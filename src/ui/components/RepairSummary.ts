@@ -7,11 +7,35 @@ export function renderRepairSummary(result: RepairResult): HTMLElement {
   const root = el('section', { className: 'panel repair-summary' });
 
   root.append(
-    el('p', { className: 'eyebrow', text: 'Reparo' }),
-    el('h2', { text: 'Alterações aplicadas' }),
-    el('p', {
-      className: 'muted',
-      text: `Antes: ${before.fatalCount} fatais, ${before.errorCount} erros, ${before.warningCount} avisos, score ${before.kindleScore}. Depois: ${after.fatalCount} fatais, ${after.errorCount} erros, ${after.warningCount} avisos, score ${after.kindleScore}.`,
+    el('div', {
+      className: 'section-heading',
+      children: [
+        el('p', { className: 'eyebrow', text: 'Reparo' }),
+        el('h2', { text: 'Alterações aplicadas' }),
+        el('p', {
+          className: 'muted',
+          text: 'Resumo das correções seguras feitas no pacote EPUB, com comparação antes e depois.',
+        }),
+      ],
+    }),
+    el('div', {
+      className: 'repair-delta-grid',
+      children: [
+        renderDeltaCard(
+          'Antes',
+          before.kindleScore,
+          before.fatalCount,
+          before.errorCount,
+          before.warningCount,
+        ),
+        renderDeltaCard(
+          'Depois',
+          after.kindleScore,
+          after.fatalCount,
+          after.errorCount,
+          after.warningCount,
+        ),
+      ],
     }),
   );
 
@@ -26,13 +50,35 @@ export function renderRepairSummary(result: RepairResult): HTMLElement {
       el('li', {
         className: `action action-${action.type}`,
         children: [
-          el('strong', { text: action.title }),
-          action.file ? el('code', { text: action.file }) : undefined,
-          el('p', { text: action.detail }),
+          el('span', { className: 'action-dot', attrs: { 'aria-hidden': 'true' } }),
+          el('div', {
+            children: [
+              el('strong', { text: action.title }),
+              action.file ? el('code', { text: action.file }) : undefined,
+              el('p', { text: action.detail }),
+            ],
+          }),
         ],
       }),
     );
   }
   root.append(list);
   return root;
+}
+
+function renderDeltaCard(
+  label: string,
+  score: number,
+  fatal: number,
+  error: number,
+  warning: number,
+): HTMLElement {
+  return el('div', {
+    className: 'repair-delta-card',
+    children: [
+      el('small', { text: label }),
+      el('strong', { text: `${score}/100` }),
+      el('span', { text: `${fatal} fatais • ${error} erros • ${warning} avisos` }),
+    ],
+  });
 }

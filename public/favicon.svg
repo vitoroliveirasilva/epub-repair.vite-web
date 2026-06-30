@@ -1,6 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="EPUB Repair">
-  <rect width="64" height="64" rx="16" fill="#111827"/>
-  <path d="M17 14h21a9 9 0 0 1 9 9v27H24a7 7 0 0 0-7 7V14Z" fill="#22d3ee"/>
-  <path d="M17 14h21a9 9 0 0 1 9 9v27H24a7 7 0 0 0-7 7V14Z" fill="none" stroke="#f8fafc" stroke-width="3"/>
-  <path d="M26 26h12M26 34h14M26 42h9" stroke="#111827" stroke-width="4" stroke-linecap="round"/>
+  <rect width="64" height="64" rx="18" fill="#276C63"/>
+  <path d="M20 12h19l9 9v31H20z" fill="#FFFDF8"/>
+  <path d="M39 12v10h9" fill="#DCEEEA"/>
+  <path d="M26 29h18M26 36h13M26 43h10" stroke="#276C63" stroke-width="4" stroke-linecap="round"/>
+  <path d="M40 45l4 4 8-10" fill="none" stroke="#287A55" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M20 12h19l9 9v31H20z" fill="none" stroke="#174E48" stroke-width="3" stroke-linejoin="round"/>
 </svg>

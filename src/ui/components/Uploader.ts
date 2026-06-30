@@ -3,18 +3,32 @@ import { el, formatBytes } from '../dom';
 
 export function renderUploader(state: AppState, onFile: (file: File) => void): HTMLElement {
   const input = el('input', {
-    attrs: { type: 'file', accept: '.epub,application/epub+zip', id: 'epub-file-input' },
+    attrs: {
+      type: 'file',
+      accept: '.epub,application/epub+zip',
+      id: 'epub-file-input',
+      'aria-describedby': 'upload-help',
+    },
   });
   input.className = 'visually-hidden';
 
   const dropzone = el('label', {
     className: 'dropzone',
-    attrs: { for: 'epub-file-input', tabindex: '0' },
+    attrs: {
+      for: 'epub-file-input',
+      tabindex: '0',
+      role: 'button',
+      'aria-label': 'Escolher ou arrastar arquivo EPUB para análise local',
+    },
     children: [
-      el('span', { className: 'drop-icon', text: '📚' }),
-      el('strong', { text: 'Solte seu EPUB aqui' }),
+      renderDropIcon(),
+      el('strong', {
+        text: state.payload ? 'EPUB carregado com segurança' : 'Arraste seu arquivo EPUB aqui',
+      }),
       el('p', {
-        text: 'ou clique para escolher um arquivo. O processamento acontece somente no navegador.',
+        text: state.payload
+          ? 'Você pode analisar novamente, reparar ou escolher outro arquivo quando quiser.'
+          : 'ou clique para escolher um arquivo. Tudo acontece localmente no navegador.',
       }),
     ],
   });
@@ -44,21 +58,49 @@ export function renderUploader(state: AppState, onFile: (file: File) => void): H
 
   return el('section', {
     className: 'panel upload-panel',
+    attrs: { id: 'upload', 'aria-labelledby': 'upload-title' },
     children: [
+      el('div', {
+        className: 'section-heading',
+        children: [
+          el('p', { className: 'eyebrow', text: 'Upload' }),
+          el('h2', {
+            text: 'Escolha o EPUB que precisa de cuidado.',
+            attrs: { id: 'upload-title' },
+          }),
+          el('p', {
+            className: 'muted',
+            attrs: { id: 'upload-help' },
+            text: 'Aceitamos arquivos .epub. O limite sugerido é 250 MB para evitar travamentos em navegadores mais modestos.',
+          }),
+        ],
+      }),
       input,
       dropzone,
       state.payload
         ? el('div', {
             className: 'file-pill',
+            attrs: { role: 'status' },
             children: [
               el('span', { text: state.payload.file.name }),
               el('strong', { text: formatBytes(state.payload.file.size) }),
             ],
           })
-        : el('p', {
-            className: 'hint',
-            text: 'Limite sugerido: até 250 MB para evitar travamentos em navegadores mais modestos.',
-          }),
+        : undefined,
+    ],
+  });
+}
+
+function renderDropIcon(): HTMLElement {
+  return el('span', {
+    className: 'drop-icon',
+    attrs: { 'aria-hidden': 'true' },
+    children: [
+      el('span', { className: 'drop-page' }),
+      el('span', { className: 'drop-line drop-line-1' }),
+      el('span', { className: 'drop-line drop-line-2' }),
+      el('span', { className: 'drop-line drop-line-3' }),
+      el('span', { className: 'drop-check' }),
     ],
   });
 }

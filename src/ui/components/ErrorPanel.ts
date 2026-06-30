@@ -6,8 +6,13 @@ export function renderStatusMessage(message?: string, error?: string): HTMLEleme
     className: error ? 'panel status-panel status-error' : 'panel status-panel status-ok',
     attrs: { role: error ? 'alert' : 'status' },
     children: [
-      el('strong', { text: error ? 'Ops, algo deu errado' : 'Status' }),
-      el('p', { text: error ?? message ?? '' }),
+      el('span', { className: 'status-icon', attrs: { 'aria-hidden': 'true' } }),
+      el('div', {
+        children: [
+          el('strong', { text: error ? 'Não foi possível concluir' : 'Tudo certo por aqui' }),
+          el('p', { text: error ?? message ?? '' }),
+        ],
+      }),
     ],
   });
 }

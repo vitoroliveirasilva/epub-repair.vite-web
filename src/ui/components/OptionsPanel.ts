@@ -76,21 +76,30 @@ export function renderOptionsPanel(state: AppState, onChange: () => void): HTMLE
     className: 'sidebar',
     children: [
       el('section', {
-        className: 'panel',
+        className: 'panel privacy-mini-card',
         children: [
-          el('p', { className: 'eyebrow', text: 'Privacidade' }),
-          el('h2', { text: 'Local' }),
+          el('p', { className: 'eyebrow', text: 'Local first' }),
+          el('h2', { text: 'Seu livro fica no seu navegador.' }),
           el('p', {
             className: 'muted',
-            text: 'O EPUB é lido, validado, reparado e reempacotado no navegador.',
+            text: 'A leitura, validação, limpeza e reconstrução acontecem localmente. Nenhum upload para servidor é necessário.',
           }),
         ],
       }),
       el('section', {
-        className: 'panel',
+        className: 'panel options-panel',
         children: [
-          el('p', { className: 'eyebrow', text: 'Opções' }),
-          el('h2', { text: 'Reparo automático' }),
+          el('div', {
+            className: 'section-heading',
+            children: [
+              el('p', { className: 'eyebrow', text: 'Opções' }),
+              el('h2', { text: 'Reparo automático' }),
+              el('p', {
+                className: 'muted',
+                text: 'Deixe marcado o que a ferramenta pode ajustar sozinha durante a reconstrução.',
+              }),
+            ],
+          }),
           form,
         ],
       }),

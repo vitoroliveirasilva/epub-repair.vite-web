@@ -2,12 +2,31 @@ import type { Issue } from '../../epub';
 import { el } from '../dom';
 
 export function renderIssueList(issues: Issue[]): HTMLElement {
-  const wrapper = el('section', { className: 'panel issues-panel' });
-  wrapper.append(el('h2', { text: 'Problemas encontrados' }));
+  const wrapper = el('section', {
+    className: 'panel issues-panel',
+    attrs: { 'aria-label': 'Relatório de problemas' },
+  });
+  wrapper.append(
+    el('div', {
+      className: 'section-heading section-heading-row',
+      children: [
+        el('div', {
+          children: [
+            el('p', { className: 'eyebrow', text: 'Relatório' }),
+            el('h2', { text: 'Problemas encontrados' }),
+          ],
+        }),
+        el('span', { className: 'badge badge-neutral', text: `${issues.length} ocorrência(s)` }),
+      ],
+    }),
+  );
 
   if (issues.length === 0) {
     wrapper.append(
-      el('p', { className: 'empty success-text', text: 'Nenhum problema crítico encontrado.' }),
+      el('p', {
+        className: 'empty success-text',
+        text: 'Nenhum problema crítico encontrado.',
+      }),
     );
     return wrapper;
   }
@@ -18,7 +37,10 @@ export function renderIssueList(issues: Issue[]): HTMLElement {
     details.append(
       el('summary', {
         children: [
-          el('span', { text: severityLabel(severity) }),
+          el('span', {
+            className: `severity-label severity-label-${severity}`,
+            children: [el('i', { attrs: { 'aria-hidden': 'true' } }), severityLabel(severity)],
+          }),
           el('small', { text: `${items.length} ocorrência(s)` }),
         ],
       }),
@@ -42,7 +64,7 @@ function renderIssue(issue: Issue): HTMLElement {
         children: [
           el('strong', { text: issue.title }),
           el('span', {
-            className: issue.repairable ? 'badge badge-repairable' : 'badge',
+            className: issue.repairable ? 'badge badge-repairable' : 'badge badge-manual',
             text: issue.repairable ? 'corrigível' : 'manual',
           }),
         ],
@@ -50,12 +72,18 @@ function renderIssue(issue: Issue): HTMLElement {
       el('div', {
         className: 'issue-meta',
         children: [
+          el('span', {
+            className: `badge badge-${issue.severity}`,
+            text: severityLabel(issue.severity),
+          }),
           el('code', { text: issue.code }),
           issue.file ? el('code', { text: issue.file }) : undefined,
         ],
       }),
       el('p', { text: issue.detail }),
-      issue.context ? el('small', { className: 'muted', text: issue.context }) : undefined,
+      issue.context
+        ? el('small', { className: 'muted issue-context', text: issue.context })
+        : undefined,
     ],
   });
 }
@@ -75,10 +103,10 @@ function groupBySeverity(issues: Issue[]): Array<[Issue['severity'], Issue[]]> {
 
 function severityLabel(severity: Issue['severity']): string {
   const labels: Record<Issue['severity'], string> = {
-    fatal: 'Fatais',
-    error: 'Erros',
-    warning: 'Avisos',
-    info: 'Informações',
+    fatal: 'Fatal',
+    error: 'Erro',
+    warning: 'Aviso',
+    info: 'Info',
     success: 'Sucesso',
   };
   return labels[severity];

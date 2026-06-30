@@ -10,7 +10,12 @@ import { renderRepairSummary } from '../ui/components/RepairSummary';
 import { renderUploader } from '../ui/components/Uploader';
 import { el } from '../ui/dom';
 
+type ThemeMode = 'light' | 'dark';
+
+const THEME_STORAGE_KEY = 'epub-repair-theme';
+
 export function createApp(root: HTMLElement): void {
+  initializeTheme();
   const state = createInitialState();
 
   const rerender = (): void => render(root, state, rerender);
@@ -19,9 +24,11 @@ export function createApp(root: HTMLElement): void {
 
 function render(root: HTMLElement, state: AppState, rerender: () => void): void {
   root.replaceChildren(
+    renderAppHeader(),
     renderHero(),
     el('main', {
       className: 'layout',
+      attrs: { id: 'app-workspace' },
       children: [
         el('div', {
           className: 'workspace',
@@ -52,6 +59,7 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
         renderOptionsPanel(state, rerender),
       ],
     }),
+    renderSupportSections(),
     renderFooter(),
   );
 }
@@ -78,7 +86,7 @@ async function copyCurrentReport(state: AppState, rerender: () => void): Promise
   if (!state.report) return;
   try {
     await navigator.clipboard.writeText(buildTextReport(state.report, state.repairResult));
-    state.message = 'Relatório copiado.';
+    state.message = 'Relatório copiado para a área de transferência.';
     state.error = undefined;
   } catch {
     state.error = 'Não foi possível copiar o relatório. Verifique a permissão do navegador.';
@@ -86,30 +94,119 @@ async function copyCurrentReport(state: AppState, rerender: () => void): Promise
   rerender();
 }
 
-function renderHero(): HTMLElement {
+function renderAppHeader(): HTMLElement {
   return el('header', {
-    className: 'hero',
+    className: 'app-header',
     children: [
-      el('div', {
+      el('a', {
+        className: 'brand-mark',
+        attrs: { href: '#top', 'aria-label': 'EPUB Repair, início' },
+        children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })],
+      }),
+      el('nav', {
+        className: 'header-nav',
+        attrs: { 'aria-label': 'Navegação principal' },
         children: [
-          el('p', { className: 'eyebrow', text: 'EPUB Repair' }),
-          el('h1', { text: 'Repare EPUBs para Kindle.' }),
-          el('p', {
-            className: 'hero-copy',
-            text: 'Valide referências quebradas e gere um EPUB reempacotado.',
-          }),
+          el('a', { text: 'Como funciona', attrs: { href: '#privacy' } }),
+          el('a', { text: 'Limitações', attrs: { href: '#limitations' } }),
+          el('a', { text: 'Relatório', attrs: { href: '#app-workspace' } }),
         ],
       }),
-      el('section', {
-        className: 'privacy-card',
+      el('div', {
+        className: 'header-actions',
         children: [
-          el('strong', { text: 'Processamento local, sem servidores ou serviços externos.' }),
-          el('p', {
-            text: 'O arquivo é processado no navegador.',
+          renderThemeToggle(),
+          el('a', {
+            className: 'btn btn-primary btn-small',
+            text: 'Validar EPUB',
+            attrs: { href: '#upload' },
           }),
         ],
       }),
     ],
+  });
+}
+
+function renderHero(): HTMLElement {
+  return el('section', {
+    className: 'hero',
+    attrs: { id: 'top' },
+    children: [
+      el('div', {
+        className: 'hero-content',
+        children: [
+          el('p', { className: 'eyebrow', text: 'Validação e reparo local de EPUB' }),
+          el('h1', { text: 'Conserte arquivos EPUB antes de enviar para o seu leitor.' }),
+          el('p', {
+            className: 'hero-copy',
+            text: 'Analise a estrutura, limpe arquivos problemáticos, reconstrua pacotes e gere um EPUB mais amigável para Kindle e e-readers, direto no navegador.',
+          }),
+          el('div', {
+            className: 'hero-actions',
+            children: [
+              el('a', {
+                className: 'btn btn-primary btn-large',
+                text: 'Selecionar EPUB',
+                attrs: { href: '#upload' },
+              }),
+              el('a', {
+                className: 'btn btn-ghost btn-large',
+                text: 'Ver privacidade',
+                attrs: { href: '#privacy' },
+              }),
+            ],
+          }),
+        ],
+      }),
+      renderHeroPreview(),
+    ],
+  });
+}
+
+function renderHeroPreview(): HTMLElement {
+  return el('aside', {
+    className: 'hero-preview',
+    attrs: { 'aria-label': 'Prévia visual do relatório EPUB Repair' },
+    children: [
+      el('div', {
+        className: 'preview-toolbar',
+        children: [el('span'), el('span'), el('span'), el('strong', { text: 'Relatório local' })],
+      }),
+      el('div', {
+        className: 'preview-score score-good',
+        children: [el('span', { text: '92' }), el('small', { text: 'Kindle score' })],
+      }),
+      el('div', {
+        className: 'preview-grid',
+        children: [
+          renderPreviewMetric('0', 'Fatais', 'success'),
+          renderPreviewMetric('2', 'Erros', 'error'),
+          renderPreviewMetric('6', 'Avisos', 'warning'),
+        ],
+      }),
+      el('div', {
+        className: 'preview-list',
+        children: [
+          renderPreviewLine('Manifest revisado', 'success'),
+          renderPreviewLine('Referências quebradas isoladas', 'warning'),
+          renderPreviewLine('Download pronto', 'info'),
+        ],
+      }),
+    ],
+  });
+}
+
+function renderPreviewMetric(value: string, label: string, tone: string): HTMLElement {
+  return el('div', {
+    className: `preview-metric preview-metric-${tone}`,
+    children: [el('strong', { text: value }), el('small', { text: label })],
+  });
+}
+
+function renderPreviewLine(text: string, tone: string): HTMLElement {
+  return el('p', {
+    className: `preview-line preview-line-${tone}`,
+    children: [el('span'), text],
   });
 }
 
@@ -118,11 +215,50 @@ function renderEmptyState(): HTMLElement {
     className: 'panel empty-state',
     children: [
       el('div', {
+        className: 'empty-illustration',
+        attrs: { 'aria-hidden': 'true' },
+        children: [el('span'), el('span'), el('span')],
+      }),
+      el('div', {
         children: [
+          el('p', { className: 'eyebrow', text: 'Relatório' }),
           el('h2', { text: 'Envie um EPUB para começar' }),
           el('p', {
             className: 'muted',
-            text: 'O relatório aparecerá aqui com severidade, código, arquivo afetado e explicação.',
+            text: 'O diagnóstico aparecerá aqui com score Kindle, severidades, arquivos afetados e detalhes técnicos recolhidos para não poluir a leitura.',
+          }),
+        ],
+      }),
+    ],
+  });
+}
+
+function renderSupportSections(): HTMLElement {
+  return el('section', {
+    className: 'support-sections',
+    attrs: { 'aria-label': 'Informações sobre privacidade e limitações' },
+    children: [
+      el('article', {
+        className: 'support-card',
+        attrs: { id: 'privacy' },
+        children: [
+          el('p', { className: 'eyebrow', text: 'Privacidade' }),
+          el('h2', { text: 'Processamento local, sem envio para servidor.' }),
+          el('p', {
+            className: 'muted',
+            text: 'O arquivo é lido, validado, reparado e reempacotado no próprio navegador. Nenhum dado é enviado para servidor, nem mesmo o relatório. O EPUB original e o reparado permanecem no seu dispositivo.',
+          }),
+        ],
+      }),
+      el('article', {
+        className: 'support-card',
+        attrs: { id: 'limitations' },
+        children: [
+          el('p', { className: 'eyebrow', text: 'Limitações' }),
+          el('h2', { text: 'Honesto por design.' }),
+          el('p', {
+            className: 'muted',
+            text: 'A ferramenta não remove DRM, não altera direitos autorais e não promete recuperar arquivos irremediavelmente corrompidos. O objetivo é organizar, validar e reconstruir o que for tecnicamente seguro reparar.',
           }),
         ],
       }),
@@ -134,9 +270,72 @@ function renderFooter(): HTMLElement {
   return el('footer', {
     className: 'footer',
     children: [
+      el('div', {
+        className: 'footer-brand',
+        children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })],
+      }),
       el('p', {
-        text: 'EPUB Repair é uma ferramenta de diagnóstico e reparo local. Logo, não removemos DRM nem substituimos o EPUBCheck oficial.',
+        text: 'Ferramenta front-end para diagnóstico, limpeza e reconstrução local de EPUBs. Não remove DRM e não substitui validações editoriais oficiais.',
       }),
     ],
   });
+}
+
+function renderLogoSymbol(): HTMLElement {
+  return el('span', {
+    className: 'logo-symbol',
+    attrs: { 'aria-hidden': 'true' },
+    children: [
+      el('span', { className: 'logo-fold' }),
+      el('span', { className: 'logo-line logo-line-1' }),
+      el('span', { className: 'logo-line logo-line-2' }),
+      el('span', { className: 'logo-check' }),
+    ],
+  });
+}
+
+function renderThemeToggle(): HTMLElement {
+  const currentTheme = getCurrentTheme();
+  const toggle = el('button', {
+    className: 'theme-toggle',
+    attrs: { type: 'button', 'aria-label': 'Alternar tema claro e escuro' },
+    children: [
+      el('span', { attrs: { 'aria-hidden': 'true' } }),
+      el('strong', { text: currentTheme === 'dark' ? 'Escuro' : 'Claro' }),
+    ],
+  });
+
+  toggle.addEventListener('click', () => {
+    const nextTheme: ThemeMode = getCurrentTheme() === 'dark' ? 'light' : 'dark';
+    applyTheme(nextTheme);
+    const label = toggle.querySelector('strong');
+    if (label) label.textContent = nextTheme === 'dark' ? 'Escuro' : 'Claro';
+  });
+
+  return toggle;
+}
+
+function initializeTheme(): void {
+  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+  if (storedTheme === 'light' || storedTheme === 'dark') {
+    applyTheme(storedTheme);
+    return;
+  }
+
+  const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light', false);
+}
+
+function getCurrentTheme(): ThemeMode {
+  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+}
+
+function applyTheme(theme: ThemeMode, persist = true): void {
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.style.colorScheme = theme;
+  document
+    .querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+    ?.setAttribute('content', theme === 'dark' ? '#111817' : '#F7F3EA');
+
+  if (persist) window.localStorage.setItem(THEME_STORAGE_KEY, theme);
 }
