@@ -243,7 +243,7 @@ function renderSupportSections(): HTMLElement {
         attrs: { id: 'privacy' },
         children: [
           el('p', { className: 'eyebrow', text: 'Privacidade' }),
-          el('h2', { text: 'Processamento local, sem envio para servidor.' }),
+          el('h2', { text: 'Processamento local sem envio para servidor' }),
           el('p', {
             className: 'muted',
             text: 'O arquivo é lido, validado, reparado e reempacotado no próprio navegador. Nenhum dado é enviado para servidor, nem mesmo o relatório. O EPUB original e o reparado permanecem no seu dispositivo.',
@@ -255,10 +255,10 @@ function renderSupportSections(): HTMLElement {
         attrs: { id: 'limitations' },
         children: [
           el('p', { className: 'eyebrow', text: 'Limitações' }),
-          el('h2', { text: 'Honesto por design.' }),
+          el('h2', { text: 'Transparente sobre o que é possível fazer' }),
           el('p', {
             className: 'muted',
-            text: 'A ferramenta não remove DRM, não altera direitos autorais e não promete recuperar arquivos irremediavelmente corrompidos. O objetivo é organizar, validar e reconstruir o que for tecnicamente seguro reparar.',
+            text: 'A ferramenta não remove DRM, não altera direitos autorais e não recupera arquivos irremediavelmente corrompidos. Focamos em organizar, validar e reconstruir apenas o que é tecnicamente viável e seguro reparar.',
           }),
         ],
       }),
@@ -275,7 +275,11 @@ function renderFooter(): HTMLElement {
         children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })],
       }),
       el('p', {
-        text: 'Ferramenta front-end para diagnóstico, limpeza e reconstrução local de EPUBs. Não remove DRM e não substitui validações editoriais oficiais.',
+        children: [
+          el('span', { text: 'Ferramenta front-end para diagnóstico, limpeza e reconstrução local de EPUBs' }),
+          el('br'),
+          el('span', { text: 'Não remove DRM e não substitui validações editoriais oficiais' }),
+        ],
       }),
     ],
   });

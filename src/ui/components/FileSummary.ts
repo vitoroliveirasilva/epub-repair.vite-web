@@ -51,7 +51,7 @@ function renderScore(score: number): HTMLElement {
   const node = el('div', {
     className: scoreClass(score),
     attrs: { 'aria-label': `Compatibilidade estimada Kindle: ${score} de 100` },
-    children: [el('span', { text: String(score) }), el('small', { text: 'Kindle score' })],
+    children: [el('span', { text: String(score) })],
   });
   node.style.setProperty('--score-angle', `${score * 3.6}deg`);
   return node;
