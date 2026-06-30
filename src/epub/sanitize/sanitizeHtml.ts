@@ -25,6 +25,7 @@ export function sanitizeHtmlDocument(
   if (options.sanitizeScripts) {
     const before = output;
     output = output.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/giu, '');
+    output = output.replace(/<script\b[^>]*\/?>/giu, '');
     output = output.replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/giu, '');
     output = output.replace(/\s+(?:href|src)\s*=\s*(["'])\s*javascript:[\s\S]*?\1/giu, '');
     if (output !== before) {
@@ -65,6 +66,7 @@ export function sanitizeHtmlDocument(
     output = removeRemoteResourceAttributes(output, options.filePath, actions);
   }
 
+  output = filterUnsafeSrcset(output, options, actions);
   output = removeBrokenResourceAttributes(output, options, actions);
 
   return { text: output, changed: output !== text, actions };
@@ -107,7 +109,28 @@ function replaceBrokenKindleEmbeds(
   actions: RepairAction[],
 ): string {
   let changed = false;
-  const output = text.replace(/kindle:embed:[^\s"'<>)]*/giu, (value) => {
+  let output = text.replace(
+    /<img\b[^>]*\bsrc\s*=\s*(["'])(kindle:embed:[^"']+)\1[^>]*>/giu,
+    (_full, _quote: string, value: string) => {
+      changed = true;
+      return `<span class="epub-repair-kindle-embed">[Conteúdo Kindle indisponível: ${escapeHtml(value)}]</span>`;
+    },
+  );
+  output = output.replace(
+    /<a\b([^>]*)\bhref\s*=\s*(["'])(kindle:embed:[^"']+)\2([^>]*)>([\s\S]*?)<\/a\s*>/giu,
+    (_full, _before: string, _quote: string, value: string, _after: string, label: string) => {
+      changed = true;
+      return escapeHtml(stripTags(label).trim() || value);
+    },
+  );
+  output = output.replace(
+    /<(iframe|embed|object|source)\b[^>]*(?:src|data)\s*=\s*(["'])kindle:embed:[^"']+\2[^>]*>(?:[\s\S]*?<\/\1\s*>)?/giu,
+    () => {
+      changed = true;
+      return '<p>[Conteúdo Kindle indisponível]</p>';
+    },
+  );
+  output = output.replace(/kindle:embed:[^\s"'<>)]*/giu, (value) => {
     changed = true;
     return `[Conteúdo Kindle indisponível: ${escapeHtml(value)}]`;
   });
@@ -118,6 +141,48 @@ function replaceBrokenKindleEmbeds(
       title: 'Referências kindle:embed neutralizadas',
       detail: 'Referências proprietárias quebráveis foram trocadas por marcador textual seguro.',
       file: filePath,
+    });
+  }
+
+  return output;
+}
+
+function filterUnsafeSrcset(
+  text: string,
+  options: SanitizeHtmlOptions,
+  actions: RepairAction[],
+): string {
+  let changed = false;
+  const output = text.replace(
+    /\ssrcset\s*=\s*(["'])(.*?)\1/giu,
+    (full, quote: string, value: string) => {
+      const safeCandidates = value
+        .split(',')
+        .map((candidate) => candidate.trim())
+        .filter(Boolean)
+        .filter((candidate) => {
+          const [rawUrl] = candidate.split(/\s+/u);
+          if (!rawUrl || rawUrl.startsWith('#') || rawUrl.startsWith('kindle:embed:')) return false;
+          if (isRemoteUrl(rawUrl)) return !options.removeRemoteResourceLinks;
+          const resolved = resolveReference(options.filePath, rawUrl);
+          return resolved.safe && options.existingFiles.has(resolved.path);
+        });
+
+      if (safeCandidates.length === value.split(',').filter((part) => part.trim()).length) {
+        return full;
+      }
+
+      changed = true;
+      return safeCandidates.length ? ` srcset=${quote}${safeCandidates.join(', ')}${quote}` : '';
+    },
+  );
+
+  if (changed) {
+    actions.push({
+      type: 'updated',
+      title: 'Srcset inseguro filtrado',
+      detail: 'Candidatos srcset remotos, kindle:embed ou inexistentes foram removidos.',
+      file: options.filePath,
     });
   }
 

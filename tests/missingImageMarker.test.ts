@@ -23,4 +23,20 @@ describe('sanitizeHtmlDocument', () => {
     });
     expect(result.text).toBe('Site externo');
   });
+
+  it('filtra candidatos srcset remotos ou ausentes preservando os locais válidos', () => {
+    const result = sanitizeHtmlDocument(
+      '<img src="../img/capa.jpg" srcset="../img/capa.jpg 1x, https://cdn/img.jpg 2x, ../img/falta.jpg 3x" />',
+      {
+        filePath: 'OPS/Text/cap.xhtml',
+        existingFiles: new Set(['OPS/Text/cap.xhtml', 'OPS/img/capa.jpg']),
+        kindleSafeMode: true,
+        removeRemoteResourceLinks: true,
+        sanitizeScripts: true,
+      },
+    );
+    expect(result.text).toContain('srcset="../img/capa.jpg 1x"');
+    expect(result.text).not.toContain('https://cdn');
+    expect(result.text).not.toContain('falta.jpg');
+  });
 });

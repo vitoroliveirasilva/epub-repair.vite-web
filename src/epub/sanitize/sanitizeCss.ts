@@ -15,17 +15,23 @@ export function sanitizeCssDocument(
   const actions: RepairAction[] = [];
   let changed = false;
 
-  const output = text.replace(
+  let output = text.replace(
+    /@import\s+(?:url\(\s*)?(?:["'])([^"']+)(?:["'])\s*\)?[^;]*;/giu,
+    (full, rawValue: string) => {
+      if (isUnsafeCssReference(filePath, rawValue.trim(), existingFiles)) {
+        changed = true;
+        return '';
+      }
+      return full;
+    },
+  );
+
+  output = output.replace(
     /url\(\s*(["']?)(.*?)\1\s*\)/giu,
     (full, _quote: string, rawValue: string) => {
       const value = rawValue.trim();
       if (!value || value.startsWith('#')) return full;
-      if (isRemoteUrl(value)) {
-        changed = true;
-        return 'none';
-      }
-      const resolved = resolveReference(filePath, value);
-      if (!resolved.safe || !existingFiles.has(resolved.path)) {
+      if (isUnsafeCssReference(filePath, value, existingFiles)) {
         changed = true;
         return 'none';
       }
@@ -43,4 +49,15 @@ export function sanitizeCssDocument(
   }
 
   return { text: output, changed, actions };
+}
+
+function isUnsafeCssReference(
+  filePath: string,
+  value: string,
+  existingFiles: Set<string>,
+): boolean {
+  if (!value || value.startsWith('#')) return false;
+  if (isRemoteUrl(value)) return true;
+  const resolved = resolveReference(filePath, value);
+  return !resolved.safe || !existingFiles.has(resolved.path);
 }

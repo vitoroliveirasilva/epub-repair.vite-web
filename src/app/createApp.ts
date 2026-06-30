@@ -63,6 +63,8 @@ async function runAsync(
 ): Promise<void> {
   try {
     state.error = undefined;
+    state.busy = true;
+    rerender();
     await task();
   } catch (error) {
     state.error = error instanceof Error ? error.message : 'Não foi possível concluir a ação.';
@@ -74,8 +76,13 @@ async function runAsync(
 
 async function copyCurrentReport(state: AppState, rerender: () => void): Promise<void> {
   if (!state.report) return;
-  await navigator.clipboard.writeText(buildTextReport(state.report, state.repairResult));
-  state.message = 'Relatório copiado.';
+  try {
+    await navigator.clipboard.writeText(buildTextReport(state.report, state.repairResult));
+    state.message = 'Relatório copiado.';
+    state.error = undefined;
+  } catch {
+    state.error = 'Não foi possível copiar o relatório. Verifique a permissão do navegador.';
+  }
   rerender();
 }
 

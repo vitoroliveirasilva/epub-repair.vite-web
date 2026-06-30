@@ -32,9 +32,10 @@ export function buildNavDocument(pkg: PackageDocumentInfo, navPath: string): str
   return `<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="pt-BR">\n  <head>\n    <title>Navegação</title>\n  </head>\n  <body>\n    <nav epub:type="toc" id="toc">\n      <h1>Sumário</h1>\n      <ol>\n${list || '      <li><span>Início</span></li>'}\n      </ol>\n    </nav>\n  </body>\n</html>\n`;
 }
 
-export function buildNcxDocument(pkg: PackageDocumentInfo): string {
+export function buildNcxDocument(pkg: PackageDocumentInfo, ncxPath: string): string {
   const title = pkg.metadata.title ?? 'Livro sem título';
   const identifier = pkg.metadata.identifier ?? 'epub-repair-id';
+  const ncxDir = ncxPath.includes('/') ? ncxPath.slice(0, ncxPath.lastIndexOf('/')) : '';
   const entries = pkg.spine
     .map((item) => item.manifestItem)
     .filter((item): item is NonNullable<typeof item> =>
@@ -43,7 +44,8 @@ export function buildNcxDocument(pkg: PackageDocumentInfo): string {
   const navPoints = entries
     .map((item, index) => {
       const label = item.id || basename(item.href) || `Capítulo ${index + 1}`;
-      return `    <navPoint id="navPoint-${index + 1}" playOrder="${index + 1}">\n      <navLabel><text>${escapeXml(label)}</text></navLabel>\n      <content src="${encodePathForXml(item.href)}"/>\n    </navPoint>`;
+      const href = encodePathForXml(relativePath(ncxDir, item.resolvedPath));
+      return `    <navPoint id="navPoint-${index + 1}" playOrder="${index + 1}">\n      <navLabel><text>${escapeXml(label)}</text></navLabel>\n      <content src="${href}"/>\n    </navPoint>`;
     })
     .join('\n');
 

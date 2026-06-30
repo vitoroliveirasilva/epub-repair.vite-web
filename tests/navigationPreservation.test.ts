@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { shouldCreateNav, shouldCreateNcx } from '../src/epub/repair/repairNavigation';
+import {
+  buildNcxDocument,
+  shouldCreateNav,
+  shouldCreateNcx,
+} from '../src/epub/repair/repairNavigation';
 import type { PackageDocumentInfo } from '../src/epub/model/opfTypes';
 
 const basePackage: PackageDocumentInfo = {
@@ -23,6 +27,7 @@ describe('navigation repair rules', () => {
           mediaType: 'application/xhtml+xml',
           properties: ['nav'],
           resolvedPath: 'OPS/nav.xhtml',
+          pathSafe: true,
           exists: true,
         },
       }),
@@ -35,5 +40,41 @@ describe('navigation repair rules', () => {
 
   it('não gera NCX para EPUB 3 quando não foi declarado ausente', () => {
     expect(shouldCreateNcx(basePackage)).toBe(false);
+  });
+
+  it('gera caminhos do NCX relativos ao próprio arquivo toc.ncx', () => {
+    const ncx = buildNcxDocument(
+      {
+        ...basePackage,
+        version: '2.0',
+        manifest: [
+          {
+            id: 'cap1',
+            href: 'Text/cap1.xhtml',
+            mediaType: 'application/xhtml+xml',
+            properties: [],
+            resolvedPath: 'OPS/Text/cap1.xhtml',
+            pathSafe: true,
+            exists: true,
+          },
+        ],
+        spine: [
+          {
+            idref: 'cap1',
+            manifestItem: {
+              id: 'cap1',
+              href: 'Text/cap1.xhtml',
+              mediaType: 'application/xhtml+xml',
+              properties: [],
+              resolvedPath: 'OPS/Text/cap1.xhtml',
+              pathSafe: true,
+              exists: true,
+            },
+          },
+        ],
+      },
+      'OPS/nav/toc.ncx',
+    );
+    expect(ncx).toContain('src="../Text/cap1.xhtml"');
   });
 });

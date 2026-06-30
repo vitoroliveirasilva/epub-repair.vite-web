@@ -6,6 +6,12 @@ describe('pathUtils', () => {
     expect(normalizeInternalPath('./OPS\\chapter 1.xhtml').path).toBe('OPS/chapter 1.xhtml');
   });
 
+  it('preserva espaços legítimos nas partes do caminho', () => {
+    expect(normalizeInternalPath('OPS/Text/ capítulo 1 .xhtml').path).toBe(
+      'OPS/Text/ capítulo 1 .xhtml',
+    );
+  });
+
   it('marca path traversal como inseguro', () => {
     const result = normalizeInternalPath('../../evil.xhtml');
     expect(result.safe).toBe(false);

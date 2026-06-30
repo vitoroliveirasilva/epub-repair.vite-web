@@ -4,7 +4,13 @@ import type { RepairAction, RepairOptions } from '../model/repairTypes';
 import { HTML_MEDIA_TYPES, RELEVANT_MEDIA_TYPES, SYSTEM_FILE_PATTERNS } from '../utils/constants';
 import { deriveTitleFromFileName } from '../utils/fileName';
 import { guessMediaType } from '../utils/mediaTypes';
-import { basename, encodePathForXml, makeUniqueId, relativePath } from '../utils/pathUtils';
+import {
+  basename,
+  encodePathForXml,
+  makeUniqueId,
+  relativePath,
+  resolveFromDir,
+} from '../utils/pathUtils';
 import {
   childElementsByLocalName,
   findFirstByLocalName,
@@ -51,7 +57,7 @@ export function repairOpfDocument(
   repairMetadata(doc, metadata, originalFileName, actions, pkg.opfPath);
   if (options.repairManifest) repairManifest(doc, manifest, loaded, pkg, actions);
   if (options.repairSpine) repairSpine(spine, manifest, actions, pkg.opfPath);
-  ensureNavigationFiles(doc, manifest, spine, pkg, filesToAdd, actions, options);
+  ensureNavigationFiles(doc, manifest, spine, loaded, pkg, filesToAdd, actions, options);
 
   return {
     opfText: serializeXml(doc),
@@ -120,12 +126,18 @@ function repairManifest(
   for (const item of childElementsByLocalName(manifest, 'item')) {
     const href = getAttr(item, 'href') ?? '';
     const id = getAttr(item, 'id') ?? '';
-    const currentPath = pkg.manifest.find(
+    const parsedItem = pkg.manifest.find(
       (manifestItem) => manifestItem.href === href && manifestItem.id === id,
-    )?.resolvedPath;
+    );
+    const resolvedFromDocument = href ? resolveFromDir(pkg.opfDir, href) : undefined;
+    const currentPath = parsedItem?.resolvedPath ?? resolvedFromDocument?.path;
     const mediaType = getAttr(item, 'media-type') ?? '';
     const shouldRemove =
-      !href || !currentPath || !loaded.files.has(currentPath) || seenHrefs.has(currentPath);
+      !href ||
+      !currentPath ||
+      resolvedFromDocument?.safe === false ||
+      !loaded.files.has(currentPath) ||
+      seenHrefs.has(currentPath);
 
     if (shouldRemove) {
       item.remove();
@@ -133,7 +145,7 @@ function repairManifest(
         type: 'removed',
         title: 'Item inválido removido do manifest',
         detail: href
-          ? `O item "${href}" estava duplicado ou apontava para arquivo inexistente.`
+          ? `O item "${href}" estava duplicado, inseguro ou apontava para arquivo inexistente.`
           : 'Um item sem href foi removido.',
         file: pkg.opfPath,
       });
@@ -163,10 +175,27 @@ function repairManifest(
         file: pkg.opfPath,
       });
     }
+
+    if (pkg.version.startsWith('3') && isNavCandidate(currentPath, getAttr(item, 'properties'))) {
+      const added = addTokenAttribute(item, 'properties', 'nav');
+      if (added) {
+        actions.push({
+          type: 'updated',
+          title: 'Documento nav preservado no manifest',
+          detail: `O item "${href}" já existia e recebeu properties="nav" em vez de recriar o índice.`,
+          file: pkg.opfPath,
+        });
+      }
+    }
   }
 
-  const declared = new Set(
-    childElementsByLocalName(manifest, 'item').map((item) => getAttr(item, 'href') ?? ''),
+  const declaredPaths = new Set(
+    childElementsByLocalName(manifest, 'item')
+      .map((item) => {
+        const href = getAttr(item, 'href');
+        return href ? resolveFromDir(pkg.opfDir, href).path : '';
+      })
+      .filter(Boolean),
   );
   for (const path of loaded.files.keys()) {
     if (path === 'mimetype' || path === 'META-INF/container.xml' || path === pkg.opfPath) continue;
@@ -174,17 +203,17 @@ function repairManifest(
     const mediaType = guessMediaType(path);
     if (!mediaType || !RELEVANT_MEDIA_TYPES.has(mediaType)) continue;
     const href = relativePath(pkg.opfDir, path);
-    if (declared.has(href)) continue;
+    if (declaredPaths.has(path)) continue;
     const item = doc.createElementNS(OPF_NS, 'item');
     const id = makeUniqueId(basename(path), usedIds);
     item.setAttribute('id', id);
     item.setAttribute('href', encodePathForXml(href));
     item.setAttribute('media-type', mediaType);
-    if (mediaType === 'application/xhtml+xml' && path.toLowerCase().endsWith('nav.xhtml')) {
+    if (pkg.version.startsWith('3') && isNavCandidate(path, undefined)) {
       item.setAttribute('properties', 'nav');
     }
     manifest.append(item);
-    declared.add(href);
+    declaredPaths.add(path);
     actions.push({
       type: 'updated',
       title: 'Recurso existente adicionado ao manifest',
@@ -243,6 +272,7 @@ function ensureNavigationFiles(
   doc: Document,
   manifest: Element,
   spine: Element,
+  loaded: LoadedEpub,
   pkg: PackageDocumentInfo,
   filesToAdd: Map<string, string>,
   actions: RepairAction[],
@@ -254,7 +284,11 @@ function ensureNavigationFiles(
       .filter(Boolean),
   );
 
-  if (options.generateNavigation && shouldCreateNav(pkg)) {
+  if (
+    options.generateNavigation &&
+    shouldCreateNav(pkg) &&
+    !currentManifestNavExists(manifest, loaded, pkg, filesToAdd)
+  ) {
     const navPath = pkg.navItem?.resolvedPath || `${pkg.opfDir ? `${pkg.opfDir}/` : ''}nav.xhtml`;
     filesToAdd.set(navPath, buildNavDocument(pkg, navPath));
     const item = doc.createElementNS(OPF_NS, 'item');
@@ -271,10 +305,21 @@ function ensureNavigationFiles(
     });
   }
 
-  if (options.generateNcx && shouldCreateNcx(pkg)) {
+  const currentNcxId = currentManifestNcxId(manifest, loaded, pkg, filesToAdd);
+  if (options.generateNcx && currentNcxId && !getAttr(spine, 'toc')) {
+    spine.setAttribute('toc', currentNcxId);
+    actions.push({
+      type: 'updated',
+      title: 'NCX existente preservado no spine',
+      detail: 'Um toc.ncx existente foi reaproveitado em vez de recriar a navegação legada.',
+      file: pkg.opfPath,
+    });
+  }
+
+  if (options.generateNcx && shouldCreateNcx(pkg) && !currentNcxId) {
     const ncxPath = pkg.ncxItem?.resolvedPath || `${pkg.opfDir ? `${pkg.opfDir}/` : ''}toc.ncx`;
     const ncxId = pkg.ncxItem?.id || makeUniqueId('ncx', usedIds);
-    filesToAdd.set(ncxPath, buildNcxDocument(pkg));
+    filesToAdd.set(ncxPath, buildNcxDocument(pkg, ncxPath));
     if (!pkg.ncxItem) {
       const item = doc.createElementNS(OPF_NS, 'item');
       item.setAttribute('id', ncxId);
@@ -292,6 +337,56 @@ function ensureNavigationFiles(
       file: ncxPath,
     });
   }
+}
+
+function isNavCandidate(path: string, properties: string | undefined): boolean {
+  return (
+    /(^|\s)nav($|\s)/u.test(properties ?? '') ||
+    path.toLowerCase().endsWith('/nav.xhtml') ||
+    path.toLowerCase() === 'nav.xhtml'
+  );
+}
+
+function addTokenAttribute(element: Element, attribute: string, token: string): boolean {
+  const tokens = new Set((getAttr(element, attribute) ?? '').split(/\s+/u).filter(Boolean));
+  if (tokens.has(token)) return false;
+  tokens.add(token);
+  element.setAttribute(attribute, Array.from(tokens).join(' '));
+  return true;
+}
+
+function currentManifestNavExists(
+  manifest: Element,
+  loaded: LoadedEpub,
+  pkg: PackageDocumentInfo,
+  filesToAdd: Map<string, string>,
+): boolean {
+  return childElementsByLocalName(manifest, 'item').some((item) => {
+    if (!/(^|\s)nav($|\s)/u.test(getAttr(item, 'properties') ?? '')) return false;
+    const href = getAttr(item, 'href');
+    if (!href) return false;
+    const resolved = resolveFromDir(pkg.opfDir, href);
+    return resolved.safe && (loaded.files.has(resolved.path) || filesToAdd.has(resolved.path));
+  });
+}
+
+function currentManifestNcxId(
+  manifest: Element,
+  loaded: LoadedEpub,
+  pkg: PackageDocumentInfo,
+  filesToAdd: Map<string, string>,
+): string | undefined {
+  for (const item of childElementsByLocalName(manifest, 'item')) {
+    if (getAttr(item, 'media-type') !== 'application/x-dtbncx+xml') continue;
+    const href = getAttr(item, 'href');
+    const id = getAttr(item, 'id');
+    if (!href || !id) continue;
+    const resolved = resolveFromDir(pkg.opfDir, href);
+    if (resolved.safe && (loaded.files.has(resolved.path) || filesToAdd.has(resolved.path))) {
+      return id;
+    }
+  }
+  return undefined;
 }
 
 function ensureChild(doc: Document, parent: Element, localName: string): Element {

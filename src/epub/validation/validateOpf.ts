@@ -78,6 +78,22 @@ export function validateOpf(pkg: PackageDocumentInfo): Issue[] {
     }
     if (item.href) hrefs.add(item.resolvedPath);
 
+    if (item.href && !item.pathSafe) {
+      issues.push(
+        createIssue({
+          code: 'OPF_UNSAFE_HREF',
+          severity: 'error',
+          title: 'Href inseguro no manifest',
+          detail:
+            item.pathReason ??
+            'O manifest aponta para um caminho interno que não é seguro preservar no EPUB.',
+          file: pkg.opfPath,
+          context: item.href,
+          repairable: true,
+        }),
+      );
+    }
+
     const guessed = guessMediaType(item.resolvedPath);
     if (guessed && item.mediaType && item.mediaType !== guessed && item.mediaType !== 'image/jpg') {
       issues.push(

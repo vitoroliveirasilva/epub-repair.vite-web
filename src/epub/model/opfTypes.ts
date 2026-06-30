@@ -12,6 +12,8 @@ export interface ManifestItem {
   properties: string[];
   fallback?: string | undefined;
   resolvedPath: string;
+  pathSafe: boolean;
+  pathReason?: string | undefined;
   exists: boolean;
 }
 

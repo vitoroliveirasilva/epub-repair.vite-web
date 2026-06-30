@@ -172,6 +172,8 @@ export function parseOpfDocument(
       properties: (getAttr(element, 'properties') ?? '').split(/\s+/u).filter(Boolean),
       fallback: getAttr(element, 'fallback'),
       resolvedPath: resolved.path,
+      pathSafe: resolved.safe,
+      pathReason: resolved.reason,
       exists: files.has(resolved.path),
     };
   });

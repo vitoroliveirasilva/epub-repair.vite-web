@@ -36,7 +36,10 @@ export function renderUploader(state: AppState, onFile: (file: File) => void): H
     if (file) onFile(file);
   });
   dropzone.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' || event.key === ' ') input.click();
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      input.click();
+    }
   });
 
   return el('section', {

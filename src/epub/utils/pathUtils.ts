@@ -21,11 +21,12 @@ export function normalizeInternalPath(input: string): NormalizedPathResult {
   const original = input;
   const decoded = decodeUriSafe(stripFragmentAndQuery(input.trim())).replace(/\\/g, '/');
   const absolute = decoded.startsWith('/') || /^[a-zA-Z]:\//.test(decoded);
+  const hasControlCharacter = containsControlCharacter(decoded);
   const parts: string[] = [];
   let escaped = false;
 
   for (const raw of decoded.split('/')) {
-    const part = raw.trim();
+    const part = raw;
     if (!part || part === '.') continue;
     if (part === '..') {
       if (parts.length === 0) {
@@ -39,14 +40,21 @@ export function normalizeInternalPath(input: string): NormalizedPathResult {
   }
 
   const path = parts.join('/');
-  const safe = Boolean(path) && !absolute && !escaped && !path.includes('\u0000');
+  const safe = Boolean(path) && !absolute && !escaped && !hasControlCharacter;
   let reason: string | undefined;
   if (!path) reason = 'caminho vazio após normalização';
   else if (absolute) reason = 'caminho absoluto não é seguro dentro de EPUB';
   else if (escaped) reason = 'caminho tenta sair da raiz do EPUB usando ..';
-  else if (path.includes('\u0000')) reason = 'caminho contém byte nulo';
+  else if (hasControlCharacter) reason = 'caminho contém caractere de controle';
 
   return { original, path, safe, reason };
+}
+
+function containsControlCharacter(value: string): boolean {
+  return Array.from(value).some((char) => {
+    const code = char.charCodeAt(0);
+    return code <= 31 || code === 127;
+  });
 }
 
 export function normalizePath(input: string): string {
