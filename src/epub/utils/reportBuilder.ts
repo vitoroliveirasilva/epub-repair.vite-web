@@ -1,4 +1,4 @@
-import type { ValidationReport, ZipEntryInfo } from '../model/epubTypes';
+import type { CoverReportInfo, ValidationReport, ZipEntryInfo } from '../model/epubTypes';
 import type { Issue } from '../model/issueTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import { dedupeIssues, issueSeverityWeight } from './issueFactory';
@@ -10,6 +10,7 @@ export function buildValidationReport(params: {
   zipEntries: ZipEntryInfo[];
   issues: Issue[];
   packageInfo?: PackageDocumentInfo;
+  cover?: CoverReportInfo;
 }): ValidationReport {
   const issues = dedupeIssues(params.issues);
   const fatalCount = issues.filter((issue) => issue.severity === 'fatal').length;
@@ -29,6 +30,7 @@ export function buildValidationReport(params: {
     issues,
     zipEntries: params.zipEntries,
     packageInfo: params.packageInfo,
+    cover: params.cover,
     stats: {
       totalFiles: params.zipEntries.length || params.packageInfo?.manifest.length || 0,
       fatalCount,
@@ -36,7 +38,39 @@ export function buildValidationReport(params: {
       warningCount,
       infoCount,
       repairableCount,
-      kindleScore: Math.max(0, Math.min(100, 100 - penalty)),
+      kindleScore: clampScore(100 - penalty),
+      structureScore: scoreForGroup(issues, isStructureIssue),
+      compatibilityScore: scoreForGroup(issues, isCompatibilityIssue),
+      securityScore: scoreForGroup(issues, isSecurityIssue),
     },
   };
+}
+
+function scoreForGroup(issues: Issue[], predicate: (issue: Issue) => boolean): number {
+  const penalty = issues
+    .filter(predicate)
+    .reduce((total, issue) => total + issueSeverityWeight(issue.severity), 0);
+  return clampScore(100 - penalty);
+}
+
+function clampScore(value: number): number {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function isStructureIssue(issue: Issue): boolean {
+  return /^(?:ZIP|MIME|CONTAINER|OPF_(?:MISSING|INVALID|MANIFEST|SPINE|DUPLICATE|BAD_MEDIA|MISSING_RESOURCE|UNSAFE)|NAV_|NCX_(?:MISSING|INVALID)|ORPHAN|SYSTEM)/u.test(
+    issue.code,
+  );
+}
+
+function isCompatibilityIssue(issue: Issue): boolean {
+  return /^(?:KINDLE|OPF_(?:LANGUAGE|DATE|PACKAGE|COVER)|NCX_(?:PLAYORDER|SPINE|CONTENT)|XHTML|IMAGE_PROGRESSIVE|CONTENT_KINDLE)/u.test(
+    issue.code,
+  );
+}
+
+function isSecurityIssue(issue: Issue): boolean {
+  return /^(?:DRM|ZIP_(?:ENCRYPTED|UNSAFE|NAME_COLLISION)|CONTENT_(?:SCRIPTED|REMOTE|UNSAFE)|CSS_REMOTE)/u.test(
+    issue.code,
+  );
 }

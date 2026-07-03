@@ -1,4 +1,4 @@
-import type { RepairResult, ValidationReport } from '../epub';
+import type { CoverReportInfo, Issue, RepairResult, ValidationReport } from '../epub';
 
 export function buildTextReport(report: ValidationReport, repair?: RepairResult): string {
   const lines = [
@@ -6,14 +6,22 @@ export function buildTextReport(report: ValidationReport, repair?: RepairResult)
     `OPF: ${report.opfPath ?? 'não encontrado'}`,
     `Versão EPUB: ${report.epubVersion ?? 'não identificada'}`,
     `Score Kindle: ${report.stats.kindleScore}`,
+    `Score estrutura: ${report.stats.structureScore}`,
+    `Score compatibilidade: ${report.stats.compatibilityScore}`,
+    `Score segurança: ${report.stats.securityScore}`,
     `Fatais: ${report.stats.fatalCount} | Erros: ${report.stats.errorCount} | Avisos: ${report.stats.warningCount} | Informações: ${report.stats.infoCount}`,
     '',
+    'Capa:',
+    `- Status: ${coverStatus(report)}`,
+    report.cover?.path ? `- Arquivo: ${report.cover.path}` : '- Arquivo: não detectado',
+    report.cover?.mediaType ? `- Media type: ${report.cover.mediaType}` : undefined,
+    report.cover?.note ? `- Observação: ${report.cover.note}` : undefined,
+    '',
     'Problemas:',
-    ...report.issues.map(
-      (issue) =>
-        `- [${issue.severity.toUpperCase()}] ${issue.code}${issue.file ? ` em ${issue.file}` : ''}: ${issue.title} - ${issue.detail}`,
-    ),
-  ];
+    ...(report.issues.length > 0
+      ? report.issues.map(formatIssue)
+      : ['- Nenhum problema encontrado.']),
+  ].filter((line): line is string => Boolean(line));
 
   if (repair) {
     lines.push(
@@ -22,11 +30,94 @@ export function buildTextReport(report: ValidationReport, repair?: RepairResult)
       `Depois do reparo: ${repair.after.stats.fatalCount} fatais, ${repair.after.stats.errorCount} erros, ${repair.after.stats.warningCount} avisos, score ${repair.after.stats.kindleScore}`,
       '',
       'Alterações aplicadas:',
-      ...repair.actions.map(
-        (action) => `- ${action.title}${action.file ? ` em ${action.file}` : ''}: ${action.detail}`,
-      ),
+      ...(repair.actions.length > 0
+        ? repair.actions.map(
+            (action) =>
+              `- ${action.title}${action.file ? ` em ${action.file}` : ''}: ${action.detail}`,
+          )
+        : ['- Nenhuma alteração automática registrada.']),
     );
   }
 
   return lines.join('\n');
+}
+
+export function buildJsonReport(report: ValidationReport, repair?: RepairResult): string {
+  return JSON.stringify(
+    {
+      report: toSerializableReport(report),
+      repair: repair
+        ? {
+            fileName: repair.fileName,
+            before: toSerializableReport(repair.before),
+            after: toSerializableReport(repair.after),
+            actions: repair.actions,
+            warnings: repair.warnings,
+          }
+        : undefined,
+    },
+    null,
+    2,
+  );
+}
+
+export function makeReportFileName(fileName: string, extension: 'txt' | 'json'): string {
+  const base = fileName.replace(/\.epub$/iu, '').replace(/[^\p{L}\p{N}._-]+/gu, '-');
+  return `${base || 'relatorio-epub'}-relatorio.${extension}`;
+}
+
+function formatIssue(issue: Issue): string {
+  return `- [${issue.severity.toUpperCase()}] ${issue.code}${issue.file ? ` em ${issue.file}` : ''}: ${issue.title} - ${issue.detail}`;
+}
+
+function coverStatus(report: ValidationReport): string {
+  if (!report.cover || report.cover.source === 'none') return 'não detectada';
+  if (report.cover.declared && report.cover.exists) return 'declarada no OPF';
+  if (report.cover.exists) return 'detectada, mas não declarada oficialmente';
+  return 'declarada, mas ausente no pacote';
+}
+
+function stripCoverPreview(
+  cover: CoverReportInfo | undefined,
+): Omit<CoverReportInfo, 'previewDataUrl'> | undefined {
+  if (!cover) return undefined;
+
+  return {
+    declared: cover.declared,
+    exists: cover.exists,
+    source: cover.source,
+    ...(cover.path ? { path: cover.path } : {}),
+    ...(cover.mediaType ? { mediaType: cover.mediaType } : {}),
+    ...(cover.note ? { note: cover.note } : {}),
+  };
+}
+
+function toSerializableReport(report: ValidationReport): object {
+  return {
+    fileName: report.fileName,
+    fileSize: report.fileSize,
+    generatedAt: report.generatedAt,
+    validZip: report.validZip,
+    opfPath: report.opfPath,
+    epubVersion: report.epubVersion,
+    cover: stripCoverPreview(report.cover),
+    stats: report.stats,
+    issues: report.issues,
+    zipEntries: report.zipEntries,
+    packageInfo: report.packageInfo
+      ? {
+          opfPath: report.packageInfo.opfPath,
+          opfDir: report.packageInfo.opfDir,
+          version: report.packageInfo.version,
+          metadata: report.packageInfo.metadata,
+          manifestCount: report.packageInfo.manifest.length,
+          spineCount: report.packageInfo.spine.length,
+          navPath: report.packageInfo.navItem?.resolvedPath,
+          ncxPath: report.packageInfo.ncxItem?.resolvedPath,
+          coverPath: report.packageInfo.coverItem?.resolvedPath,
+          coverMetaDeclared: report.packageInfo.coverMetaDeclared,
+          rootfileCount: report.packageInfo.rootfileCount,
+        }
+      : undefined,
+  };
 }
