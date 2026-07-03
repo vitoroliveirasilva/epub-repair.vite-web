@@ -90,8 +90,18 @@ export async function repairEpub(
     actions.push(ensureContainerFile(files, parsed.packageInfo.opfPath));
   }
 
-  actions.push(...repairContentDocuments(files, loaded, parsed.packageInfo, options));
-  actions.push(...repairKindleCompatibility(files, parsed.packageInfo));
+  if (!options.conservativeMode) {
+    actions.push(...repairContentDocuments(files, loaded, parsed.packageInfo, options));
+  } else {
+    actions.push({
+      type: 'skipped',
+      title: 'Sanitização de conteúdo ignorada',
+      detail:
+        'O modo conservador está ativo, então XHTML, CSS e imagens foram preservados sempre que possível.',
+    });
+  }
+
+  actions.push(...repairKindleCompatibility(files, parsed.packageInfo, options));
   actions.push(...(await repairImageCompatibility(files, parsed.packageInfo, options)));
 
   if (actions.length === 0) {

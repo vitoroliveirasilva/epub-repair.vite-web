@@ -1,5 +1,6 @@
 import type { ValidationReport } from '../model/epubTypes';
 import { loadEpub } from '../reader/loadEpub';
+import { buildCoverReportInfo } from '../utils/kindleCompatibility';
 import { buildValidationReport } from '../utils/reportBuilder';
 import { parsePackageDocument } from './opfParser';
 import { detectOrphanResources } from './detectOrphans';
@@ -43,6 +44,11 @@ export async function inspectEpub(fileName: string, bytes: Uint8Array): Promise<
     validZip: loaded.validZip,
     zipEntries: loaded.rawEntries,
     issues,
-    ...(parsed.packageInfo ? { packageInfo: parsed.packageInfo } : {}),
+    ...(parsed.packageInfo
+      ? {
+          packageInfo: parsed.packageInfo,
+          cover: buildCoverReportInfo(parsed.packageInfo, loaded.files),
+        }
+      : {}),
   });
 }

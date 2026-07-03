@@ -1,5 +1,5 @@
 import type { ManifestItem, PackageDocumentInfo } from '../model/opfTypes';
-import type { RepairAction } from '../model/repairTypes';
+import type { RepairAction, RepairOptions } from '../model/repairTypes';
 import { HTML_MEDIA_TYPES } from '../utils/constants';
 import { normalizeLanguageTag } from '../utils/kindleCompatibility';
 import { basename, dirname, relativePath, resolveReference } from '../utils/pathUtils';
@@ -17,8 +17,11 @@ const TEXT_ENCODER = new TextEncoder();
 export function repairKindleCompatibility(
   files: Map<string, Uint8Array>,
   pkg: PackageDocumentInfo,
+  options: Pick<RepairOptions, 'conservativeMode'>,
 ): RepairAction[] {
-  return [...repairNcxCompatibility(files, pkg), ...repairXhtmlCompatibility(files, pkg)];
+  const actions = [...repairNcxCompatibility(files, pkg)];
+  if (!options.conservativeMode) actions.push(...repairXhtmlCompatibility(files, pkg));
+  return actions;
 }
 
 function repairNcxCompatibility(

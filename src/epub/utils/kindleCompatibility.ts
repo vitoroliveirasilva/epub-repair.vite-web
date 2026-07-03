@@ -1,4 +1,4 @@
-import type { EpubEntry } from '../model/epubTypes';
+import type { CoverReportInfo, EpubEntry } from '../model/epubTypes';
 import type { ManifestItem, PackageDocumentInfo } from '../model/opfTypes';
 import { HTML_MEDIA_TYPES } from './constants';
 import { basename, resolveReference } from './pathUtils';
@@ -21,6 +21,7 @@ const SAFE_OPF_DATE_PATTERN =
   /^\d{4}(?:-\d{2}(?:-\d{2})?)?(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)?$/u;
 const DATE_CAPTURE_PATTERN = /(\d{4})[-/](\d{1,2})[-/](\d{1,2})/u;
 const JPEG_PROGRESSIVE_MARKER = 0xc2;
+const MAX_COVER_PREVIEW_BYTES = 2 * 1024 * 1024;
 const JPEG_BASELINE_MARKERS = new Set([
   0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf,
 ]);
@@ -239,6 +240,68 @@ function findJpegStartOfFrame(
   }
 
   return undefined;
+}
+
+export function buildCoverReportInfo(
+  pkg: PackageDocumentInfo,
+  entries?: ReadonlyMap<string, Pick<EpubEntry, 'bytes'>>,
+): CoverReportInfo {
+  const candidate = findCoverImageCandidate(pkg, entries);
+  const selected = pkg.coverItem ?? candidate;
+  const declared = Boolean(pkg.coverMetaDeclared && pkg.coverItem?.exists);
+
+  if (!selected) {
+    return {
+      declared: false,
+      exists: false,
+      source: 'none',
+      note: 'Nenhuma imagem de capa foi declarada ou detectada com segurança.',
+    };
+  }
+
+  const source = declared
+    ? 'opf-meta'
+    : selected.properties.includes('cover-image')
+      ? 'cover-image-property'
+      : 'candidate';
+
+  const previewDataUrl = buildCoverPreviewDataUrl(selected, entries);
+
+  return {
+    declared,
+    exists: selected.exists,
+    source,
+    path: selected.resolvedPath,
+    mediaType: selected.mediaType,
+    note: declared
+      ? 'Capa declarada oficialmente no OPF.'
+      : 'Imagem provável de capa detectada, mas ainda sem declaração OPF oficial.',
+    ...(previewDataUrl ? { previewDataUrl } : {}),
+  };
+}
+
+function buildCoverPreviewDataUrl(
+  item: ManifestItem,
+  entries: ReadonlyMap<string, Pick<EpubEntry, 'bytes'>> | undefined,
+): string | undefined {
+  if (!item.exists || !isCoverCompatibleImage(item.mediaType) || !entries) return undefined;
+
+  const entry = entries.get(item.resolvedPath);
+  if (!entry || entry.bytes.byteLength === 0 || entry.bytes.byteLength > MAX_COVER_PREVIEW_BYTES) {
+    return undefined;
+  }
+
+  return `data:${item.mediaType};base64,${bytesToBase64(entry.bytes)}`;
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let offset = 0; offset < bytes.byteLength; offset += chunkSize) {
+    const chunk = bytes.subarray(offset, offset + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
 }
 
 export function coverCandidateScore(item: ManifestItem): number {

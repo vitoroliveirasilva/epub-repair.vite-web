@@ -78,6 +78,7 @@ export const KNOWN_MEDIA_TYPES: Record<string, string> = {
 
 export const DEFAULT_REPAIR_OPTIONS: RepairOptions = {
   kindleSafeMode: true,
+  conservativeMode: false,
   stripSystemFiles: true,
   normalizeMimetype: true,
   rebuildContainer: true,

@@ -2,6 +2,7 @@ import type { ValidationReport } from './epubTypes';
 
 export interface RepairOptions {
   kindleSafeMode: boolean;
+  conservativeMode: boolean;
   stripSystemFiles: boolean;
   normalizeMimetype: boolean;
   rebuildContainer: boolean;

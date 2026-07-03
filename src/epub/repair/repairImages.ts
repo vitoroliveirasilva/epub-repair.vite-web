@@ -7,10 +7,10 @@ const MAX_CANVAS_PIXELS = 50_000_000;
 export async function repairImageCompatibility(
   files: Map<string, Uint8Array>,
   pkg: PackageDocumentInfo,
-  options: Pick<RepairOptions, 'kindleSafeMode'>,
+  options: Pick<RepairOptions, 'kindleSafeMode' | 'conservativeMode'>,
 ): Promise<RepairAction[]> {
   const actions: RepairAction[] = [];
-  if (!options.kindleSafeMode) return actions;
+  if (!options.kindleSafeMode || options.conservativeMode) return actions;
 
   for (const item of pkg.manifest) {
     if (!item.exists || !isJpegMediaType(item.mediaType)) continue;

@@ -40,6 +40,21 @@ export interface ReportStats {
   infoCount: number;
   repairableCount: number;
   kindleScore: number;
+  structureScore: number;
+  compatibilityScore: number;
+  securityScore: number;
+}
+
+export type CoverReportSource = 'opf-meta' | 'cover-image-property' | 'candidate' | 'none';
+
+export interface CoverReportInfo {
+  declared: boolean;
+  exists: boolean;
+  source: CoverReportSource;
+  path?: string | undefined;
+  mediaType?: string | undefined;
+  note?: string | undefined;
+  previewDataUrl?: string | undefined;
 }
 
 export interface ValidationReport {
@@ -52,6 +67,7 @@ export interface ValidationReport {
   issues: Issue[];
   zipEntries: ZipEntryInfo[];
   packageInfo?: PackageDocumentInfo | undefined;
+  cover?: CoverReportInfo | undefined;
   stats: ReportStats;
 }
 
