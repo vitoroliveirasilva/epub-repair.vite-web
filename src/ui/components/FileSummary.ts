@@ -83,17 +83,17 @@ function renderScoreBreakdown(report: ValidationReport): HTMLElement {
     [
       'Estrutura EPUB',
       report.stats.structureScore,
-      'ZIP, OCF, OPF, manifest, spine e navegação base.',
+      'ZIP, OCF, OPF, manifest, spine e navegação base',
     ],
     [
       'Kindle Safe',
       report.stats.compatibilityScore,
-      'Metadados, capa, NCX, XHTML e imagens sensíveis ao Kindle.',
+      'Metadados, capa, NCX, XHTML e imagens sensíveis ao Kindle',
     ],
     [
       'Segurança',
       report.stats.securityScore,
-      'Scripts, links remotos, caminhos inseguros, DRM ou criptografia.',
+      'Scripts, links remotos, caminhos inseguros, DRM ou criptografia',
     ],
   ] as const;
 
@@ -129,7 +129,7 @@ function renderCoverSummary(cover: CoverReportInfo | undefined): HTMLElement {
           el('h3', { text: coverTitle(cover) }),
           el('p', {
             className: 'muted',
-            text: cover?.note ?? 'Nenhuma informação de capa disponível.',
+            text: cover?.note ?? 'Nenhuma informação de capa disponível',
           }),
           el('div', {
             className: 'cover-summary-meta',

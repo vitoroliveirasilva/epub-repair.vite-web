@@ -162,10 +162,10 @@ function renderHero(): HTMLElement {
         className: 'hero-content',
         children: [
           el('p', { className: 'eyebrow', text: 'Validação e reparo local de EPUB' }),
-          el('h1', { text: 'Conserte arquivos EPUB antes de enviar para o seu leitor.' }),
+          el('h1', { text: 'Conserte arquivos EPUB antes de enviar para o seu leitor' }),
           el('p', {
             className: 'hero-copy',
-            text: 'Analise a estrutura, limpe arquivos problemáticos, reconstrua pacotes e gere um EPUB mais amigável para Kindle e e-readers, direto no navegador.',
+            text: 'Analise a estrutura, limpe arquivos problemáticos, reconstrua pacotes e gere um EPUB mais amigável para Kindle e e-readers direto no navegador',
           }),
           el('div', {
             className: 'hero-actions',

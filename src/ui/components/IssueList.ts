@@ -37,7 +37,7 @@ export function renderIssueList(
     wrapper.append(
       el('p', {
         className: 'empty success-text',
-        text: 'Nenhum problema crítico encontrado.',
+        text: 'Nenhum problema crítico encontrado',
       }),
     );
     return wrapper;
@@ -117,7 +117,7 @@ function renderSimpleReport(report: ValidationReport): HTMLElement {
       report.issues.length > visible.length
         ? el('p', {
             className: 'muted simple-report-more',
-            text: `Mais ${report.issues.length - visible.length} ocorrência(s) estão disponíveis no modo técnico.`,
+            text: `Mais ${report.issues.length - visible.length} ocorrência(s) estão disponíveis no modo técnico`,
           })
         : undefined,
     ],
@@ -150,8 +150,8 @@ function renderSimpleIssue(issue: Issue): HTMLElement {
       el('small', {
         className: 'muted',
         text: issue.repairable
-          ? 'O reparo automático pode tentar resolver.'
-          : 'Pode exigir revisão manual.',
+          ? 'O reparo automático pode tentar resolver'
+          : 'Pode exigir revisão manual',
       }),
     ],
   });

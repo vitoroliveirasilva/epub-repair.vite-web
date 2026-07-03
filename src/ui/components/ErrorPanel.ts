@@ -9,7 +9,7 @@ export function renderStatusMessage(message?: string, error?: string): HTMLEleme
       el('span', { className: 'status-icon', attrs: { 'aria-hidden': 'true' } }),
       el('div', {
         children: [
-          el('strong', { text: error ? 'Não foi possível concluir' : 'Tudo certo por aqui' }),
+          el('strong', { text: error ? 'Não foi possível concluir' : 'Concluído com sucesso' }),
           el('p', { text: error ?? message ?? '' }),
         ],
       }),

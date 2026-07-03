@@ -50,20 +50,20 @@ export function renderControls(
           renderFlowStep(
             '1',
             'Verificar',
-            'Encontrar problemas de estrutura, capa, sumário e Kindle.',
+            'Encontrar problemas de estrutura, capa, sumário e Kindle',
             {
               active: hasFile && !hasReport,
               done: hasReport,
             },
           ),
-          renderFlowStep('2', 'Corrigir', 'Gerar uma nova cópia sem alterar o EPUB original.', {
+          renderFlowStep('2', 'Corrigir', 'Gerar uma nova cópia sem alterar o EPUB original', {
             active: hasReport && !hasRepair,
             done: hasRepair,
           }),
           renderFlowStep(
             '3',
             'Baixar',
-            'Salvar o EPUB corrigido e, se quiser, o relatório técnico.',
+            'Salvar o EPUB corrigido e se quiser, o relatório técnico',
             {
               active: hasRepair,
               done: hasRepair,
@@ -119,26 +119,26 @@ function buildPrimaryActionButtons(
 }
 
 function controlsTitle(state: AppState): string {
-  if (state.repairResult) return 'EPUB corrigido pronto para baixar.';
-  if (state.report) return 'Agora você pode gerar uma cópia corrigida.';
-  if (state.payload) return 'Verifique seu EPUB antes de enviar ao Kindle.';
-  return 'Escolha um EPUB para começar.';
+  if (state.repairResult) return 'EPUB corrigido pronto para ser baixado';
+  if (state.report) return 'Agora você pode gerar uma cópia corrigida';
+  if (state.payload) return 'Verifique seu EPUB antes de enviar ao Kindle';
+  return 'Escolha um EPUB para começar';
 }
 
 function controlsDescription(state: AppState): string {
   if (state.repairResult) {
-    return 'Baixe a nova versão do arquivo. O relatório técnico fica separado abaixo, caso você queira guardar o histórico.';
+    return 'Baixe a nova versão do arquivo, o relatório técnico fica separado abaixo caso você queira guardar o histórico';
   }
   if (state.report?.stats.fatalCount) {
-    return 'Encontramos um problema fatal. O reparo automático fica bloqueado para evitar gerar um arquivo incompleto.';
+    return 'Encontramos um problema fatal, o reparo automático fica bloqueado para evitar gerar um arquivo incompleto ou pior que o original. Você pode analisar novamente, reparar ou escolher outro arquivo quando quiser';
   }
   if (state.report) {
-    return 'O diagnóstico terminou. Quando houver correções seguras, gere uma cópia corrigida do EPUB.';
+    return 'O diagnóstico terminou, quando houver correções seguras gere uma cópia corrigida do EPUB';
   }
   if (state.payload) {
-    return 'A análise acontece localmente no navegador e prepara o arquivo para uma correção segura.';
+    return 'A análise acontece localmente no navegador e prepara o arquivo para uma correção segura';
   }
-  return 'Envie o arquivo, confira o diagnóstico e baixe uma cópia corrigida. O original não é alterado.';
+  return 'Envie o arquivo, confira o diagnóstico e baixe uma cópia corrigida (O arquivo original não é alterado)';
 }
 
 function renderFlowStep(
@@ -184,7 +184,7 @@ function renderTechnicalReportTools(
       children: [
         el('p', {
           className: 'muted',
-          text: 'Use esta área para salvar evidências, comparar antes/depois ou investigar códigos técnicos do diagnóstico.',
+          text: 'Use esta área para salvar evidências, comparar antes/depois ou investigar códigos técnicos do diagnóstico',
         }),
         el('div', {
           className: 'technical-report-actions',

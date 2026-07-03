@@ -14,7 +14,7 @@ export function renderRepairSummary(result: RepairResult): HTMLElement {
         el('h2', { text: 'Alterações aplicadas' }),
         el('p', {
           className: 'muted',
-          text: 'Resumo das correções seguras feitas no pacote EPUB, com comparação antes e depois.',
+          text: 'Resumo das correções feitas no pacote EPUB com comparação antes e depois',
         }),
       ],
     }),
