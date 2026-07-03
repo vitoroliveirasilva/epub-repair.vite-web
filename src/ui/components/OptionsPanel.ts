@@ -1,11 +1,19 @@
+import type { RepairOptions } from '../../epub';
 import type { AppState } from '../../app/state';
 import { el } from '../dom';
 
-const options = [
+type RepairOptionDescriptor = readonly [keyof RepairOptions, string, string];
+
+const options: readonly RepairOptionDescriptor[] = [
   [
     'kindleSafeMode',
     'Modo Kindle Safe',
     'Neutraliza recursos interativos e prioriza compatibilidade.',
+  ],
+  [
+    'conservativeMode',
+    'Modo conservador',
+    'Preserva XHTML, CSS e imagens; corrige principalmente pacote, OPF, capa, container e NCX.',
   ],
   [
     'stripSystemFiles',
@@ -45,7 +53,7 @@ const options = [
     'Transforma links remotos em texto legível.',
   ],
   ['repairCssReferences', 'Corrigir CSS', 'Neutraliza URLs CSS remotas ou quebradas.'],
-] as const;
+];
 
 export function renderOptionsPanel(state: AppState, onChange: () => void): HTMLElement {
   const form = el('div', { className: 'options-list' });
@@ -60,7 +68,7 @@ export function renderOptionsPanel(state: AppState, onChange: () => void): HTMLE
 
     form.append(
       el('label', {
-        className: 'option-item',
+        className: key === 'conservativeMode' ? 'option-item option-item-featured' : 'option-item',
         attrs: { for: key },
         children: [
           checkbox,

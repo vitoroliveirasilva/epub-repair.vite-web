@@ -1,6 +1,6 @@
 import { analyzeCurrentFile, loadFileIntoState, repairCurrentFile } from './actions';
 import { createInitialState, type AppState } from './state';
-import { buildTextReport } from '../ui/copyReport';
+import { buildJsonReport, buildTextReport, makeReportFileName } from '../ui/copyReport';
 import { renderControls } from '../ui/components/Controls';
 import { renderStatusMessage } from '../ui/components/ErrorPanel';
 import { renderFileSummary } from '../ui/components/FileSummary';
@@ -8,7 +8,7 @@ import { renderIssueList } from '../ui/components/IssueList';
 import { renderOptionsPanel } from '../ui/components/OptionsPanel';
 import { renderRepairSummary } from '../ui/components/RepairSummary';
 import { renderUploader } from '../ui/components/Uploader';
-import { el } from '../ui/dom';
+import { downloadBlob, el } from '../ui/dom';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -49,11 +49,22 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
               copy: () => {
                 void copyCurrentReport(state, rerender);
               },
+              downloadTextReport: () => {
+                downloadCurrentReport(state, 'txt');
+              },
+              downloadJsonReport: () => {
+                downloadCurrentReport(state, 'json');
+              },
             }),
             renderStatusMessage(state.message, state.error),
             state.report ? renderFileSummary(state.report) : renderEmptyState(),
             state.repairResult ? renderRepairSummary(state.repairResult) : undefined,
-            state.report ? renderIssueList(state.report.issues) : undefined,
+            state.report
+              ? renderIssueList(state.report, state.reportViewMode, (mode) => {
+                  state.reportViewMode = mode;
+                  rerender();
+                })
+              : undefined,
           ],
         }),
         renderOptionsPanel(state, rerender),
@@ -92,6 +103,21 @@ async function copyCurrentReport(state: AppState, rerender: () => void): Promise
     state.error = 'Não foi possível copiar o relatório. Verifique a permissão do navegador.';
   }
   rerender();
+}
+
+function downloadCurrentReport(state: AppState, format: 'txt' | 'json'): void {
+  if (!state.report) return;
+
+  const content =
+    format === 'json'
+      ? buildJsonReport(state.report, state.repairResult)
+      : buildTextReport(state.report, state.repairResult);
+  const mimeType =
+    format === 'json' ? 'application/json;charset=utf-8' : 'text/plain;charset=utf-8';
+  downloadBlob(
+    new Blob([content], { type: mimeType }),
+    makeReportFileName(state.report.fileName, format),
+  );
 }
 
 function renderAppHeader(): HTMLElement {
@@ -188,8 +214,8 @@ function renderHeroPreview(): HTMLElement {
         className: 'preview-list',
         children: [
           renderPreviewLine('Manifest revisado', 'success'),
-          renderPreviewLine('Referências quebradas isoladas', 'warning'),
-          renderPreviewLine('Download pronto', 'info'),
+          renderPreviewLine('Capa Kindle identificada', 'info'),
+          renderPreviewLine('Relatório simples e técnico', 'warning'),
         ],
       }),
     ],
@@ -276,7 +302,9 @@ function renderFooter(): HTMLElement {
       }),
       el('p', {
         children: [
-          el('span', { text: 'Ferramenta front-end para diagnóstico, limpeza e reconstrução local de EPUBs' }),
+          el('span', {
+            text: 'Ferramenta front-end para diagnóstico, limpeza e reconstrução local de EPUBs',
+          }),
           el('br'),
           el('span', { text: 'Não remove DRM e não substitui validações editoriais oficiais' }),
         ],

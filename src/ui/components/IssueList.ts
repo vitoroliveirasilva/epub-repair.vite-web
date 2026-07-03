@@ -1,27 +1,39 @@
-import type { Issue } from '../../epub';
+import type { ReportViewMode } from '../../app/state';
+import type { Issue, ValidationReport } from '../../epub';
 import { el } from '../dom';
+import { explainIssue } from '../issueExplanations';
 
-export function renderIssueList(issues: Issue[]): HTMLElement {
+export function renderIssueList(
+  report: ValidationReport,
+  mode: ReportViewMode,
+  onModeChange: (mode: ReportViewMode) => void,
+): HTMLElement {
   const wrapper = el('section', {
     className: 'panel issues-panel',
     attrs: { 'aria-label': 'Relatório de problemas' },
   });
+
   wrapper.append(
     el('div', {
       className: 'section-heading section-heading-row',
       children: [
         el('div', {
           children: [
-            el('p', { className: 'eyebrow', text: 'Relatório' }),
-            el('h2', { text: 'Problemas encontrados' }),
+            el('p', {
+              className: 'eyebrow',
+              text: mode === 'simple' ? 'Resumo' : 'Relatório técnico',
+            }),
+            el('h2', {
+              text: mode === 'simple' ? 'O que precisa da sua atenção' : 'Problemas encontrados',
+            }),
           ],
         }),
-        el('span', { className: 'badge badge-neutral', text: `${issues.length} ocorrência(s)` }),
+        renderModeToggle(mode, onModeChange),
       ],
     }),
   );
 
-  if (issues.length === 0) {
+  if (report.issues.length === 0) {
     wrapper.append(
       el('p', {
         className: 'empty success-text',
@@ -31,9 +43,14 @@ export function renderIssueList(issues: Issue[]): HTMLElement {
     return wrapper;
   }
 
-  for (const [severity, items] of groupBySeverity(issues)) {
+  if (mode === 'simple') {
+    wrapper.append(renderSimpleReport(report));
+    return wrapper;
+  }
+
+  for (const [severity, items] of groupBySeverity(report.issues)) {
     const details = el('details', { className: `issue-group issue-group-${severity}` });
-    details.open = severity === 'fatal' || severity === 'error' || issues.length <= 8;
+    details.open = severity === 'fatal' || severity === 'error' || report.issues.length <= 8;
     details.append(
       el('summary', {
         children: [
@@ -53,6 +70,91 @@ export function renderIssueList(issues: Issue[]): HTMLElement {
   }
 
   return wrapper;
+}
+
+function renderModeToggle(
+  mode: ReportViewMode,
+  onModeChange: (mode: ReportViewMode) => void,
+): HTMLElement {
+  const simple = el('button', {
+    className:
+      mode === 'simple' ? 'mode-toggle-button mode-toggle-button-active' : 'mode-toggle-button',
+    text: 'Simples',
+    attrs: { type: 'button', 'aria-pressed': String(mode === 'simple') },
+  });
+  simple.addEventListener('click', () => onModeChange('simple'));
+
+  const technical = el('button', {
+    className:
+      mode === 'technical' ? 'mode-toggle-button mode-toggle-button-active' : 'mode-toggle-button',
+    text: 'Técnico',
+    attrs: { type: 'button', 'aria-pressed': String(mode === 'technical') },
+  });
+  technical.addEventListener('click', () => onModeChange('technical'));
+
+  return el('div', {
+    className: 'mode-toggle',
+    attrs: { 'aria-label': 'Modo de visualização do relatório' },
+    children: [simple, technical],
+  });
+}
+
+function renderSimpleReport(report: ValidationReport): HTMLElement {
+  const highPriority = report.issues.filter((issue) => issue.severity !== 'info').slice(0, 8);
+  const visible = highPriority.length > 0 ? highPriority : report.issues.slice(0, 6);
+
+  return el('div', {
+    className: 'simple-report',
+    children: [
+      el('p', {
+        className: 'muted',
+        text: simpleSummary(report),
+      }),
+      el('div', {
+        className: 'simple-issue-list',
+        children: visible.map((issue) => renderSimpleIssue(issue)),
+      }),
+      report.issues.length > visible.length
+        ? el('p', {
+            className: 'muted simple-report-more',
+            text: `Mais ${report.issues.length - visible.length} ocorrência(s) estão disponíveis no modo técnico.`,
+          })
+        : undefined,
+    ],
+  });
+}
+
+function simpleSummary(report: ValidationReport): string {
+  if (report.stats.fatalCount > 0) {
+    return 'O EPUB tem problema fatal. O reparo automático foi bloqueado para evitar gerar um arquivo pior que o original.';
+  }
+  if (report.stats.errorCount > 0 || report.stats.warningCount > 0) {
+    return 'Há pontos que podem afetar Kindle ou outros leitores. O reparo automático tenta corrigir somente alterações seguras.';
+  }
+  return 'Não há problemas graves. As informações restantes são alertas técnicos de compatibilidade ou melhoria.';
+}
+
+function renderSimpleIssue(issue: Issue): HTMLElement {
+  const explanation = explainIssue(issue);
+  return el('article', {
+    className: `simple-issue simple-issue-${issue.severity}`,
+    children: [
+      el('div', {
+        className: 'simple-issue-heading',
+        children: [
+          el('span', { className: `severity-dot severity-dot-${issue.severity}` }),
+          el('strong', { text: explanation.title }),
+        ],
+      }),
+      el('p', { text: explanation.message }),
+      el('small', {
+        className: 'muted',
+        text: issue.repairable
+          ? 'O reparo automático pode tentar resolver.'
+          : 'Pode exigir revisão manual.',
+      }),
+    ],
+  });
 }
 
 function renderIssue(issue: Issue): HTMLElement {
