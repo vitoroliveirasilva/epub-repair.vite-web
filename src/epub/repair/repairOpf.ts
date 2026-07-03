@@ -1,18 +1,14 @@
 import type { LoadedEpub } from '../model/epubTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction, RepairOptions } from '../model/repairTypes';
-import {
-  HTML_MEDIA_TYPES,
-  IMAGE_MEDIA_TYPES,
-  RELEVANT_MEDIA_TYPES,
-  SYSTEM_FILE_PATTERNS,
-} from '../utils/constants';
+import { HTML_MEDIA_TYPES, RELEVANT_MEDIA_TYPES, SYSTEM_FILE_PATTERNS } from '../utils/constants';
 import { deriveTitleFromFileName } from '../utils/fileName';
 import {
   isInvalidLanguageTag,
   isInvalidOpfDate,
   normalizeLanguageTag,
   normalizeOpfDate,
+  findCoverImageCandidate,
 } from '../utils/kindleCompatibility';
 import { guessMediaType } from '../utils/mediaTypes';
 import {
@@ -300,7 +296,10 @@ function ensureCoverMetadata(
     return;
   }
 
-  const coverItem = findCoverItemElement(manifestItems, loaded, pkg);
+  const coverCandidate = findCoverImageCandidate(pkg, loaded.files);
+  const coverItem = coverCandidate
+    ? manifestItems.find((item) => getAttr(item, 'id') === coverCandidate.id)
+    : undefined;
   const coverId = coverItem ? getAttr(coverItem, 'id') : undefined;
   if (!coverItem || !coverId) return;
 
@@ -318,46 +317,6 @@ function ensureCoverMetadata(
     detail: `O OPF agora declara "${coverId}" como imagem de capa para leitores Kindle.`,
     file: pkg.opfPath,
   });
-}
-
-function findCoverItemElement(
-  manifestItems: Element[],
-  loaded: LoadedEpub,
-  pkg: PackageDocumentInfo,
-): Element | undefined {
-  const candidates = manifestItems
-    .map((item) => {
-      const href = getAttr(item, 'href');
-      const id = getAttr(item, 'id');
-      const mediaType = getAttr(item, 'media-type') ?? '';
-      if (!href || !id || !IMAGE_MEDIA_TYPES.has(mediaType) || !/^(?:image\/jpe?g|image\/png)$/iu.test(mediaType)) {
-        return undefined;
-      }
-      const resolved = resolveFromDir(pkg.opfDir, href);
-      if (!resolved.safe || !loaded.files.has(resolved.path)) return undefined;
-      return { item, score: coverCandidateScore(item, resolved.path) };
-    })
-    .filter((candidate): candidate is { item: Element; score: number } => Boolean(candidate))
-    .filter((candidate) => candidate.score > 0)
-    .sort((left, right) => right.score - left.score);
-
-  return candidates[0]?.item;
-}
-
-function coverCandidateScore(item: Element, resolvedPath: string): number {
-  const id = getAttr(item, 'id') ?? '';
-  const href = getAttr(item, 'href') ?? '';
-  const properties = getAttr(item, 'properties') ?? '';
-  const haystack = `${id} ${href} ${basename(resolvedPath)}`.toLowerCase();
-  let score = 0;
-
-  if (/(^|\s)cover-image($|\s)/iu.test(properties)) score += 120;
-  if (/(^|[-_./])cover([-_./]|$)/iu.test(haystack)) score += 90;
-  if (/(^|[-_./])capa([-_./]|$)/iu.test(haystack)) score += 90;
-  if (/front[-_]?cover/iu.test(haystack)) score += 70;
-  if (/title[-_]?page/iu.test(haystack)) score += 35;
-
-  return score;
 }
 
 function removeExtraCoverMetas(

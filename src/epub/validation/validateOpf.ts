@@ -1,3 +1,4 @@
+import type { LoadedEpub } from '../model/epubTypes';
 import type { Issue } from '../model/issueTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import { createIssue } from '../utils/issueFactory';
@@ -8,7 +9,7 @@ import {
 } from '../utils/kindleCompatibility';
 import { guessMediaType } from '../utils/mediaTypes';
 
-export function validateOpf(pkg: PackageDocumentInfo): Issue[] {
+export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issue[] {
   const issues: Issue[] = [];
 
   if (!pkg.metadata.title || !pkg.metadata.language || !pkg.metadata.identifier) {
@@ -215,7 +216,7 @@ export function validateOpf(pkg: PackageDocumentInfo): Issue[] {
     );
   }
 
-  const coverCandidate = findCoverImageCandidate(pkg);
+  const coverCandidate = findCoverImageCandidate(pkg, loaded?.files);
   if (!pkg.coverMetaDeclared && coverCandidate) {
     issues.push(
       createIssue({

@@ -29,7 +29,7 @@ export async function inspectEpub(fileName: string, bytes: Uint8Array): Promise<
   issues.push(...parsed.issues);
 
   if (parsed.packageInfo) {
-    issues.push(...validateOpf(parsed.packageInfo));
+    issues.push(...validateOpf(parsed.packageInfo, loaded));
     issues.push(...validateNavigation(loaded, parsed.packageInfo));
     issues.push(...validateContentReferences(loaded, parsed.packageInfo));
     issues.push(...validateCssReferences(loaded, parsed.packageInfo));

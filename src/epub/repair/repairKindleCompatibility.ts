@@ -1,7 +1,8 @@
-import type { PackageDocumentInfo } from '../model/opfTypes';
+import type { ManifestItem, PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction } from '../model/repairTypes';
 import { HTML_MEDIA_TYPES } from '../utils/constants';
 import { normalizeLanguageTag } from '../utils/kindleCompatibility';
+import { basename, dirname, relativePath, resolveReference } from '../utils/pathUtils';
 import {
   childElementsByLocalName,
   findByLocalName,
@@ -37,6 +38,30 @@ function repairNcxCompatibility(
     return actions;
   }
 
+  const navMap = findByLocalName(doc, 'navMap')[0];
+  const existingPaths = collectNcxContentPaths(doc, pkg.ncxItem.resolvedPath, files);
+  const missingSpineItems = pkg.spine
+    .map((item, index) => ({ index, item: item.manifestItem }))
+    .filter((entry): entry is { index: number; item: ManifestItem } =>
+      Boolean(
+        entry.item?.exists &&
+        HTML_MEDIA_TYPES.has(entry.item.mediaType) &&
+        !existingPaths.has(entry.item.resolvedPath),
+      ),
+    );
+
+  let addedMissingSpineItems = 0;
+  if (navMap && missingSpineItems.length > 0) {
+    for (const { index, item } of missingSpineItems) {
+      const navPoint = createNcxNavPoint(doc, pkg, item.resolvedPath, index + 1, files);
+      const before = findFirstNavPointAfterSpineIndex(navMap, pkg, item.resolvedPath);
+      if (before) navMap.insertBefore(navPoint, before);
+      else navMap.append(navPoint);
+      addedMissingSpineItems += 1;
+      existingPaths.add(item.resolvedPath);
+    }
+  }
+
   const navPoints = findByLocalName(doc, 'navPoint');
   let playOrderChanged = false;
 
@@ -49,7 +74,7 @@ function repairNcxCompatibility(
   });
 
   const titleChanged = normalizeNcxTitle(doc, pkg.metadata.title);
-  if (playOrderChanged || titleChanged) {
+  if (playOrderChanged || titleChanged || addedMissingSpineItems > 0) {
     files.set(pkg.ncxItem.resolvedPath, TEXT_ENCODER.encode(serializeXml(doc)));
   }
 
@@ -58,6 +83,18 @@ function repairNcxCompatibility(
       type: 'normalized',
       title: 'playOrder do NCX normalizado',
       detail: 'Os navPoints do toc.ncx foram renumerados em sequência limpa.',
+      file: pkg.ncxItem.resolvedPath,
+    });
+  }
+
+  if (addedMissingSpineItems > 0) {
+    actions.push({
+      type: 'updated',
+      title: 'Itens do spine adicionados ao NCX',
+      detail:
+        addedMissingSpineItems === 1
+          ? 'Um documento da ordem de leitura foi adicionado ao toc.ncx.'
+          : `${addedMissingSpineItems} documentos da ordem de leitura foram adicionados ao toc.ncx.`,
       file: pkg.ncxItem.resolvedPath,
     });
   }
@@ -134,6 +171,106 @@ function repairXhtmlCompatibility(
   return actions;
 }
 
+function collectNcxContentPaths(
+  doc: Document,
+  ncxPath: string,
+  files: Map<string, Uint8Array>,
+): Set<string> {
+  const paths = new Set<string>();
+  for (const content of findByLocalName(doc, 'content')) {
+    const src = getAttr(content, 'src');
+    if (!src) continue;
+    const resolved = resolveReference(ncxPath, src);
+    if (resolved.safe && files.has(resolved.path)) paths.add(resolved.path);
+  }
+  return paths;
+}
+
+function createNcxNavPoint(
+  doc: Document,
+  pkg: PackageDocumentInfo,
+  contentPath: string,
+  spinePosition: number,
+  files: Map<string, Uint8Array>,
+): Element {
+  const namespace = doc.documentElement.namespaceURI || 'http://www.daisy.org/z3986/2005/ncx/';
+  const navPoint = doc.createElementNS(namespace, 'navPoint');
+  navPoint.setAttribute('id', makeNcxId(contentPath, spinePosition));
+  navPoint.setAttribute('playOrder', String(spinePosition));
+
+  const navLabel = doc.createElementNS(namespace, 'navLabel');
+  const text = doc.createElementNS(namespace, 'text');
+  text.textContent = inferNcxLabel(contentPath, files);
+  navLabel.append(text);
+  navPoint.append(navLabel);
+
+  const content = doc.createElementNS(namespace, 'content');
+  content.setAttribute(
+    'src',
+    relativePath(dirname(pkg.ncxItem?.resolvedPath ?? pkg.opfPath), contentPath),
+  );
+  navPoint.append(content);
+
+  return navPoint;
+}
+
+function findFirstNavPointAfterSpineIndex(
+  navMap: Element,
+  pkg: PackageDocumentInfo,
+  contentPath: string,
+): Element | undefined {
+  const targetIndex = spineIndexForPath(pkg, contentPath);
+  if (targetIndex < 0) return undefined;
+
+  return childElementsByLocalName(navMap, 'navPoint').find((navPoint) => {
+    const content = childElementsByLocalName(navPoint, 'content')[0];
+    const src = getAttr(content, 'src');
+    if (!src || !pkg.ncxItem) return false;
+    const resolved = resolveReference(pkg.ncxItem.resolvedPath, src);
+    return resolved.safe && spineIndexForPath(pkg, resolved.path) > targetIndex;
+  });
+}
+
+function spineIndexForPath(pkg: PackageDocumentInfo, contentPath: string): number {
+  return pkg.spine.findIndex((spineItem) => spineItem.manifestItem?.resolvedPath === contentPath);
+}
+
+function inferNcxLabel(contentPath: string, files: Map<string, Uint8Array>): string {
+  const bytes = files.get(contentPath);
+  if (bytes) {
+    const text = TEXT_DECODER.decode(bytes);
+    const title = stripTags(readFirstMatch(text, /<title\b[^>]*>([\s\S]*?)<\/title\s*>/iu));
+    if (title && !/^untitled$/iu.test(title)) return title;
+
+    const heading = stripTags(readFirstMatch(text, /<h[1-3]\b[^>]*>([\s\S]*?)<\/h[1-3]\s*>/iu));
+    if (heading) return heading;
+  }
+
+  return (
+    basename(contentPath)
+      .replace(/\.[^.]+$/u, '')
+      .replace(/[-_]+/gu, ' ')
+      .trim() || 'Seção'
+  );
+}
+
+function readFirstMatch(text: string, pattern: RegExp): string | undefined {
+  return pattern.exec(text)?.[1]?.trim() || undefined;
+}
+
+function stripTags(text: string | undefined): string | undefined {
+  return text
+    ?.replace(/<[^>]+>/gu, ' ')
+    .replace(/\s+/gu, ' ')
+    .trim();
+}
+
+function makeNcxId(contentPath: string, spinePosition: number): string {
+  return `epub-repair-spine-${spinePosition}-${basename(contentPath)
+    .replace(/\.[^.]+$/u, '')
+    .replace(/[^a-zA-Z0-9_-]+/gu, '-')}`;
+}
+
 function normalizeNcxTitle(doc: Document, title: string | undefined): boolean {
   const normalizedTitle = title?.trim();
   if (!normalizedTitle) return false;
@@ -152,11 +289,24 @@ function normalizeNcxTitle(doc: Document, title: string | undefined): boolean {
 }
 
 function ensureHtmlLanguage(text: string, language: string): string {
-  return text.replace(/<html\b([^>]*)>/iu, (full, attrs: string) => {
-    if (/\s(?:xml:lang|lang)\s*=/iu.test(attrs)) return full;
-    const trimmedAttrs = attrs.trimEnd();
-    return `<html${trimmedAttrs} xml:lang="${escapeAttribute(language)}" lang="${escapeAttribute(language)}">`;
+  return text.replace(/<html\b([^>]*)>/iu, (_full, attrs: string) => {
+    let nextAttrs = attrs;
+    nextAttrs = upsertLanguageAttribute(nextAttrs, 'xml:lang', language);
+    nextAttrs = upsertLanguageAttribute(nextAttrs, 'lang', language);
+    return `<html${nextAttrs.trimEnd()}>`;
   });
+}
+
+function upsertLanguageAttribute(attrs: string, name: string, language: string): string {
+  const escaped = escapeAttribute(language);
+  const pattern = new RegExp(`\\s${name}\\s*=\\s*(["'])(.*?)\\1`, 'iu');
+  if (pattern.test(attrs)) {
+    return attrs.replace(pattern, (_match, quote: string, value: string) => {
+      if (value.trim()) return ` ${name}=${quote}${value}${quote}`;
+      return ` ${name}=${quote}${escaped}${quote}`;
+    });
+  }
+  return `${attrs} ${name}="${escaped}"`;
 }
 
 function normalizeContentTypeMeta(text: string): string {

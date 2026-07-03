@@ -162,7 +162,7 @@ function validateXhtmlKindleRules(loaded: LoadedEpub, pkg: PackageDocumentInfo):
 
     const htmlOpenTag = text.match(/<html\b([^>]*)>/iu);
     const htmlAttrs = htmlOpenTag?.[1] ?? '';
-    if (htmlOpenTag && !/\s(?:xml:lang|lang)\s*=/iu.test(htmlAttrs)) {
+    if (htmlOpenTag && !hasNonEmptyLanguageAttribute(htmlAttrs)) {
       issues.push(
         createIssue({
           code: 'XHTML_LANG_MISSING',
@@ -218,6 +218,17 @@ function validateImageKindleRules(loaded: LoadedEpub, pkg: PackageDocumentInfo):
   }
 
   return issues;
+}
+
+function hasNonEmptyLanguageAttribute(attrs: string): boolean {
+  const lang = readAttributeFromText(attrs, 'lang');
+  const xmlLang = readAttributeFromText(attrs, 'xml:lang');
+  return Boolean(lang?.trim() || xmlLang?.trim());
+}
+
+function readAttributeFromText(text: string, name: string): string | undefined {
+  const pattern = new RegExp(`${name}\\s*=\\s*(["'])(.*?)\\1`, 'iu');
+  return pattern.exec(text)?.[2] ?? undefined;
 }
 
 function findSuspiciousContentTypeMeta(text: string): string | undefined {
