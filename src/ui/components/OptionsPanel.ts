@@ -76,17 +76,6 @@ export function renderOptionsPanel(state: AppState, onChange: () => void): HTMLE
     className: 'sidebar',
     children: [
       el('section', {
-        className: 'panel privacy-mini-card',
-        children: [
-          el('p', { className: 'eyebrow', text: 'Local first' }),
-          el('h2', { text: 'Seu livro fica no seu navegador.' }),
-          el('p', {
-            className: 'muted',
-            text: 'A leitura, validação, limpeza e reconstrução acontecem localmente. Nenhum upload para servidor é necessário.',
-          }),
-        ],
-      }),
-      el('section', {
         className: 'panel options-panel',
         children: [
           el('div', {
