@@ -2,21 +2,41 @@ name: CI
 
 on:
   push:
-    branches: [prod]
+    branches:
+      - prod
   pull_request:
-    branches: [prod]
+    branches:
+      - prod
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   quality:
+    name: Quality gate / Node ${{ matrix.node-version }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 20.x
+          - 22.x
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node-version }}
           cache: npm
 
       - name: Install dependencies
@@ -31,5 +51,5 @@ jobs:
       - name: Test
         run: npm test
 
-      - name: Build
+      - name: Production build
         run: npm run build
