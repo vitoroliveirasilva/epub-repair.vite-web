@@ -7,6 +7,8 @@ import { normalizeInternalPath } from '../utils/pathUtils';
 import { parsePackageDocument } from '../validation/opfParser';
 import { ensureContainerFile } from './repairContainer';
 import { repairContentDocuments } from './repairContentDocuments';
+import { repairImageCompatibility } from './repairImages';
+import { repairKindleCompatibility } from './repairKindleCompatibility';
 import { repairOpfDocument } from './repairOpf';
 import { rebuildEpubZip } from './rebuildEpubZip';
 
@@ -89,6 +91,8 @@ export async function repairEpub(
   }
 
   actions.push(...repairContentDocuments(files, loaded, parsed.packageInfo, options));
+  actions.push(...repairKindleCompatibility(files, parsed.packageInfo));
+  actions.push(...(await repairImageCompatibility(files, parsed.packageInfo, options)));
 
   if (actions.length === 0) {
     warnings.push('Nenhuma alteração automática foi necessária.');

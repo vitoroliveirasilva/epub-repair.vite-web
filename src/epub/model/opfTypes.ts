@@ -2,6 +2,7 @@ export interface PackageMetadata {
   title?: string | undefined;
   language?: string | undefined;
   identifier?: string | undefined;
+  date?: string | undefined;
   modified?: string | undefined;
 }
 
@@ -33,5 +34,7 @@ export interface PackageDocumentInfo {
   navItem?: ManifestItem | undefined;
   ncxItem?: ManifestItem | undefined;
   coverItem?: ManifestItem | undefined;
+  coverMetaId?: string | undefined;
+  coverMetaDeclared?: boolean | undefined;
   rootfileCount: number;
 }

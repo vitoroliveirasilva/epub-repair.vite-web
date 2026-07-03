@@ -152,6 +152,7 @@ export function parseOpfDocument(
     title: metadataRoot ? textOfFirstLocalName(metadataRoot, 'title') : undefined,
     language: metadataRoot ? textOfFirstLocalName(metadataRoot, 'language') : undefined,
     identifier: metadataRoot ? textOfFirstLocalName(metadataRoot, 'identifier') : undefined,
+    date: metadataRoot ? textOfFirstLocalName(metadataRoot, 'date') : undefined,
     modified:
       findByLocalName(doc, 'meta')
         .find((meta) => getAttr(meta, 'property') === 'dcterms:modified')
@@ -194,13 +195,11 @@ export function parseOpfDocument(
   const ncxItem =
     (tocId ? manifestById.get(tocId) : undefined) ??
     manifest.find((item) => item.mediaType === 'application/x-dtbncx+xml');
-  const coverId = findByLocalName(doc, 'meta')
-    .find((meta) => getAttr(meta, 'name') === 'cover')
-    ?.getAttribute('content')
-    ?.trim();
-  const coverItem = coverId
-    ? manifestById.get(coverId)
-    : manifest.find((item) => item.properties.includes('cover-image'));
+  const coverMeta = findByLocalName(doc, 'meta').find((meta) => getAttr(meta, 'name') === 'cover');
+  const coverMetaId = coverMeta?.getAttribute('content')?.trim() || undefined;
+  const coverItem =
+    (coverMetaId ? manifestById.get(coverMetaId) : undefined) ??
+    manifest.find((item) => item.properties.includes('cover-image'));
 
   return {
     opfPath,
@@ -212,6 +211,8 @@ export function parseOpfDocument(
     navItem,
     ncxItem,
     coverItem,
+    coverMetaId,
+    coverMetaDeclared: Boolean(coverMeta),
     rootfileCount,
   };
 }

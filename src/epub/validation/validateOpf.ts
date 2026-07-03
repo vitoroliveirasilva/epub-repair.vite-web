@@ -1,6 +1,11 @@
 import type { Issue } from '../model/issueTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import { createIssue } from '../utils/issueFactory';
+import {
+  findCoverImageCandidate,
+  isInvalidLanguageTag,
+  isInvalidOpfDate,
+} from '../utils/kindleCompatibility';
 import { guessMediaType } from '../utils/mediaTypes';
 
 export function validateOpf(pkg: PackageDocumentInfo): Issue[] {
@@ -14,6 +19,50 @@ export function validateOpf(pkg: PackageDocumentInfo): Issue[] {
         title: 'Metadados básicos incompletos',
         detail:
           'Título, idioma e identificador ajudam leitores e serviços de envio a interpretar o livro corretamente.',
+        file: pkg.opfPath,
+        repairable: true,
+      }),
+    );
+  }
+
+  if (pkg.metadata.language && isInvalidLanguageTag(pkg.metadata.language)) {
+    issues.push(
+      createIssue({
+        code: 'OPF_LANGUAGE_INVALID',
+        severity: 'warning',
+        title: 'Idioma do OPF inválido ou genérico',
+        detail:
+          'O idioma declarado não é específico o suficiente para fluxos Kindle. Valores como UND, unknown ou tags fora do padrão podem quebrar a conversão.',
+        file: pkg.opfPath,
+        context: pkg.metadata.language,
+        repairable: true,
+      }),
+    );
+  }
+
+  if (pkg.metadata.date && isInvalidOpfDate(pkg.metadata.date)) {
+    issues.push(
+      createIssue({
+        code: 'OPF_DATE_INVALID_FORMAT',
+        severity: 'warning',
+        title: 'Data do OPF em formato frágil',
+        detail:
+          'Datas com espaço, milissegundos soltos ou timezone fora do formato ISO podem falhar em conversores Kindle. O reparo tenta normalizar para YYYY-MM-DD.',
+        file: pkg.opfPath,
+        context: pkg.metadata.date,
+        repairable: true,
+      }),
+    );
+  }
+
+  if (pkg.version.trim() === '1.0') {
+    issues.push(
+      createIssue({
+        code: 'OPF_PACKAGE_VERSION_OLD',
+        severity: 'warning',
+        title: 'Versão OPF antiga',
+        detail:
+          'O pacote declara version="1.0". EPUB 2.0 é uma base mais segura para compatibilidade com leitores e conversores atuais.',
         file: pkg.opfPath,
         repairable: true,
       }),
@@ -137,6 +186,21 @@ export function validateOpf(pkg: PackageDocumentInfo): Issue[] {
     }
   }
 
+  if (pkg.coverMetaId && !pkg.manifest.some((item) => item.id === pkg.coverMetaId)) {
+    issues.push(
+      createIssue({
+        code: 'OPF_COVER_MANIFEST_MISMATCH',
+        severity: 'warning',
+        title: 'Metadado de capa aponta para item inexistente',
+        detail:
+          'O OPF possui meta name="cover", mas o content informado não corresponde a nenhum id do manifest.',
+        file: pkg.opfPath,
+        context: pkg.coverMetaId,
+        repairable: true,
+      }),
+    );
+  }
+
   if (pkg.coverItem && !pkg.coverItem.exists) {
     issues.push(
       createIssue({
@@ -146,6 +210,22 @@ export function validateOpf(pkg: PackageDocumentInfo): Issue[] {
         detail:
           'O OPF declara uma imagem de capa, mas o arquivo não foi encontrado dentro do EPUB.',
         file: pkg.coverItem.resolvedPath,
+        repairable: true,
+      }),
+    );
+  }
+
+  const coverCandidate = findCoverImageCandidate(pkg);
+  if (!pkg.coverMetaDeclared && coverCandidate) {
+    issues.push(
+      createIssue({
+        code: 'OPF_COVER_META_MISSING',
+        severity: 'warning',
+        title: 'Imagem de capa não declarada no OPF',
+        detail:
+          'Há uma imagem com cara de capa no manifest, mas falta meta name="cover" apontando para ela. Kindle pode não exibir a capa na biblioteca.',
+        file: pkg.opfPath,
+        context: coverCandidate.resolvedPath,
         repairable: true,
       }),
     );

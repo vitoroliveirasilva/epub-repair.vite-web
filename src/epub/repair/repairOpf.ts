@@ -1,8 +1,19 @@
 import type { LoadedEpub } from '../model/epubTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction, RepairOptions } from '../model/repairTypes';
-import { HTML_MEDIA_TYPES, RELEVANT_MEDIA_TYPES, SYSTEM_FILE_PATTERNS } from '../utils/constants';
+import {
+  HTML_MEDIA_TYPES,
+  IMAGE_MEDIA_TYPES,
+  RELEVANT_MEDIA_TYPES,
+  SYSTEM_FILE_PATTERNS,
+} from '../utils/constants';
 import { deriveTitleFromFileName } from '../utils/fileName';
+import {
+  isInvalidLanguageTag,
+  isInvalidOpfDate,
+  normalizeLanguageTag,
+  normalizeOpfDate,
+} from '../utils/kindleCompatibility';
 import { guessMediaType } from '../utils/mediaTypes';
 import {
   basename,
@@ -54,8 +65,10 @@ export function repairOpfDocument(
   const actions: RepairAction[] = [];
   const filesToAdd = new Map<string, string>();
 
+  repairPackageVersion(packageElement, actions, pkg.opfPath);
   repairMetadata(doc, metadata, originalFileName, actions, pkg.opfPath);
   if (options.repairManifest) repairManifest(doc, manifest, loaded, pkg, actions);
+  ensureCoverMetadata(doc, metadata, manifest, loaded, pkg, actions);
   if (options.repairSpine) repairSpine(spine, manifest, actions, pkg.opfPath);
   ensureNavigationFiles(doc, manifest, spine, loaded, pkg, filesToAdd, actions, options);
 
@@ -64,6 +77,22 @@ export function repairOpfDocument(
     filesToAdd,
     actions,
   };
+}
+
+function repairPackageVersion(
+  packageElement: Element,
+  actions: RepairAction[],
+  opfPath: string,
+): void {
+  if ((packageElement.getAttribute('version') ?? '').trim() !== '1.0') return;
+
+  packageElement.setAttribute('version', '2.0');
+  actions.push({
+    type: 'normalized',
+    title: 'Versão OPF normalizada',
+    detail: 'O pacote declarava version="1.0" e foi normalizado para version="2.0".',
+    file: opfPath,
+  });
 }
 
 function repairMetadata(
@@ -85,16 +114,41 @@ function repairMetadata(
     });
   }
 
-  if (!findFirstByLocalName(metadata, 'language')?.textContent?.trim()) {
-    const language = doc.createElementNS(DC_NS, 'dc:language');
-    language.textContent = 'pt-BR';
-    metadata.append(language);
+  const language = findFirstByLocalName(metadata, 'language');
+  const languageValue = language?.textContent?.trim();
+  if (!languageValue) {
+    const createdLanguage = doc.createElementNS(DC_NS, 'dc:language');
+    createdLanguage.textContent = 'pt-BR';
+    metadata.append(createdLanguage);
     actions.push({
       type: 'updated',
       title: 'Idioma padrão adicionado',
       detail: 'Foi usado pt-BR somente porque o OPF não informava idioma.',
       file: opfPath,
     });
+  } else if (language && isInvalidLanguageTag(languageValue)) {
+    language.textContent = normalizeLanguageTag(languageValue, 'pt-BR');
+    actions.push({
+      type: 'normalized',
+      title: 'Idioma inválido normalizado',
+      detail: `O idioma "${languageValue}" foi normalizado para "${language.textContent}".`,
+      file: opfPath,
+    });
+  }
+
+  const date = findFirstByLocalName(metadata, 'date');
+  const dateValue = date?.textContent?.trim();
+  if (date && dateValue && isInvalidOpfDate(dateValue)) {
+    const normalizedDate = normalizeOpfDate(dateValue);
+    if (normalizedDate) {
+      date.textContent = normalizedDate;
+      actions.push({
+        type: 'normalized',
+        title: 'Data do OPF normalizada',
+        detail: `A data "${dateValue}" foi normalizada para "${normalizedDate}".`,
+        file: opfPath,
+      });
+    }
   }
 
   if (!findFirstByLocalName(metadata, 'identifier')?.textContent?.trim()) {
@@ -221,6 +275,105 @@ function repairManifest(
       file: pkg.opfPath,
     });
   }
+}
+
+function ensureCoverMetadata(
+  doc: Document,
+  metadata: Element,
+  manifest: Element,
+  loaded: LoadedEpub,
+  pkg: PackageDocumentInfo,
+  actions: RepairAction[],
+): void {
+  const manifestItems = childElementsByLocalName(manifest, 'item');
+  const manifestIds = new Set(
+    manifestItems.map((item) => getAttr(item, 'id') ?? '').filter(Boolean),
+  );
+  const coverMetas = childElementsByLocalName(metadata, 'meta').filter(
+    (meta) => getAttr(meta, 'name') === 'cover',
+  );
+  const firstCoverMeta = coverMetas[0];
+  const currentCoverId = firstCoverMeta?.getAttribute('content')?.trim() || undefined;
+
+  if (currentCoverId && manifestIds.has(currentCoverId)) {
+    removeExtraCoverMetas(coverMetas, actions, pkg.opfPath);
+    return;
+  }
+
+  const coverItem = findCoverItemElement(manifestItems, loaded, pkg);
+  const coverId = coverItem ? getAttr(coverItem, 'id') : undefined;
+  if (!coverItem || !coverId) return;
+
+  const meta = firstCoverMeta ?? doc.createElementNS(OPF_NS, 'meta');
+  meta.setAttribute('name', 'cover');
+  meta.setAttribute('content', coverId);
+  if (!firstCoverMeta) metadata.append(meta);
+
+  if (pkg.version.startsWith('3')) addTokenAttribute(coverItem, 'properties', 'cover-image');
+  removeExtraCoverMetas(coverMetas, actions, pkg.opfPath);
+
+  actions.push({
+    type: firstCoverMeta ? 'updated' : 'created',
+    title: 'Metadado de capa ajustado',
+    detail: `O OPF agora declara "${coverId}" como imagem de capa para leitores Kindle.`,
+    file: pkg.opfPath,
+  });
+}
+
+function findCoverItemElement(
+  manifestItems: Element[],
+  loaded: LoadedEpub,
+  pkg: PackageDocumentInfo,
+): Element | undefined {
+  const candidates = manifestItems
+    .map((item) => {
+      const href = getAttr(item, 'href');
+      const id = getAttr(item, 'id');
+      const mediaType = getAttr(item, 'media-type') ?? '';
+      if (!href || !id || !IMAGE_MEDIA_TYPES.has(mediaType) || !/^(?:image\/jpe?g|image\/png)$/iu.test(mediaType)) {
+        return undefined;
+      }
+      const resolved = resolveFromDir(pkg.opfDir, href);
+      if (!resolved.safe || !loaded.files.has(resolved.path)) return undefined;
+      return { item, score: coverCandidateScore(item, resolved.path) };
+    })
+    .filter((candidate): candidate is { item: Element; score: number } => Boolean(candidate))
+    .filter((candidate) => candidate.score > 0)
+    .sort((left, right) => right.score - left.score);
+
+  return candidates[0]?.item;
+}
+
+function coverCandidateScore(item: Element, resolvedPath: string): number {
+  const id = getAttr(item, 'id') ?? '';
+  const href = getAttr(item, 'href') ?? '';
+  const properties = getAttr(item, 'properties') ?? '';
+  const haystack = `${id} ${href} ${basename(resolvedPath)}`.toLowerCase();
+  let score = 0;
+
+  if (/(^|\s)cover-image($|\s)/iu.test(properties)) score += 120;
+  if (/(^|[-_./])cover([-_./]|$)/iu.test(haystack)) score += 90;
+  if (/(^|[-_./])capa([-_./]|$)/iu.test(haystack)) score += 90;
+  if (/front[-_]?cover/iu.test(haystack)) score += 70;
+  if (/title[-_]?page/iu.test(haystack)) score += 35;
+
+  return score;
+}
+
+function removeExtraCoverMetas(
+  coverMetas: Element[],
+  actions: RepairAction[],
+  opfPath: string,
+): void {
+  const extras = coverMetas.slice(1);
+  if (extras.length === 0) return;
+  for (const extra of extras) extra.remove();
+  actions.push({
+    type: 'removed',
+    title: 'Metadados de capa duplicados removidos',
+    detail: 'Metas name="cover" duplicados foram removidos para evitar ambiguidade.',
+    file: opfPath,
+  });
 }
 
 function repairSpine(
