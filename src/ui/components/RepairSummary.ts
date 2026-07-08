@@ -15,14 +15,9 @@ export function renderRepairSummary(result: RepairResult): HTMLElement {
     el('div', {
       className: 'section-heading',
       children: [
-        el('p', { className: 'eyebrow', text: isCoverReplacement ? 'Capa' : 'Reparo' }),
-        el('h2', { text: isCoverReplacement ? 'Capa aplicada' : 'Alterações aplicadas' }),
-        el('p', {
-          className: 'muted',
-          text: isCoverReplacement
-            ? 'Resumo da troca de capa feita no pacote EPUB com validação antes e depois'
-            : 'Resumo das correções feitas no pacote EPUB com comparação antes e depois',
-        }),
+        el('p', { className: 'eyebrow', text: resultEyebrow(result) }),
+        el('h2', { text: resultTitle(result) }),
+        el('p', { className: 'muted', text: resultDescription(result) }),
       ],
     }),
     isCoverReplacement
@@ -77,6 +72,28 @@ export function renderRepairSummary(result: RepairResult): HTMLElement {
   }
   root.append(list);
   return root;
+}
+
+function resultEyebrow(result: RepairResult): string {
+  if (result.operation === 'cover-replacement') return 'Capa';
+  if (result.operation === 'optimization') return 'Otimização';
+  return 'Reparo';
+}
+
+function resultTitle(result: RepairResult): string {
+  if (result.operation === 'cover-replacement') return 'Capa aplicada';
+  if (result.operation === 'optimization') return 'Otimização aplicada';
+  return 'Alterações aplicadas';
+}
+
+function resultDescription(result: RepairResult): string {
+  if (result.operation === 'cover-replacement') {
+    return 'Resumo da troca de capa feita no pacote EPUB com validação final';
+  }
+  if (result.operation === 'optimization') {
+    return 'Resumo das melhorias opcionais aplicadas no pacote EPUB com comparação antes e depois';
+  }
+  return 'Resumo das correções feitas no pacote EPUB com comparação antes e depois';
 }
 
 function renderCoverResultGrid(result: RepairResult): HTMLElement {

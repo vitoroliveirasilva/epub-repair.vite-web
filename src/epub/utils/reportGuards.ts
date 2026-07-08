@@ -28,3 +28,12 @@ export function hasOptionalOptimizations(report: ValidationReport | undefined): 
 export function canRepairReport(report: ValidationReport | undefined): boolean {
   return Boolean(report?.validZip && report.stats.fatalCount === 0 && hasRepairableIssues(report));
 }
+
+export function canOptimizeReport(report: ValidationReport | undefined): boolean {
+  return Boolean(
+    report?.validZip &&
+    report.stats.fatalCount === 0 &&
+    !hasRepairableIssues(report) &&
+    hasOptionalOptimizations(report),
+  );
+}

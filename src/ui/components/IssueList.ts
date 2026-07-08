@@ -168,7 +168,9 @@ function renderSimpleIssue(issue: Issue): HTMLElement {
 }
 
 function simpleIssueFooter(issue: Issue): string {
-  if (isOptionalOptimizationIssue(issue)) return 'Otimização opcional disponível';
+  if (isOptionalOptimizationIssue(issue)) {
+    return 'Use o botão de otimização opcional para tentar aplicar este ajuste';
+  }
   if (isRequiredRepairableIssue(issue)) return 'O reparo automático pode tentar resolver';
   return 'Pode exigir revisão manual';
 }

@@ -22,7 +22,7 @@ export interface RepairAction {
   file?: string | undefined;
 }
 
-export type RepairOperation = 'repair' | 'cover-replacement';
+export type RepairOperation = 'repair' | 'optimization' | 'cover-replacement';
 
 export interface RepairResult {
   blob?: Blob | undefined;

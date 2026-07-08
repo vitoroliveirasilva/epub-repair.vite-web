@@ -34,7 +34,7 @@ export function buildTextReport(report: ValidationReport, repair?: RepairResult)
   ].filter((line): line is string => Boolean(line));
 
   if (repair) {
-    const operationTitle = repair.operation === 'cover-replacement' ? 'Troca de capa' : 'Reparo';
+    const operationTitle = operationReportTitle(repair);
     lines.push(
       '',
       `${operationTitle}:`,
@@ -57,6 +57,12 @@ export function buildTextReport(report: ValidationReport, repair?: RepairResult)
   }
 
   return lines.join('\n');
+}
+
+function operationReportTitle(repair: RepairResult): string {
+  if (repair.operation === 'cover-replacement') return 'Troca de capa';
+  if (repair.operation === 'optimization') return 'Otimização opcional';
+  return 'Reparo';
 }
 
 export function buildJsonReport(report: ValidationReport, repair?: RepairResult): string {

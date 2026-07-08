@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ValidationReport } from '../src/epub';
 import {
+  canOptimizeReport,
   canRepairReport,
   getOptionalOptimizationCount,
   getRequiredRepairableCount,
@@ -41,6 +42,7 @@ describe('reportGuards', () => {
     expect(getRequiredRepairableCount(cleanReport)).toBe(0);
     expect(getOptionalOptimizationCount(cleanReport)).toBe(0);
     expect(canRepairReport(cleanReport)).toBe(false);
+    expect(canOptimizeReport(cleanReport)).toBe(false);
   });
 
   it('libera reparo quando existe problema corrigível não fatal', () => {
@@ -75,6 +77,7 @@ describe('reportGuards', () => {
     expect(getRequiredRepairableCount(repairableReport)).toBe(1);
     expect(getOptionalOptimizationCount(repairableReport)).toBe(0);
     expect(canRepairReport(repairableReport)).toBe(true);
+    expect(canOptimizeReport(repairableReport)).toBe(false);
   });
 
   it('trata informação corrigível como otimização opcional, não como reparo obrigatório', () => {
@@ -109,6 +112,7 @@ describe('reportGuards', () => {
     expect(getRequiredRepairableCount(optionalReport)).toBe(0);
     expect(getOptionalOptimizationCount(optionalReport)).toBe(1);
     expect(canRepairReport(optionalReport)).toBe(false);
+    expect(canOptimizeReport(optionalReport)).toBe(true);
   });
 
   it('não libera reparo quando só existe informação não corrigível', () => {
@@ -128,5 +132,6 @@ describe('reportGuards', () => {
     expect(hasRepairableIssues(infoReport)).toBe(false);
     expect(hasOptionalOptimizations(infoReport)).toBe(false);
     expect(canRepairReport(infoReport)).toBe(false);
+    expect(canOptimizeReport(infoReport)).toBe(false);
   });
 });

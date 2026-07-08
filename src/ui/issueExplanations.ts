@@ -58,8 +58,7 @@ const ISSUE_EXPLANATIONS: Partial<Record<Issue['code'], IssueExplanation>> = {
   },
   IMAGE_PROGRESSIVE_JPEG: {
     title: 'Há JPEG progressivo no pacote.',
-    message:
-      'Normalmente funciona, mas alguns conversores antigos preferem JPEG baseline. O reparo tenta regravar via navegador.',
+    message: 'Normalmente funciona, mas alguns conversores antigos preferem JPEG baseline.',
   },
   CONTENT_SCRIPTED: {
     title: 'O livro contém scripts ou comportamento interativo.',

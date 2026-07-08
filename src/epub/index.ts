@@ -3,6 +3,7 @@ export { repairEpub } from './repair/repairEpub';
 export { replaceEpubCover } from './cover/replaceCover';
 export { readCoverImageFile, MAX_COVER_IMAGE_SIZE_BYTES } from './cover/coverImageInput';
 export {
+  canOptimizeReport,
   canRepairReport,
   getOptionalOptimizationCount,
   getRequiredRepairableCount,

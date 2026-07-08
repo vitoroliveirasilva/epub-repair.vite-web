@@ -1,4 +1,5 @@
 import {
+  canOptimizeReport,
   canRepairReport,
   hasOptionalOptimizations,
   inspectEpub,
@@ -57,23 +58,37 @@ export async function repairCurrentFile(state: AppState): Promise<void> {
       state.report ?? (await inspectEpub(state.payload.file.name, state.payload.bytes));
     state.report = currentReport;
 
-    if (!canRepairReport(currentReport)) {
+    const canRunRequiredRepair = canRepairReport(currentReport);
+    const canRunOptionalOptimization = canOptimizeReport(currentReport);
+
+    if (!canRunRequiredRepair && !canRunOptionalOptimization) {
       state.repairResult = undefined;
       state.message = readyWithoutRequiredRepairMessage(currentReport);
       return;
     }
 
-    const result = await repairEpub(state.payload.file.name, state.payload.bytes, state.options);
+    const result = await repairEpub(
+      state.payload.file.name,
+      state.payload.bytes,
+      state.options,
+      canRunOptionalOptimization ? 'optimization' : 'repair',
+    );
     if (!result.changed || !result.blob) {
       state.repairResult = undefined;
       state.report = result.after;
-      state.message = 'Nenhuma correção obrigatória foi necessária.';
+      state.message =
+        result.operation === 'optimization'
+          ? 'A otimização opcional foi avaliada, mas nenhuma alteração automática foi aplicada pelo navegador.'
+          : 'Nenhuma correção obrigatória foi necessária.';
       return;
     }
 
     state.repairResult = result;
     state.report = result.after;
-    state.message = 'Reparo concluído e revalidado.';
+    state.message =
+      result.operation === 'optimization'
+        ? 'Otimização opcional aplicada e EPUB revalidado.'
+        : 'Reparo concluído e revalidado.';
   } finally {
     state.busy = false;
   }

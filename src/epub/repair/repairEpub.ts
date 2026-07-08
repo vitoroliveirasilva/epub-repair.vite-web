@@ -4,7 +4,7 @@ import { inspectEpub } from '../validation/validateEpub';
 import { DEFAULT_REPAIR_OPTIONS, EPUB_MIME, SYSTEM_FILE_PATTERNS } from '../utils/constants';
 import { makeRepairedFileName } from '../utils/fileName';
 import { normalizeInternalPath } from '../utils/pathUtils';
-import { canRepairReport } from '../utils/reportGuards';
+import { canOptimizeReport, canRepairReport } from '../utils/reportGuards';
 import { parsePackageDocument } from '../validation/opfParser';
 import { ensureContainerFile } from './repairContainer';
 import { repairContentDocuments } from './repairContentDocuments';
@@ -13,23 +13,35 @@ import { repairKindleCompatibility } from './repairKindleCompatibility';
 import { repairOpfDocument } from './repairOpf';
 import { rebuildEpubZip } from './rebuildEpubZip';
 
+type RepairRunMode = 'repair' | 'optimization';
+
 export async function repairEpub(
   fileName: string,
   bytes: Uint8Array,
   options: RepairOptions = DEFAULT_REPAIR_OPTIONS,
+  mode: RepairRunMode = 'repair',
 ): Promise<RepairResult> {
   const before = await inspectEpub(fileName, bytes);
   const warnings: string[] = [];
 
-  if (!canRepairReport(before)) {
+  const canRunRequiredRepair = canRepairReport(before);
+  const canRunOptionalOptimization = canOptimizeReport(before);
+  const shouldRun = mode === 'optimization' ? canRunOptionalOptimization : canRunRequiredRepair;
+  const operation = mode === 'optimization' ? 'optimization' : 'repair';
+
+  if (!shouldRun) {
     return {
       fileName,
       before,
       after: before,
       actions: [],
-      warnings: ['Nenhuma correção obrigatória foi necessária'],
+      warnings: [
+        mode === 'optimization'
+          ? 'Nenhuma otimização opcional está disponível para aplicação automática.'
+          : 'Nenhuma correção obrigatória foi necessária.',
+      ],
       changed: false,
-      operation: 'repair',
+      operation,
     };
   }
 
@@ -115,9 +127,13 @@ export async function repairEpub(
       before,
       after: before,
       actions: [],
-      warnings: ['Nenhuma alteração automática foi aplicada.'],
+      warnings: [
+        operation === 'optimization'
+          ? 'A otimização opcional foi avaliada, mas nenhuma alteração automática foi aplicada.'
+          : 'Nenhuma alteração automática foi aplicada.',
+      ],
       changed: false,
-      operation: 'repair',
+      operation,
     };
   }
 
@@ -134,7 +150,7 @@ export async function repairEpub(
     actions: appliedActions,
     warnings,
     changed: true,
-    operation: 'repair',
+    operation,
   };
 }
 
