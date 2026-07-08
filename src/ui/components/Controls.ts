@@ -1,3 +1,9 @@
+import {
+  canOptimizeReport,
+  canRepairReport,
+  getOptionalOptimizationCount,
+  hasOptionalOptimizations,
+} from '../../epub';
 import type { AppState } from '../../app/state';
 import { button, el, downloadBlob } from '../dom';
 
@@ -13,13 +19,17 @@ export function renderControls(
 ): HTMLElement {
   const hasFile = Boolean(state.payload);
   const hasReport = Boolean(state.report);
-  const hasRepair = Boolean(state.repairResult);
+  const hasRepair = Boolean(state.repairResult?.changed && state.repairResult.blob);
   const hasFatalIssues = Boolean(state.report?.stats.fatalCount);
+  const canRepair = canRepairReport(state.report);
+  const canOptimize = canOptimizeReport(state.report);
 
   const primaryActionButtons = buildPrimaryActionButtons(state, actions, {
     hasFile,
     hasRepair,
     hasFatalIssues,
+    canRepair,
+    canOptimize,
   });
 
   const copyButton = button('Copiar', 'btn btn-ghost', actions.copy);
@@ -50,20 +60,25 @@ export function renderControls(
           renderFlowStep(
             '1',
             'Verificar',
-            'Encontrar problemas de estrutura, capa, sumário e Kindle.',
+            'Encontrar problemas de estrutura, capa, sumário e Kindle',
             {
               active: hasFile && !hasReport,
               done: hasReport,
             },
           ),
-          renderFlowStep('2', 'Corrigir', 'Gerar uma nova cópia sem alterar o EPUB original.', {
-            active: hasReport && !hasRepair,
-            done: hasRepair,
-          }),
+          renderFlowStep(
+            '2',
+            'Corrigir, otimizar ou trocar capa',
+            'Gerar uma nova cópia somente quando houver mudança real',
+            {
+              active: hasReport && !hasRepair,
+              done: hasRepair,
+            },
+          ),
           renderFlowStep(
             '3',
             'Baixar',
-            'Salvar o EPUB corrigido e, se quiser, o relatório técnico.',
+            'Salvar o EPUB alterado e se quiser, o relatório técnico',
             {
               active: hasRepair,
               done: hasRepair,
@@ -95,50 +110,120 @@ export function renderControls(
 function buildPrimaryActionButtons(
   state: AppState,
   actions: { analyze: () => void; repair: () => void },
-  flags: { hasFile: boolean; hasRepair: boolean; hasFatalIssues: boolean },
+  flags: {
+    hasFile: boolean;
+    hasRepair: boolean;
+    hasFatalIssues: boolean;
+    canRepair: boolean;
+    canOptimize: boolean;
+  },
 ): HTMLButtonElement[] {
   if (flags.hasRepair) {
     const downloadButton = button(
-      'Baixar EPUB corrigido',
+      state.repairResult?.operation === 'cover-replacement'
+        ? 'Baixar EPUB com nova capa'
+        : state.repairResult?.operation === 'optimization'
+          ? 'Baixar EPUB otimizado'
+          : 'Baixar EPUB corrigido',
       'btn btn-primary btn-download-ready',
       () => {
-        if (state.repairResult) downloadBlob(state.repairResult.blob, state.repairResult.fileName);
+        if (state.repairResult?.blob)
+          downloadBlob(state.repairResult.blob, state.repairResult.fileName);
       },
     );
     downloadButton.disabled = state.busy;
-    return [downloadButton];
+
+    if (!flags.canOptimize) return [downloadButton];
+
+    const optimizeButton = button(
+      'Aplicar otimização opcional',
+      'btn btn-secondary',
+      actions.repair,
+    );
+    optimizeButton.disabled = state.busy;
+    optimizeButton.title = repairButtonTitle(state, false, true);
+
+    return [downloadButton, optimizeButton];
   }
 
   const analyzeButton = button('Verificar EPUB', 'btn btn-secondary', actions.analyze);
   analyzeButton.disabled = !flags.hasFile || state.busy;
 
-  const repairButton = button('Gerar EPUB corrigido', 'btn btn-primary', actions.repair);
-  repairButton.disabled = !flags.hasFile || state.busy || flags.hasFatalIssues;
+  const repairButton = button(
+    flags.canRepair
+      ? 'Gerar EPUB corrigido'
+      : flags.canOptimize
+        ? 'Aplicar otimização opcional'
+        : 'Nenhum reparo necessário',
+    'btn btn-primary',
+    actions.repair,
+  );
+  repairButton.disabled =
+    !flags.hasFile ||
+    state.busy ||
+    flags.hasFatalIssues ||
+    (!flags.canRepair && !flags.canOptimize);
+  repairButton.title = repairButtonTitle(state, flags.canRepair, flags.canOptimize);
 
   return [analyzeButton, repairButton];
 }
 
 function controlsTitle(state: AppState): string {
-  if (state.repairResult) return 'EPUB corrigido pronto para baixar.';
-  if (state.report) return 'Agora você pode gerar uma cópia corrigida.';
-  if (state.payload) return 'Verifique seu EPUB antes de enviar ao Kindle.';
-  return 'Escolha um EPUB para começar.';
+  if (state.repairResult?.operation === 'cover-replacement')
+    return 'EPUB com nova capa pronto para baixar';
+  if (state.repairResult?.operation === 'optimization') return 'EPUB otimizado pronto para baixar';
+  if (state.repairResult) return 'EPUB corrigido pronto para ser baixado';
+  if (state.report && !canRepairReport(state.report) && hasOptionalOptimizations(state.report)) {
+    return 'Seu EPUB está pronto para uso';
+  }
+  if (state.report && !canRepairReport(state.report)) return 'Seu EPUB já está pronto';
+  if (state.report) return 'Agora você pode gerar uma cópia corrigida';
+  if (state.payload) return 'Verifique seu EPUB antes de enviar ao Kindle';
+  return 'Escolha um EPUB para começar';
 }
 
 function controlsDescription(state: AppState): string {
+  if (state.repairResult?.operation === 'cover-replacement') {
+    return 'Baixe a nova versão do arquivo com a capa aplicada. O relatório técnico fica separado abaixo';
+  }
+  if (state.repairResult?.operation === 'optimization') {
+    return 'Baixe a nova versão otimizada do arquivo. O relatório técnico mostra quais melhorias opcionais foram aplicadas';
+  }
   if (state.repairResult) {
-    return 'Baixe a nova versão do arquivo. O relatório técnico fica separado abaixo, caso você queira guardar o histórico.';
+    return 'Baixe a nova versão do arquivo, o relatório técnico fica separado abaixo';
   }
   if (state.report?.stats.fatalCount) {
-    return 'Encontramos um problema fatal. O reparo automático fica bloqueado para evitar gerar um arquivo incompleto.';
+    return 'Encontramos um problema fatal, o reparo automático fica bloqueado para evitar gerar um arquivo incompleto ou pior que o original.';
+  }
+  if (state.report && !canRepairReport(state.report) && hasOptionalOptimizations(state.report)) {
+    const count = getOptionalOptimizationCount(state.report);
+    return `Nenhuma correção obrigatória é necessária. Há ${formatCount(count, 'melhoria opcional', 'melhorias opcionais')} de compatibilidade. Use o botão de otimização para tentar aplicar esse ajuste, ou troque a capa abaixo se quiser alterar algo intencionalmente.`;
+  }
+  if (state.report && !canRepairReport(state.report)) {
+    return 'Nenhuma correção técnica é necessária. Se quiser alterar algo intencionalmente, use a troca de capa abaixo.';
   }
   if (state.report) {
-    return 'O diagnóstico terminou. Quando houver correções seguras, gere uma cópia corrigida do EPUB.';
+    return 'O diagnóstico terminou, quando houver correções seguras gere uma cópia corrigida do EPUB';
   }
   if (state.payload) {
-    return 'A análise acontece localmente no navegador e prepara o arquivo para uma correção segura.';
+    return 'A análise acontece localmente no navegador e prepara o arquivo para uma correção segura';
   }
-  return 'Envie o arquivo, confira o diagnóstico e baixe uma cópia corrigida. O original não é alterado.';
+  return 'Envie o arquivo, confira o diagnóstico e baixe uma cópia corrigida. O arquivo original não é alterado';
+}
+
+function repairButtonTitle(state: AppState, canRepair: boolean, canOptimize: boolean): string {
+  if (canRepair) return 'Gerar uma cópia corrigida do EPUB';
+  if (canOptimize) {
+    return 'Tentar aplicar melhorias opcionais, como converter JPEG progressivo para baseline quando o navegador permitir.';
+  }
+  if (hasOptionalOptimizations(state.report)) {
+    return 'O EPUB tem somente notas opcionais, mas nenhuma delas pode ser aplicada automaticamente neste estado.';
+  }
+  return 'O EPUB validado não possui problemas corrigíveis.';
+}
+
+function formatCount(count: number, singular: string, plural: string): string {
+  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 function renderFlowStep(
@@ -184,7 +269,7 @@ function renderTechnicalReportTools(
       children: [
         el('p', {
           className: 'muted',
-          text: 'Use esta área para salvar evidências, comparar antes/depois ou investigar códigos técnicos do diagnóstico.',
+          text: 'Use esta área para salvar evidências, comparar antes/depois ou investigar códigos técnicos do diagnóstico',
         }),
         el('div', {
           className: 'technical-report-actions',

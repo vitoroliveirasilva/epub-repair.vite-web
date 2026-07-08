@@ -22,11 +22,15 @@ export interface RepairAction {
   file?: string | undefined;
 }
 
+export type RepairOperation = 'repair' | 'optimization' | 'cover-replacement';
+
 export interface RepairResult {
-  blob: Blob;
+  blob?: Blob | undefined;
   fileName: string;
   before: ValidationReport;
   after: ValidationReport;
   actions: RepairAction[];
   warnings: string[];
+  changed: boolean;
+  operation: RepairOperation;
 }

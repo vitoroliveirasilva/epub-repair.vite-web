@@ -857,17 +857,17 @@ p {
 
 .drop-line-1 {
   top: 2.03rem;
-  width: 1.35rem;
+  width: 1.18rem;
 }
 
 .drop-line-2 {
   top: 2.45rem;
-  width: 1.72rem;
+  width: 1.18rem;
 }
 
 .drop-line-3 {
   top: 2.87rem;
-  width: 1rem;
+  width: 1.18rem;
 }
 
 .drop-check {
@@ -1515,7 +1515,6 @@ p {
 
 .footer {
   display: flex;
-  justify-content: space-between;
   gap: var(--space-6);
   align-items: center;
   padding: var(--space-8) 0 var(--space-10);

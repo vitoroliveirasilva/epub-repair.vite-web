@@ -27,8 +27,8 @@ export function renderUploader(state: AppState, onFile: (file: File) => void): H
       }),
       el('p', {
         text: state.payload
-          ? 'Você pode analisar novamente, reparar ou escolher outro arquivo quando quiser.'
-          : 'ou clique para escolher um arquivo. Tudo acontece localmente no navegador.',
+          ? 'Você pode analisar novamente, reparar ou escolher outro arquivo quando quiser'
+          : 'ou clique para escolher um arquivo',
       }),
     ],
   });
@@ -65,13 +65,13 @@ export function renderUploader(state: AppState, onFile: (file: File) => void): H
         children: [
           el('p', { className: 'eyebrow', text: 'Upload' }),
           el('h2', {
-            text: 'Escolha o EPUB que precisa de cuidado.',
+            text: 'Escolha o EPUB a ser alterado',
             attrs: { id: 'upload-title' },
           }),
           el('p', {
             className: 'muted',
             attrs: { id: 'upload-help' },
-            text: 'Aceitamos arquivos .epub. O limite sugerido é 250 MB para evitar travamentos em navegadores mais modestos.',
+            text: 'Arquivos .epub são aceitos com o limite sugerido de 250 MB para evitar travamentos em navegadores mais modestos',
           }),
         ],
       }),
