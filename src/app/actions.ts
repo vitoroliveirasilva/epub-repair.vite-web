@@ -1,4 +1,11 @@
-import { inspectEpub, MAX_FILE_SIZE_BYTES, repairEpub } from '../epub';
+import {
+  canRepairReport,
+  inspectEpub,
+  MAX_FILE_SIZE_BYTES,
+  readCoverImageFile,
+  repairEpub,
+  replaceEpubCover,
+} from '../epub';
 import type { AppState } from './state';
 
 export async function loadFileIntoState(file: File, state: AppState): Promise<void> {
@@ -6,11 +13,10 @@ export async function loadFileIntoState(file: File, state: AppState): Promise<vo
   state.message = undefined;
   state.repairResult = undefined;
   state.report = undefined;
+  state.coverImage = undefined;
 
   if (!file.name.toLowerCase().endsWith('.epub')) {
-    throw new Error(
-      'Selecione um arquivo .epub.',
-    );
+    throw new Error('Selecione um arquivo .epub.');
   }
 
   if (file.size > MAX_FILE_SIZE_BYTES) {
@@ -32,7 +38,10 @@ export async function analyzeCurrentFile(state: AppState): Promise<void> {
   state.error = undefined;
   try {
     state.report = await inspectEpub(state.payload.file.name, state.payload.bytes);
-    state.message = 'Análise concluída no navegador.';
+    state.repairResult = undefined;
+    state.message = canRepairReport(state.report)
+      ? 'Análise concluída no navegador.'
+      : 'Seu EPUB já está pronto, nenhuma correção é necessária.';
   } finally {
     state.busy = false;
   }
@@ -43,13 +52,72 @@ export async function repairCurrentFile(state: AppState): Promise<void> {
   state.busy = true;
   state.error = undefined;
   try {
-    state.repairResult = await repairEpub(
+    const currentReport =
+      state.report ?? (await inspectEpub(state.payload.file.name, state.payload.bytes));
+    state.report = currentReport;
+
+    if (!canRepairReport(currentReport)) {
+      state.repairResult = undefined;
+      state.message = 'Seu EPUB já está pronto, nenhuma correção é necessária.';
+      return;
+    }
+
+    const result = await repairEpub(state.payload.file.name, state.payload.bytes, state.options);
+    if (!result.changed || !result.blob) {
+      state.repairResult = undefined;
+      state.report = result.after;
+      state.message = 'Nenhuma correção foi necessária.';
+      return;
+    }
+
+    state.repairResult = result;
+    state.report = result.after;
+    state.message = 'Reparo concluído e revalidado.';
+  } finally {
+    state.busy = false;
+  }
+}
+
+export async function loadCoverImageIntoState(file: File, state: AppState): Promise<void> {
+  if (!state.payload) throw new Error('Envie um EPUB antes de escolher uma capa.');
+
+  state.coverImage = await readCoverImageFile(file);
+  state.repairResult = undefined;
+  state.error = undefined;
+  state.message = 'Nova capa carregada, confira a prévia e aplique quando quiser.';
+}
+
+export function clearCoverImageFromState(state: AppState): void {
+  state.coverImage = undefined;
+  state.message = 'Seleção de capa removida.';
+}
+
+export async function applyCoverReplacementToCurrentFile(state: AppState): Promise<void> {
+  if (!state.payload) throw new Error('Envie um EPUB antes de trocar a capa.');
+  if (!state.coverImage) throw new Error('Escolha uma imagem de capa antes de aplicar.');
+
+  state.busy = true;
+  state.error = undefined;
+  try {
+    const result = await replaceEpubCover(
       state.payload.file.name,
       state.payload.bytes,
-      state.options,
+      state.coverImage,
     );
-    state.report = state.repairResult.after;
-    state.message = 'Reparo concluído e revalidado.';
+
+    if (!result.blob) {
+      throw new Error('Não foi possível gerar o EPUB com a nova capa.');
+    }
+
+    const outputBytes = new Uint8Array(await result.blob.arrayBuffer());
+    state.payload = {
+      file: new File([result.blob], result.fileName, { type: 'application/epub+zip' }),
+      bytes: outputBytes,
+    };
+    state.repairResult = result;
+    state.report = result.after;
+    state.coverImage = undefined;
+    state.message = 'Capa aplicada e EPUB revalidado.';
   } finally {
     state.busy = false;
   }

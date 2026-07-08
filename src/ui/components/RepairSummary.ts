@@ -5,16 +5,19 @@ export function renderRepairSummary(result: RepairResult): HTMLElement {
   const before = result.before.stats;
   const after = result.after.stats;
   const root = el('section', { className: 'panel repair-summary' });
+  const isCoverReplacement = result.operation === 'cover-replacement';
 
   root.append(
     el('div', {
       className: 'section-heading',
       children: [
-        el('p', { className: 'eyebrow', text: 'Reparo' }),
-        el('h2', { text: 'Alterações aplicadas' }),
+        el('p', { className: 'eyebrow', text: isCoverReplacement ? 'Capa' : 'Reparo' }),
+        el('h2', { text: isCoverReplacement ? 'Capa aplicada' : 'Alterações aplicadas' }),
         el('p', {
           className: 'muted',
-          text: 'Resumo das correções feitas no pacote EPUB com comparação antes e depois',
+          text: isCoverReplacement
+            ? 'Resumo da troca de capa feita no pacote EPUB com validação antes e depois'
+            : 'Resumo das correções feitas no pacote EPUB com comparação antes e depois',
         }),
       ],
     }),
@@ -39,7 +42,11 @@ export function renderRepairSummary(result: RepairResult): HTMLElement {
     }),
   );
 
-  if (result.actions.length === 0) {
+  for (const warning of result.warnings) {
+    root.append(el('p', { className: 'muted repair-warning', text: warning }));
+  }
+
+  if (!result.changed || result.actions.length === 0) {
     root.append(el('p', { className: 'empty', text: 'Nada precisou ser alterado.' }));
     return root;
   }

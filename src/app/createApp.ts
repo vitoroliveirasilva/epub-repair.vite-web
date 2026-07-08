@@ -1,7 +1,15 @@
-import { analyzeCurrentFile, loadFileIntoState, repairCurrentFile } from './actions';
+import {
+  analyzeCurrentFile,
+  applyCoverReplacementToCurrentFile,
+  clearCoverImageFromState,
+  loadCoverImageIntoState,
+  loadFileIntoState,
+  repairCurrentFile,
+} from './actions';
 import { createInitialState, type AppState } from './state';
 import { buildJsonReport, buildTextReport, makeReportFileName } from '../ui/copyReport';
 import { renderControls } from '../ui/components/Controls';
+import { renderCoverChanger } from '../ui/components/CoverChanger';
 import { renderStatusMessage } from '../ui/components/ErrorPanel';
 import { renderFileSummary } from '../ui/components/FileSummary';
 import { renderIssueList } from '../ui/components/IssueList';
@@ -54,6 +62,18 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
               },
               downloadJsonReport: () => {
                 downloadCurrentReport(state, 'json');
+              },
+            }),
+            renderCoverChanger(state, {
+              selectCoverImage: (file) => {
+                void runAsync(state, rerender, () => loadCoverImageIntoState(file, state));
+              },
+              clearCoverImage: () => {
+                clearCoverImageFromState(state);
+                rerender();
+              },
+              applyCoverReplacement: () => {
+                void runAsync(state, rerender, () => applyCoverReplacementToCurrentFile(state));
               },
             }),
             renderStatusMessage(state.message, state.error),

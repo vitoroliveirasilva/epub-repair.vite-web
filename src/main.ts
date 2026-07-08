@@ -1,5 +1,6 @@
 import './styles/main.css';
 import './styles/reportUx.css';
+import './styles/coverActions.css';
 import './styles/mobile.css';
 import { createApp } from './app/createApp';
 

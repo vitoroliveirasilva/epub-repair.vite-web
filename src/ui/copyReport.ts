@@ -24,10 +24,12 @@ export function buildTextReport(report: ValidationReport, repair?: RepairResult)
   ].filter((line): line is string => Boolean(line));
 
   if (repair) {
+    const operationTitle = repair.operation === 'cover-replacement' ? 'Troca de capa' : 'Reparo';
     lines.push(
       '',
+      `${operationTitle}:`,
       `Arquivo gerado: ${repair.fileName}`,
-      `Depois do reparo: ${repair.after.stats.fatalCount} fatais, ${repair.after.stats.errorCount} erros, ${repair.after.stats.warningCount} avisos, score ${repair.after.stats.kindleScore}`,
+      `Depois da operação: ${repair.after.stats.fatalCount} fatais, ${repair.after.stats.errorCount} erros, ${repair.after.stats.warningCount} avisos, score ${repair.after.stats.kindleScore}`,
       '',
       'Alterações aplicadas:',
       ...(repair.actions.length > 0
@@ -37,6 +39,10 @@ export function buildTextReport(report: ValidationReport, repair?: RepairResult)
           )
         : ['- Nenhuma alteração automática registrada.']),
     );
+
+    if (repair.warnings.length > 0) {
+      lines.push('', 'Observações:', ...repair.warnings.map((warning) => `- ${warning}`));
+    }
   }
 
   return lines.join('\n');
@@ -53,6 +59,8 @@ export function buildJsonReport(report: ValidationReport, repair?: RepairResult)
             after: toSerializableReport(repair.after),
             actions: repair.actions,
             warnings: repair.warnings,
+            changed: repair.changed,
+            operation: repair.operation,
           }
         : undefined,
     },
