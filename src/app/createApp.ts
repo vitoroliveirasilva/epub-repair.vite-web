@@ -1,7 +1,15 @@
-import { analyzeCurrentFile, loadFileIntoState, repairCurrentFile } from './actions';
+import {
+  analyzeCurrentFile,
+  applyCoverReplacementToCurrentFile,
+  clearCoverImageFromState,
+  loadCoverImageIntoState,
+  loadFileIntoState,
+  repairCurrentFile,
+} from './actions';
 import { createInitialState, type AppState } from './state';
 import { buildJsonReport, buildTextReport, makeReportFileName } from '../ui/copyReport';
 import { renderControls } from '../ui/components/Controls';
+import { renderCoverChanger } from '../ui/components/CoverChanger';
 import { renderStatusMessage } from '../ui/components/ErrorPanel';
 import { renderFileSummary } from '../ui/components/FileSummary';
 import { renderIssueList } from '../ui/components/IssueList';
@@ -54,6 +62,18 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
               },
               downloadJsonReport: () => {
                 downloadCurrentReport(state, 'json');
+              },
+            }),
+            renderCoverChanger(state, {
+              selectCoverImage: (file) => {
+                void runAsync(state, rerender, () => loadCoverImageIntoState(file, state));
+              },
+              clearCoverImage: () => {
+                clearCoverImageFromState(state);
+                rerender();
+              },
+              applyCoverReplacement: () => {
+                void runAsync(state, rerender, () => applyCoverReplacementToCurrentFile(state));
               },
             }),
             renderStatusMessage(state.message, state.error),
@@ -162,10 +182,10 @@ function renderHero(): HTMLElement {
         className: 'hero-content',
         children: [
           el('p', { className: 'eyebrow', text: 'Validação e reparo local de EPUB' }),
-          el('h1', { text: 'Conserte arquivos EPUB antes de enviar para o seu leitor.' }),
+          el('h1', { text: 'Conserte arquivos EPUB antes de enviar para o seu leitor' }),
           el('p', {
             className: 'hero-copy',
-            text: 'Analise a estrutura, limpe arquivos problemáticos, reconstrua pacotes e gere um EPUB mais amigável para Kindle e e-readers, direto no navegador.',
+            text: 'Analise a estrutura, limpe arquivos problemáticos, reconstrua pacotes e gere um EPUB mais amigável para Kindle e e-readers direto no navegador',
           }),
           el('div', {
             className: 'hero-actions',
@@ -293,23 +313,53 @@ function renderSupportSections(): HTMLElement {
 }
 
 function renderFooter(): HTMLElement {
+  const currentYear = new Date().getFullYear();
+
   return el('footer', {
-    className: 'footer',
+    className: 'footer app-footer',
     children: [
       el('div', {
-        className: 'footer-brand',
-        children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })],
-      }),
-      el('p', {
+        className: 'footer-main',
         children: [
-          el('span', {
-            text: 'Ferramenta front-end para diagnóstico, limpeza e reconstrução local de EPUBs',
+          el('div', {
+            className: 'footer-brand-block',
+            children: [
+              el('a', {
+                className: 'footer-brand',
+                attrs: { href: '#top', 'aria-label': 'EPUB Repair, voltar ao início' },
+                children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })],
+              }),
+            ],
           }),
-          el('br'),
-          el('span', { text: 'Não remove DRM e não substitui validações editoriais oficiais' }),
+          el('nav', {
+            className: 'footer-links',
+            attrs: { 'aria-label': 'Link do projeto e do desenvolvedor' },
+            children: [
+              renderFooterLink(
+                'Projeto no GitHub',
+                'https://github.com/vitoroliveirasilva/epub-repair.vite-web',
+                true,
+              ),
+              renderFooterLink('Desenvolvedor', 'https://github.com/vitoroliveirasilva', true),
+            ],
+          }),
+        ],
+      }),
+      el('div', {
+        className: 'footer-bottom',
+        children: [
+          el('span', { text: `© ${currentYear} Vitor Oliveira Silva` }),
+          el('span', { text: 'Feito para leitores, dispositivos de leitura e arquivos EPUB.' }),
         ],
       }),
     ],
+  });
+}
+
+function renderFooterLink(text: string, href: string, external = false): HTMLElement {
+  return el('a', {
+    text,
+    attrs: external ? { href, target: '_blank', rel: 'noreferrer noopener' } : { href },
   });
 }
 

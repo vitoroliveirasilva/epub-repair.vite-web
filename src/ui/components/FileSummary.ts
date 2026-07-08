@@ -1,14 +1,30 @@
-import type { CoverReportInfo, ValidationReport } from '../../epub';
+import {
+  getOptionalOptimizationCount,
+  getRequiredRepairableCount,
+  type CoverReportInfo,
+  type ValidationReport,
+} from '../../epub';
 import { el, formatBytes } from '../dom';
 
 export function renderFileSummary(report: ValidationReport): HTMLElement {
+  const requiredRepairableCount = getRequiredRepairableCount(report);
+  const optionalOptimizationCount = getOptionalOptimizationCount(report);
   const stats = [
     ['Arquivos', String(report.stats.totalFiles), 'neutral'],
     ['Fatais', String(report.stats.fatalCount), 'fatal'],
     ['Erros', String(report.stats.errorCount), 'error'],
     ['Avisos', String(report.stats.warningCount), 'warning'],
     ['Informações', String(report.stats.infoCount), 'info'],
-    ['Corrigíveis', String(report.stats.repairableCount), 'success'],
+    [
+      'Reparos',
+      String(requiredRepairableCount),
+      requiredRepairableCount > 0 ? 'success' : 'neutral',
+    ],
+    [
+      'Otimizações',
+      String(optionalOptimizationCount),
+      optionalOptimizationCount > 0 ? 'info' : 'neutral',
+    ],
   ];
 
   const score = renderScore(report.stats.kindleScore);
@@ -83,17 +99,17 @@ function renderScoreBreakdown(report: ValidationReport): HTMLElement {
     [
       'Estrutura EPUB',
       report.stats.structureScore,
-      'ZIP, OCF, OPF, manifest, spine e navegação base.',
+      'ZIP, OCF, OPF, manifest, spine e navegação base',
     ],
     [
       'Kindle Safe',
       report.stats.compatibilityScore,
-      'Metadados, capa, NCX, XHTML e imagens sensíveis ao Kindle.',
+      'Metadados, capa, NCX, XHTML e imagens sensíveis ao Kindle',
     ],
     [
       'Segurança',
       report.stats.securityScore,
-      'Scripts, links remotos, caminhos inseguros, DRM ou criptografia.',
+      'Scripts, links remotos, caminhos inseguros, DRM ou criptografia',
     ],
   ] as const;
 
@@ -129,7 +145,7 @@ function renderCoverSummary(cover: CoverReportInfo | undefined): HTMLElement {
           el('h3', { text: coverTitle(cover) }),
           el('p', {
             className: 'muted',
-            text: cover?.note ?? 'Nenhuma informação de capa disponível.',
+            text: cover?.note ?? 'Nenhuma informação de capa disponível',
           }),
           el('div', {
             className: 'cover-summary-meta',

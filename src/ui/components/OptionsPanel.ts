@@ -93,7 +93,7 @@ export function renderOptionsPanel(state: AppState, onChange: () => void): HTMLE
               el('h2', { text: 'Reparo automático' }),
               el('p', {
                 className: 'muted',
-                text: 'Deixe marcado o que a ferramenta pode ajustar sozinha durante a reconstrução.',
+                text: 'Deixe marcado o que a ferramenta pode ajustar sozinha durante a reconstrução do EPUB',
               }),
             ],
           }),

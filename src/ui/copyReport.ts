@@ -1,4 +1,13 @@
-import type { CoverReportInfo, Issue, RepairResult, ValidationReport } from '../epub';
+import {
+  getOptionalOptimizationCount,
+  getRequiredRepairableCount,
+  isOptionalOptimizationIssue,
+  isRequiredRepairableIssue,
+  type CoverReportInfo,
+  type Issue,
+  type RepairResult,
+  type ValidationReport,
+} from '../epub';
 
 export function buildTextReport(report: ValidationReport, repair?: RepairResult): string {
   const lines = [
@@ -10,6 +19,7 @@ export function buildTextReport(report: ValidationReport, repair?: RepairResult)
     `Score compatibilidade: ${report.stats.compatibilityScore}`,
     `Score segurança: ${report.stats.securityScore}`,
     `Fatais: ${report.stats.fatalCount} | Erros: ${report.stats.errorCount} | Avisos: ${report.stats.warningCount} | Informações: ${report.stats.infoCount}`,
+    `Reparos obrigatórios: ${getRequiredRepairableCount(report)} | Otimizações opcionais: ${getOptionalOptimizationCount(report)}`,
     '',
     'Capa:',
     `- Status: ${coverStatus(report)}`,
@@ -24,10 +34,13 @@ export function buildTextReport(report: ValidationReport, repair?: RepairResult)
   ].filter((line): line is string => Boolean(line));
 
   if (repair) {
+    const operationTitle = operationReportTitle(repair);
     lines.push(
       '',
+      `${operationTitle}:`,
       `Arquivo gerado: ${repair.fileName}`,
-      `Depois do reparo: ${repair.after.stats.fatalCount} fatais, ${repair.after.stats.errorCount} erros, ${repair.after.stats.warningCount} avisos, score ${repair.after.stats.kindleScore}`,
+      `Depois da operação: ${repair.after.stats.fatalCount} fatais, ${repair.after.stats.errorCount} erros, ${repair.after.stats.warningCount} avisos, score ${repair.after.stats.kindleScore}`,
+      `Reparos obrigatórios após operação: ${getRequiredRepairableCount(repair.after)} | Otimizações opcionais após operação: ${getOptionalOptimizationCount(repair.after)}`,
       '',
       'Alterações aplicadas:',
       ...(repair.actions.length > 0
@@ -37,9 +50,19 @@ export function buildTextReport(report: ValidationReport, repair?: RepairResult)
           )
         : ['- Nenhuma alteração automática registrada.']),
     );
+
+    if (repair.warnings.length > 0) {
+      lines.push('', 'Observações:', ...repair.warnings.map((warning) => `- ${warning}`));
+    }
   }
 
   return lines.join('\n');
+}
+
+function operationReportTitle(repair: RepairResult): string {
+  if (repair.operation === 'cover-replacement') return 'Troca de capa';
+  if (repair.operation === 'optimization') return 'Otimização opcional';
+  return 'Reparo';
 }
 
 export function buildJsonReport(report: ValidationReport, repair?: RepairResult): string {
@@ -53,6 +76,8 @@ export function buildJsonReport(report: ValidationReport, repair?: RepairResult)
             after: toSerializableReport(repair.after),
             actions: repair.actions,
             warnings: repair.warnings,
+            changed: repair.changed,
+            operation: repair.operation,
           }
         : undefined,
     },
@@ -67,7 +92,13 @@ export function makeReportFileName(fileName: string, extension: 'txt' | 'json'):
 }
 
 function formatIssue(issue: Issue): string {
-  return `- [${issue.severity.toUpperCase()}] ${issue.code}${issue.file ? ` em ${issue.file}` : ''}: ${issue.title} - ${issue.detail}`;
+  return `- [${issue.severity.toUpperCase()}] ${issueLabel(issue)} ${issue.code}${issue.file ? ` em ${issue.file}` : ''}: ${issue.title} - ${issue.detail}`;
+}
+
+function issueLabel(issue: Issue): string {
+  if (isOptionalOptimizationIssue(issue)) return '[OTIMIZAÇÃO OPCIONAL]';
+  if (isRequiredRepairableIssue(issue)) return '[REPARO OBRIGATÓRIO]';
+  return '[MANUAL/INFO]';
 }
 
 function coverStatus(report: ValidationReport): string {
@@ -101,7 +132,11 @@ function toSerializableReport(report: ValidationReport): object {
     opfPath: report.opfPath,
     epubVersion: report.epubVersion,
     cover: stripCoverPreview(report.cover),
-    stats: report.stats,
+    stats: {
+      ...report.stats,
+      requiredRepairableCount: getRequiredRepairableCount(report),
+      optionalOptimizationCount: getOptionalOptimizationCount(report),
+    },
     issues: report.issues,
     zipEntries: report.zipEntries,
     packageInfo: report.packageInfo

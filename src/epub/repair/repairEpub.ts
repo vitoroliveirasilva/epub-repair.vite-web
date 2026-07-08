@@ -1,9 +1,10 @@
 import type { RepairAction, RepairOptions, RepairResult } from '../model/repairTypes';
 import { loadEpub } from '../reader/loadEpub';
 import { inspectEpub } from '../validation/validateEpub';
-import { DEFAULT_REPAIR_OPTIONS, SYSTEM_FILE_PATTERNS } from '../utils/constants';
+import { DEFAULT_REPAIR_OPTIONS, EPUB_MIME, SYSTEM_FILE_PATTERNS } from '../utils/constants';
 import { makeRepairedFileName } from '../utils/fileName';
 import { normalizeInternalPath } from '../utils/pathUtils';
+import { canOptimizeReport, canRepairReport } from '../utils/reportGuards';
 import { parsePackageDocument } from '../validation/opfParser';
 import { ensureContainerFile } from './repairContainer';
 import { repairContentDocuments } from './repairContentDocuments';
@@ -12,14 +13,39 @@ import { repairKindleCompatibility } from './repairKindleCompatibility';
 import { repairOpfDocument } from './repairOpf';
 import { rebuildEpubZip } from './rebuildEpubZip';
 
+type RepairRunMode = 'repair' | 'optimization';
+
 export async function repairEpub(
   fileName: string,
   bytes: Uint8Array,
   options: RepairOptions = DEFAULT_REPAIR_OPTIONS,
+  mode: RepairRunMode = 'repair',
 ): Promise<RepairResult> {
   const before = await inspectEpub(fileName, bytes);
-  const loaded = await loadEpub(fileName, bytes);
   const warnings: string[] = [];
+
+  const canRunRequiredRepair = canRepairReport(before);
+  const canRunOptionalOptimization = canOptimizeReport(before);
+  const shouldRun = mode === 'optimization' ? canRunOptionalOptimization : canRunRequiredRepair;
+  const operation = mode === 'optimization' ? 'optimization' : 'repair';
+
+  if (!shouldRun) {
+    return {
+      fileName,
+      before,
+      after: before,
+      actions: [],
+      warnings: [
+        mode === 'optimization'
+          ? 'Nenhuma otimização opcional está disponível para aplicação automática.'
+          : 'Nenhuma correção obrigatória foi necessária.',
+      ],
+      changed: false,
+      operation,
+    };
+  }
+
+  const loaded = await loadEpub(fileName, bytes);
 
   if (!loaded.validZip) {
     throw new Error('Não é seguro reparar: o arquivo não pôde ser aberto como ZIP/EPUB válido.');
@@ -32,16 +58,7 @@ export async function repairEpub(
     );
   }
 
-  const actions: RepairAction[] = [
-    ...parsed.issues.map(
-      (issue): RepairAction => ({
-        type: 'skipped' as const,
-        title: issue.title,
-        detail: issue.detail,
-        file: issue.file,
-      }),
-    ),
-  ];
+  const actions: RepairAction[] = [];
   const files = new Map<string, Uint8Array>();
 
   for (const [path, entry] of loaded.files) {
@@ -69,8 +86,8 @@ export async function repairEpub(
     files.set(path, entry.bytes);
   }
 
-  if (options.normalizeMimetype) {
-    files.set('mimetype', new TextEncoder().encode('application/epub+zip'));
+  if (options.normalizeMimetype && shouldNormalizeMimetype(before.issues, files)) {
+    files.set('mimetype', new TextEncoder().encode(EPUB_MIME));
     actions.push({
       type: 'normalized',
       title: 'mimetype normalizado',
@@ -80,44 +97,75 @@ export async function repairEpub(
   }
 
   const opfRepair = repairOpfDocument(loaded, parsed.packageInfo, fileName, options);
-  files.set(parsed.packageInfo.opfPath, new TextEncoder().encode(opfRepair.opfText));
-  for (const [path, text] of opfRepair.filesToAdd) {
-    files.set(path, new TextEncoder().encode(text));
+  if (opfRepair.actions.length > 0 || opfRepair.filesToAdd.size > 0) {
+    files.set(parsed.packageInfo.opfPath, new TextEncoder().encode(opfRepair.opfText));
+    for (const [path, text] of opfRepair.filesToAdd) {
+      files.set(path, new TextEncoder().encode(text));
+    }
+    actions.push(...opfRepair.actions);
   }
-  actions.push(...opfRepair.actions);
 
-  if (options.rebuildContainer) {
+  if (options.rebuildContainer && shouldRebuildContainer(before.issues)) {
     actions.push(ensureContainerFile(files, parsed.packageInfo.opfPath));
   }
 
   if (!options.conservativeMode) {
     actions.push(...repairContentDocuments(files, loaded, parsed.packageInfo, options));
   } else {
-    actions.push({
-      type: 'skipped',
-      title: 'Sanitização de conteúdo ignorada',
-      detail:
-        'O modo conservador está ativo, então XHTML, CSS e imagens foram preservados sempre que possível.',
-    });
+    warnings.push(
+      'O modo conservador está ativo, então XHTML, CSS e imagens foram preservados sempre que possível.',
+    );
   }
 
   actions.push(...repairKindleCompatibility(files, parsed.packageInfo, options));
   actions.push(...(await repairImageCompatibility(files, parsed.packageInfo, options)));
 
-  if (actions.length === 0) {
-    warnings.push('Nenhuma alteração automática foi necessária.');
+  const appliedActions = actions.filter((action) => action.type !== 'skipped');
+  if (appliedActions.length === 0) {
+    return {
+      fileName,
+      before,
+      after: before,
+      actions: [],
+      warnings: [
+        operation === 'optimization'
+          ? 'A otimização opcional foi avaliada, mas nenhuma alteração automática foi aplicada.'
+          : 'Nenhuma alteração automática foi aplicada.',
+      ],
+      changed: false,
+      operation,
+    };
   }
 
   const blob = await rebuildEpubZip(files);
   const afterBytes = new Uint8Array(await blob.arrayBuffer());
-  const after = await inspectEpub(makeRepairedFileName(fileName), afterBytes);
+  const outputFileName = makeRepairedFileName(fileName);
+  const after = await inspectEpub(outputFileName, afterBytes);
 
   return {
     blob,
-    fileName: makeRepairedFileName(fileName),
+    fileName: outputFileName,
     before,
     after,
-    actions,
+    actions: appliedActions,
     warnings,
+    changed: true,
+    operation,
   };
+}
+
+function shouldNormalizeMimetype(
+  issues: { code: string }[],
+  files: Map<string, Uint8Array>,
+): boolean {
+  if (issues.some((issue) => issue.code.startsWith('MIME_'))) return true;
+
+  const mimetype = files.get('mimetype');
+  if (!mimetype) return true;
+
+  return new TextDecoder('utf-8', { fatal: false }).decode(mimetype).trim() !== EPUB_MIME;
+}
+
+function shouldRebuildContainer(issues: { code: string }[]): boolean {
+  return issues.some((issue) => issue.code.startsWith('CONTAINER_'));
 }

@@ -1,0 +1,640 @@
+:root {
+  --content-safe-width: min(var(--container-wide), calc(100% - (var(--page-gutter) * 2)));
+  --content-safe-width-compact: min(var(--container-wide),
+      calc(100% - (var(--page-gutter-compact) * 2)));
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  max-width: 100%;
+}
+
+img,
+svg,
+canvas,
+video,
+iframe {
+  max-width: 100%;
+}
+
+button,
+.btn,
+summary,
+input,
+label {
+  min-width: 0;
+}
+
+.btn {
+  line-height: 1.15;
+  white-space: normal;
+}
+
+.app-header,
+.hero,
+.layout,
+.support-sections,
+.footer {
+  width: var(--content-safe-width);
+}
+
+.app-header {
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+}
+
+.brand-mark,
+.header-actions,
+.header-nav {
+  min-width: 0;
+}
+
+.brand-mark span:last-child,
+.footer-brand span:last-child {
+  overflow-wrap: anywhere;
+}
+
+.header-nav {
+  flex-wrap: wrap;
+  justify-self: center;
+}
+
+.header-actions {
+  justify-self: end;
+}
+
+.hero {
+  justify-items: stretch;
+}
+
+.hero-content,
+.hero-copy {
+  min-width: 0;
+}
+
+.hero h1,
+.hero-copy,
+.controls-copy h2,
+.controls-copy p,
+.section-heading h2,
+.section-heading p,
+.report-heading h2,
+.report-heading p,
+.support-card h2,
+.support-card p {
+  text-wrap: balance;
+}
+
+.hero-preview {
+  justify-self: center;
+  max-width: 100%;
+}
+
+.preview-grid,
+.stats-grid,
+.score-breakdown,
+.repair-delta-grid,
+.flow-steps,
+.cover-action-grid,
+.support-sections {
+  min-width: 0;
+}
+
+.panel,
+.support-card,
+.hero-preview,
+.cover-picker-card,
+.cover-preview-card,
+.simple-issue,
+.issue,
+.action,
+.option-item,
+.file-pill,
+.technical-report-tools {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.workspace,
+.sidebar {
+  width: 100%;
+  max-width: 100%;
+}
+
+.layout {
+  justify-content: center;
+}
+
+.sidebar {
+  justify-self: stretch;
+}
+
+.control-row,
+.primary-action-row,
+.technical-report-actions,
+.cover-action-buttons,
+.hero-actions {
+  min-width: 0;
+}
+
+.primary-action-row {
+  align-items: stretch;
+}
+
+.primary-action-row .btn,
+.control-row .btn,
+.technical-report-actions .btn,
+.cover-action-buttons .btn {
+  min-width: min(100%, 10rem);
+}
+
+.primary-action-row-download {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  align-items: stretch;
+}
+
+.primary-action-row-download .btn-download-ready {
+  width: 100%;
+}
+
+.technical-report-tools summary {
+  position: relative;
+  min-width: 0;
+}
+
+.technical-report-tools summary span,
+.technical-report-tools summary small {
+  min-width: 0;
+}
+
+.score-breakdown {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+}
+
+.score-breakdown-card,
+.stat-card,
+.preview-metric,
+.repair-delta-card {
+  display: grid;
+  align-content: start;
+}
+
+.score-breakdown-card>div,
+.score-bar-label,
+.issue-group summary,
+.issue-title-row,
+.report-heading,
+.section-heading-row {
+  min-width: 0;
+}
+
+.cover-summary,
+.cover-action-grid {
+  align-items: stretch;
+}
+
+.cover-summary-meta {
+  min-width: 0;
+}
+
+.cover-summary-meta code,
+.issue-meta code,
+.cover-preview-card code {
+  max-width: 100%;
+}
+
+.cover-new-preview,
+.cover-preview {
+  justify-self: center;
+}
+
+.option-item {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.issue-meta,
+.cover-summary-meta {
+  align-items: center;
+}
+
+@media (max-width: 1180px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 20.5rem);
+  }
+}
+
+@media (max-width: 1060px) {
+
+  .hero,
+  .layout,
+  .support-sections {
+    justify-items: center;
+  }
+
+  .workspace,
+  .sidebar,
+  .support-card {
+    max-width: 56rem;
+    justify-self: center;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
+  .hero-content {
+    display: grid;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .hero-actions {
+    justify-content: center;
+  }
+
+  .report-heading {
+    align-items: center;
+  }
+}
+
+@media (max-width: 860px) {
+  .app-header {
+    border-radius: var(--radius-xl);
+  }
+
+  .panel,
+  .support-card,
+  .hero-preview {
+    padding: clamp(1.05rem, 4vw, 1.5rem);
+  }
+
+  .workspace,
+  .sidebar,
+  .support-card {
+    max-width: 44rem;
+  }
+
+  .flow-step {
+    align-items: center;
+  }
+
+  .cover-action-grid,
+  .cover-summary {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .cover-picker-card,
+  .cover-preview-card {
+    width: 100%;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .cover-action-buttons,
+  .cover-summary-meta {
+    justify-content: center;
+  }
+
+  .issue,
+  .simple-issue,
+  .action,
+  .option-item {
+    text-align: left;
+  }
+}
+
+@media (max-width: 760px) {
+
+  .app-header,
+  .hero,
+  .layout,
+  .support-sections,
+  .footer {
+    width: var(--content-safe-width-compact);
+  }
+
+  .app-header {
+    top: auto;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    align-items: center;
+  }
+
+  .brand-mark {
+    max-width: 100%;
+  }
+
+  .header-actions {
+    justify-self: end;
+  }
+
+  .hero {
+    padding-top: clamp(2rem, 8vw, var(--space-10));
+  }
+
+  .hero-preview {
+    width: min(100%, 34rem);
+  }
+
+  .report-heading,
+  .section-heading-row {
+    align-items: center;
+    text-align: center;
+  }
+
+  .report-heading>div,
+  .section-heading-row>div {
+    display: grid;
+    width: 100%;
+    justify-items: center;
+  }
+
+  .report-heading .score {
+    margin-inline: auto;
+  }
+
+  .mode-toggle {
+    justify-self: center;
+  }
+
+  .score-bar-label {
+    align-items: center;
+    text-align: center;
+  }
+
+  .primary-action-row,
+  .control-row,
+  .technical-report-actions,
+  .hero-actions,
+  .cover-action-buttons {
+    justify-content: center;
+  }
+
+  .primary-action-row .btn,
+  .control-row .btn,
+  .technical-report-actions .btn,
+  .hero-actions .btn,
+  .cover-action-buttons .btn {
+    flex: 1 1 min(100%, 13rem);
+  }
+
+  .technical-report-tools summary {
+    align-items: center;
+    text-align: left;
+  }
+
+  .footer {
+    align-items: center;
+    text-align: center;
+  }
+
+  .footer p {
+    max-width: 42rem;
+    text-align: center;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 15.75px;
+  }
+
+  .panel,
+  .support-card,
+  .hero-preview {
+    border-radius: var(--radius-lg);
+  }
+
+  .dropzone {
+    min-height: 240px;
+  }
+
+  .file-pill {
+    align-items: center;
+    text-align: center;
+  }
+
+  .status-panel {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .status-icon {
+    margin-top: 0;
+  }
+
+  .empty-state {
+    justify-items: center;
+  }
+
+  .score-breakdown-card>div,
+  .score-bar-label,
+  .issue-group summary,
+  .issue-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .score-breakdown-card>div,
+  .score-bar-label {
+    align-items: center;
+    text-align: center;
+  }
+
+  .score-breakdown-card small {
+    text-align: center;
+  }
+
+  .issue-group summary small {
+    margin-left: 0;
+  }
+
+  .technical-report-tools summary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .technical-report-tools summary::after {
+    position: absolute;
+    right: var(--space-4);
+  }
+
+  .flow-step {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .option-item {
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 560px) {
+  :root {
+    --page-gutter-compact: clamp(0.75rem, 4vw, 1rem);
+  }
+
+  .app-header {
+    padding: var(--space-3);
+  }
+
+  .brand-mark {
+    gap: var(--space-2);
+  }
+
+  .hero-content,
+  .controls-copy,
+  .section-heading,
+  .support-card {
+    text-align: center;
+  }
+
+  .hero-actions,
+  .control-row,
+  .primary-action-row,
+  .technical-report-actions,
+  .cover-action-buttons {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .hero-actions .btn,
+  .control-row .btn,
+  .primary-action-row .btn,
+  .technical-report-actions .btn,
+  .cover-action-buttons .btn {
+    width: 100%;
+  }
+
+  .preview-toolbar strong {
+    max-width: 50%;
+  }
+
+  .preview-grid,
+  .stats-grid,
+  .repair-delta-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .score {
+    width: min(6.7rem, 42vw);
+    height: min(6.7rem, 42vw);
+  }
+
+  .score span {
+    font-size: clamp(1.85rem, 8vw, 2.25rem);
+  }
+
+  .score small {
+    margin-top: -1.2rem;
+  }
+
+  .cover-new-preview,
+  .cover-preview {
+    width: min(9.5rem, 58vw);
+  }
+
+  .action {
+    grid-template-columns: 1fr;
+  }
+
+  .action-dot {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 430px) {
+  h1 {
+    font-size: clamp(2.05rem, 11vw, 2.7rem);
+  }
+
+  h2 {
+    font-size: clamp(1.45rem, 7vw, 1.9rem);
+  }
+
+  .panel,
+  .support-card,
+  .hero-preview {
+    padding: var(--space-4);
+  }
+
+  .preview-grid,
+  .stats-grid,
+  .repair-delta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card,
+  .preview-metric,
+  .repair-delta-card,
+  .score-breakdown-card {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .mode-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .mode-toggle-button {
+    min-width: 0;
+  }
+
+  .cover-summary-meta,
+  .issue-meta {
+    justify-content: center;
+  }
+
+  .issue-title-row,
+  .issue p,
+  .issue-context {
+    padding-left: 0;
+  }
+
+  .issue::before {
+    width: 100%;
+    height: 0.22rem;
+    inset: 0 0 auto;
+  }
+
+  .option-item {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .option-item input {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .app-header {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .header-actions {
+    justify-self: center;
+  }
+
+  .theme-toggle strong {
+    display: inline;
+  }
+
+  .preview-toolbar {
+    justify-content: center;
+  }
+
+  .preview-toolbar strong {
+    display: none;
+  }
+}
