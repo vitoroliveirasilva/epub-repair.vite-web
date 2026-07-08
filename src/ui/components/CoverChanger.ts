@@ -41,7 +41,7 @@ export function renderCoverChanger(
     children: [
       input,
       el('div', {
-        className: 'section-heading',
+        className: 'section-heading cover-action-heading',
         children: [
           el('p', { className: 'eyebrow', text: 'Capa' }),
           el('h2', { text: 'Trocar capa do EPUB' }),
@@ -57,16 +57,21 @@ export function renderCoverChanger(
           el('article', {
             className: 'cover-picker-card',
             children: [
-              el('strong', { text: 'Nova imagem' }),
-              el('p', {
-                className: 'muted',
-                text: hasCoverImage
-                  ? `${state.coverImage!.fileName} • ${formatBytes(state.coverImage!.bytes.length)} • ${state.coverImage!.mediaType}`
-                  : 'Use JPG, JPEG ou PNG. JPEGs são normalizados quando possível para evitar perda opcional de compatibilidade.',
+              el('div', {
+                className: 'cover-picker-content',
+                children: [
+                  el('strong', { text: 'Nova imagem' }),
+                  el('p', {
+                    className: 'muted',
+                    text: hasCoverImage
+                      ? `${state.coverImage!.fileName} • ${formatBytes(state.coverImage!.bytes.length)} • ${state.coverImage!.mediaType}`
+                      : 'Use JPG, JPEG ou PNG. JPEGs são normalizados quando possível para evitar perda opcional de compatibilidade.',
+                  }),
+                  state.coverImage?.normalizationNote
+                    ? el('small', { className: 'muted', text: state.coverImage.normalizationNote })
+                    : undefined,
+                ],
               }),
-              state.coverImage?.normalizationNote
-                ? el('small', { className: 'muted', text: state.coverImage.normalizationNote })
-                : undefined,
               el('div', {
                 className: 'cover-action-buttons',
                 children: [chooseButton, applyButton, clearButton],
@@ -82,34 +87,46 @@ export function renderCoverChanger(
 
 function renderCoverPreviewCard(state: AppState): HTMLElement {
   const previewDataUrl = state.coverImage?.previewDataUrl ?? state.report?.cover?.previewDataUrl;
-  const title = state.coverImage ? 'Prévia da nova capa' : 'Capa atual detectada';
+  const title = state.coverImage
+    ? 'Prévia da nova capa'
+    : state.payload
+      ? 'Capa atual detectada'
+      : 'Nenhum epub enviado';
   const detail = state.coverImage
-    ? 'Esta imagem será aplicada quando você confirmar.'
-    : (state.report?.cover?.path ?? 'Nenhuma capa atual detectada com segurança.');
+    ? 'Esta imagem será aplicada quando você confirmar'
+    : (state.report?.cover?.path ?? 'Nenhuma capa atual detectada');
 
   return el('article', {
-    className: 'cover-preview-card',
+    className: state.coverImage
+      ? 'cover-preview-card cover-preview-card-selected'
+      : 'cover-preview-card',
     children: [
-      previewDataUrl
-        ? el('figure', {
-            className: 'cover-new-preview',
-            children: [
-              el('img', {
-                attrs: {
-                  src: previewDataUrl,
-                  alt: title,
-                  loading: 'lazy',
-                  decoding: 'async',
-                },
-              }),
-            ],
-          })
-        : el('div', {
-            className: 'cover-new-preview cover-new-preview-empty',
-            attrs: { 'aria-hidden': 'true' },
-            children: [el('span'), el('small', { text: 'Sem prévia' })],
-          }),
       el('div', {
+        className: 'cover-preview-stage',
+        children: [
+          previewDataUrl
+            ? el('figure', {
+                className: 'cover-new-preview',
+                children: [
+                  el('img', {
+                    attrs: {
+                      src: previewDataUrl,
+                      alt: title,
+                      loading: 'lazy',
+                      decoding: 'async',
+                    },
+                  }),
+                ],
+              })
+            : el('div', {
+                className: 'cover-new-preview cover-new-preview-empty',
+                attrs: { 'aria-hidden': 'true' },
+                children: [el('span')],
+              }),
+        ],
+      }),
+      el('div', {
+        className: 'cover-preview-copy',
         children: [el('strong', { text: title }), el('p', { className: 'muted', text: detail })],
       }),
     ],
@@ -117,10 +134,11 @@ function renderCoverPreviewCard(state: AppState): HTMLElement {
 }
 
 function coverDescription(state: AppState): string {
-  if (!state.payload) return 'Envie um EPUB primeiro para liberar a troca de capa.';
-  if (state.coverImage) return 'Confira a prévia e aplique para gerar uma nova cópia do EPUB.';
+  if (!state.payload) return 'Envie um EPUB primeiro para liberar a troca de capa';
+  if (state.coverImage)
+    return 'Confira a prévia centralizada e aplique para gerar uma nova cópia do EPUB';
   if (state.report?.stats.kindleScore === 100) {
-    return 'O EPUB não precisa de correção, mas você ainda pode trocar a capa como alteração intencional.';
+    return 'O EPUB não precisa de correção, mas você ainda pode trocar a capa como alteração intencional';
   }
   return 'A troca de capa é separada do reparo técnico. Ela pode substituir ou adicionar a capa oficial sem rodar correções desnecessárias.';
 }
