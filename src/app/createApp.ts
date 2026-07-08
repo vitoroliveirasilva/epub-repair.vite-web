@@ -313,23 +313,53 @@ function renderSupportSections(): HTMLElement {
 }
 
 function renderFooter(): HTMLElement {
+  const currentYear = new Date().getFullYear();
+
   return el('footer', {
-    className: 'footer',
+    className: 'footer app-footer',
     children: [
       el('div', {
-        className: 'footer-brand',
-        children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })],
-      }),
-      el('p', {
+        className: 'footer-main',
         children: [
-          el('span', {
-            text: 'Ferramenta front-end para diagnóstico, limpeza e reconstrução local de EPUBs',
+          el('div', {
+            className: 'footer-brand-block',
+            children: [
+              el('a', {
+                className: 'footer-brand',
+                attrs: { href: '#top', 'aria-label': 'EPUB Repair, voltar ao início' },
+                children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })],
+              }),
+            ],
           }),
-          el('br'),
-          el('span', { text: 'Não remove DRM e não substitui validações editoriais oficiais' }),
+          el('nav', {
+            className: 'footer-links',
+            attrs: { 'aria-label': 'Link do projeto e do desenvolvedor' },
+            children: [
+              renderFooterLink(
+                'Projeto no GitHub',
+                'https://github.com/vitoroliveirasilva/epub-repair.vite-web',
+                true,
+              ),
+              renderFooterLink('Desenvolvedor', 'https://github.com/vitoroliveirasilva', true),
+            ],
+          }),
+        ],
+      }),
+      el('div', {
+        className: 'footer-bottom',
+        children: [
+          el('span', { text: `© ${currentYear} Vitor Oliveira Silva` }),
+          el('span', { text: 'Feito para leitores, dispositivos de leitura e arquivos EPUB.' }),
         ],
       }),
     ],
+  });
+}
+
+function renderFooterLink(text: string, href: string, external = false): HTMLElement {
+  return el('a', {
+    text,
+    attrs: external ? { href, target: '_blank', rel: 'noreferrer noopener' } : { href },
   });
 }
 

@@ -1515,7 +1515,6 @@ p {
 
 .footer {
   display: flex;
-  justify-content: space-between;
   gap: var(--space-6);
   align-items: center;
   padding: var(--space-8) 0 var(--space-10);
