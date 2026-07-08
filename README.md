@@ -25,7 +25,7 @@ O projeto não possui backend, banco de dados nem integração com APIs externas
 * O modo Kindle Safe neutraliza scripts, handlers inline, `javascript:`, `iframe`, `embed`, `object`, referências remotas e caminhos internos suspeitos quando possível
 * Caminhos internos do ZIP são normalizados e entradas com path traversal, caminhos absolutos ou colisões são sinalizadas
 * A troca de capa é uma operação explícita e separada do reparo técnico, evitando alterações desnecessárias no EPUB
-* Quando não há reparo obrigatório nem alteração solicitada pelo usuário, o app não gera  um EPUB "corrigido" artificialmente nem listaa ações que não aconteceram
+* Quando não há reparo obrigatório nem alteração solicitada pelo usuário, o app não gera um EPUB "corrigido" artificialmente nem lista ações que não aconteceram
 
 ## Principais funcionalidades
 
@@ -132,7 +132,7 @@ Se o EPUB já estiver em bom estado e não houver reparo obrigatório:
 * a troca de capa continua disponível, porque é uma alteração intencional do usuário;
 * otimizações opcionais continuam visíveis, mas não são tratadas como erro.
 
-Esse comportamento evita que o usuário baixe um arquivo aparentemente "corrigido" quando nenhuma correção técnica real de fato fora aplicada.
+Esse comportamento evita que o usuário baixe um arquivo aparentemente "corrigido" quando nenhuma correção técnica real de fato foi aplicada.
 
 ## Experiência de uso
 
