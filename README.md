@@ -12,18 +12,32 @@
 ![Privacy](https://img.shields.io/badge/privacy-local--first-success)
 ![Static Site](https://img.shields.io/badge/deploy-static--site-orange)
 
-Ferramenta **front-end estática** para validar, reparar e reempacotar arquivos `.epub` diretamente no navegador, com foco em aumentar a compatibilidade com fluxos de envio/upload para Kindle.
+Ferramenta **front-end estática** para validar, reparar, trocar capa e reempacotar arquivos `.epub` diretamente no navegador, com o objetivo de aumentar a compatibilidade com fluxos de envio/upload para Kindle e outros e-readers.
 
-O projeto não possui backend, banco de dados nem integração com APIs externas. O EPUB é carregado, analisado, reparado e baixado localmente no navegador do usuário.
+O projeto não possui backend, banco de dados nem integração com APIs externas.  Sendo assim, o EPUB é carregado, analisado, alterado e baixado localmente no navegador do usuário.
 
 ## Privacidade e segurança
 
-* O arquivo EPUB **não é enviado para servidor**.
-* Todo processamento acontece no navegador.
-* O app pode ser hospedado como front-end estático.
-* O modo Kindle Safe neutraliza scripts, handlers inline, `javascript:`, `iframe`, `embed`, `object`, referências remotas e caminhos internos suspeitos quando possível.
-* Caminhos internos do ZIP são normalizados e entradas com path traversal, caminhos absolutos ou colisões são sinalizadas.
-* O arquivo original não é alterado. Sendo assim, o reparo apenas gera uma nova cópia para download.
+* O arquivo EPUB **não é enviado para servidor**
+* Todo processamento acontece no navegador
+* O app pode ser hospedado como front-end estático
+* Toda correção ou troca de capa gera uma nova cópia para download
+* O modo Kindle Safe neutraliza scripts, handlers inline, `javascript:`, `iframe`, `embed`, `object`, referências remotas e caminhos internos suspeitos quando possível
+* Caminhos internos do ZIP são normalizados e entradas com path traversal, caminhos absolutos ou colisões são sinalizadas
+* A troca de capa é uma operação explícita e separada do reparo técnico, evitando alterações desnecessárias no EPUB
+* Quando não há reparo obrigatório nem alteração solicitada pelo usuário, o app não gera  um EPUB "corrigido" artificialmente nem listaa ações que não aconteceram
+
+## Principais funcionalidades
+
+* Validação local de EPUB
+* Reparo técnico seguro para problemas estruturais e de compatibilidade
+* Separação entre **reparos obrigatórios** e **otimizações opcionais**
+* Troca ou adição de capa com imagem enviada pelo usuário
+* Revalidação automática depois de reparos ou troca de capa
+* Relatório simples e relatório técnico
+* Exportação de relatório em TXT e JSON
+* Prévia local da capa detectada quando a imagem é pequena e segura para exibição
+* Modo conservador para reduzir alterações em conteúdo interno
 
 ## O que a validação verifica
 
@@ -50,7 +64,16 @@ O projeto não possui backend, banco de dados nem integração com APIs externas
 
 Os problemas são classificados como `fatal`, `error`, `warning` ou `info`, com código, arquivo afetado, explicação e indicação de reparo automático quando aplicável.
 
-## O que o reparo corrige
+## Reparos obrigatórios e otimizações opcionais
+
+A interface separa correções em dois grupos para evitar confusão:
+
+* **Reparos obrigatórios** são problemas reais que podem afetar a estrutura, segurança, leitura, empacotamento ou compatibilidade básica do EPUB
+* **Otimizações opcionais** são melhorias de compatibilidade que não impedem o uso do arquivo como JPEG progressivo em imagens
+
+Quando o EPUB não possui reparos obrigatórios, o app informa que ele está pronto para uso. Caso existam apenas otimizações opcionais, elas são exibidas separadamente sem tratar o arquivo como quebrado.
+
+## O que o reparo técnico corrige
 
 * Reempacota o EPUB com `mimetype` primeiro, sem compressão e com conteúdo exato
 * Reconstrói `META-INF/container.xml` quando necessário
@@ -70,23 +93,58 @@ Os problemas são classificados como `fatal`, `error`, `warning` ou `info`, com 
 * Normaliza `playOrder` e adiciona ao NCX itens do spine
 * Transforma links externos em texto legível
 * Transforma `kindle:embed:*` em marcador textual seguro
-* Substitui imagens ausentes por marcador visível, como `[Imagem indisponível: nome-da-imagem]`
+* Substitui imagens ausentes por marcador visível, como `[Imagem indisponível: nome-imagem]`
 * Remove scripts, handlers inline, `javascript:`, iframes, embeds e objects no modo seguro
 * Neutraliza referências CSS remotas ou quebradas
 * Normaliza `&nbsp;`, `lang/xml:lang` e meta `Content-Type` em XHTML no modo completo
 * Tenta converter JPEG progressivo para baseline quando o navegador permite
-* Revalida o EPUB depois do reparo e mostra antes/depois
+* Revalida o EPUB depois do reparo e mostra o resultado final
 
-O arquivo gerado preserva o nome original e adiciona apenas o sufixo mínimo `-k`. Ou seja, o nome `Livro.epub` se torna `Livro-k.epub`, por exemplo.
+O arquivo gerado preserva o nome original e adiciona apenas o sufixo mínimo `-k`. Ou seja, `Livro.epub` se torna `Livro-k.epub`.
+
+## Troca ou adição de capa
+
+A troca de capa é uma operação separada do reparo técnico. Dessa forma, ela permite a substituição ou adição da capa oficial do EPUB sem rodar correções desnecessárias.
+
+A funcionalidade:
+
+* aceita imagens JPG, JPEG ou PNG;
+* mostra prévia da imagem selecionada;
+* localiza o OPF a partir de `META-INF/container.xml`;
+* detecta a capa atual por `meta name="cover"`, `properties="cover-image"`, referência de `guide` ou candidatos seguros;
+* substitui a capa existente quando possível, preservando o caminho interno;
+* adiciona uma nova capa quando o EPUB não possui capa oficial segura;
+* atualiza o manifest e o media type da imagem;
+* registra a capa em EPUB 3 com `properties="cover-image"`;
+* mantém compatibilidade EPUB 2 com `meta name="cover"`;
+* revalida o EPUB depois da troca;
+* mostra um resumo específico da operação de capa.
+
+Quando a capa é alterada, o app mostra o EPUB final como pronto para download e informa separadamente se restou alguma otimização opcional de compatibilidade.
+
+## Comportamento quando nada precisa ser corrigido
+
+Se o EPUB já estiver em bom estado e não houver reparo obrigatório:
+
+* o botão de reparo técnico é bloqueado ou exibido como **Sem reparo obrigatório**;
+* o app não gera uma cópia corrigida sem motivo;
+* o relatório não lista ações falsas;
+* a troca de capa continua disponível, porque é uma alteração intencional do usuário;
+* otimizações opcionais continuam visíveis, mas não são tratadas como erro.
+
+Esse comportamento evita que o usuário baixe um arquivo aparentemente "corrigido" quando nenhuma correção técnica real de fato fora aplicada.
 
 ## Experiência de uso
 
-* Fluxo guiado: verificar, corrigir e baixar
-* Prévia visual da capa detectada quando a imagem é pequena e segura para preview local
+* Fluxo guiado: verificar, corrigir ou trocar capa e baixar
+* Mensagens específicas para EPUB com reparos obrigatórios, EPUB pronto para uso e EPUB com otimizações opcionais
+* Prévia visual da capa atual e da nova capa selecionada
 * Relatório simples para leitura rápida
 * Relatório técnico recolhido para investigação de códigos e arquivos afetados
 * Exportação de relatório em TXT e JSON
 * Scores separados para estrutura EPUB, compatibilidade Kindle e segurança
+* Resumo de alterações reais após reparo técnico
+* Resumo específico após troca de capa
 * Modo conservador para reduzir alterações em conteúdo interno
 
 ## Limitações
@@ -97,6 +155,8 @@ O arquivo gerado preserva o nome original e adiciona apenas o sufixo mínimo `-k
 * Não garante aceitação universal em todos os fluxos do Kindle
 * Não substitui o EPUBCheck oficial, pois a proposta é a correção de problemas comuns e o aumento de compatibilidade prática
 * EPUBs extremamente corrompidos ou sem OPF válido podem exigir correção manual
+* A conversão de JPEG progressivo para baseline depende do suporte do navegador
+* A troca de capa não altera direitos autorais nem valida a procedência da imagem escolhida pelo usuário
 
 ## Como rodar localmente
 
@@ -113,7 +173,7 @@ Acesse a URL exibida pelo Vite, normalmente disponível em `http://localhost:517
 npm run build
 ```
 
-O build final será gerado em `dist/` e pode ser publicado em qualquer hospedagem de front-end estático.
+O build final é gerado em `dist/`.
 
 Para testar o build localmente:
 
@@ -132,7 +192,7 @@ npm run build
 
 O repositório possui GitHub Actions para executar automaticamente o mesmo portão de qualidade em pushes e pull requests para `prod`.
 
-Também há fixtures EPUB sintéticas em testes para preservar cenários críticos de compatibilidade como OPF legado, capa não declarada, NCX problemático, XHTML frágil e JPEG progressivo.
+Também há fixtures EPUB sintéticas em testes para preservar cenários críticos de compatibilidade como OPF legado, capa não declarada, NCX problemático, XHTML frágil, JPEG progressivo, ausência de reparos obrigatórios e troca de capa.
 
 ## Estrutura de diretórios
 
@@ -144,16 +204,16 @@ Também há fixtures EPUB sintéticas em testes para preservar cenários crític
 │     └─ ci.yml
 ├─ public/
 ├─ src/
-│  ├─ app/                 # Estado e ações da aplicação
+│  ├─ app/                 # Estado, ações e fluxo principal da aplicação
 │  ├─ epub/
-│  │  ├─ model/            # Tipos de EPUB, OPF, issues e reparo
+│  │  ├─ model/            # Tipos de EPUB, OPF, issues, reparo e troca de capa
 │  │  ├─ reader/           # Leitura ZIP/EPUB e inspeção do diretório central
-│  │  ├─ validation/       # Validadores de OCF, OPF, navegação, HTML e CSS
-│  │  ├─ repair/           # Reparos e reempacotamento do EPUB
+│  │  ├─ validation/       # Validadores de OCF, OPF, navegação, HTML, CSS e compatibilidade
+│  │  ├─ repair/           # Reparos técnicos e reempacotamento do EPUB
 │  │  ├─ sanitize/         # Sanitização segura de HTML/XHTML e CSS
 │  │  └─ utils/            # Caminhos, XML, media types, relatório e nomes
-│  ├─ ui/                  # Componentes e helpers de interface
-│  └─ styles/              # CSS principal
+│  ├─ ui/                  # Componentes, mensagens, relatórios e helpers de interface
+│  └─ styles/              # CSS principal, UX do relatório e responsividade
 ├─ tests/
 │  ├─ helpers/             # Fixtures sintéticas reutilizáveis
 │  └─ *.test.ts            # Testes unitários das funções críticas
