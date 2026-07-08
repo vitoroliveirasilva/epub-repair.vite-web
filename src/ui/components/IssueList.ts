@@ -1,5 +1,11 @@
 import type { ReportViewMode } from '../../app/state';
-import type { Issue, ValidationReport } from '../../epub';
+import {
+  getOptionalOptimizationCount,
+  isOptionalOptimizationIssue,
+  isRequiredRepairableIssue,
+  type Issue,
+  type ValidationReport,
+} from '../../epub';
 import { el } from '../dom';
 import { explainIssue } from '../issueExplanations';
 
@@ -131,7 +137,13 @@ function simpleSummary(report: ValidationReport): string {
   if (report.stats.errorCount > 0 || report.stats.warningCount > 0) {
     return 'Há pontos que podem afetar Kindle ou outros leitores. O reparo automático tenta corrigir somente alterações seguras.';
   }
-  return 'Não há problemas graves. As informações restantes são alertas técnicos de compatibilidade ou melhoria.';
+
+  const optionalOptimizationCount = getOptionalOptimizationCount(report);
+  if (optionalOptimizationCount > 0) {
+    return `Não há correções obrigatórias. Há somente ${formatCount(optionalOptimizationCount, 'otimização opcional', 'otimizações opcionais')} de compatibilidade.`;
+  }
+
+  return 'Nenhum problema grave encontrado. As informações restantes são apenas notas técnicas.';
 }
 
 function renderSimpleIssue(issue: Issue): HTMLElement {
@@ -149,15 +161,27 @@ function renderSimpleIssue(issue: Issue): HTMLElement {
       el('p', { text: explanation.message }),
       el('small', {
         className: 'muted',
-        text: issue.repairable
-          ? 'O reparo automático pode tentar resolver'
-          : 'Pode exigir revisão manual',
+        text: simpleIssueFooter(issue),
       }),
     ],
   });
 }
 
+function simpleIssueFooter(issue: Issue): string {
+  if (isOptionalOptimizationIssue(issue)) {
+    return 'Use o botão de otimização opcional para tentar aplicar este ajuste';
+  }
+  if (isRequiredRepairableIssue(issue)) return 'O reparo automático pode tentar resolver';
+  return 'Pode exigir revisão manual';
+}
+
 function renderIssue(issue: Issue): HTMLElement {
+  const repairBadgeText = isOptionalOptimizationIssue(issue)
+    ? 'opcional'
+    : isRequiredRepairableIssue(issue)
+      ? 'corrigível'
+      : 'manual';
+
   return el('article', {
     className: `issue issue-${issue.severity}`,
     children: [
@@ -166,8 +190,9 @@ function renderIssue(issue: Issue): HTMLElement {
         children: [
           el('strong', { text: issue.title }),
           el('span', {
-            className: issue.repairable ? 'badge badge-repairable' : 'badge badge-manual',
-            text: issue.repairable ? 'corrigível' : 'manual',
+            className:
+              repairBadgeText === 'manual' ? 'badge badge-manual' : 'badge badge-repairable',
+            text: repairBadgeText,
           }),
         ],
       }),
@@ -188,6 +213,10 @@ function renderIssue(issue: Issue): HTMLElement {
         : undefined,
     ],
   });
+}
+
+function formatCount(count: number, singular: string, plural: string): string {
+  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 function groupBySeverity(issues: Issue[]): Array<[Issue['severity'], Issue[]]> {
