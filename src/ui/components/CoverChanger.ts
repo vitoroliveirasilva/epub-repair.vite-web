@@ -62,8 +62,11 @@ export function renderCoverChanger(
                 className: 'muted',
                 text: hasCoverImage
                   ? `${state.coverImage!.fileName} • ${formatBytes(state.coverImage!.bytes.length)} • ${state.coverImage!.mediaType}`
-                  : 'Use JPG, JPEG ou PNG. A imagem será inserida localmente no EPUB e registrada no OPF.',
+                  : 'Use JPG, JPEG ou PNG. JPEGs são normalizados quando possível para evitar perda opcional de compatibilidade.',
               }),
+              state.coverImage?.normalizationNote
+                ? el('small', { className: 'muted', text: state.coverImage.normalizationNote })
+                : undefined,
               el('div', {
                 className: 'cover-action-buttons',
                 children: [chooseButton, applyButton, clearButton],
@@ -82,7 +85,7 @@ function renderCoverPreviewCard(state: AppState): HTMLElement {
   const title = state.coverImage ? 'Prévia da nova capa' : 'Capa atual detectada';
   const detail = state.coverImage
     ? 'Esta imagem será aplicada quando você confirmar.'
-    : state.report?.cover?.path ?? 'Nenhuma capa atual detectada com segurança.';
+    : (state.report?.cover?.path ?? 'Nenhuma capa atual detectada com segurança.');
 
   return el('article', {
     className: 'cover-preview-card',

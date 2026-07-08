@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { ValidationReport } from '../src/epub';
-import { canRepairReport, hasRepairableIssues } from '../src/epub';
+import {
+  canRepairReport,
+  getOptionalOptimizationCount,
+  getRequiredRepairableCount,
+  hasOptionalOptimizations,
+  hasRepairableIssues,
+} from '../src/epub';
 
 function report(overrides: Partial<ValidationReport>): ValidationReport {
   return {
@@ -31,6 +37,9 @@ describe('reportGuards', () => {
     const cleanReport = report({});
 
     expect(hasRepairableIssues(cleanReport)).toBe(false);
+    expect(hasOptionalOptimizations(cleanReport)).toBe(false);
+    expect(getRequiredRepairableCount(cleanReport)).toBe(0);
+    expect(getOptionalOptimizationCount(cleanReport)).toBe(0);
     expect(canRepairReport(cleanReport)).toBe(false);
   });
 
@@ -62,7 +71,44 @@ describe('reportGuards', () => {
     });
 
     expect(hasRepairableIssues(repairableReport)).toBe(true);
+    expect(hasOptionalOptimizations(repairableReport)).toBe(false);
+    expect(getRequiredRepairableCount(repairableReport)).toBe(1);
+    expect(getOptionalOptimizationCount(repairableReport)).toBe(0);
     expect(canRepairReport(repairableReport)).toBe(true);
+  });
+
+  it('trata informação corrigível como otimização opcional, não como reparo obrigatório', () => {
+    const optionalReport = report({
+      issues: [
+        {
+          id: 'progressive-jpeg',
+          code: 'IMAGE_PROGRESSIVE_JPEG',
+          severity: 'info',
+          title: 'Há JPEG progressivo no pacote.',
+          detail: 'Alguns conversores antigos preferem JPEG baseline.',
+          repairable: true,
+          file: 'OEBPS/Images/capa.jpg',
+        },
+      ],
+      stats: {
+        totalFiles: 1,
+        fatalCount: 0,
+        errorCount: 0,
+        warningCount: 0,
+        infoCount: 1,
+        repairableCount: 1,
+        kindleScore: 99,
+        structureScore: 100,
+        compatibilityScore: 99,
+        securityScore: 100,
+      },
+    });
+
+    expect(hasRepairableIssues(optionalReport)).toBe(false);
+    expect(hasOptionalOptimizations(optionalReport)).toBe(true);
+    expect(getRequiredRepairableCount(optionalReport)).toBe(0);
+    expect(getOptionalOptimizationCount(optionalReport)).toBe(1);
+    expect(canRepairReport(optionalReport)).toBe(false);
   });
 
   it('não libera reparo quando só existe informação não corrigível', () => {
@@ -79,6 +125,8 @@ describe('reportGuards', () => {
       ],
     });
 
+    expect(hasRepairableIssues(infoReport)).toBe(false);
+    expect(hasOptionalOptimizations(infoReport)).toBe(false);
     expect(canRepairReport(infoReport)).toBe(false);
   });
 });

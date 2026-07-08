@@ -1,4 +1,8 @@
-import type { RepairResult } from '../../epub';
+import {
+  getOptionalOptimizationCount,
+  getRequiredRepairableCount,
+  type RepairResult,
+} from '../../epub';
 import { el } from '../dom';
 
 export function renderRepairSummary(result: RepairResult): HTMLElement {
@@ -21,25 +25,27 @@ export function renderRepairSummary(result: RepairResult): HTMLElement {
         }),
       ],
     }),
-    el('div', {
-      className: 'repair-delta-grid',
-      children: [
-        renderDeltaCard(
-          'Antes',
-          before.kindleScore,
-          before.fatalCount,
-          before.errorCount,
-          before.warningCount,
-        ),
-        renderDeltaCard(
-          'Depois',
-          after.kindleScore,
-          after.fatalCount,
-          after.errorCount,
-          after.warningCount,
-        ),
-      ],
-    }),
+    isCoverReplacement
+      ? renderCoverResultGrid(result)
+      : el('div', {
+          className: 'repair-delta-grid',
+          children: [
+            renderDeltaCard(
+              'Antes',
+              before.kindleScore,
+              before.fatalCount,
+              before.errorCount,
+              before.warningCount,
+            ),
+            renderDeltaCard(
+              'Depois',
+              after.kindleScore,
+              after.fatalCount,
+              after.errorCount,
+              after.warningCount,
+            ),
+          ],
+        }),
   );
 
   for (const warning of result.warnings) {
@@ -71,6 +77,48 @@ export function renderRepairSummary(result: RepairResult): HTMLElement {
   }
   root.append(list);
   return root;
+}
+
+function renderCoverResultGrid(result: RepairResult): HTMLElement {
+  const after = result.after.stats;
+  const requiredRepairableCount = getRequiredRepairableCount(result.after);
+  const optionalOptimizationCount = getOptionalOptimizationCount(result.after);
+
+  return el('div', {
+    className: 'repair-delta-grid',
+    children: [
+      renderMetricCard(
+        'Validação final',
+        `${after.kindleScore}/100`,
+        `${after.fatalCount} fatais • ${after.errorCount} erros • ${after.warningCount} avisos`,
+      ),
+      renderMetricCard(
+        'Reparos obrigatórios',
+        String(requiredRepairableCount),
+        requiredRepairableCount > 0
+          ? 'Ainda há correções técnicas disponíveis'
+          : 'Nenhum reparo obrigatório pendente',
+      ),
+      renderMetricCard(
+        'Otimizações opcionais',
+        String(optionalOptimizationCount),
+        optionalOptimizationCount > 0
+          ? 'Melhorias de compatibilidade ainda disponíveis'
+          : 'Nenhuma otimização opcional pendente',
+      ),
+    ],
+  });
+}
+
+function renderMetricCard(label: string, value: string, detail: string): HTMLElement {
+  return el('div', {
+    className: 'repair-delta-card',
+    children: [
+      el('small', { text: label }),
+      el('strong', { text: value }),
+      el('span', { text: detail }),
+    ],
+  });
 }
 
 function renderDeltaCard(

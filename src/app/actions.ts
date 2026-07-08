@@ -1,5 +1,6 @@
 import {
   canRepairReport,
+  hasOptionalOptimizations,
   inspectEpub,
   MAX_FILE_SIZE_BYTES,
   readCoverImageFile,
@@ -41,7 +42,7 @@ export async function analyzeCurrentFile(state: AppState): Promise<void> {
     state.repairResult = undefined;
     state.message = canRepairReport(state.report)
       ? 'Análise concluída no navegador.'
-      : 'Seu EPUB já está pronto, nenhuma correção é necessária.';
+      : readyWithoutRequiredRepairMessage(state.report);
   } finally {
     state.busy = false;
   }
@@ -58,7 +59,7 @@ export async function repairCurrentFile(state: AppState): Promise<void> {
 
     if (!canRepairReport(currentReport)) {
       state.repairResult = undefined;
-      state.message = 'Seu EPUB já está pronto, nenhuma correção é necessária.';
+      state.message = readyWithoutRequiredRepairMessage(currentReport);
       return;
     }
 
@@ -66,7 +67,7 @@ export async function repairCurrentFile(state: AppState): Promise<void> {
     if (!result.changed || !result.blob) {
       state.repairResult = undefined;
       state.report = result.after;
-      state.message = 'Nenhuma correção foi necessária.';
+      state.message = 'Nenhuma correção obrigatória foi necessária.';
       return;
     }
 
@@ -121,4 +122,12 @@ export async function applyCoverReplacementToCurrentFile(state: AppState): Promi
   } finally {
     state.busy = false;
   }
+}
+
+function readyWithoutRequiredRepairMessage(report: NonNullable<AppState['report']>): string {
+  if (hasOptionalOptimizations(report)) {
+    return 'Análise concluída: não há correções obrigatórias. Há apenas melhorias opcionais de compatibilidade.';
+  }
+
+  return 'Seu EPUB já está pronto, nenhuma correção é necessária.';
 }

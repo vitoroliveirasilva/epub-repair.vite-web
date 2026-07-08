@@ -2,7 +2,15 @@ export { inspectEpub } from './validation/validateEpub';
 export { repairEpub } from './repair/repairEpub';
 export { replaceEpubCover } from './cover/replaceCover';
 export { readCoverImageFile, MAX_COVER_IMAGE_SIZE_BYTES } from './cover/coverImageInput';
-export { canRepairReport, hasRepairableIssues } from './utils/reportGuards';
+export {
+  canRepairReport,
+  getOptionalOptimizationCount,
+  getRequiredRepairableCount,
+  hasOptionalOptimizations,
+  hasRepairableIssues,
+  isOptionalOptimizationIssue,
+  isRequiredRepairableIssue,
+} from './utils/reportGuards';
 export { DEFAULT_REPAIR_OPTIONS, MAX_FILE_SIZE_BYTES } from './utils/constants';
 export { makeRepairedFileName } from './utils/fileName';
 export type {

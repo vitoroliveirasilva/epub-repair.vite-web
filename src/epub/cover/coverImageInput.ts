@@ -5,9 +5,13 @@ export interface CoverImageInput {
   bytes: Uint8Array;
   mediaType: SupportedCoverMediaType;
   previewDataUrl: string;
+  normalized?: boolean | undefined;
+  normalizationNote?: string | undefined;
 }
 
 export const MAX_COVER_IMAGE_SIZE_BYTES = 15 * 1024 * 1024;
+
+const JPEG_REENCODE_QUALITY = 0.92;
 
 export async function readCoverImageFile(file: File): Promise<CoverImageInput> {
   if (file.size <= 0) {
@@ -27,11 +31,23 @@ export async function readCoverImageFile(file: File): Promise<CoverImageInput> {
     throw new Error('Formato de capa não suportado, use uma imagem JPG, JPEG ou PNG.');
   }
 
+  const normalizedBytes =
+    mediaType === 'image/jpeg' ? await normalizeJpegForEpub(bytes) : undefined;
+  const finalBytes =
+    normalizedBytes && normalizedBytes.length <= MAX_COVER_IMAGE_SIZE_BYTES
+      ? normalizedBytes
+      : bytes;
+  const normalized = finalBytes !== bytes;
+
   return {
     fileName: sanitizeCoverFileName(file.name, mediaType),
-    bytes,
+    bytes: finalBytes,
     mediaType,
-    previewDataUrl: `data:${mediaType};base64,${uint8ArrayToBase64(bytes)}`,
+    previewDataUrl: `data:${mediaType};base64,${uint8ArrayToBase64(finalBytes)}`,
+    normalized,
+    normalizationNote: normalized
+      ? 'JPEG normalizado para aumentar compatibilidade com leitores antigos.'
+      : undefined,
   };
 }
 
@@ -67,6 +83,35 @@ function hasPngSignature(bytes: Uint8Array): boolean {
     bytes[6] === 0x1a &&
     bytes[7] === 0x0a
   );
+}
+
+async function normalizeJpegForEpub(bytes: Uint8Array): Promise<Uint8Array | undefined> {
+  if (typeof createImageBitmap !== 'function' || typeof document === 'undefined') return undefined;
+
+  let bitmap: ImageBitmap | undefined;
+  try {
+    bitmap = await createImageBitmap(new Blob([new Uint8Array(bytes)], { type: 'image/jpeg' }));
+    if (bitmap.width <= 0 || bitmap.height <= 0) return undefined;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+
+    const context = canvas.getContext('2d', { alpha: false });
+    if (!context) return undefined;
+
+    context.drawImage(bitmap, 0, 0);
+    const blob = await new Promise<Blob | undefined>((resolve) => {
+      canvas.toBlob((value) => resolve(value ?? undefined), 'image/jpeg', JPEG_REENCODE_QUALITY);
+    });
+
+    if (!blob || blob.size <= 0) return undefined;
+    return new Uint8Array(await blob.arrayBuffer());
+  } catch {
+    return undefined;
+  } finally {
+    bitmap?.close();
+  }
 }
 
 function sanitizeCoverFileName(fileName: string, mediaType: SupportedCoverMediaType): string {

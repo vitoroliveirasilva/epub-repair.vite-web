@@ -14,7 +14,7 @@ import {
   relativePath,
   resolveFromDir,
 } from '../utils/pathUtils';
-import { canRepairReport } from '../utils/reportGuards';
+import { canRepairReport, getOptionalOptimizationCount } from '../utils/reportGuards';
 import {
   childElementsByLocalName,
   findFirstByLocalName,
@@ -43,12 +43,16 @@ export async function replaceEpubCover(
   const loaded = await loadEpub(fileName, bytes);
 
   if (!loaded.validZip) {
-    throw new Error('Não é seguro trocar a capa: o arquivo não pôde ser aberto como ZIP/EPUB válido.');
+    throw new Error(
+      'Não é seguro trocar a capa: o arquivo não pôde ser aberto como ZIP/EPUB válido.',
+    );
   }
 
   const parsed = parsePackageDocument(loaded);
   if (!parsed.packageInfo) {
-    throw new Error('Não é seguro trocar a capa: o OPF do EPUB não foi encontrado ou está inválido.');
+    throw new Error(
+      'Não é seguro trocar a capa: o OPF do EPUB não foi encontrado ou está inválido.',
+    );
   }
 
   const opfFile = loaded.files.get(parsed.packageInfo.opfPath);
@@ -66,10 +70,17 @@ export async function replaceEpubCover(
   const coverPath = canReplaceInPlace
     ? target!.path
     : makeUniqueCoverPath(files, parsed.packageInfo, coverImage.mediaType);
-  const coverItem = canReplaceInPlace && target?.item
-    ? target.item
-    : createOrFindManifestItem(doc, manifest, parsed.packageInfo, coverPath);
-  const coverId = ensureManifestCoverItem(coverItem, manifest, parsed.packageInfo, coverPath, coverImage);
+  const coverItem =
+    canReplaceInPlace && target?.item
+      ? target.item
+      : createOrFindManifestItem(doc, manifest, parsed.packageInfo, coverPath);
+  const coverId = ensureManifestCoverItem(
+    coverItem,
+    manifest,
+    parsed.packageInfo,
+    coverPath,
+    coverImage,
+  );
 
   ensureCoverMeta(doc, metadata, coverId);
   ensureSingleCoverImageProperty(manifest, coverItem);
@@ -93,13 +104,11 @@ export async function replaceEpubCover(
       file: parsed.packageInfo.opfPath,
     },
   ];
-  const warnings = canRepairReport(before)
-    ? ['A capa foi alterada sem executar as demais correções técnicas do EPUB.']
-    : ['Nenhum reparo técnico era necessário; apenas a capa foi alterada.'];
   const blob = await rebuildEpubZip(files);
   const afterBytes = new Uint8Array(await blob.arrayBuffer());
   const outputFileName = makeRepairedFileName(fileName, '-capa');
   const after = await inspectEpub(outputFileName, afterBytes);
+  const warnings = buildCoverReplacementWarnings(before, after);
 
   return {
     blob,
@@ -111,6 +120,38 @@ export async function replaceEpubCover(
     changed: true,
     operation: 'cover-replacement',
   };
+}
+
+function buildCoverReplacementWarnings(
+  before: Awaited<ReturnType<typeof inspectEpub>>,
+  after: Awaited<ReturnType<typeof inspectEpub>>,
+): string[] {
+  const warnings: string[] = [];
+
+  if (canRepairReport(before)) {
+    warnings.push('A capa foi alterada sem executar as demais correções técnicas do EPUB.');
+  } else {
+    warnings.push('Nenhum reparo foi necessário, somente a capa foi alterada.');
+  }
+
+  const optionalAfter = getOptionalOptimizationCount(after);
+  if (optionalAfter > 0) {
+    warnings.push(
+      `A validação final ainda mostra ${formatCount(optionalAfter, 'melhoria opcional', 'melhorias opcionais')} de compatibilidade. Isso não bloqueia o EPUB.`,
+    );
+  }
+
+  if (after.stats.kindleScore < before.stats.kindleScore) {
+    warnings.push(
+      'A nova capa foi aplicada, mas a validação final ficou com score menor por uma otimização opcional da imagem enviada.',
+    );
+  }
+
+  return Array.from(new Set(warnings));
+}
+
+function formatCount(count: number, singular: string, plural: string): string {
+  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 function cloneLoadedFiles(loaded: LoadedEpub): Map<string, Uint8Array> {
@@ -186,7 +227,8 @@ function findGuideCoverTarget(
 
     const resolved = resolveFromDir(pkg.opfDir, href);
     const mediaType = guessMediaType(resolved.path);
-    if (!resolved.safe || !files.has(resolved.path) || !isSupportedCoverMediaType(mediaType)) continue;
+    if (!resolved.safe || !files.has(resolved.path) || !isSupportedCoverMediaType(mediaType))
+      continue;
 
     return {
       path: resolved.path,
@@ -206,7 +248,9 @@ function findFilenameCoverCandidate(
 ): CoverTarget | undefined {
   const candidates = Array.from(files.keys())
     .filter((path) => isSupportedCoverMediaType(guessMediaType(path)))
-    .filter((path) => /(^|[-_.\s/])(?:cover|capa|frontcover|titlepage|folder)(?:[-_.\s]|$)/iu.test(basename(path)))
+    .filter((path) =>
+      /(^|[-_.\s/])(?:cover|capa|frontcover|titlepage|folder)(?:[-_.\s]|$)/iu.test(basename(path)),
+    )
     .sort((a, b) => coverCandidateScore(a) - coverCandidateScore(b));
   const path = candidates[0];
   if (!path) return undefined;
@@ -245,7 +289,11 @@ function createOrFindManifestItem(
   pkg: PackageDocumentInfo,
   coverPath: string,
 ): Element {
-  const existing = findManifestItemByPath(childElementsByLocalName(manifest, 'item'), pkg, coverPath);
+  const existing = findManifestItemByPath(
+    childElementsByLocalName(manifest, 'item'),
+    pkg,
+    coverPath,
+  );
   if (existing) return existing;
 
   const item = doc.createElementNS(OPF_NS, 'item');
@@ -304,7 +352,9 @@ function addTokenAttribute(element: Element, attribute: string, token: string): 
 }
 
 function removeTokenAttribute(element: Element, attribute: string, token: string): void {
-  const tokens = (getAttr(element, attribute) ?? '').split(/\s+/u).filter((value) => value && value !== token);
+  const tokens = (getAttr(element, attribute) ?? '')
+    .split(/\s+/u)
+    .filter((value) => value && value !== token);
   if (tokens.length > 0) {
     element.setAttribute(attribute, tokens.join(' '));
   } else {

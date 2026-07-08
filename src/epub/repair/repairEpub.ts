@@ -27,7 +27,7 @@ export async function repairEpub(
       before,
       after: before,
       actions: [],
-      warnings: ['Nenhuma correção foi necessária'],
+      warnings: ['Nenhuma correção obrigatória foi necessária'],
       changed: false,
       operation: 'repair',
     };
