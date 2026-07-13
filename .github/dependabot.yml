@@ -16,9 +16,19 @@ updates:
           - vite
           - vitest
           - eslint
+        update-types:
+          - minor
+          - patch
       epub-runtime:
         patterns:
           - jszip
+        update-types:
+          - minor
+          - patch
+    ignore:
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: /
