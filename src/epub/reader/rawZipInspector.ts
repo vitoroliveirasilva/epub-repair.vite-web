@@ -1,6 +1,12 @@
 import type { ZipEntryInfo } from '../model/epubTypes';
 import type { Issue } from '../model/issueTypes';
 import { createIssue } from '../utils/issueFactory';
+import {
+  MAX_ZIP_COMPRESSION_RATIO,
+  MAX_ZIP_ENTRIES,
+  MAX_ZIP_ENTRY_BYTES,
+  MAX_ZIP_UNCOMPRESSED_BYTES,
+} from '../utils/constants';
 import { normalizeInternalPath } from '../utils/pathUtils';
 
 function readUInt16LE(bytes: Uint8Array, offset: number): number {
@@ -60,12 +66,42 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
   }
 
   const totalEntries = readUInt16LE(bytes, eocdOffset + 10);
+  const diskNumber = readUInt16LE(bytes, eocdOffset + 4);
+  const centralDisk = readUInt16LE(bytes, eocdOffset + 6);
+  const centralDirSize = readUInt32LE(bytes, eocdOffset + 12);
   const centralDirOffset = readUInt32LE(bytes, eocdOffset + 16);
+  const centralDirEnd = centralDirOffset + centralDirSize;
+
+  if (
+    diskNumber !== 0 ||
+    centralDisk !== 0 ||
+    totalEntries === 0xffff ||
+    centralDirSize === 0xffffffff ||
+    centralDirOffset === 0xffffffff ||
+    totalEntries > MAX_ZIP_ENTRIES ||
+    centralDirEnd > eocdOffset ||
+    centralDirOffset < 0
+  ) {
+    return {
+      entries,
+      issues: [
+        createIssue({
+          code: 'ZIP_RESOURCE_LIMIT',
+          severity: 'fatal',
+          title: 'ZIP excede limites seguros ou usa formato não suportado',
+          detail: 'Arquivo multipartes, ZIP64, excesso de entradas ou diretório central inconsistente.',
+          repairable: false,
+        }),
+      ],
+    };
+  }
+
   let cursor = centralDirOffset;
+  let totalUncompressed = 0;
   const seen = new Map<string, number>();
 
   for (let index = 0; index < totalEntries; index += 1) {
-    if (cursor + 46 > bytes.length || readUInt32LE(bytes, cursor) !== 0x02014b50) {
+    if (cursor + 46 > centralDirEnd || readUInt32LE(bytes, cursor) !== 0x02014b50) {
       issues.push(
         createIssue({
           code: 'ZIP_INVALID',
@@ -88,10 +124,33 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
     const localHeaderOffset = readUInt32LE(bytes, cursor + 42);
     const fileNameStart = cursor + 46;
     const fileNameEnd = fileNameStart + fileNameLength;
+    const nextCursor = fileNameEnd + extraLength + commentLength;
+    const localNameLength =
+      localHeaderOffset + 30 <= centralDirOffset
+        ? readUInt16LE(bytes, localHeaderOffset + 26)
+        : 0;
+    const localExtra = getLocalHeaderExtraLength(bytes, localHeaderOffset);
+    if (
+      nextCursor > centralDirEnd ||
+      localHeaderOffset + 30 > centralDirOffset ||
+      readUInt32LE(bytes, localHeaderOffset) !== 0x04034b50 ||
+      localHeaderOffset + 30 + localNameLength + localExtra + compressedSize > centralDirOffset
+    ) {
+      issues.push(
+        createIssue({
+          code: 'ZIP_INVALID',
+          severity: 'fatal',
+          title: 'Offsets ou tamanhos inválidos no ZIP',
+          detail: 'Cabeçalhos locais e metadados do diretório central não são consistentes.',
+          repairable: false,
+        }),
+      );
+      break;
+    }
     const normalized = normalizeInternalPath(
       decodeFileName(bytes.slice(fileNameStart, fileNameEnd)),
     );
-    const localExtraLength = getLocalHeaderExtraLength(bytes, localHeaderOffset);
+    const localExtraLength = localExtra;
     const fileName = normalized.path || normalized.original;
 
     const entry: ZipEntryInfo = {
@@ -106,6 +165,28 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
     };
 
     entries.push(entry);
+
+    if (!entry.isDirectory) {
+      totalUncompressed += uncompressedSize;
+      const ratio = uncompressedSize / Math.max(1, compressedSize);
+      if (
+        uncompressedSize > MAX_ZIP_ENTRY_BYTES ||
+        totalUncompressed > MAX_ZIP_UNCOMPRESSED_BYTES ||
+        (uncompressedSize > 8 * 1024 * 1024 && ratio > MAX_ZIP_COMPRESSION_RATIO)
+      ) {
+        issues.push(
+          createIssue({
+            code: 'ZIP_RESOURCE_LIMIT',
+            severity: 'fatal',
+            title: 'EPUB pode esgotar a memória',
+            detail: 'Os tamanhos ou a taxa de compressão declarados excedem os limites seguros.',
+            repairable: false,
+            file: fileName,
+          }),
+        );
+        break;
+      }
+    }
 
     if (!normalized.safe) {
       issues.push(
@@ -148,7 +229,19 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
       );
     }
 
-    cursor = fileNameEnd + extraLength + commentLength;
+    cursor = nextCursor;
+  }
+
+  if (!issues.some((issue) => issue.severity === 'fatal') && cursor !== centralDirEnd) {
+    issues.push(
+      createIssue({
+        code: 'ZIP_INVALID',
+        severity: 'fatal',
+        title: 'Diretório central com tamanho inconsistente',
+        detail: 'O final das entradas não corresponde aos metadados do arquivo ZIP.',
+        repairable: false,
+      }),
+    );
   }
 
   entries.sort((a, b) => a.localHeaderOffset - b.localHeaderOffset);
@@ -160,7 +253,10 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
 function findEndOfCentralDirectory(bytes: Uint8Array): number {
   const min = Math.max(0, bytes.length - 65557);
   for (let index = bytes.length - 22; index >= min; index -= 1) {
-    if (readUInt32LE(bytes, index) === 0x06054b50) return index;
+    if (
+      readUInt32LE(bytes, index) === 0x06054b50 &&
+      index + 22 + readUInt16LE(bytes, index + 20) === bytes.length
+    ) return index;
   }
   return -1;
 }

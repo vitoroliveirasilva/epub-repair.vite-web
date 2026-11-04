@@ -1,4 +1,5 @@
 import type { RepairAction } from '../model/repairTypes';
+import { sanitizeActiveContentMarkup } from './sanitizeActiveContent';
 import { basename, isRemoteUrl, resolveReference } from '../utils/pathUtils';
 
 export interface SanitizeHtmlResult {
@@ -68,6 +69,19 @@ export function sanitizeHtmlDocument(
 
   output = filterUnsafeSrcset(output, options, actions);
   output = removeBrokenResourceAttributes(output, options, actions);
+
+  // O parser interpreta entidades e namespaces antes de validar atributos,
+  // cobrindo variações que expressões regulares não conseguem reconhecer.
+  const structurallySanitized = sanitizeActiveContentMarkup(output, options.filePath, options);
+  if (structurallySanitized.changed) {
+    output = structurallySanitized.text;
+    actions.push({
+      type: 'updated',
+      title: 'Conteúdo ativo e URLs inseguras neutralizados',
+      detail: 'Elementos e atributos perigosos foram removidos por análise estrutural do documento.',
+      file: options.filePath,
+    });
+  }
 
   return { text: output, changed: output !== text, actions };
 }

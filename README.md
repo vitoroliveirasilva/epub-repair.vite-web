@@ -23,6 +23,10 @@ O projeto não possui backend, banco de dados nem integração com APIs externas
 * O app pode ser hospedado como front-end estático
 * Toda correção ou troca de capa gera uma nova cópia para download
 * O modo Kindle Safe neutraliza scripts, handlers inline, `javascript:`, `iframe`, `embed`, `object`, referências remotas e caminhos internos suspeitos quando possível
+* A leitura dos ZIPs aplica limites a quantidades de entradas, tamanhos descompactados e taxa de compressão; EPUBs que ultrapassem os limites são rejeitados para evitar esgotamento de memória
+* A limpeza de conteúdo ativo utiliza também o parser estrutural do navegador e interrompe reparos que exijam analisar XHTML malformado
+* Capas novas precisam ter assinatura JPEG/PNG válida e dimensões compatíveis
+* Mesmo após essas proteções, a ferramenta não é antivírus nem prova que todo EPUB recebido é seguro; não execute conteúdo extraído de fontes não confiáveis
 * Caminhos internos do ZIP são normalizados e entradas com path traversal, caminhos absolutos ou colisões são sinalizadas
 * A troca de capa é uma operação explícita e separada do reparo técnico, evitando alterações desnecessárias no EPUB
 * Quando não há reparo obrigatório nem alteração solicitada pelo usuário, o app não gera um EPUB "corrigido" artificialmente nem lista ações que não aconteceram

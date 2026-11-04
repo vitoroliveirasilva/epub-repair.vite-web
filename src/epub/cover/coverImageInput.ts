@@ -10,6 +10,7 @@ export interface CoverImageInput {
 }
 
 export const MAX_COVER_IMAGE_SIZE_BYTES = 15 * 1024 * 1024;
+const MAX_COVER_IMAGE_PIXELS = 40_000_000;
 
 const JPEG_REENCODE_QUALITY = 0.92;
 
@@ -25,12 +26,13 @@ export async function readCoverImageFile(file: File): Promise<CoverImageInput> {
   }
 
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const mediaType = detectSupportedCoverMediaType(file, bytes);
+  const mediaType = detectSupportedCoverMediaType(bytes);
 
   if (!mediaType) {
     throw new Error('Formato de capa não suportado, use uma imagem JPG, JPEG ou PNG.');
   }
 
+  await assertValidCoverImage(bytes, mediaType);
   const normalizedBytes =
     mediaType === 'image/jpeg' ? await normalizeJpegForEpub(bytes) : undefined;
   const finalBytes =
@@ -51,20 +53,55 @@ export async function readCoverImageFile(file: File): Promise<CoverImageInput> {
   };
 }
 
-function detectSupportedCoverMediaType(
-  file: File,
-  bytes: Uint8Array,
-): SupportedCoverMediaType | undefined {
+function detectSupportedCoverMediaType(bytes: Uint8Array): SupportedCoverMediaType | undefined {
+  // O nome do arquivo e o tipo informado pelo navegador não são prova do formato.
   if (hasJpegSignature(bytes)) return 'image/jpeg';
   if (hasPngSignature(bytes)) return 'image/png';
-
-  const type = file.type.toLowerCase();
-  const name = file.name.toLowerCase();
-
-  if (type === 'image/jpeg' || /\.jpe?g$/u.test(name)) return 'image/jpeg';
-  if (type === 'image/png' || name.endsWith('.png')) return 'image/png';
-
   return undefined;
+}
+
+async function assertValidCoverImage(
+  bytes: Uint8Array,
+  mediaType: SupportedCoverMediaType,
+): Promise<void> {
+  if (mediaType === 'image/png') {
+    if (
+      bytes.length < 33 ||
+      bytes[12] !== 0x49 || bytes[13] !== 0x48 ||
+      bytes[14] !== 0x44 || bytes[15] !== 0x52
+    ) {
+      throw new Error('PNG inválido: cabeçalho IHDR não encontrado.');
+    }
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const width = view.getUint32(16);
+    const height = view.getUint32(20);
+    if (!validCoverDimensions(width, height)) {
+      throw new Error('Dimensões da capa PNG inválidas ou acima do limite permitido.');
+    }
+  }
+
+  if (typeof createImageBitmap !== 'function') return;
+
+  let bitmap: ImageBitmap | undefined;
+  try {
+    bitmap = await createImageBitmap(new Blob([new Uint8Array(bytes)], { type: mediaType }));
+    if (!validCoverDimensions(bitmap.width, bitmap.height)) {
+      throw new Error('Dimensões da capa inválidas ou excessivas.');
+    }
+  } catch (error) {
+    throw new Error(
+      error instanceof Error && error.message.includes('Dimensões')
+        ? error.message
+        : 'A imagem da capa está corrompida ou não pôde ser decodificada.',
+      { cause: error },
+    );
+  } finally {
+    bitmap?.close();
+  }
+}
+
+function validCoverDimensions(width: number, height: number): boolean {
+  return width > 0 && height > 0 && width * height <= MAX_COVER_IMAGE_PIXELS;
 }
 
 function hasJpegSignature(bytes: Uint8Array): boolean {

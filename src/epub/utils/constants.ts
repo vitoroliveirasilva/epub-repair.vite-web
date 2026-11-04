@@ -2,6 +2,11 @@ import type { RepairOptions } from '../model/repairTypes';
 
 export const EPUB_MIME = 'application/epub+zip';
 export const MAX_FILE_SIZE_BYTES = 250 * 1024 * 1024;
+// Limites conservadores aplicados ANTES da descompactação, inclusive a metadados forjados.
+export const MAX_ZIP_ENTRIES = 10_000;
+export const MAX_ZIP_ENTRY_BYTES = 128 * 1024 * 1024;
+export const MAX_ZIP_UNCOMPRESSED_BYTES = 384 * 1024 * 1024;
+export const MAX_ZIP_COMPRESSION_RATIO = 1_000;
 
 export const SYSTEM_FILE_PATTERNS = [
   /^__MACOSX\//i,
