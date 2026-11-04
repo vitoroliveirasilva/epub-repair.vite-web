@@ -116,6 +116,7 @@ export function shouldRemoveUrl(
   options: Pick<Parameters<typeof sanitizeActiveContentMarkup>[2], 'sanitizeScripts' | 'removeRemoteResourceLinks'>,
 ): boolean {
   // Remove controles e espaços que navegadores ignoram ao interpretar schemes.
+  // eslint-disable-next-line no-control-regex -- rejeita controles que camuflam schemes
   const normalized = url.replace(/[\u0000-\u0020\u007f]/gu, '').toLowerCase();
   if (!normalized) return false;
   const hasScheme = /^[a-z][a-z0-9+.-]*:/iu.test(normalized);

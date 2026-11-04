@@ -82,6 +82,7 @@ export function extname(path: string): string {
 export function isRemoteUrl(value: string): boolean {
   // Bloqueia URLs absolutas, protocol-relative e schemes inesperados,
   // inclusive com espaços/controles usados para ocultar javascript:.
+  // eslint-disable-next-line no-control-regex -- rejeita controles que camuflam schemes
   const normalized = value.trim().replace(/[\u0000-\u0020\u007f]/gu, '');
   return /^(?:[a-z][a-z0-9+.-]*:|\/\/|\\\\)/iu.test(normalized);
 }

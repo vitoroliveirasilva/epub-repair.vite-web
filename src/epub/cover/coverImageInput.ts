@@ -93,6 +93,7 @@ async function assertValidCoverImage(
       error instanceof Error && error.message.includes('Dimensões')
         ? error.message
         : 'A imagem da capa está corrompida ou não pôde ser decodificada.',
+      { cause: error },
     );
   } finally {
     bitmap?.close();

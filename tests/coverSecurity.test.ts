@@ -6,7 +6,7 @@ function coverFile(bytes: Uint8Array, name = 'cover.png'): File {
     name,
     size: bytes.length,
     type: 'image/png',
-    arrayBuffer: async () => new Uint8Array(bytes).buffer,
+    arrayBuffer: () => Promise.resolve(new Uint8Array(bytes).buffer),
   } as File;
 }
 
