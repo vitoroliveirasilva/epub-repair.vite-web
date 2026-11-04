@@ -76,7 +76,7 @@ describe('políticas de URLs e recursos externos', () => {
       '@import url(https://cdn.example/a.css); .x { background: url(j\\61vascript:alert(1)) }',
       new Set(['OEBPS/style.css']),
     );
-    expect(result.text).not.toContain('@import');
+    expect(result.text).toContain('@import url(https://cdn.example/a.css)');
     expect(result.text).toContain('none');
   });
 });

@@ -3,7 +3,13 @@ import type { Issue } from '../model/issueTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import { CSS_MEDIA_TYPES } from '../utils/constants';
 import { createIssue } from '../utils/issueFactory';
-import { isRemoteUrl, resolveReference } from '../utils/pathUtils';
+import {
+  decodeCssEscapes,
+  isInlineFontDataUrl,
+  isRemoteUrl,
+  isSafeRemoteResourceUrl,
+  resolveReference,
+} from '../utils/pathUtils';
 import { extractCssResourceReferences } from './referenceExtractor';
 
 export function validateCssReferences(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
@@ -19,13 +25,16 @@ export function validateCssReferences(loaded: LoadedEpub, pkg: PackageDocumentIn
 
     for (const ref of extractCssResourceReferences(text)) {
       if (!ref.value || ref.value.startsWith('#')) continue;
-      if (isRemoteUrl(ref.value)) {
+      const decodedUrl = decodeCssEscapes(ref.value);
+      if (isRemoteUrl(decodedUrl)) {
+        // Fontes e estilos externos passivos são intencionais e não são problemas.
+        if (isSafeRemoteResourceUrl(decodedUrl) || isInlineFontDataUrl(decodedUrl)) continue;
         issues.push(
           createIssue({
-            code: 'CSS_REMOTE_RESOURCE',
-            severity: 'info',
-            title: 'CSS referencia recurso externo',
-            detail: `O CSS referencia "${ref.raw}". Recursos externos podem falhar offline no Kindle.`,
+            code: 'CSS_UNSAFE_RESOURCE',
+            severity: 'warning',
+            title: 'CSS contém referência potencialmente perigosa',
+            detail: `A referência "${ref.raw}" usa um esquema não permitido para recursos CSS.`,
             file: item.resolvedPath,
             context: ref.attr,
             repairable: true,

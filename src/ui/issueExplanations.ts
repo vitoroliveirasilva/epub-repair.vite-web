@@ -36,11 +36,6 @@ const ISSUE_EXPLANATIONS: Partial<Record<Issue['code'], IssueExplanation>> = {
     message:
       'A ordem de navegação pode ficar estranha no Kindle. O reparo limpa a sequência de playOrder.',
   },
-  NCX_SPINE_MISSING_ITEMS: {
-    title: 'Alguns capítulos não aparecem no sumário legado.',
-    message:
-      'O livro pode abrir normalmente, mas a navegação fica incompleta. O reparo adiciona os itens ausentes quando seguro.',
-  },
   XHTML_NBSP_ENTITY: {
     title: 'Há espaços especiais escritos de forma frágil no XHTML.',
     message:
@@ -65,10 +60,13 @@ const ISSUE_EXPLANATIONS: Partial<Record<Issue['code'], IssueExplanation>> = {
     message:
       'Scripts não são desejáveis em EPUB para leitura. O modo Kindle Safe remove esses trechos quando possível.',
   },
-  CONTENT_REMOTE_RESOURCE: {
-    title: 'O conteúdo depende de recurso remoto.',
-    message:
-      'Recursos externos podem falhar offline e atrapalhar conversores. O reparo remove ou transforma em texto seguro.',
+  CONTENT_UNSAFE_URL: {
+    title: 'O conteúdo contém uma URL potencialmente executável.',
+    message: 'O reparo bloqueia esquemas perigosos, preservando referências externas legítimas.',
+  },
+  CSS_UNSAFE_RESOURCE: {
+    title: 'O CSS contém uma referência potencialmente perigosa.',
+    message: 'O reparo neutraliza URLs executáveis ou indevidas sem remover fontes externas legítimas.',
   },
 };
 

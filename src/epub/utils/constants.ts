@@ -92,6 +92,6 @@ export const DEFAULT_REPAIR_OPTIONS: RepairOptions = {
   generateNavigation: true,
   generateNcx: true,
   sanitizeScripts: true,
-  removeRemoteResourceLinks: true,
+  removeRemoteResourceLinks: false,
   repairCssReferences: true,
 };

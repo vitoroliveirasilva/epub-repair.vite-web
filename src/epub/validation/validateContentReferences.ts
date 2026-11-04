@@ -3,7 +3,12 @@ import type { Issue } from '../model/issueTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import { HTML_MEDIA_TYPES } from '../utils/constants';
 import { createIssue } from '../utils/issueFactory';
-import { isInternalAnchor, isRemoteUrl, resolveReference } from '../utils/pathUtils';
+import {
+  isInternalAnchor,
+  isRemoteUrl,
+  isSafeExternalLinkUrl,
+  resolveReference,
+} from '../utils/pathUtils';
 import { parseXml } from '../utils/xmlUtils';
 import { extractHtmlResourceReferences } from './referenceExtractor';
 
@@ -76,15 +81,16 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
       }
 
       if (isRemoteUrl(ref.value)) {
+        if (isSafeExternalLinkUrl(ref.value)) continue;
         issues.push(
           createIssue({
-            code: 'CONTENT_REMOTE_RESOURCE',
-            severity: 'info',
-            title: 'Referência externa encontrada',
-            detail: `O conteúdo referencia "${ref.raw}". Recursos remotos podem não funcionar offline no Kindle.`,
+            code: 'CONTENT_UNSAFE_URL',
+            severity: 'warning',
+            title: 'Conteúdo contém URL potencialmente perigosa',
+            detail: `A referência "${ref.raw}" usa um esquema não permitido para conteúdos EPUB.`,
             file: item.resolvedPath,
             context: ref.attr,
-            repairable: ref.attr === 'href',
+            repairable: true,
           }),
         );
         continue;

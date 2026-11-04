@@ -22,7 +22,7 @@ O projeto não possui backend, banco de dados nem integração com APIs externas
 * Todo processamento acontece no navegador
 * O app pode ser hospedado como front-end estático
 * Toda correção ou troca de capa gera uma nova cópia para download
-* O modo Kindle Safe neutraliza scripts, handlers inline, `javascript:`, `iframe`, `embed`, `object`, referências remotas e caminhos internos suspeitos quando possível
+* O modo Kindle Safe neutraliza scripts, handlers inline, `javascript:`, `iframe`, `embed`, `object` e caminhos internos suspeitos, preservando URLs HTTPS e fontes externas legítimas por padrão
 * A leitura dos ZIPs aplica limites a quantidades de entradas, tamanhos descompactados e taxa de compressão; EPUBs que ultrapassem os limites são rejeitados para evitar esgotamento de memória
 * A limpeza de conteúdo ativo utiliza também o parser estrutural do navegador e interrompe reparos que exijam analisar XHTML malformado
 * Capas novas precisam ter assinatura JPEG/PNG válida e dimensões compatíveis
@@ -57,7 +57,7 @@ O projeto não possui backend, banco de dados nem integração com APIs externas
 * Imagem de capa declarada, ausente ou apenas detectada como candidata
 * `nav.xhtml` em EPUB 3
 * `toc.ncx` em EPUB 2 ou quando declarado
-* `playOrder` duplicado, fora de ordem ou navegação incompleta em relação ao spine
+* `playOrder` duplicado ou fora de ordem; destinos de navegação inexistentes continuam sendo identificados sem exigir que cada item do spine apareça no índice
 * Referências em HTML/XHTML: imagens, links, `srcset`, `poster`, `data`, `xlink:href` e `kindle:embed:*`
 * XHTML com `&nbsp;`, `lang/xml:lang` vazio ou ausente e meta `Content-Type` suspeita
 * Referências em CSS: `url(...)` e `@import`
@@ -94,12 +94,12 @@ Quando o EPUB não possui reparos obrigatórios, o app informa que ele está pro
 * Preserva `nav.xhtml` e `toc.ncx` válidos
 * Cria `nav.xhtml` apenas quando EPUB 3 precisa e ele está ausente
 * Cria `toc.ncx` para EPUB 2 ou quando ele está declarado e ausente
-* Normaliza `playOrder` e adiciona ao NCX itens do spine
-* Transforma links externos em texto legível
+* Normaliza `playOrder` quando necessário, sem acrescentar automaticamente itens do spine ao NCX
+* Preserva links e fontes externas legítimas por padrão; a remoção de referências externas continua disponível como opção explícita
 * Transforma `kindle:embed:*` em marcador textual seguro
 * Substitui imagens ausentes por marcador visível, como `[Imagem indisponível: nome-imagem]`
 * Remove scripts, handlers inline, `javascript:`, iframes, embeds e objects no modo seguro
-* Neutraliza referências CSS remotas ou quebradas
+* Neutraliza referências CSS perigosas ou quebradas sem eliminar fontes HTTPS, `@import` remoto permitido ou fontes embutidas em `data:font`
 * Normaliza `&nbsp;`, `lang/xml:lang` e meta `Content-Type` em XHTML no modo completo
 * Tenta converter JPEG progressivo para baseline quando o navegador permite
 * Revalida o EPUB depois do reparo e mostra o resultado final
@@ -229,3 +229,8 @@ Os testes adversariais cobrem ZIPs adulterados (incluindo CRC32, offsets, arquiv
 ├─ tsconfig.json
 └─ eslint.config.js
 ```
+### Navegação e fontes externas
+
+Referências passivas `http://` e `https://` (incluindo fontes externas via `@font-face` e `@import`) são preservadas e não reduzem o score de segurança. Fontes `data:font/*;base64` também são mantidas. Isso não garante que um leitor offline consiga carregar recursos externos: preserve as fontes no pacote quando precisar de funcionamento offline.
+
+O índice (`toc.ncx` no EPUB 2 ou `nav.xhtml` no EPUB 3) descreve a navegação editorial, não uma enumeração obrigatória de todos os arquivos do `spine`. O validador ainda identifica destinos quebrados, NCX inválido e `playOrder` inconsistente, mas não insere automaticamente apêndices e páginas auxiliares no índice.

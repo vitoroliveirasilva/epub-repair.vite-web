@@ -61,6 +61,7 @@ export function repairContentDocuments(
         item.resolvedPath,
         decoder.decode(entry.bytes),
         existingFiles,
+        options.removeRemoteResourceLinks,
       );
       if (result.changed) {
         files.set(item.resolvedPath, encoder.encode(result.text));
