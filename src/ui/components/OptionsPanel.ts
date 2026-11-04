@@ -49,10 +49,10 @@ const options: readonly RepairOptionDescriptor[] = [
   ['sanitizeScripts', 'Remover scripts', 'Remove scripts, javascript: e handlers inline.'],
   [
     'removeRemoteResourceLinks',
-    'Links externos viram texto',
-    'Transforma links remotos em texto legível.',
+    'Remover referências externas (opcional)',
+    'Desmarcado por padrão: preserva links, imagens e fontes externas. Marque somente se quiser eliminá-los.',
   ],
-  ['repairCssReferences', 'Corrigir CSS', 'Neutraliza URLs CSS remotas ou quebradas.'],
+  ['repairCssReferences', 'Corrigir CSS', 'Corrige referências ausentes ou perigosas sem remover fontes e estilos externos legítimos.'],
 ];
 
 export function renderOptionsPanel(state: AppState, onChange: () => void): HTMLElement {

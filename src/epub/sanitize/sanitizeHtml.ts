@@ -1,6 +1,11 @@
 import type { RepairAction } from '../model/repairTypes';
 import { sanitizeActiveContentMarkup } from './sanitizeActiveContent';
-import { basename, isRemoteUrl, resolveReference } from '../utils/pathUtils';
+import {
+  basename,
+  isRemoteUrl,
+  isSafeRemoteResourceUrl,
+  resolveReference,
+} from '../utils/pathUtils';
 
 export interface SanitizeHtmlResult {
   text: string;
@@ -177,7 +182,9 @@ function filterUnsafeSrcset(
         .filter((candidate) => {
           const [rawUrl] = candidate.split(/\s+/u);
           if (!rawUrl || rawUrl.startsWith('#') || rawUrl.startsWith('kindle:embed:')) return false;
-          if (isRemoteUrl(rawUrl)) return !options.removeRemoteResourceLinks;
+          if (isRemoteUrl(rawUrl)) {
+            return isSafeRemoteResourceUrl(rawUrl) && !options.removeRemoteResourceLinks;
+          }
           const resolved = resolveReference(options.filePath, rawUrl);
           return resolved.safe && options.existingFiles.has(resolved.path);
         });

@@ -10,7 +10,7 @@ import { DEFAULT_REPAIR_OPTIONS } from '../src/epub/utils/constants';
 import { buildKindleIssueEpub } from './helpers/syntheticEpub';
 
 describe('SVG e XML adversariais dentro de EPUBs', () => {
-  it('detecta e neutraliza SVG com script, evento inline e recurso externo', async () => {
+  it('detecta e neutraliza SVG ativo sem apagar recursos HTTPS legítimos', async () => {
     const zip = await JSZip.loadAsync(await buildKindleIssueEpub());
     const opf = await zip.file('OEBPS/content.opf')!.async('string');
     zip.file(
@@ -41,7 +41,7 @@ describe('SVG e XML adversariais dentro de EPUBs', () => {
     const doc = new DOMParser().parseFromString(updated, 'image/svg+xml');
     expect(doc.getElementsByTagName('script')).toHaveLength(0);
     expect(doc.documentElement.hasAttribute('onload')).toBe(false);
-    expect(doc.getElementsByTagName('image')[0]?.hasAttribute('href')).toBe(false);
+    expect(doc.getElementsByTagName('image')[0]?.getAttribute('href')).toBe('https://evil.invalid/track');
     expect(doc.getElementById('keep')?.textContent).toBe('Conteúdo legítimo');
   });
 

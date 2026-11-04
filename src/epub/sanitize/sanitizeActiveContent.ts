@@ -1,4 +1,10 @@
-import { isRemoteUrl } from '../utils/pathUtils';
+import {
+  decodeCssEscapes,
+  isInlineFontDataUrl,
+  isRemoteUrl,
+  isSafeExternalLinkUrl,
+  isSafeRemoteResourceUrl,
+} from '../utils/pathUtils';
 
 /**
  * Segunda camada de limpeza usando a árvore real do documento.
@@ -55,7 +61,7 @@ export function sanitizeActiveContentMarkup(
       continue;
     }
 
-    if (options.sanitizeScripts && name === 'style' && /@import|url\s*\(|expression\s*\(|behavior\s*:|-moz-binding/iu.test(element.textContent ?? '')) {
+    if (options.sanitizeScripts && name === 'style' && containsDangerousCss(element.textContent ?? '')) {
       element.remove();
       changed = true;
       continue;
@@ -70,7 +76,7 @@ export function sanitizeActiveContentMarkup(
         (options.sanitizeScripts && (attrName.startsWith('on') || attrName === 'srcdoc' ||
           attrName === 'nonce' || attrName === 'formaction' || attrName === 'action')) ||
         (options.sanitizeScripts && attrName === 'style' &&
-          /@import|url\s*\(|expression\s*\(|behavior\s*:|-moz-binding/iu.test(value))
+          containsDangerousCss(value))
       ) {
         element.removeAttributeNode(attribute);
         changed = true;
@@ -115,15 +121,29 @@ export function shouldRemoveUrl(
   url: string,
   options: Pick<Parameters<typeof sanitizeActiveContentMarkup>[2], 'sanitizeScripts' | 'removeRemoteResourceLinks'>,
 ): boolean {
-  // Remove controles e espaços que navegadores ignoram ao interpretar schemes.
-  // eslint-disable-next-line no-control-regex -- rejeita controles que camuflam schemes
+  // eslint-disable-next-line no-control-regex -- controles escondem schemes executáveis
   const normalized = url.replace(/[\u0000-\u0020\u007f]/gu, '').toLowerCase();
   if (!normalized) return false;
-  const hasScheme = /^[a-z][a-z0-9+.-]*:/iu.test(normalized);
-  const isProtocolRelative = normalized.startsWith('//') || normalized.startsWith('\\\\');
-  if (options.removeRemoteResourceLinks && (hasScheme || isProtocolRelative || isRemoteUrl(url))) {
-    return true;
-  }
+  if (isRemoteUrl(normalized) && options.removeRemoteResourceLinks) return true;
   if (!options.sanitizeScripts) return false;
-  return isProtocolRelative || /^(?:javascript|vbscript|data|blob|file|filesystem):/iu.test(normalized);
+  return isRemoteUrl(normalized) && !isSafeExternalLinkUrl(normalized);
+}
+
+/** Usa somente URLs ativas como sinal de risco; fontes e @import HTTPS não são perigosos por si. */
+export function containsDangerousCss(text: string): boolean {
+  if (/expression\s*\(|behavior\s*:|-moz-binding\s*:/iu.test(text)) return true;
+
+  for (const match of text.matchAll(/url\(\s*(["']?)(.*?)\1\s*\)/giu)) {
+    const value = decodeCssEscapes(match[2] ?? '');
+    if (isRemoteUrl(value) && !isSafeRemoteResourceUrl(value) && !isInlineFontDataUrl(value)) {
+      return true;
+    }
+  }
+
+  for (const match of text.matchAll(/@import\s+(?:url\(\s*)?(?:(["'])(.*?)\1|([^"'\s);]+))/giu)) {
+    const value = decodeCssEscapes(match[2] || match[3] || '');
+    if (isRemoteUrl(value) && !isSafeRemoteResourceUrl(value)) return true;
+  }
+
+  return false;
 }

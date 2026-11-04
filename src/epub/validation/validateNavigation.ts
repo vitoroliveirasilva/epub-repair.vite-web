@@ -28,11 +28,13 @@ export function validateNavigation(loaded: LoadedEpub, pkg: PackageDocumentInfo)
       try {
         const text = new TextDecoder('utf-8', { fatal: false }).decode(navFile.bytes);
         const doc = parseXml(text, 'application/xhtml+xml');
-        const hasToc = Array.from(doc.getElementsByTagName('*')).some(
-          (element) =>
-            element.localName === 'nav' &&
-            /(^|\s)toc($|\s)/u.test(element.getAttribute('epub:type') ?? ''),
-        );
+        const hasToc = Array.from(doc.getElementsByTagName('*')).some((element) => {
+          if (element.localName !== 'nav') return false;
+          const navType = element.getAttributeNS('http://www.idpf.org/2007/ops', 'type')
+            ?? element.getAttribute('epub:type')
+            ?? '';
+          return /(^|\s)toc($|\s)/u.test(navType);
+        });
         if (!hasToc) {
           issues.push(
             createIssue({
@@ -104,18 +106,6 @@ export function validateNavigation(loaded: LoadedEpub, pkg: PackageDocumentInfo)
         );
       }
     }
-  } else if (isEpub3) {
-    issues.push(
-      createIssue({
-        code: 'NCX_MISSING',
-        severity: 'info',
-        title: 'NCX legado ausente',
-        detail:
-          'EPUB 3 não exige NCX, mas alguns fluxos antigos ainda lidam melhor quando ele existe.',
-        file: pkg.opfPath,
-        repairable: true,
-      }),
-    );
   }
 
   return issues;

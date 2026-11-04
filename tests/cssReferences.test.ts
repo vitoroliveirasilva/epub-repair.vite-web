@@ -22,13 +22,14 @@ describe('cssReferences', () => {
     expect(result.changed).toBe(true);
   });
 
-  it('remove import CSS remoto ou ausente', () => {
+  it('preserva import CSS HTTPS e remove somente import ausente', () => {
     const result = sanitizeCssDocument(
       'OPS/css/main.css',
       '@import "https://cdn.example/base.css"; @import "missing.css"; body{color:#111}',
       new Set(['OPS/css/main.css']),
     );
-    expect(result.text).not.toContain('@import');
+    expect(result.text).toContain('@import "https://cdn.example/base.css"');
+    expect(result.text).not.toContain('missing.css');
     expect(result.text).toContain('body{color:#111}');
     expect(result.changed).toBe(true);
   });

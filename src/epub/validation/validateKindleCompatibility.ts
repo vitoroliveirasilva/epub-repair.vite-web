@@ -37,7 +37,6 @@ function validateNcxKindleRules(loaded: LoadedEpub, pkg: PackageDocumentInfo): I
   let previousPlayOrder = 0;
   let hasOutOfOrder = false;
   let hasDuplicate = false;
-  const ncxContentPaths = new Set<string>();
   const missingContentTargets: string[] = [];
 
   for (const [index, navPoint] of navPoints.entries()) {
@@ -59,12 +58,12 @@ function validateNcxKindleRules(loaded: LoadedEpub, pkg: PackageDocumentInfo): I
     if (!src) continue;
 
     const resolved = resolveReference(pkg.ncxItem.resolvedPath, src);
-    if (resolved.safe && loaded.files.has(resolved.path)) {
-      ncxContentPaths.add(resolved.path);
-    } else if (missingContentTargets.length < MAX_CONTEXT_ITEMS) {
-      missingContentTargets.push(src);
+    if (!resolved.safe || !loaded.files.has(resolved.path)) {
+      if (missingContentTargets.length < MAX_CONTEXT_ITEMS) {
+        missingContentTargets.push(src);
+      }
     }
-
+    // Caminhos presentes são válidos mesmo quando o TOC cobre apenas seções principais.
     if (index > 10000) break;
   }
 
@@ -111,28 +110,6 @@ function validateNcxKindleRules(loaded: LoadedEpub, pkg: PackageDocumentInfo): I
     );
   }
 
-  const spineHtmlPaths = pkg.spine
-    .map((item) => item.manifestItem)
-    .filter((item): item is NonNullable<typeof item> =>
-      Boolean(item?.exists && HTML_MEDIA_TYPES.has(item.mediaType)),
-    )
-    .map((item) => item.resolvedPath);
-  const missingFromNcx = spineHtmlPaths.filter((path) => !ncxContentPaths.has(path));
-
-  if (spineHtmlPaths.length > 0 && missingFromNcx.length > 0) {
-    issues.push(
-      createIssue({
-        code: 'NCX_SPINE_MISSING_ITEMS',
-        severity: 'info',
-        title: 'toc.ncx não cobre todos os itens do spine',
-        detail:
-          'Há documentos na ordem de leitura que não aparecem no NCX. O livro pode abrir, mas a navegação fica incompleta.',
-        file: pkg.ncxItem.resolvedPath,
-        context: summarizePaths(missingFromNcx),
-        repairable: true,
-      }),
-    );
-  }
 
   return issues;
 }
@@ -251,8 +228,3 @@ function readAttribute(tag: string, name: string): string | undefined {
   return pattern.exec(tag)?.[2]?.trim() || undefined;
 }
 
-function summarizePaths(paths: string[]): string {
-  const visible = paths.slice(0, MAX_CONTEXT_ITEMS);
-  const suffix = paths.length > visible.length ? `, +${paths.length - visible.length}` : '';
-  return `${visible.join(', ')}${suffix}`;
-}

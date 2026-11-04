@@ -145,3 +145,34 @@ export function makeUniqueId(base: string, usedIds: Set<string>): string {
   usedIds.add(candidate);
   return candidate;
 }
+
+
+/**
+ * URLs de rede passivas são referências legítimas de EPUB, inclusive fontes via CSS.
+ * Schemes executáveis (javascript:, file:, data:text/html, etc.) não entram aqui.
+ */
+export function isSafeRemoteResourceUrl(value: string): boolean {
+  const cleaned = value.trim();
+  return /^(?:https?:\/\/|\/\/)/iu.test(cleaned);
+}
+
+export function isSafeExternalLinkUrl(value: string): boolean {
+  return isSafeRemoteResourceUrl(value) || /^(?:mailto:|tel:)/iu.test(value.trim());
+}
+
+/** Fontes embutidas em CSS por data URI não são documentos executáveis. */
+export function isInlineFontDataUrl(value: string): boolean {
+  return /^data:(?:font\/(?:woff2?|ttf|otf|sfnt)|application\/(?:font-woff2?|font-sfnt|x-font-(?:woff|ttf|otf)|vnd\.ms-fontobject));base64,[a-z0-9+/=\s]+$/iu.test(value.trim());
+}
+
+export function decodeCssEscapes(value: string): string {
+  return value.replace(/\\([0-9a-f]{1,6})\s?|\\([^0-9a-f])/giu,
+    (_full, hex: string | undefined, escaped: string | undefined) => {
+      if (hex) {
+        const point = Number.parseInt(hex, 16);
+        return point > 0 && point <= 0x10ffff ? String.fromCodePoint(point) : '';
+      }
+      return escaped ?? '';
+    },
+  );
+}

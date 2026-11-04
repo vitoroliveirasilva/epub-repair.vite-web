@@ -1,5 +1,11 @@
 import type { RepairAction } from '../model/repairTypes';
-import { isRemoteUrl, resolveReference } from '../utils/pathUtils';
+import {
+  decodeCssEscapes,
+  isInlineFontDataUrl,
+  isRemoteUrl,
+  isSafeRemoteResourceUrl,
+  resolveReference,
+} from '../utils/pathUtils';
 
 export interface SanitizeCssResult {
   text: string;
@@ -11,6 +17,7 @@ export function sanitizeCssDocument(
   filePath: string,
   text: string,
   existingFiles: Set<string>,
+  removeRemoteResourceLinks = false,
 ): SanitizeCssResult {
   const actions: RepairAction[] = [];
   let changed = false;
@@ -19,7 +26,7 @@ export function sanitizeCssDocument(
     /@import\s+(?:url\(\s*)?(?:(["'])(.*?)\1|([^"'\s);]+))\s*\)?[^;]*;/giu,
     (full, _quote: string, quotedValue: string, unquotedValue: string) => {
       const rawValue = quotedValue || unquotedValue || '';
-      if (isUnsafeCssReference(filePath, rawValue.trim(), existingFiles)) {
+      if (isUnsafeCssReference(filePath, rawValue.trim(), existingFiles, removeRemoteResourceLinks)) {
         changed = true;
         return '';
       }
@@ -32,7 +39,7 @@ export function sanitizeCssDocument(
     (full, _quote: string, rawValue: string) => {
       const value = rawValue.trim();
       if (!value || value.startsWith('#')) return full;
-      if (isUnsafeCssReference(filePath, value, existingFiles)) {
+      if (isUnsafeCssReference(filePath, value, existingFiles, removeRemoteResourceLinks)) {
         changed = true;
         return 'none';
       }
@@ -43,8 +50,8 @@ export function sanitizeCssDocument(
   if (changed) {
     actions.push({
       type: 'updated',
-      title: 'Referências CSS inseguras neutralizadas',
-      detail: 'URLs remotas ou quebradas em CSS foram substituídas por none.',
+      title: 'Referências CSS inválidas neutralizadas',
+      detail: 'Ajustou URLs inseguras ou arquivos ausentes, preservando fontes e estilos externos legítimos quando permitido.',
       file: filePath,
     });
   }
@@ -56,19 +63,15 @@ function isUnsafeCssReference(
   filePath: string,
   value: string,
   existingFiles: Set<string>,
+  removeRemoteResourceLinks: boolean,
 ): boolean {
   if (!value || value.startsWith('#')) return false;
-  if (isRemoteUrl(decodeCssEscapes(value))) return true;
-  const resolved = resolveReference(filePath, value);
+  const decoded = decodeCssEscapes(value);
+  if (isInlineFontDataUrl(decoded)) return false;
+  if (isRemoteUrl(decoded)) {
+    if (isSafeRemoteResourceUrl(decoded)) return removeRemoteResourceLinks;
+    return true;
+  }
+  const resolved = resolveReference(filePath, decoded);
   return !resolved.safe || !existingFiles.has(resolved.path);
-}
-
-function decodeCssEscapes(value: string): string {
-  return value.replace(/\\([0-9a-f]{1,6})\s?|\\([^0-9a-f])/giu, (_full, hex: string | undefined, escaped: string | undefined) => {
-    if (hex) {
-      const point = Number.parseInt(hex, 16);
-      return point > 0 && point <= 0x10ffff ? String.fromCodePoint(point) : '';
-    }
-    return escaped ?? '';
-  });
 }
