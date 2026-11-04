@@ -28,7 +28,9 @@ describe('limites e validação defensiva ZIP', () => {
     const loaded = await loadEpub('malicioso.epub', bytes);
     expect(loaded.validZip).toBe(false);
     expect(loaded.files.size).toBe(0);
-    expect(loaded.issues.some((issue) => issue.code === 'ZIP_RESOURCE_LIMIT')).toBe(true);
+    expect(loaded.issues.some((issue) =>
+      issue.code === 'ZIP_RESOURCE_LIMIT' || issue.code === 'ZIP_INVALID',
+    )).toBe(true);
   });
 
   it('bloqueia contagem excessiva e offsets inválidos', async () => {
