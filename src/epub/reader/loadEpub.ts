@@ -158,7 +158,11 @@ export async function loadEpub(fileName: string, bytes: Uint8Array): Promise<Loa
  */
 function readZipEntryLimited(entry: JSZip.JSZipObject, maxBytes: number): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
-    const stream = entry.internalStream('uint8array');
+    // JSZip 3.x implementa internalStream em JSZipObject, mas não o expõe na interface pública.
+    // O tipo limitado documenta somente a superfície utilizada pelo leitor por blocos.
+    const stream = (entry as JSZip.JSZipObject & {
+      internalStream(type: 'uint8array'): JSZip.JSZipStreamHelper<Uint8Array>;
+    }).internalStream('uint8array');
     const chunks: Uint8Array[] = [];
     let length = 0;
     let settled = false;

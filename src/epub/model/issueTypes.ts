@@ -2,6 +2,7 @@ export type Severity = 'fatal' | 'error' | 'warning' | 'info' | 'success';
 
 export type IssueCode =
   | 'ZIP_INVALID'
+  | 'ZIP_RESOURCE_LIMIT'
   | 'ZIP_DUPLICATE_ENTRY'
   | 'ZIP_ENCRYPTED_ENTRY'
   | 'ZIP_UNSAFE_PATH'
