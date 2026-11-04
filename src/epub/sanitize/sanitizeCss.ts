@@ -16,8 +16,9 @@ export function sanitizeCssDocument(
   let changed = false;
 
   let output = text.replace(
-    /@import\s+(?:url\(\s*)?(?:["'])([^"']+)(?:["'])\s*\)?[^;]*;/giu,
-    (full, rawValue: string) => {
+    /@import\s+(?:url\(\s*)?(?:(["'])(.*?)\1|([^"'\s);]+))\s*\)?[^;]*;/giu,
+    (full, _quote: string, quotedValue: string, unquotedValue: string) => {
+      const rawValue = quotedValue || unquotedValue || '';
       if (isUnsafeCssReference(filePath, rawValue.trim(), existingFiles)) {
         changed = true;
         return '';
@@ -57,7 +58,17 @@ function isUnsafeCssReference(
   existingFiles: Set<string>,
 ): boolean {
   if (!value || value.startsWith('#')) return false;
-  if (isRemoteUrl(value)) return true;
+  if (isRemoteUrl(decodeCssEscapes(value))) return true;
   const resolved = resolveReference(filePath, value);
   return !resolved.safe || !existingFiles.has(resolved.path);
+}
+
+function decodeCssEscapes(value: string): string {
+  return value.replace(/\\([0-9a-f]{1,6})\s?|\\([^0-9a-f])/giu, (_full, hex: string | undefined, escaped: string | undefined) => {
+    if (hex) {
+      const point = Number.parseInt(hex, 16);
+      return point > 0 && point <= 0x10ffff ? String.fromCodePoint(point) : '';
+    }
+    return escaped ?? '';
+  });
 }
