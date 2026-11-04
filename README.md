@@ -198,6 +198,8 @@ O repositório possui GitHub Actions para executar automaticamente o mesmo port�
 
 Também há fixtures EPUB sintéticas em testes para preservar cenários críticos de compatibilidade como OPF legado, capa não declarada, NCX problemático, XHTML frágil, JPEG progressivo, ausência de reparos obrigatórios e troca de capa.
 
+Os testes adversariais cobrem ZIPs adulterados (incluindo CRC32, offsets, arquivos compactados com expansão suspeita e path traversal), XML com entidades personalizadas, XHTML e SVG com conteúdo ativo. O CI executa `npm audit --audit-level=moderate` para impedir regressões conhecidas nas dependências de desenvolvimento e produção. Nenhum conjunto de testes substitui uma revisão de segurança de arquivos não confiáveis.
+
 ## Estrutura de diretórios
 
 ```txt

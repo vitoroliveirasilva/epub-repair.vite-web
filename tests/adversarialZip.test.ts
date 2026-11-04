@@ -101,7 +101,7 @@ describe('arquivos EPUB maliciosos e ZIPs corrompidos', () => {
     expect(loaded.issues.some((issue) => issue.code === 'ZIP_ENCRYPTED_ENTRY')).toBe(true);
   });
 
-  it('permanece controlado ao ler 40 mutações de metadados ZIP', async () => {
+  it('permanece controlado ao ler 28 mutações de metadados ZIP', async () => {
     const original = await buildKindleIssueEpub();
     const { central, eocd, local } = headers(original);
     const offsets = [
