@@ -1,0 +1,72 @@
+name: Publish GitHub Release
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [prod]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-prod
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Create versioned release after successful CI
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Check out validated production commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+
+      - name: Validate package and lockfile versions
+        id: version
+        run: |
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const pkg = require('./package.json');
+          const lock = require('./package-lock.json');
+          if (pkg.version !== lock.version || pkg.version !== lock.packages?.['']?.version) {
+            throw new Error('package.json e package-lock.json estão com versões diferentes.');
+          }
+          if (!/^\d+\.\d+\.\d+$/.test(pkg.version)) {
+            throw new Error('A versão deve ser um SemVer estável (x.y.z).');
+          }
+          process.stdout.write(`tag=v${pkg.version}\n`);
+          NODE
+
+      - name: Publish release if not yet published
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          current_sha="$(gh api "repos/${GITHUB_REPOSITORY}/branches/prod" --jq '.commit.sha')"
+          if [[ "$current_sha" != "$SOURCE_SHA" ]]; then
+            echo "Commit ultrapassado na branch prod; release não será criada."
+            exit 0
+          fi
+
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            echo "Release $RELEASE_TAG já existe."
+            exit 0
+          fi
+
+          notes_path=".github/release-notes/${RELEASE_TAG}.md"
+          if [[ -f "$notes_path" ]]; then
+            gh release create "$RELEASE_TAG" --target "$SOURCE_SHA" \
+              --title "$RELEASE_TAG" --notes-file "$notes_path"
+          else
+            gh release create "$RELEASE_TAG" --target "$SOURCE_SHA" \
+              --title "$RELEASE_TAG" --generate-notes
+          fi
