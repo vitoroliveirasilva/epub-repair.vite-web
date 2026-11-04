@@ -10,7 +10,7 @@ import { extractHtmlResourceReferences } from './referenceExtractor';
 export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
   const issues: Issue[] = [];
   const candidates = pkg.manifest.filter(
-    (item) => item.exists && HTML_MEDIA_TYPES.has(item.mediaType),
+    (item) => item.exists && (HTML_MEDIA_TYPES.has(item.mediaType) || item.mediaType === 'image/svg+xml'),
   );
 
   for (const item of candidates) {
@@ -18,14 +18,14 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
     if (!file) continue;
     const text = new TextDecoder('utf-8', { fatal: false }).decode(file.bytes);
 
-    if (/<script\b|\son[a-z]+\s*=|<(?:iframe|embed|object)\b/iu.test(text)) {
+    if (/<script\b|\son[a-z]+\s*=|<(?:iframe|embed|object|foreignobject|animate|set)\b/iu.test(text)) {
       issues.push(
         createIssue({
-          code: /<(?:iframe|embed|object)\b/iu.test(text)
+          code: /<(?:iframe|embed|object|foreignobject)\b/iu.test(text)
             ? 'CONTENT_UNSAFE_EMBED'
             : 'CONTENT_SCRIPTED',
           severity: 'warning',
-          title: /<(?:iframe|embed|object)\b/iu.test(text)
+          title: /<(?:iframe|embed|object|foreignobject)\b/iu.test(text)
             ? 'Conteúdo com iframe/embed/object'
             : 'Conteúdo com script ou handler inline',
           detail:
@@ -36,7 +36,7 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
       );
     }
 
-    if (item.mediaType === 'application/xhtml+xml') {
+    if (item.mediaType === 'application/xhtml+xml' || item.mediaType === 'image/svg+xml') {
       try {
         parseXml(text, 'application/xhtml+xml');
       } catch (error) {

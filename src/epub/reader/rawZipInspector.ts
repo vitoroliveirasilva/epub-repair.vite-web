@@ -65,6 +65,7 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
     };
   }
 
+  const totalEntriesOnDisk = readUInt16LE(bytes, eocdOffset + 8);
   const totalEntries = readUInt16LE(bytes, eocdOffset + 10);
   const diskNumber = readUInt16LE(bytes, eocdOffset + 4);
   const centralDisk = readUInt16LE(bytes, eocdOffset + 6);
@@ -75,6 +76,7 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
   if (
     diskNumber !== 0 ||
     centralDisk !== 0 ||
+    totalEntriesOnDisk !== totalEntries ||
     totalEntries === 0xffff ||
     centralDirSize === 0xffffffff ||
     centralDirOffset === 0xffffffff ||
@@ -116,6 +118,7 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
 
     const flags = readUInt16LE(bytes, cursor + 8);
     const compressionMethod = readUInt16LE(bytes, cursor + 10);
+    const crc32 = readUInt32LE(bytes, cursor + 16);
     const compressedSize = readUInt32LE(bytes, cursor + 20);
     const uncompressedSize = readUInt32LE(bytes, cursor + 24);
     const fileNameLength = readUInt16LE(bytes, cursor + 28);
@@ -130,11 +133,28 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
         ? readUInt16LE(bytes, localHeaderOffset + 26)
         : 0;
     const localExtra = getLocalHeaderExtraLength(bytes, localHeaderOffset);
+    const localNameStart = localHeaderOffset + 30;
+    const localNameEnd = localNameStart + localNameLength;
+    const localFlags = readUInt16LE(bytes, localHeaderOffset + 6);
+    const localMethod = readUInt16LE(bytes, localHeaderOffset + 8);
+    const localNameMatches =
+      localNameLength === fileNameLength &&
+      bytes.subarray(localNameStart, localNameEnd).every(
+        (byte, position) => byte === bytes[fileNameStart + position],
+      );
     if (
       nextCursor > centralDirEnd ||
       localHeaderOffset + 30 > centralDirOffset ||
       readUInt32LE(bytes, localHeaderOffset) !== 0x04034b50 ||
-      localHeaderOffset + 30 + localNameLength + localExtra + compressedSize > centralDirOffset
+      localHeaderOffset + 30 + localNameLength + localExtra + compressedSize > centralDirOffset ||
+      localFlags !== flags ||
+      localMethod !== compressionMethod ||
+      !localNameMatches ||
+      (!(flags & 0x0008) && (
+        readUInt32LE(bytes, localHeaderOffset + 14) !== crc32 ||
+        readUInt32LE(bytes, localHeaderOffset + 18) !== compressedSize ||
+        readUInt32LE(bytes, localHeaderOffset + 22) !== uncompressedSize
+      ))
     ) {
       issues.push(
         createIssue({
@@ -160,8 +180,9 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
       localHeaderOffset,
       compressedSize,
       uncompressedSize,
+      crc32,
       extraFieldLength: localExtraLength,
-      isDirectory: fileName.endsWith('/'),
+      isDirectory: decodeFileName(bytes.slice(fileNameStart, fileNameEnd)).endsWith('/'),
     };
 
     entries.push(entry);
@@ -216,7 +237,7 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
     }
     seen.set(fileName, seenCount + 1);
 
-    if (entry.encrypted) {
+    if (entry.encrypted || (flags & 0x0040) !== 0) {
       issues.push(
         createIssue({
           code: 'ZIP_ENCRYPTED_ENTRY',
