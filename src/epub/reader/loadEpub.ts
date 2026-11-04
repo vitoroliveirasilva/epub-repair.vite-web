@@ -67,9 +67,13 @@ export async function loadEpub(fileName: string, bytes: Uint8Array): Promise<Loa
   const fileNames: string[] = [];
   const issues = [...raw.issues];
   let totalUncompressedBytes = 0;
+  const rawByPath = new Map(raw.entries.map((entry) => [entry.fileName, entry]));
 
   for (const [originalName, zipEntry] of Object.entries(zip.files)) {
-    const normalized = normalizeInternalPath(originalName);
+    const archivedName = (zipEntry as JSZip.JSZipObject & {
+      unsafeOriginalName?: string;
+    }).unsafeOriginalName ?? originalName;
+    const normalized = normalizeInternalPath(archivedName);
     if (!normalized.path) continue;
     fileNames.push(normalized.path);
 
@@ -105,7 +109,12 @@ export async function loadEpub(fileName: string, bytes: Uint8Array): Promise<Loa
 
     try {
       const remaining = MAX_ZIP_UNCOMPRESSED_BYTES - totalUncompressedBytes;
-      const entryBytes = await readZipEntryLimited(zipEntry, Math.min(MAX_ZIP_ENTRY_BYTES, remaining));
+      const unpacked = await readZipEntryLimited(zipEntry, Math.min(MAX_ZIP_ENTRY_BYTES, remaining));
+      const metadata = rawByPath.get(normalized.path);
+      if (!metadata || unpacked.crc32 !== metadata.crc32) {
+        throw new Error('Falha de integridade CRC32: a entrada ZIP foi adulterada ou corrompida.');
+      }
+      const entryBytes = unpacked.bytes;
       totalUncompressedBytes += entryBytes.length;
       files.set(normalized.path, {
         path: normalized.path,
@@ -156,7 +165,18 @@ export async function loadEpub(fileName: string, bytes: Uint8Array): Promise<Loa
  * Descompacta por blocos, evitando que tamanhos forjados no ZIP contornem
  * o limite baseado nos metadados. Pausa a stream antes de acumular o bloco excedente.
  */
-function readZipEntryLimited(entry: JSZip.JSZipObject, maxBytes: number): Promise<Uint8Array> {
+const CRC32_TABLE = Uint32Array.from({ length: 256 }, (_, index) => {
+  let crc = index;
+  for (let bit = 0; bit < 8; bit += 1) {
+    crc = (crc & 1) !== 0 ? (crc >>> 1) ^ 0xedb88320 : crc >>> 1;
+  }
+  return crc >>> 0;
+});
+
+function readZipEntryLimited(
+  entry: JSZip.JSZipObject,
+  maxBytes: number,
+): Promise<{ bytes: Uint8Array; crc32: number }> {
   return new Promise((resolve, reject) => {
     // JSZip 3.x implementa internalStream em JSZipObject, mas não o expõe na interface pública.
     // O tipo limitado documenta somente a superfície utilizada pelo leitor por blocos.
@@ -165,6 +185,7 @@ function readZipEntryLimited(entry: JSZip.JSZipObject, maxBytes: number): Promis
     }).internalStream('uint8array');
     const chunks: Uint8Array[] = [];
     let length = 0;
+    let crc = 0xffffffff;
     let settled = false;
 
     const fail = (error: Error): void => {
@@ -183,6 +204,9 @@ function readZipEntryLimited(entry: JSZip.JSZipObject, maxBytes: number): Promis
           return;
         }
         length += chunk.length;
+        for (const byte of chunk) {
+          crc = CRC32_TABLE[(crc ^ byte) & 0xff]! ^ (crc >>> 8);
+        }
         chunks.push(chunk);
       })
       .on('error', fail)
@@ -195,7 +219,7 @@ function readZipEntryLimited(entry: JSZip.JSZipObject, maxBytes: number): Promis
           output.set(chunk, offset);
           offset += chunk.length;
         }
-        resolve(output);
+        resolve({ bytes: output, crc32: (crc ^ 0xffffffff) >>> 0 });
       })
       .resume();
   });

@@ -2,6 +2,9 @@ export function parseXml(
   text: string,
   mimeType: DOMParserSupportedType = 'application/xml',
 ): Document {
+  if (/<!ENTITY\b/iu.test(text)) {
+    throw new Error('Entidades XML personalizadas não são permitidas por segurança.');
+  }
   const doc = new DOMParser().parseFromString(text, mimeType);
   const parserError = doc.querySelector('parsererror');
   if (parserError) {

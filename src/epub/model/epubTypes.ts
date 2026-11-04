@@ -9,6 +9,7 @@ export interface ZipEntryInfo {
   localHeaderOffset: number;
   compressedSize: number;
   uncompressedSize: number;
+  crc32: number;
   extraFieldLength: number;
   isDirectory: boolean;
 }
