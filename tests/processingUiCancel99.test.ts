@@ -37,7 +37,7 @@ describe('E-080: progresso sem porcentagem inventada e cancelamento seguro', () 
   it('sinal já abortado impede publicar análise nova', async () => {
     const input=await buildKindleIssueEpub();
     const state=createInitialState();
-    state.payload={file:new File([input],'book.epub'),bytes:input};
+    state.payload={file:new File(['epub fixture'],'book.epub'),bytes:input};
     const controller=new AbortController();controller.abort();
     await expect(analyzeCurrentFile(state,{signal:controller.signal}))
       .rejects.toMatchObject({name:'AbortError'});
@@ -47,7 +47,7 @@ describe('E-080: progresso sem porcentagem inventada e cancelamento seguro', () 
   it('sinal já abortado impede reparo e preserva resultado anterior', async () => {
     const input=await buildKindleIssueEpub();
     const state=createInitialState();
-    state.payload={file:new File([input],'book.epub'),bytes:input};
+    state.payload={file:new File(['epub fixture'],'book.epub'),bytes:input};
     const original=state.repairResult;
     const controller=new AbortController();controller.abort();
     await expect(repairCurrentFile(state,{signal:controller.signal}))
