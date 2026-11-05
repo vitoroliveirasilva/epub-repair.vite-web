@@ -9,6 +9,7 @@ import {
 } from '../utils/kindleCompatibility';
 import { areEquivalentMediaTypes, guessMediaType } from '../utils/mediaTypes';
 import { validateManifestFallbacks } from './validateManifestFallbacks';
+import { validateRemoteManifestResources } from './validateRemoteManifestResources';
 
 export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issue[] {
   const issues: Issue[] = [];
@@ -290,5 +291,6 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
   }
 
   issues.push(...validateManifestFallbacks(pkg));
+  issues.push(...validateRemoteManifestResources(pkg));
   return issues;
 }
