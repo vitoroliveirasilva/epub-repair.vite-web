@@ -21,6 +21,7 @@ import { validateDeclaredScripts } from './validateDeclaredScripts';
 import { validateUndeclaredActiveContent } from './validateUndeclaredActiveContent';
 import { validateMediaOverlays } from './validateMediaOverlays';
 import { validateFixedLayout } from './validateFixedLayout';
+import { validateEditorialOcrQuality } from './validateEditorialOcrQuality';
 
 export async function inspectEpub(fileName: string, bytes: Uint8Array): Promise<ValidationReport> {
   const loaded = await loadEpub(fileName, bytes);
@@ -56,6 +57,7 @@ export async function inspectEpub(fileName: string, bytes: Uint8Array): Promise<
     issues.push(...validateMediaOverlays(loaded, parsed.packageInfo));
     issues.push(...validateFixedLayout(loaded, parsed.packageInfo));
     issues.push(...validateAccessibility(loaded, parsed.packageInfo));
+    issues.push(...validateEditorialOcrQuality(loaded, parsed.packageInfo));
     issues.push(...validateKindleCompatibility(loaded, parsed.packageInfo));
     issues.push(...detectOrphanResources(loaded, parsed.packageInfo));
   }

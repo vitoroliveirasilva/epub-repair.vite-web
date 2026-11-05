@@ -1,0 +1,82 @@
+import type { LoadedEpub } from '../model/epubTypes';
+import type { Issue } from '../model/issueTypes';
+import type { PackageDocumentInfo } from '../model/opfTypes';
+import { createIssue } from '../utils/issueFactory';
+import { parseXml } from '../utils/xmlUtils';
+
+const HTML_TYPES = new Set(['application/xhtml+xml', 'text/html']);
+
+/**
+ * Sinais objetivos de OCR ruim; nunca reescrever hifens, espaços, cabeçalhos
+ * ou rodapés sem revisão humana. Um indício isolado não autoriza "conserto".
+ */
+export function validateEditorialOcrQuality(
+  loaded: LoadedEpub,
+  pkg: PackageDocumentInfo,
+): Issue[] {
+  const issues: Issue[] = [];
+  const pageLabels = new Map<string, Set<string>>();
+  const paragraphsByPath = new Map<string, string[]>();
+  for (const item of pkg.manifest) {
+    if (!item.exists || !HTML_TYPES.has(item.mediaType)) continue;
+    const bytes = loaded.files.get(item.resolvedPath)?.bytes;
+    if (!bytes) continue;
+    let doc: Document;
+    try {
+      const markup = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+      doc = item.mediaType === 'text/html'
+        ? new DOMParser().parseFromString(markup, 'text/html')
+        : parseXml(markup.replace(/&nbsp;/giu, '&#160;'));
+    } catch {
+      continue; // Erros de XML/encoding são tratados em seus validadores próprios.
+    }
+
+    const content = Array.from(doc.getElementsByTagName('*'))
+      .find((element) => element.localName.toLowerCase() === 'body') ?? doc.documentElement;
+    const paragraphs = Array.from(content.getElementsByTagName('*'))
+      .filter((element) => element.localName.toLowerCase() === 'p')
+      .map((element) => element.textContent ?? '');
+    paragraphsByPath.set(item.resolvedPath, paragraphs);
+    const visible = paragraphs.join('\n');
+    const replacementChars = (visible.match(/\uFFFD/gu) ?? []).length;
+    // Um único hífen de fim de linha pode ser estilístico. Exigir recorrência.
+    const splitWords = (visible.match(/[\p{L}]{3,}-[ \t]*\r?\n[ \t]*[\p{L}]{3,}/gu) ?? []).length;
+    if (replacementChars >= 2 || splitWords >= 3) {
+      issues.push(createIssue({
+        code: 'CONTENT_OCR_SUSPECT',
+        severity: 'info',
+        title: 'Possíveis artefatos de OCR no texto',
+        detail: replacementChars >= 2
+          ? replacementChars + ' caracteres de substituição (�) podem indicar falha de OCR ou decodificação.'
+          : splitWords + ' palavras separadas por hífen e quebra de linha exigem conferência editorial.',
+        file: item.resolvedPath,
+        repairable: false,
+      }));
+    }
+
+    // Capturar apenas marcadores explícitos de página. Um título curto
+    // repetido não é necessariamente um cabeçalho OCR e não será sinalizado.
+    const labels = paragraphs.map((p) => p.trim())
+      .filter((p) => /^(?:p(?:á|a)g(?:ina)?\.?\s*\d+|page\s*\d+|\d{1,4})$/iu.test(p));
+    for (const label of labels) {
+      const key = label.replace(/\d+/gu, '#').toLowerCase();
+      const locations = pageLabels.get(key) ?? new Set<string>();
+      locations.add(item.resolvedPath);
+      pageLabels.set(key, locations);
+    }
+  }
+
+  for (const [format, locations] of pageLabels) {
+    if (locations.size < 3) continue;
+    issues.push(createIssue({
+      code: 'CONTENT_OCR_SUSPECT',
+      severity: 'info',
+      title: 'Marcadores repetidos de página em documentos distintos',
+      detail: 'Há marcadores semelhantes a "' + format + '" em ' + locations.size +
+        ' documentos. Podem ser cabeçalhos/rodapés de digitalização; confirmar visualmente.',
+      repairable: false,
+    }));
+  }
+
+  return issues;
+}
