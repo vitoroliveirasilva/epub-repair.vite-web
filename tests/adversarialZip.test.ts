@@ -72,6 +72,60 @@ describe('arquivos EPUB maliciosos e ZIPs corrompidos', () => {
       issue.code === 'ZIP_UNSUPPORTED_FILENAME_ENCODING')).toBe(true);
   });
 
+  it('E-026/E-030: duplicação e sobreposição de registros ZIP são fatais', async () => {
+    const zip = new JSZip();
+    zip.file('mimetype', EPUB_MIME, { compression: 'STORE' });
+    zip.file('OPS/a.xhtml', '<p>A</p>');
+    zip.file('OPS/b.xhtml', '<p>B</p>');
+    const original = await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+
+    const records = (bytes: Uint8Array) => {
+      const { view, central, eocd } = headers(bytes);
+      const n = view.getUint16(eocd + 10, true);
+      const out: Array<{ cursor: number; local: number; name: string }> = [];
+      let cursor = central;
+      for (let i = 0; i < n; i += 1) {
+        const length = view.getUint16(cursor + 28, true);
+        const name = String.fromCharCode(...bytes.subarray(cursor + 46, cursor + 46 + length));
+        out.push({ cursor, name, local: view.getUint32(cursor + 42, true) });
+        cursor += 46 + length + view.getUint16(cursor + 30, true) +
+          view.getUint16(cursor + 32, true);
+      }
+      return out;
+    };
+    const [first, second] = [
+      records(original).find((x) => x.name === 'OPS/a.xhtml'),
+      records(original).find((x) => x.name === 'OPS/b.xhtml'),
+    ];
+    if (!first || !second) throw new Error('Fixture com nomes inesperados');
+
+    const duplicate = new Uint8Array(original);
+    for (let i = 0; i < first.name.length; i += 1) {
+      duplicate[second.cursor + 46 + i] = duplicate[first.cursor + 46 + i]!;
+      duplicate[second.local + 30 + i] = duplicate[first.local + 30 + i]!;
+    }
+    const duplicateIssues = parseZipCentralDirectory(duplicate).issues;
+    expect(duplicateIssues.some((x) => x.code === 'ZIP_DUPLICATE_ENTRY' &&
+      x.severity === 'fatal')).toBe(true);
+    expect((await loadEpub('duplicado.epub', duplicate)).validZip).toBe(false);
+
+    const overlap = new Uint8Array(original);
+    const view = new DataView(overlap.buffer);
+    for (let i = 0; i < first.name.length; i += 1) {
+      overlap[second.cursor + 46 + i] = overlap[first.cursor + 46 + i]!;
+    }
+    // O segundo registro passa a apontar para o mesmo cabeçalho e payload do primeiro.
+    for (const offset of [8, 10]) {
+      view.setUint16(second.cursor + offset, view.getUint16(first.cursor + offset, true), true);
+    }
+    for (const offset of [16, 20, 24, 42]) {
+      view.setUint32(second.cursor + offset, view.getUint32(first.cursor + offset, true), true);
+    }
+    expect(parseZipCentralDirectory(overlap).issues.some((x) =>
+      x.code === 'ZIP_OVERLAPPING_ENTRIES' && x.severity === 'fatal')).toBe(true);
+    expect((await loadEpub('sobreposto.epub', overlap)).validZip).toBe(false);
+  });
+
   it('rejeita nome local divergente do diretório central', async () => {
     const original = await buildKindleIssueEpub();
     const input = corrupt(original, ({ view, local }) => {
