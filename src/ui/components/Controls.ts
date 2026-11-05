@@ -121,7 +121,9 @@ function buildPrimaryActionButtons(
 ): HTMLButtonElement[] {
   if (flags.hasRepair) {
     const downloadButton = button(
-      state.repairResult?.operation === 'cover-replacement'
+      hasManualReviewIssues(state.report)
+        ? 'Baixar cópia parcial (revisar)'
+        : state.repairResult?.operation === 'cover-replacement'
         ? 'Baixar EPUB com nova capa'
         : state.repairResult?.operation === 'optimization'
           ? 'Baixar EPUB otimizado'
@@ -170,10 +172,12 @@ function buildPrimaryActionButtons(
 }
 
 function controlsTitle(state: AppState): string {
-  if (state.repairResult?.operation === 'cover-replacement')
-    return 'EPUB com nova capa pronto para baixar';
-  if (state.repairResult?.operation === 'optimization') return 'EPUB otimizado pronto para baixar';
-  if (state.repairResult) return 'EPUB corrigido pronto para ser baixado';
+  if (state.repairResult?.changed && state.repairResult.blob) {
+    if (hasManualReviewIssues(state.report)) return 'Cópia parcial gerada: revisão manual necessária';
+    if (state.repairResult.operation === 'cover-replacement') return 'EPUB com nova capa pronto para baixar';
+    if (state.repairResult.operation === 'optimization') return 'EPUB otimizado pronto para baixar';
+    return 'EPUB corrigido pronto para ser baixado';
+  }
   if (state.report && !canRepairReport(state.report) && hasManualReviewIssues(state.report)) {
     return 'Revisão manual necessária';
   }
@@ -187,13 +191,19 @@ function controlsTitle(state: AppState): string {
 }
 
 function controlsDescription(state: AppState): string {
-  if (state.repairResult?.operation === 'cover-replacement') {
+  if (state.repairResult?.changed && state.repairResult.blob && hasManualReviewIssues(state.report)) {
+    return 'A cópia contém correções parciais, mas ainda há alertas que exigem revisão humana. ' +
+      'Não considere o EPUB seguro ou pronto para distribuição.';
+  }
+  if (state.repairResult?.changed && state.repairResult.blob &&
+      state.repairResult.operation === 'cover-replacement') {
     return 'Baixe a nova versão do arquivo com a capa aplicada. O relatório técnico fica separado abaixo';
   }
-  if (state.repairResult?.operation === 'optimization') {
+  if (state.repairResult?.changed && state.repairResult.blob &&
+      state.repairResult.operation === 'optimization') {
     return 'Baixe a nova versão otimizada do arquivo. O relatório técnico mostra quais melhorias opcionais foram aplicadas';
   }
-  if (state.repairResult) {
+  if (state.repairResult?.changed && state.repairResult.blob) {
     return 'Baixe a nova versão do arquivo, o relatório técnico fica separado abaixo';
   }
   if (state.report?.stats.fatalCount) {

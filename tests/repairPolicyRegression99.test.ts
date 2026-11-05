@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
+import { renderControls } from '../src/ui/components/Controls';
+import { createInitialState } from '../src/app/state';
+import type { AppState } from '../src/app/state';
 import { buildKindleIssueEpub } from './helpers/syntheticEpub';
 import { loadEpub } from '../src/epub/reader/loadEpub';
 import { parsePackageDocument } from '../src/epub/validation/opfParser';
@@ -11,7 +14,50 @@ import { assertNoNewCriticalIssues } from '../src/epub/repair/repairSafety';
 import { hasManualReviewIssues, hasResidualActiveContent } from '../src/epub/utils/reportGuards';
 import type { ValidationReport } from '../src/epub/model/epubTypes';
 
+const uiActions = {
+  analyze: () => {}, repair: () => {}, copy: () => {},
+  downloadTextReport: () => {}, downloadJsonReport: () => {},
+};
+
 describe('Políticas conservadoras de reparo', () => {
+  it('E-052: não chama cópia com scripts remanescentes de EPUB pronto', () => {
+    const state: AppState = createInitialState();
+    const report = {
+      validZip: true, issues: [{
+        code: 'CONTENT_SCRIPTED', severity: 'warning', repairable: true,
+      }], stats: { fatalCount: 0, errorCount: 0, warningCount: 1 },
+    } as unknown as ValidationReport;
+    state.report = report;
+    state.repairResult = {
+      blob: new Blob(['epub']), fileName: 'teste-corrigido.epub',
+      before: report, after: report, actions: [], warnings: [], changed: true,
+      operation: 'repair',
+    };
+    const ui = renderControls(state, uiActions);
+    expect(ui.textContent).toContain('Cópia parcial gerada: revisão manual necessária');
+    expect(ui.textContent).toContain('Baixar cópia parcial (revisar)');
+    expect(ui.textContent).not.toContain('EPUB corrigido pronto');
+  });
+
+  it('E-079: operação somente pulada não anuncia download inexistente', () => {
+    const state: AppState = createInitialState();
+    const report = {
+      validZip: true, issues: [{ code: 'OPF_FALLBACK_MISSING',
+        severity: 'warning', repairable: false }],
+      stats: { fatalCount: 0, errorCount: 0, warningCount: 1 },
+    } as unknown as ValidationReport;
+    state.report = report;
+    state.repairResult = {
+      fileName: 'teste.epub', before: report, after: report,
+      actions: [{ type: 'skipped', title: 'Sem reparo', detail: 'Revisar' }],
+      warnings: [], changed: false, operation: 'repair',
+    };
+    const ui = renderControls(state, uiActions);
+    expect(ui.textContent).toContain('Revisão manual necessária');
+    expect(ui.textContent).not.toContain('EPUB corrigido pronto');
+  });
+
+
   it('E-008: não substitui idioma UND por pt-BR sem evidência', async () => {
     const loaded = await loadEpub('book.epub', await buildKindleIssueEpub());
     const pkg = parsePackageDocument(loaded).packageInfo;
