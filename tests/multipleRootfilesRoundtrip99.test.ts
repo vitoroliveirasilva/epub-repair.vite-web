@@ -84,6 +84,9 @@ describe('E-029: múltiplas renditions/rootfiles sem perda de dados', () => {
     expect(repaired.changed).toBe(true); // mimetype ausente
     expect(repaired.blob).toBeDefined();
     const output = await JSZip.loadAsync(await repaired.blob!.arrayBuffer());
+    // CONTAINER_MULTIPLE_ROOTFILES é aviso, nunca pedido para substituir rootfiles.
+    expect(await output.file('META-INF/container.xml')!.async('uint8array'))
+      .toEqual(original.files.get('META-INF/container.xml')!.bytes);
     for (const name of ['OPS/content.opf','OPS/nav.xhtml','OPS/chapter.xhtml',
       'LEGACY/content.opf','LEGACY/nav.xhtml','LEGACY/chapter.xhtml']) {
       expect(await output.file(name)!.async('uint8array'))
