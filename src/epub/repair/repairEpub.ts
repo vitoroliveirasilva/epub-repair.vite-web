@@ -1,6 +1,6 @@
 import type { RepairAction, RepairOptions, RepairResult } from '../model/repairTypes';
 import { loadEpub } from '../reader/loadEpub';
-import { inspectEpub } from '../validation/validateEpub';
+import { inspectEpub, inspectLoadedEpub } from '../validation/validateEpub';
 import { DEFAULT_REPAIR_OPTIONS, EPUB_MIME, SYSTEM_FILE_PATTERNS } from '../utils/constants';
 import { makeRepairedFileName } from '../utils/fileName';
 import { normalizeInternalPath } from '../utils/pathUtils';
@@ -26,7 +26,8 @@ export async function repairEpub(
   options: RepairOptions = DEFAULT_REPAIR_OPTIONS,
   mode: RepairRunMode = 'repair',
 ): Promise<RepairResult> {
-  const before = await inspectEpub(fileName, bytes);
+  const loaded = await loadEpub(fileName, bytes);
+  const before = inspectLoadedEpub(fileName, bytes.length, loaded);
   const warnings: string[] = [];
 
   const canRunRequiredRepair = canRepairReport(before);
@@ -49,8 +50,6 @@ export async function repairEpub(
       operation,
     };
   }
-
-  const loaded = await loadEpub(fileName, bytes);
 
   if (!loaded.validZip) {
     throw new Error('Não é seguro reparar: o arquivo não pôde ser aberto como ZIP/EPUB válido.');

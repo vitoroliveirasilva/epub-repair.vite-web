@@ -1,4 +1,4 @@
-import type { ValidationReport } from '../model/epubTypes';
+import type { LoadedEpub, ValidationReport } from '../model/epubTypes';
 import { loadEpub } from '../reader/loadEpub';
 import { buildCoverReportInfo } from '../utils/kindleCompatibility';
 import { buildValidationReport } from '../utils/reportBuilder';
@@ -25,12 +25,24 @@ import { validateEditorialOcrQuality } from './validateEditorialOcrQuality';
 
 export async function inspectEpub(fileName: string, bytes: Uint8Array): Promise<ValidationReport> {
   const loaded = await loadEpub(fileName, bytes);
+  return inspectLoadedEpub(fileName, bytes.length, loaded);
+}
+
+/**
+ * Inspeciona a mesma instância descompactada usada pelo reparo. Evita abrir
+ * o ZIP duas vezes e reduz o pico de buffers duplicados em EPUBs maiores.
+ */
+export function inspectLoadedEpub(
+  fileName: string,
+  fileSize: number,
+  loaded: LoadedEpub,
+): ValidationReport {
   const issues = [...loaded.issues];
 
   if (!loaded.validZip) {
     return buildValidationReport({
       fileName,
-      fileSize: bytes.length,
+      fileSize,
       validZip: false,
       zipEntries: loaded.rawEntries,
       issues,
@@ -64,7 +76,7 @@ export async function inspectEpub(fileName: string, bytes: Uint8Array): Promise<
 
   return buildValidationReport({
     fileName,
-    fileSize: bytes.length,
+    fileSize,
     validZip: loaded.validZip,
     zipEntries: loaded.rawEntries,
     issues,
