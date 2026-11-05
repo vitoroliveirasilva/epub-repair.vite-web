@@ -177,7 +177,7 @@ function compareEditorialBlocks(before: string, after: string, path: string): vo
     while (cursor < afterBlocks.length &&
       !containsOriginalWordsInOrder(block, afterBlocks[cursor] ?? '')) cursor += 1;
     if (cursor >= afterBlocks.length) {
-      throw new Error(`O reparo apagaria, fundiria ou mudaria a ordem de blocos editoriais em ${path}.`);
+      throw new Error(`O reparo alteraria texto editorial: apagaria, fundiria ou mudaria a ordem de blocos editoriais em ${path}.`);
     }
     cursor += 1;
   }
