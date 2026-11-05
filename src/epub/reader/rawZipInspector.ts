@@ -103,6 +103,7 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
   let cursor = centralDirOffset;
   let totalUncompressed = 0;
   const seen = new Map<string, number>();
+  const localRanges: Array<{ start: number; end: number; name: string }> = [];
 
   for (let index = 0; index < totalEntries; index += 1) {
     if (cursor + 46 > centralDirEnd || readUInt32LE(bytes, cursor) !== 0x02014b50) {
@@ -215,6 +216,29 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
       isDirectory: decodeFileName(bytes.slice(fileNameStart, fileNameEnd)).endsWith('/'),
     };
 
+    // Duas entradas ZIP não podem apontar para o mesmo cabeçalho local ou
+    // disputar os mesmos bytes de payload: JSZip poderia escolher uma delas.
+    const currentRange = {
+      start: localHeaderOffset,
+      end: localNameEnd + localExtra + compressedSize,
+      name: fileName,
+    };
+    const overlapping = localRanges.find((range) =>
+      currentRange.start < range.end && range.start < currentRange.end,
+    );
+    if (overlapping) {
+      issues.push(createIssue({
+        code: 'ZIP_OVERLAPPING_ENTRIES',
+        severity: 'fatal',
+        title: 'Entradas ZIP compartilham área física do arquivo',
+        detail: `Os registros "${overlapping.name}" e "${fileName}" se sobrepõem. ` +
+          'A extração e o reparo automático foram bloqueados por integridade.',
+        file: fileName,
+        repairable: false,
+      }));
+      break;
+    }
+    localRanges.push(currentRange);
     entries.push(entry);
 
     if (!entry.isDirectory) {
@@ -257,10 +281,11 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
       issues.push(
         createIssue({
           code: 'ZIP_DUPLICATE_ENTRY',
-          severity: 'warning',
-          title: 'Entrada duplicada no ZIP',
-          detail: `O caminho "${fileName}" aparece mais de uma vez no pacote.`,
-          repairable: true,
+          severity: 'fatal',
+          title: 'Entrada duplicada no ZIP exige decisão manual',
+          detail: `O caminho "${fileName}" aparece mais de uma vez. ` +
+            'Não é seguro escolher qual versão do arquivo preservar automaticamente.',
+          repairable: false,
           file: fileName,
         }),
       );
