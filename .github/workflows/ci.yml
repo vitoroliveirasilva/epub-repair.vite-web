@@ -122,3 +122,12 @@ jobs:
           fi
 
           java -jar "$epubcheck_jar" "$repaired"
+
+          original2="${RUNNER_TEMP}/epub-fixtures/original-invalid-epub2.epub"
+          repaired2="${RUNNER_TEMP}/epub-fixtures/repaired-valid-epub2.epub"
+          test -s "$original2" && test -s "$repaired2"
+          if java -jar "$epubcheck_jar" "$original2"; then
+            echo 'ERRO: fixture original EPUB 2 sem mimetype foi aceita.'
+            exit 1
+          fi
+          java -jar "$epubcheck_jar" "$repaired2"

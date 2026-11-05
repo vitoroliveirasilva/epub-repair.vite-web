@@ -58,7 +58,64 @@ function createInvalidEpub(): Promise<Uint8Array> {
   });
 }
 
+
+/** EPUB 2 sintético: NCX intencionalmente válido, mas sem arquivo mimetype. */
+function createInvalidEpub2(): Promise<Uint8Array> {
+  const zip = new JSZip();
+  zip.file('META-INF/container.xml',
+    '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">' +
+    '<rootfiles><rootfile full-path="OPS/content.opf" ' +
+    'media-type="application/oebps-package+xml"/></rootfiles></container>');
+  zip.file('OPS/content.opf',
+    '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="uid">' +
+    '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">' +
+    '<dc:identifier id="uid">urn:uuid:01aa1223-3322-4b44-a555-666777888999</dc:identifier>' +
+    '<dc:title>Fixture EPUB 2</dc:title><dc:language>pt-BR</dc:language>' +
+    '</metadata><manifest>' +
+    '<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>' +
+    '<item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/>' +
+    '</manifest><spine toc="ncx"><itemref idref="chapter"/></spine></package>');
+  zip.file('OPS/toc.ncx',
+    '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">' +
+    '<head><meta name="dtb:uid" content="urn:uuid:01aa1223-3322-4b44-a555-666777888999"/>' +
+    '<meta name="dtb:depth" content="1"/>' +
+    '<meta name="dtb:totalPageCount" content="0"/>' +
+    '<meta name="dtb:maxPageNumber" content="0"/></head>' +
+    '<docTitle><text>Fixture EPUB 2</text></docTitle><navMap>' +
+    '<navPoint id="chapter1" playOrder="1"><navLabel><text>Capítulo 1</text></navLabel>' +
+    '<content src="chapter.xhtml#start"/></navPoint></navMap></ncx>');
+  zip.file('OPS/chapter.xhtml',
+    '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR">' +
+    '<head><title>Capítulo</title></head><body>' +
+    '<h1 id="start">Capítulo 1</h1><p>Texto de referência EPUB 2.</p>' +
+    '</body></html>');
+  return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+}
+
 describe('Fixture sintética de conformidade oficial', () => {
+  it('E-091: EPUBCheck verifica também um reparo de EPUB 2 com NCX válido', async () => {
+    const source = await createInvalidEpub2();
+    const before = await inspectEpub('original-epub2.epub', source);
+    expect(before.issues.some((issue) => issue.code === 'MIME_MISSING')).toBe(true);
+    const result = await repairEpub('original-epub2.epub', source, {
+      ...DEFAULT_REPAIR_OPTIONS, conservativeMode: true,
+    });
+    expect(result.changed).toBe(true);
+    expect(result.blob).toBeDefined();
+    expect(result.after.stats.fatalCount).toBe(0);
+    const bytes = new Uint8Array(await result.blob!.arrayBuffer());
+    const outputDir = process.env.EPUBCHECK_FIXTURE_OUTPUT;
+    if (outputDir) {
+      await mkdir(outputDir, { recursive: true });
+      await writeFile(join(outputDir, 'original-invalid-epub2.epub'), Buffer.from(source));
+      await writeFile(join(outputDir, 'repaired-valid-epub2.epub'), Buffer.from(bytes));
+    }
+  });
+
   it('E-035/E-091: gera original inválido e EPUB corrigido para EPUBCheck externo', async () => {
     const original = await createInvalidEpub();
     const before = await inspectEpub('fixture.epub', original);
