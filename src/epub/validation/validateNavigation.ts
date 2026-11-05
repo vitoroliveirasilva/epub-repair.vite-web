@@ -79,7 +79,8 @@ export function validateNavigation(loaded: LoadedEpub, pkg: PackageDocumentInfo)
             const lists = Array.from(nav.children).filter((node) => node.localName === 'ol');
             const entries = lists[0] ? Array.from(lists[0].children) : [];
             if (lists.length !== 1 || entries.length === 0 ||
-              entries.some((entry) => entry.localName !== 'li')) {
+              entries.some((entry) => entry.localName !== 'li') ||
+              (lists[0] ? !validNavigationList(lists[0]) : true)) {
               issues.push(createIssue({
                 code: 'NAV_INVALID_STRUCTURE',
                 severity: 'warning',
@@ -182,4 +183,34 @@ export function validateNavigation(loaded: LoadedEpub, pkg: PackageDocumentInfo)
   }
 
   return issues;
+}
+
+
+/**
+ * EPUB nav.xhtml: um li contém a ou span, com ol aninhado opcional.
+ * Validação sem recriar, achatar ou impor um item de índice por capítulo.
+ */
+function validNavigationList(list: Element, depth = 0): boolean {
+  // Limitar a profundidade protege contra navs degenerados sem stack overflow.
+  if (depth > 80 || list.localName !== 'ol') return false;
+  const children = Array.from(list.children);
+  if (children.length === 0) return false;
+  for (const li of children) {
+    if (li.localName !== 'li') return false;
+    const contents = Array.from(li.children);
+    const labels = contents.filter((node) =>
+      node.localName === 'a' || node.localName === 'span');
+    const nested = contents.filter((node) => node.localName === 'ol');
+    if (labels.length !== 1 || nested.length > 1 ||
+        contents.some((node) => !['a', 'span', 'ol'].includes(node.localName))) {
+      return false;
+    }
+    if (labels[0]?.localName === 'a' && !labels[0].getAttribute('href')?.trim()) {
+      return false;
+    }
+    if (nested.length > 0 &&
+        (contents.indexOf(nested[0]!) <= contents.indexOf(labels[0]!) ||
+         !validNavigationList(nested[0]!, depth + 1))) return false;
+  }
+  return true;
 }
