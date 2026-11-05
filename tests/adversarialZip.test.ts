@@ -33,6 +33,22 @@ describe('arquivos EPUB maliciosos e ZIPs corrompidos', () => {
     expect(loaded.files.has('mimetype')).toBe(true);
   });
 
+
+  it('E-034: tamanho ZIP forjado é rejeitado mesmo com CRC32 legítimo', async () => {
+    const original = await buildKindleIssueEpub();
+    const changed = corrupt(original, ({ view, central, local }) => {
+      const size = view.getUint32(central + 24, true);
+      view.setUint32(central + 24, size + 1, true);
+      view.setUint32(local + 22, size + 1, true);
+    });
+    expect(parseZipCentralDirectory(changed).issues.some((x) => x.severity === 'fatal'))
+      .toBe(false);
+    const loaded = await loadEpub('tamanho-forjado.epub', changed);
+    expect(loaded.validZip).toBe(false);
+    expect(loaded.files.size).toBe(0);
+    expect(loaded.issues.some((x) => x.code === 'ZIP_SIZE_MISMATCH')).toBe(true);
+  });
+
   it('rejeita CRC32 adulterado mesmo quando os dois cabeçalhos concordam', async () => {
     const original = await buildKindleIssueEpub();
     const input = corrupt(original, ({ view, central, local }) => {

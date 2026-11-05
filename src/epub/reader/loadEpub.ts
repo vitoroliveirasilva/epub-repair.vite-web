@@ -9,6 +9,13 @@ import { createIssue } from '../utils/issueFactory';
 import { normalizeInternalPath } from '../utils/pathUtils';
 import { parseZipCentralDirectory } from './rawZipInspector';
 
+class ZipIntegrityError extends Error {
+  constructor(readonly code: string, message: string) {
+    super(message);
+    this.name = 'ZipIntegrityError';
+  }
+}
+
 export async function loadEpub(fileName: string, bytes: Uint8Array): Promise<LoadedEpub> {
   const raw = bytes.length <= MAX_FILE_SIZE_BYTES
     ? parseZipCentralDirectory(bytes)
@@ -111,8 +118,17 @@ export async function loadEpub(fileName: string, bytes: Uint8Array): Promise<Loa
       const remaining = MAX_ZIP_UNCOMPRESSED_BYTES - totalUncompressedBytes;
       const unpacked = await readZipEntryLimited(zipEntry, Math.min(MAX_ZIP_ENTRY_BYTES, remaining));
       const metadata = rawByPath.get(normalized.path);
-      if (!metadata || unpacked.crc32 !== metadata.crc32) {
-        throw new Error('Falha de integridade CRC32: a entrada ZIP foi adulterada ou corrompida.');
+      if (!metadata) {
+        throw new ZipIntegrityError('ZIP_JSZIP_ENTRY_MISMATCH',
+          'A entrada do JSZip não corresponde a um registro do diretório central.');
+      }
+      if (unpacked.bytes.length !== metadata.uncompressedSize) {
+        throw new ZipIntegrityError('ZIP_SIZE_MISMATCH',
+          'O tamanho real descompactado difere do declarado no diretório central ZIP.');
+      }
+      if (unpacked.crc32 !== metadata.crc32) {
+        throw new ZipIntegrityError('ZIP_CRC_MISMATCH',
+          'Falha de integridade CRC32: a entrada ZIP foi adulterada ou corrompida.');
       }
       const entryBytes = unpacked.bytes;
       totalUncompressedBytes += entryBytes.length;
@@ -133,7 +149,7 @@ export async function loadEpub(fileName: string, bytes: Uint8Array): Promise<Loa
         issues: [
           ...issues,
           createIssue({
-            code: 'ZIP_RESOURCE_LIMIT',
+            code: error instanceof ZipIntegrityError ? error.code : 'ZIP_RESOURCE_LIMIT',
             severity: 'fatal',
             title: 'Descompactação interrompida por segurança',
             detail: error instanceof Error ? error.message : 'Entrada ZIP inválida ou muito grande.',
@@ -144,6 +160,24 @@ export async function loadEpub(fileName: string, bytes: Uint8Array): Promise<Loa
         validZip: false,
       };
     }
+  }
+
+  // O JSZip pode normalizar nomes e ignorar registros ambíguos. Garantir que
+  // toda entrada física segura e não diretório exista exatamente no mapa final.
+  const missingFromJsZip = raw.entries.find((entry) =>
+    !entry.isDirectory && normalizeInternalPath(entry.fileName).safe &&
+    !files.has(entry.fileName));
+  if (missingFromJsZip) {
+    return {
+      fileName, fileSize: bytes.length, bytes, rawEntries: raw.entries,
+      files: new Map(), fileNames: [], validZip: false,
+      issues: [...issues, createIssue({
+        code: 'ZIP_JSZIP_ENTRY_MISMATCH', severity: 'fatal',
+        title: 'Arquivo físico não encontrado após a extração',
+        detail: 'A entrada do diretório central foi omitida ou renomeada pelo extrator JSZip.',
+        file: missingFromJsZip.fileName, repairable: false,
+      })],
+    };
   }
 
   fileNames.sort((a, b) => a.localeCompare(b));
