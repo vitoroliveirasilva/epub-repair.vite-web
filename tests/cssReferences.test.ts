@@ -33,7 +33,7 @@ describe('cssReferences', () => {
   });
 
   it('E-054: bloqueia CSS ativo disfarçado por escapes sem prometer limpeza', () => {
-    const obfuscated = 'p{color:blue;background:u\\\\72l("javascript:alert(1)")}';
+    const obfuscated = 'p{color:blue;background:u\\72l("javascript:alert(1)")}';
     expect(() => sanitizeCssDocument('OPS/css/main.css', obfuscated,
       new Set(['OPS/css/main.css']))).toThrow(/Revisão manual/u);
   });
