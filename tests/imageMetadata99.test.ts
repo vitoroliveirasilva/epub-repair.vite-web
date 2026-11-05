@@ -11,8 +11,7 @@ function check(mime:string,bytes:Uint8Array) {
   const path='OPS/image.bin';
   const before=new Uint8Array(bytes);
   const loaded={files:new Map([[path,{bytes}]])} as unknown as LoadedEpub;
-  const pkg={manifest:[{id:'image',resolvedPath:path,exists:true,mediaType:mime}]}
-    as unknown as PackageDocumentInfo;
+  const pkg={manifest:[{id:'image',resolvedPath:path,exists:true,mediaType:mime}]} as unknown as PackageDocumentInfo;
   const issues=validateImageMetadata(loaded,pkg);
   expect(bytes).toEqual(before);
   return issues;
