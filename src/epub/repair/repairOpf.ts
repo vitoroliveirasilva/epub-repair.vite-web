@@ -395,7 +395,7 @@ function ensureNavigationFiles(
     !currentManifestNavExists(manifest, loaded, pkg, filesToAdd)
   ) {
     const navPath = pkg.navItem?.resolvedPath || `${pkg.opfDir ? `${pkg.opfDir}/` : ''}nav.xhtml`;
-    filesToAdd.set(navPath, buildNavDocument(pkg, navPath));
+    filesToAdd.set(navPath, buildNavDocument(pkg, navPath, loaded.files));
     const item = doc.createElementNS(OPF_NS, 'item');
     item.setAttribute('id', makeUniqueId('nav', usedIds));
     item.setAttribute('href', encodePathForXml(relativePath(pkg.opfDir, navPath)));
@@ -424,7 +424,7 @@ function ensureNavigationFiles(
   if (options.generateNcx && shouldCreateNcx(pkg) && !currentNcxId) {
     const ncxPath = pkg.ncxItem?.resolvedPath || `${pkg.opfDir ? `${pkg.opfDir}/` : ''}toc.ncx`;
     const ncxId = makeUniqueId(pkg.ncxItem?.id || 'ncx', usedIds);
-    filesToAdd.set(ncxPath, buildNcxDocument(pkg, ncxPath));
+    filesToAdd.set(ncxPath, buildNcxDocument(pkg, ncxPath, loaded.files));
     // A entrada NCX ausente pode ter sido removida ao reparar o manifest.
     if (!childElementsByLocalName(manifest, 'item').some((item) => getAttr(item, 'id') === ncxId)) {
       const item = doc.createElementNS(OPF_NS, 'item');
