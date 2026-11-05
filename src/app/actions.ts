@@ -130,6 +130,7 @@ export async function repairCurrentFile(
       canRunOptionalOptimization ? 'optimization' : 'repair',
       loaded,
       context.signal,
+      (percent) => publishProgress(context, 'Recompactando EPUB...', Math.round(percent), 100),
     );
     throwIfProcessingAborted(context.signal);
     if (!result.changed || !result.blob) {

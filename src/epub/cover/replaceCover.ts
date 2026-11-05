@@ -42,6 +42,7 @@ export async function replaceEpubCover(
   bytes: Uint8Array,
   coverImage: CoverImageInput,
   signal?: AbortSignal,
+  onZipProgress?: (percent: number) => void,
 ): Promise<RepairResult> {
   const canceled = (): void => {
     if (signal?.aborted) throw new DOMException(
@@ -120,7 +121,7 @@ export async function replaceEpubCover(
     },
   ];
   canceled();
-  const blob = await rebuildEpubZip(files);
+  const blob = await rebuildEpubZip(files, ({ percent }) => onZipProgress?.(percent));
   canceled();
   const afterBytes = new Uint8Array(await blob.arrayBuffer());
   const outputFileName = makeRepairedFileName(fileName, '-capa');

@@ -28,6 +28,7 @@ export async function repairEpub(
   mode: RepairRunMode = 'repair',
   preloaded?: LoadedEpub,
   signal?: AbortSignal,
+  onZipProgress?: (percent: number) => void,
 ): Promise<RepairResult> {
   const canceled = (): void => {
     if (signal?.aborted) throw new DOMException(
@@ -88,7 +89,7 @@ export async function repairEpub(
         changed: false, operation,
       };
     }
-    const blob = await rebuildEpubZip(optimizedFiles);
+    const blob = await rebuildEpubZip(optimizedFiles, ({ percent }) => onZipProgress?.(percent));
     canceled();
     const outName = makeRepairedFileName(fileName);
     const after = await inspectEpub(outName, new Uint8Array(await blob.arrayBuffer()));
@@ -210,7 +211,7 @@ export async function repairEpub(
   }
 
   canceled();
-  const blob = await rebuildEpubZip(files);
+  const blob = await rebuildEpubZip(files, ({ percent }) => onZipProgress?.(percent));
   canceled();
   const afterBytes = new Uint8Array(await blob.arrayBuffer());
   const outputFileName = makeRepairedFileName(fileName);
