@@ -168,6 +168,16 @@ function sanitizeDangerousEmbeddedCss(css: string): string {
     /@import\s+(?:url\(\s*)?(?:(["'])(.*?)\1|([^"'\s);]+))\s*\)?[^;]*;/giu,
     (full) => containsDangerousCss(full) ? '' : full,
   );
+  // Remover somente declarações CSS executáveis; preservar fonte e tipografia
+  // inofensivas do mesmo bloco. A verificação posterior continua fail-closed.
+  result = result.replace(
+    /(^|[;{])\s*(?:behavior|-moz-binding)\s*:[^;{}]*(?=[;}]|$)/giu,
+    '$1',
+  );
+  result = result.replace(
+    /(^|[;{])\s*[-\w]+\s*:[^;{}]*?expression\s*\([^;{}]*(?=[;}]|$)/giu,
+    '$1',
+  );
   result = result.replace(/url\(\s*(["']?)(.*?)\1\s*\)/giu, (full, _quote: string, value: string) => {
     const decoded = decodeCssEscapes(value);
     if (isRemoteUrl(decoded) && !isSafeRemoteResourceUrl(decoded) && !isInlineFontDataUrl(decoded)) {
