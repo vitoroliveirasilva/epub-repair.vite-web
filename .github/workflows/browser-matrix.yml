@@ -45,7 +45,8 @@ jobs:
           mkdir -p "${RUNNER_TEMP}/browser-harness"
           npm install --prefix "${RUNNER_TEMP}/browser-harness" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.55.1
       - name: Install supported browser and OS libraries
-        run: "${RUNNER_TEMP}/browser-harness/node_modules/.bin/playwright" install --with-deps "${{ matrix.browser }}"
+        run: |
+          "${RUNNER_TEMP}/browser-harness/node_modules/.bin/playwright" install --with-deps "${{ matrix.browser }}"
       - name: Start static app locally and smoke browser
         shell: bash
         env:
