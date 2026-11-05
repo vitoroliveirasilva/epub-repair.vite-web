@@ -33,7 +33,7 @@ function inspect(direction: string, linear: Array<string | undefined>,
     ['OPS/foreign.bin', { bytes: Uint8Array.of(1,2,3,4) }],
   ]);
   const pkg = parseOpfDocument(parseXml(source), 'OPS/book.opf', files);
-  const loaded = { files } as LoadedEpub;
+  const loaded = { files } as unknown as LoadedEpub;
   return [...validatePackageSemantics(loaded, pkg),
     ...validateManifestFallbacks(pkg)].map((issue) => issue.code);
 }
