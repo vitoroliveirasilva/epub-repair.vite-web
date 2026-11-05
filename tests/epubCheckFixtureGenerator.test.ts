@@ -74,12 +74,19 @@ describe('Fixture sintética de conformidade oficial', () => {
     expect(result.after.stats.fatalCount).toBe(0);
     expect(result.after.issues.some((issue) => issue.code === 'MIME_MISSING')).toBe(false);
 
+    // E-093: segundo reparo não deve reempacotar um EPUB já corrigido.
+    const repairedBytes = new Uint8Array(await result.blob!.arrayBuffer());
+    const second = await repairEpub('fixture-k.epub', repairedBytes, {
+      ...DEFAULT_REPAIR_OPTIONS, conservativeMode: true,
+    });
+    expect(second.changed).toBe(false);
+    expect(second.blob).toBeUndefined();
+
     const outputDir = process.env.EPUBCHECK_FIXTURE_OUTPUT;
     if (outputDir && result.blob) {
       await mkdir(outputDir, { recursive: true });
       await writeFile(join(outputDir, 'original-invalid.epub'), Buffer.from(original));
-      await writeFile(join(outputDir, 'repaired-valid.epub'),
-        Buffer.from(await result.blob.arrayBuffer()));
+      await writeFile(join(outputDir, 'repaired-valid.epub'), Buffer.from(repairedBytes));
     }
   });
 });

@@ -234,3 +234,15 @@ Os testes adversariais cobrem ZIPs adulterados (incluindo CRC32, offsets, arquiv
 Referências passivas `http://` e `https://` (incluindo fontes externas via `@font-face` e `@import`) são preservadas e não reduzem o score de segurança. Fontes `data:font/*;base64` também são mantidas. Isso não garante que um leitor offline consiga carregar recursos externos: preserve as fontes no pacote quando precisar de funcionamento offline.
 
 O índice (`toc.ncx` no EPUB 2 ou `nav.xhtml` no EPUB 3) descreve a navegação editorial, não uma enumeração obrigatória de todos os arquivos do `spine`. O validador ainda identifica destinos quebrados, NCX inválido e `playOrder` inconsistente, mas não insere automaticamente apêndices e páginas auxiliares no índice.
+
+## Auditoria de conformidade e segurança
+
+A CI da branch `dev` também utiliza o **EPUBCheck 5.4.0 oficial**, verificando uma fixture
+reparada pelo motor real em navegador simulado. O pacote é baixado da release W3C e
+validado por SHA-256. Essa prova automatizada **não** transforma o site em EPUBCheck
+nem garante conformidade de qualquer livro arbitrário.
+
+- [Modelo de ameaças, privacidade e limites](docs/SEGURANCA_E_LIMITES.md)
+- [Matriz de formatos EPUB e validações](docs/MATRIZ_COMPATIBILIDADE.md)
+- [Decisões técnicas da auditoria](docs/DECISOES_AUDITORIA.md)
+- [Andamento dos 99 itens](docs/AUDITORIA_99_PROGRESSO.md)
