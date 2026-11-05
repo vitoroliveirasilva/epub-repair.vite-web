@@ -7,6 +7,7 @@ import {
   isInternalAnchor,
   isRemoteUrl,
   isSafeExternalLinkUrl,
+  isSafeInlineImageDataUrl,
   resolveReference,
 } from '../utils/pathUtils';
 import { parseXml } from '../utils/xmlUtils';
@@ -108,7 +109,9 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
       }
 
       if (isRemoteUrl(ref.value)) {
-        if (isSafeExternalLinkUrl(ref.value)) continue;
+        if (isSafeExternalLinkUrl(ref.value) ||
+          (['src', 'srcset', 'poster'].includes(ref.attr) &&
+            isSafeInlineImageDataUrl(ref.value))) continue;
         issues.push(
           createIssue({
             code: 'CONTENT_UNSAFE_URL',

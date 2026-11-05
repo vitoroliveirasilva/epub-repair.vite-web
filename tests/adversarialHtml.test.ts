@@ -23,6 +23,30 @@ function parse(text: string): Document {
 }
 
 describe('testes adversariais de sanitização XHTML no DOM', () => {
+  it('E-057: preserva imagens raster data: sem permitir data:svg ou HTML executável', () => {
+    const input = xhtml(
+      '<img id="safe" src="data:image/png;base64,AAECAw=="/>' +
+      '<img id="unsafe" src="data:image/svg+xml;base64,PHN2Zz4="/>' +
+      '<a id="link" href="data:text/html;base64,PHNjcmlwdD4=">Texto</a>',
+    );
+    const clean = sanitizeActiveContentMarkup(input, filePath, {
+      ...options, removeRemoteResourceLinks: true,
+    });
+    const doc = parse(clean.text);
+    expect(doc.getElementById('safe')?.getAttribute('src')).toBe('data:image/png;base64,AAECAw==');
+    expect(doc.getElementById('unsafe')?.hasAttribute('src')).toBe(false);
+    expect(doc.getElementById('link')?.hasAttribute('href')).toBe(false);
+  });
+
+  it('E-057: srcset não divide a vírgula dentro de data:image e mantém imagem segura', () => {
+    const input = xhtml('<img srcset="data:image/png;base64,AAECAw== 1x, javascript:alert(1) 2x" />');
+    const clean = sanitizeActiveContentMarkup(input, filePath, options);
+    const node = parse(clean.text).getElementsByTagName('img')[0]!;
+    expect(node.getAttribute('srcset')).toBe('data:image/png;base64,AAECAw== 1x');
+    expect(node.getAttribute('srcset')).not.toContain('javascript');
+  });
+
+
   it('E-016: CSS perigoso não elimina regras e estilos legítimos do XHTML', () => {
     const original = xhtml(
       '<style>p{color:blue}.bad{background:url("javascript:alert(1)")}</style>' +

@@ -1,4 +1,4 @@
-import { stripFragmentAndQuery } from '../utils/pathUtils';
+import { splitSrcsetCandidates, stripFragmentAndQuery } from '../utils/pathUtils';
 
 export interface ResourceReference {
   attr: string;
@@ -24,7 +24,7 @@ export function extractHtmlResourceReferences(text: string): ResourceReference[]
   const srcsetRegex = /\bsrcset\s*=\s*(["'])(.*?)\1/giu;
   while ((match = srcsetRegex.exec(text)) !== null) {
     const srcset = match[2] ?? '';
-    for (const part of srcset.split(',')) {
+    for (const part of splitSrcsetCandidates(srcset)) {
       const value = part.trim().split(/\s+/u)[0];
       if (value) refs.push({ attr: 'srcset', value: stripFragmentAndQuery(value), raw: value });
     }

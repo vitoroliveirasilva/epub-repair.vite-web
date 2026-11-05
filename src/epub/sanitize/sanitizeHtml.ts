@@ -4,6 +4,8 @@ import {
   basename,
   isRemoteUrl,
   isSafeRemoteResourceUrl,
+  isSafeInlineImageDataUrl,
+  splitSrcsetCandidates,
   resolveReference,
 } from '../utils/pathUtils';
 
@@ -178,13 +180,13 @@ function filterUnsafeSrcset(
   const output = text.replace(
     /\ssrcset\s*=\s*(["'])(.*?)\1/giu,
     (full, quote: string, value: string) => {
-      const safeCandidates = value
-        .split(',')
-        .map((candidate) => candidate.trim())
+      const candidates = splitSrcsetCandidates(value);
+      const safeCandidates = candidates
         .filter(Boolean)
         .filter((candidate) => {
           const [rawUrl] = candidate.split(/\s+/u);
           if (!rawUrl || rawUrl.startsWith('#') || rawUrl.startsWith('kindle:embed:')) return false;
+          if (isSafeInlineImageDataUrl(rawUrl)) return true;
           if (isRemoteUrl(rawUrl)) {
             return isSafeRemoteResourceUrl(rawUrl) && !options.removeRemoteResourceLinks;
           }
@@ -192,7 +194,7 @@ function filterUnsafeSrcset(
           return resolved.safe && options.existingFiles.has(resolved.path);
         });
 
-      if (safeCandidates.length === value.split(',').filter((part) => part.trim()).length) {
+      if (safeCandidates.length === candidates.length) {
         return full;
       }
 

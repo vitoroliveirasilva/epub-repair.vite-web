@@ -1,6 +1,8 @@
 import {
   decodeCssEscapes,
   isInlineFontDataUrl,
+  isSafeInlineImageDataUrl,
+  splitSrcsetCandidates,
   isRemoteUrl,
   isSafeExternalLinkUrl,
   isSafeRemoteResourceUrl,
@@ -90,10 +92,10 @@ export function sanitizeActiveContentMarkup(
       }
 
       if (attrLocal === 'srcset') {
-        const candidates = value.split(',').map((part) => part.trim()).filter(Boolean);
+        const candidates = splitSrcsetCandidates(value);
         const safe = candidates.filter((part) => {
           const url = part.split(/\s+/u)[0] ?? '';
-          return !shouldRemoveUrl(url, options);
+          return !shouldRemoveUrl(url, options, 'srcset');
         });
         if (safe.length !== candidates.length) {
           if (safe.length) element.setAttribute(attrName, safe.join(', '));
@@ -105,7 +107,7 @@ export function sanitizeActiveContentMarkup(
 
       if (
         (urlAttributes.has(attrName) || urlAttributes.has(attrLocal)) &&
-        shouldRemoveUrl(value, options)
+        shouldRemoveUrl(value, options, attrLocal)
       ) {
         element.removeAttributeNode(attribute);
         changed = true;
@@ -126,10 +128,14 @@ export function sanitizeActiveContentMarkup(
 export function shouldRemoveUrl(
   url: string,
   options: Pick<Parameters<typeof sanitizeActiveContentMarkup>[2], 'sanitizeScripts' | 'removeRemoteResourceLinks'>,
+  attribute = '',
 ): boolean {
   // eslint-disable-next-line no-control-regex -- controles escondem schemes executáveis
   const normalized = url.replace(/[\u0000-\u0020\u007f]/gu, '').toLowerCase();
   if (!normalized) return false;
+  if (['src', 'srcset', 'poster'].includes(attribute) && isSafeInlineImageDataUrl(normalized)) {
+    return false; // Dados raster embutidos não são conexões de rede.
+  }
   if (isRemoteUrl(normalized) && options.removeRemoteResourceLinks) return true;
   if (!options.sanitizeScripts) return false;
   return isRemoteUrl(normalized) && !isSafeExternalLinkUrl(normalized);
