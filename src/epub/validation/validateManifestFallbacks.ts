@@ -1,6 +1,9 @@
+import type { LoadedEpub } from '../model/epubTypes';
 import type { Issue } from '../model/issueTypes';
 import type { ManifestItem, PackageDocumentInfo } from '../model/opfTypes';
 import { createIssue } from '../utils/issueFactory';
+import { isRemoteUrl, resolveReference, splitSrcsetCandidates } from '../utils/pathUtils';
+import { parseXml } from '../utils/xmlUtils';
 
 /**
  * EPUB 3: somente XHTML e SVG podem ser documentos primários do spine sem
@@ -51,7 +54,7 @@ function inspectChain(
   return { kind: core ? 'ok' : 'no-terminal', core, document };
 }
 
-export function validateManifestFallbacks(pkg: PackageDocumentInfo): Issue[] {
+export function validateManifestFallbacks(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issue[] {
   if (!pkg.version.trim().startsWith('3')) return [];
   const issues: Issue[] = [];
   const byId = new Map(pkg.manifest.map((item) => [item.id, item]));
@@ -94,6 +97,51 @@ export function validateManifestFallbacks(pkg: PackageDocumentInfo): Issue[] {
       context: item.id,
       repairable: false,
     }));
+  }
+
+
+  if (loaded) {
+    const byPath = new Map(pkg.manifest.map((item) => [item.resolvedPath, item]));
+    for (const docItem of pkg.manifest) {
+      if (!docItem.exists || docItem.mediaType !== 'application/xhtml+xml') continue;
+      const bytes = loaded.files.get(docItem.resolvedPath)?.bytes;
+      if (!bytes) continue;
+      let doc: Document;
+      try {
+        doc = parseXml(new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+          .replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml');
+      } catch {
+        continue; // Diagnóstico XML inválido pertence ao validador de conteúdo.
+      }
+      for (const image of Array.from(doc.getElementsByTagName('*'))
+        .filter((node) => node.localName.toLowerCase() === 'img')) {
+        const references = [
+          ...(image.getAttribute('src') ? [image.getAttribute('src')!] : []),
+          ...splitSrcsetCandidates(image.getAttribute('srcset') ?? '')
+            .map((candidate) => candidate.trim().split(/\s+/u)[0] ?? ''),
+        ];
+        for (const ref of references) {
+          if (!ref || isRemoteUrl(ref)) continue;
+          const target = resolveReference(docItem.resolvedPath, ref);
+          if (!target.safe) continue;
+          const resource = byPath.get(target.path);
+          if (!resource || !resource.exists || CORE_MEDIA.has(normalizedType(resource))) continue;
+          const chain = inspectChain(resource, byId);
+          if (chain.core || chain.kind === 'missing' || chain.kind === 'cycle') continue;
+          issues.push(createIssue({
+            code: 'OPF_FOREIGN_CONTENT_FALLBACK_MISSING',
+            severity: 'warning',
+            title: 'Imagem estrangeira sem fallback de formato core',
+            detail: 'O XHTML "' + docItem.id + '" incorpora recurso "' + resource.id +
+              '" não suportado como tipo core e sem fallback core verificável. ' +
+              'Texto alternativo e URLs legítimas são preservados para revisão.',
+            file: docItem.resolvedPath,
+            context: ref,
+            repairable: false,
+          }));
+        }
+      }
+    }
   }
 
   return issues;

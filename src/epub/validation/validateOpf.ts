@@ -290,7 +290,7 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
     );
   }
 
-  issues.push(...validateManifestFallbacks(pkg));
+  issues.push(...validateManifestFallbacks(pkg, loaded));
   issues.push(...validateRemoteManifestResources(pkg));
   return issues;
 }
