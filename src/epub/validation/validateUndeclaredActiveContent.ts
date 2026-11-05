@@ -25,7 +25,7 @@ export function validateUndeclaredActiveContent(
     if (declared.has(path)) continue;
     if (!/\.(?:xhtml?|svg|css)$/iu.test(path)) continue;
     const text = new TextDecoder('utf-8', { fatal: false }).decode(entry.bytes);
-    let active = false;
+    let active: boolean;
     if (/\.css$/iu.test(path)) {
       active = containsDangerousCss(text.replace(/\/\*[\s\S]*?\*\//gu, ''));
     } else {
