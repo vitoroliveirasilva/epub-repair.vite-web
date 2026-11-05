@@ -1,7 +1,7 @@
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction, RepairOptions } from '../model/repairTypes';
 import { HTML_MEDIA_TYPES } from '../utils/constants';
-import { normalizeLanguageTag } from '../utils/kindleCompatibility';
+import { isInvalidLanguageTag, normalizeLanguageTag } from '../utils/kindleCompatibility';
 import {
   childElementsByLocalName,
   findByLocalName,
@@ -86,7 +86,10 @@ function repairXhtmlCompatibility(
   pkg: PackageDocumentInfo,
 ): RepairAction[] {
   const actions: RepairAction[] = [];
-  const language = normalizeLanguageTag(pkg.metadata.language, 'pt-BR');
+  const rawLanguage = pkg.metadata.language;
+  const language = rawLanguage && !isInvalidLanguageTag(rawLanguage)
+    ? normalizeLanguageTag(rawLanguage)
+    : undefined;
 
   for (const item of pkg.manifest) {
     if (!item.exists || !HTML_MEDIA_TYPES.has(item.mediaType)) continue;
@@ -109,7 +112,7 @@ function repairXhtmlCompatibility(
       });
     }
 
-    const withLanguage = ensureHtmlLanguage(output, language);
+    const withLanguage = language ? ensureHtmlLanguage(output, language) : output;
     if (withLanguage !== output) {
       output = withLanguage;
       fileActions.push({

@@ -8,6 +8,7 @@ import { canOptimizeReport, canRepairReport } from '../utils/reportGuards';
 import { parsePackageDocument, parseOpfDocument } from '../validation/opfParser';
 import { parseXml } from '../utils/xmlUtils';
 import { auditPreservation } from './preservationAudit';
+import { assertNoNewCriticalIssues } from './repairSafety';
 import { ensureContainerFile } from './repairContainer';
 import { repairContentDocuments } from './repairContentDocuments';
 import { repairImageCompatibility } from './repairImages';
@@ -209,24 +210,4 @@ function shouldNormalizeMimetype(
 
 function shouldRebuildContainer(issues: { code: string }[]): boolean {
   return issues.some((issue) => issue.code.startsWith('CONTAINER_'));
-}
-
-// Bloqueia regressões fatais/erros críticos em vez de entregar uma cópia pior.
-function assertNoNewCriticalIssues(
-  before: RepairResult['before'],
-  after: RepairResult['after'],
-): void {
-  const isCritical = (issue: { severity: string }) =>
-    issue.severity === 'fatal' || issue.severity === 'error';
-  const known = new Set(
-    before.issues.filter(isCritical).map((issue) => `${issue.code}|${issue.file ?? ''}`),
-  );
-  const added = after.issues.filter(isCritical)
-    .filter((issue) => !known.has(`${issue.code}|${issue.file ?? ''}`));
-  if (added.length > 0) {
-    throw new Error(
-      'O reparo introduziu novos problemas críticos e o EPUB resultante não foi liberado: ' +
-      added.map((issue) => issue.code).join(', '),
-    );
-  }
 }

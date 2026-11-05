@@ -83,14 +83,14 @@ Quando o EPUB não possui reparos obrigatórios, o app informa que ele está pro
 * Reconstrói `META-INF/container.xml` quando necessário
 * Preserva o OPF e corrige apenas o necessário
 * Completa metadados básicos faltantes sem apagar os existentes
-* Normaliza idioma inválido/genérico e datas OPF frágeis
+* Aponta idioma ausente ou inválido para revisão manual, sem inventar pt-BR, e normaliza datas OPF frágeis
 * Atualiza `package version="1.0"` para uma base EPUB 2 mais segura quando aplicável
 * Declara a imagem de capa quando há uma candidata segura no manifest
 * Corrige ids duplicados/ausentes no manifest
 * Corrige media types quando a extensão indica o tipo correto
 * Remove do manifest itens claramente inexistentes, inválidos ou duplicados
 * Adiciona ao manifest recursos relevantes existentes que estavam órfãos
-* Remove `itemref` inválido do spine e reconstrói a ordem de leitura quando ela está vazia
+* Remove `itemref` inválido do spine, mas não inventa ordem editorial quando não há referência confiável
 * Preserva `nav.xhtml` e `toc.ncx` válidos
 * Cria `nav.xhtml` apenas quando EPUB 3 precisa e ele está ausente
 * Cria `toc.ncx` para EPUB 2 ou quando ele está declarado e ausente

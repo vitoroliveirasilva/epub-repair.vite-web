@@ -12,7 +12,7 @@ import { areEquivalentMediaTypes, guessMediaType } from '../utils/mediaTypes';
 export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issue[] {
   const issues: Issue[] = [];
 
-  if (!pkg.metadata.title || !pkg.metadata.language || !pkg.metadata.identifier) {
+  if (!pkg.metadata.title || !pkg.metadata.identifier) {
     issues.push(
       createIssue({
         code: 'OPF_METADATA_MISSING',
@@ -26,6 +26,17 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
     );
   }
 
+  if (!pkg.metadata.language) {
+    issues.push(createIssue({
+      code: 'OPF_LANGUAGE_MISSING',
+      severity: 'warning',
+      title: 'Idioma do OPF não declarado',
+      detail: 'Não é seguro supor o idioma da obra. Informe manualmente o idioma correto.',
+      file: pkg.opfPath,
+      repairable: false,
+    }));
+  }
+
   if (pkg.metadata.language && isInvalidLanguageTag(pkg.metadata.language)) {
     issues.push(
       createIssue({
@@ -33,10 +44,10 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
         severity: 'warning',
         title: 'Idioma do OPF inválido ou genérico',
         detail:
-          'O idioma declarado não é específico o suficiente para fluxos Kindle. Valores como UND, unknown ou tags fora do padrão podem quebrar a conversão.',
+          'O idioma declarado é genérico ou inválido. Revise o idioma da obra sem atribuir pt-BR automaticamente.',
         file: pkg.opfPath,
         context: pkg.metadata.language,
-        repairable: true,
+        repairable: false,
       }),
     );
   }

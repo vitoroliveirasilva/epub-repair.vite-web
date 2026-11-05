@@ -3,6 +3,7 @@ import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction, RepairResult } from '../model/repairTypes';
 import { loadEpub } from '../reader/loadEpub';
 import { rebuildEpubZip } from '../repair/rebuildEpubZip';
+import { assertNoNewCriticalIssues } from '../repair/repairSafety';
 import { inspectEpub } from '../validation/validateEpub';
 import { parsePackageDocument } from '../validation/opfParser';
 import { makeRepairedFileName } from '../utils/fileName';
@@ -40,6 +41,9 @@ export async function replaceEpubCover(
   coverImage: CoverImageInput,
 ): Promise<RepairResult> {
   const before = await inspectEpub(fileName, bytes);
+  if (before.stats.fatalCount > 0) {
+    throw new Error('Não é seguro substituir a capa de um EPUB com problemas fatais.');
+  }
   const loaded = await loadEpub(fileName, bytes);
 
   if (!loaded.validZip) {
@@ -108,7 +112,11 @@ export async function replaceEpubCover(
   const afterBytes = new Uint8Array(await blob.arrayBuffer());
   const outputFileName = makeRepairedFileName(fileName, '-capa');
   const after = await inspectEpub(outputFileName, afterBytes);
+  assertNoNewCriticalIssues(before, after);
   const warnings = buildCoverReplacementWarnings(before, after);
+  if (after.stats.errorCount > 0) {
+    warnings.push('O EPUB ainda apresenta erros. A troca de capa não significa validação completa.');
+  }
 
   return {
     blob,

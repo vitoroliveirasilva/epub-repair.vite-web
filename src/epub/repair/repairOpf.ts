@@ -4,9 +4,7 @@ import type { RepairAction, RepairOptions } from '../model/repairTypes';
 import { HTML_MEDIA_TYPES, RELEVANT_MEDIA_TYPES, SYSTEM_FILE_PATTERNS } from '../utils/constants';
 import { deriveTitleFromFileName } from '../utils/fileName';
 import {
-  isInvalidLanguageTag,
   isInvalidOpfDate,
-  normalizeLanguageTag,
   normalizeOpfDate,
   findCoverImageCandidate,
 } from '../utils/kindleCompatibility';
@@ -110,27 +108,8 @@ function repairMetadata(
     });
   }
 
-  const language = findFirstByLocalName(metadata, 'language');
-  const languageValue = language?.textContent?.trim();
-  if (!languageValue) {
-    const createdLanguage = doc.createElementNS(DC_NS, 'dc:language');
-    createdLanguage.textContent = 'pt-BR';
-    metadata.append(createdLanguage);
-    actions.push({
-      type: 'updated',
-      title: 'Idioma padrão adicionado',
-      detail: 'Foi usado pt-BR somente porque o OPF não informava idioma.',
-      file: opfPath,
-    });
-  } else if (language && isInvalidLanguageTag(languageValue)) {
-    language.textContent = normalizeLanguageTag(languageValue, 'pt-BR');
-    actions.push({
-      type: 'normalized',
-      title: 'Idioma inválido normalizado',
-      detail: `O idioma "${languageValue}" foi normalizado para "${language.textContent}".`,
-      file: opfPath,
-    });
-  }
+  // O idioma não pode ser deduzido pelo nome ou pela interface em português.
+  // Quando ausente/inválido, o validador exige revisão editorial.
 
   const date = findFirstByLocalName(metadata, 'date');
   const dateValue = date?.textContent?.trim();
@@ -360,21 +339,10 @@ function repairSpine(
   }
 
   if (childElementsByLocalName(spine, 'itemref').length === 0) {
-    for (const item of childElementsByLocalName(manifest, 'item')) {
-      const mediaType = getAttr(item, 'media-type') ?? '';
-      const properties = getAttr(item, 'properties') ?? '';
-      if (!HTML_MEDIA_TYPES.has(mediaType) || /(^|\s)nav($|\s)/u.test(properties)) continue;
-      const id = getAttr(item, 'id');
-      if (!id) continue;
-      const itemref = item.ownerDocument.createElementNS(OPF_NS, 'itemref');
-      itemref.setAttribute('idref', id);
-      spine.append(itemref);
-    }
     actions.push({
-      type: 'updated',
-      title: 'Spine reconstruído',
-      detail:
-        'A ordem de leitura estava vazia e foi reconstruída com documentos HTML/XHTML existentes.',
+      type: 'skipped',
+      title: 'Spine sem ordem de leitura confiável',
+      detail: 'Não é possível inferir a ordem editorial a partir do manifest. Requer revisão manual.',
       file: opfPath,
     });
   }

@@ -21,6 +21,9 @@ export function buildNavDocument(pkg: PackageDocumentInfo, navPath: string): str
     spineItems.length > 0
       ? spineItems
       : pkg.manifest.filter((item) => item.exists && item.mediaType.includes('html'));
+  if (entries.length === 0) {
+    throw new Error('Não é possível criar nav.xhtml sem um documento de leitura válido.');
+  }
   const list = entries
     .map((item, index) => {
       const href = encodePathForXml(relativePath(navDir, item.resolvedPath));
@@ -41,6 +44,9 @@ export function buildNcxDocument(pkg: PackageDocumentInfo, ncxPath: string): str
     .filter((item): item is NonNullable<typeof item> =>
       Boolean(item?.exists && item.mediaType.includes('html')),
     );
+  if (entries.length === 0) {
+    throw new Error('Não é possível criar toc.ncx sem destino de leitura válido.');
+  }
   const navPoints = entries
     .map((item, index) => {
       const label = item.id || basename(item.href) || `Capítulo ${index + 1}`;
