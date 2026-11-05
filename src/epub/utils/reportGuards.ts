@@ -4,7 +4,7 @@ import type { Issue } from '../model/issueTypes';
 /** Conteúdo ativo não neutralizado ou binário suspeito exige revisão humana. */
 export function hasResidualActiveContent(report: ValidationReport | undefined): boolean {
   return Boolean(report?.issues.some((issue) =>
-    /^(?:CONTENT_(?:SCRIPTED|UNSAFE)|CSS_UNSAFE_RESOURCE|PACKAGE_SUSPICIOUS_EXECUTABLE)/u.test(issue.code),
+    /^(?:CONTENT_(?:SCRIPTED|UNSAFE)|CSS_UNSAFE_RESOURCE|PACKAGE_(?:SUSPICIOUS_EXECUTABLE|UNDECLARED_ACTIVE_CONTENT|UNDECLARED_SCRIPT))/u.test(issue.code),
   ));
 }
 

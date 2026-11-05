@@ -11,6 +11,7 @@ import {
   resolveReference,
 } from '../utils/pathUtils';
 import { extractCssResourceReferences } from './referenceExtractor';
+import { containsDangerousCss } from '../sanitize/sanitizeActiveContent';
 
 export function validateCssReferences(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
   const issues: Issue[] = [];
@@ -22,6 +23,17 @@ export function validateCssReferences(loaded: LoadedEpub, pkg: PackageDocumentIn
     const file = loaded.files.get(item.resolvedPath);
     if (!file) continue;
     const text = new TextDecoder('utf-8', { fatal: false }).decode(file.bytes);
+    if (containsDangerousCss(text.replace(/\/\*[\s\S]*?\*\//gu, ''))) {
+      issues.push(createIssue({
+        code: 'CSS_UNSAFE_RESOURCE',
+        severity: 'warning',
+        title: 'Declaração ativa detectada no CSS',
+        detail: 'O CSS contém expressão, behavior, binding ou URL de esquema executável. ' +
+          'Confira se a limpeza automática conseguiu neutralizar o conteúdo.',
+        file: item.resolvedPath,
+        repairable: true,
+      }));
+    }
 
     for (const ref of extractCssResourceReferences(text)) {
       if (!ref.value || ref.value.startsWith('#')) continue;

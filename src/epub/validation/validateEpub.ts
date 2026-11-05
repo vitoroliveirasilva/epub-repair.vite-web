@@ -18,6 +18,7 @@ import { validateAccessibility } from './validateAccessibility';
 import { validateCssQuality } from './validateCssQuality';
 import { validateCoverConsistency } from './validateCoverConsistency';
 import { validateDeclaredScripts } from './validateDeclaredScripts';
+import { validateUndeclaredActiveContent } from './validateUndeclaredActiveContent';
 import { validateMediaOverlays } from './validateMediaOverlays';
 import { validateFixedLayout } from './validateFixedLayout';
 
@@ -45,6 +46,7 @@ export async function inspectEpub(fileName: string, bytes: Uint8Array): Promise<
     issues.push(...validatePackageSemantics(loaded, parsed.packageInfo));
     issues.push(...validateCoverConsistency(loaded, parsed.packageInfo));
     issues.push(...validateDeclaredScripts(loaded, parsed.packageInfo));
+    issues.push(...validateUndeclaredActiveContent(loaded, parsed.packageInfo));
     issues.push(...validateNavigation(loaded, parsed.packageInfo));
     issues.push(...validateInternalAnchors(loaded, parsed.packageInfo));
     issues.push(...validateContentReferences(loaded, parsed.packageInfo));
