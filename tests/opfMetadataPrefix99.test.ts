@@ -13,8 +13,7 @@ function check(meta: string, extra = '', prefix = '') {
     '<dc:title>Livro</dc:title><dc:language>pt-BR</dc:language>' +
     '<meta property="dcterms:modified">' + meta + '</meta>' + extra +
     '</metadata><manifest/><spine/></package>';
-  const loaded = { files: new Map([[path, { bytes: new TextEncoder().encode(source) }]]) }
-    as unknown as LoadedEpub;
+  const loaded = { files: new Map([[path, { bytes: new TextEncoder().encode(source) }]]) } as unknown as LoadedEpub;
   const pkg = { opfPath: path, version: '3.3', manifest: [], spine: [] } as PackageDocumentInfo;
   return validatePackageSemantics(loaded, pkg).map((x) => x.code);
 }
