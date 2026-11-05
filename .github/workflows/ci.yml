@@ -61,3 +61,64 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+  epubcheck:
+    name: EPUBCheck 5.4.0 / EPUB reparado
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate synthetic EPUB before and after real repair
+        env:
+          EPUBCHECK_FIXTURE_OUTPUT: ${{ runner.temp }}/epub-fixtures
+        run: npx vitest run tests/epubCheckFixtureGenerator.test.ts
+
+      - name: Download verified official EPUBCheck 5.4.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 \
+            'https://github.com/w3c/epubcheck/releases/download/v5.4.0/epubcheck-5.4.0.zip' \
+            -o "${RUNNER_TEMP}/epubcheck.zip"
+          printf '%s  %s\n' \
+            '33350c61038e71dfb3d45a76aed04bf5481e6d5500cb780f6e98db8bbd15a28c' \
+            "${RUNNER_TEMP}/epubcheck.zip" | sha256sum --check
+          mkdir -p "${RUNNER_TEMP}/epubcheck"
+          unzip -q "${RUNNER_TEMP}/epubcheck.zip" -d "${RUNNER_TEMP}/epubcheck"
+
+      - name: Assert broken input is rejected and repaired EPUB passes
+        shell: bash
+        run: |
+          set -euo pipefail
+          epubcheck_jar="$(find "${RUNNER_TEMP}/epubcheck" -name 'epubcheck.jar' -print -quit)"
+          test -n "$epubcheck_jar"
+          java -jar "$epubcheck_jar" --version
+
+          original="${RUNNER_TEMP}/epub-fixtures/original-invalid.epub"
+          repaired="${RUNNER_TEMP}/epub-fixtures/repaired-valid.epub"
+          test -s "$original" && test -s "$repaired"
+
+          if java -jar "$epubcheck_jar" "$original"; then
+            echo 'ERRO: a fixture original inválida foi aceita pelo EPUBCheck.'
+            exit 1
+          fi
+
+          java -jar "$epubcheck_jar" "$repaired"
