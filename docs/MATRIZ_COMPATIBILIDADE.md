@@ -36,3 +36,14 @@ Referências:
 - https://www.w3.org/TR/epub-33/
 - https://www.w3.org/TR/epub-34/
 - https://github.com/w3c/epubcheck/releases/tag/v5.4.0
+
+## Complementos da execução 3
+
+| Recurso | Cobertura |
+| --- | --- |
+| JPEG/PNG/GIF/WebP | Assinatura e dimensões básicas, sem prova de integridade de pixels |
+| Imagens sem alt | Avisos em XHTML, sem alterar a obra |
+| ZIP sem UTF-8 confiável | Rejeição segura antes de perda de nomes, conversão CP437 não disponível |
+| Ofuscação IDPF | Informada como fonte ofuscada e não confundida com DRM |
+| Imagens raster data: | Permitidas nos contextos de imagem; SVG/HTML ativos bloqueados |
+| Relatórios técnicos | SHA-256 do arquivo carregado, versão e opções atuais, sem snapshot completo da execução |

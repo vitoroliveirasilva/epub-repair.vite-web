@@ -64,3 +64,17 @@ Não há integração antivírus embutida no site e nenhuma alegação de limpez
 3. Criar uma fixture mínima sem conteúdo protegido.
 4. Reproduzir a diferença antes/depois no Vitest e, se aplicável, EPUBCheck.
 5. Corrigir na `dev`; executar CI e verificar integridade antes de atualizar `prod`.
+
+## Complementos da execução 3
+
+- Conteúdo `data:image/png/jpeg/gif/webp` passivo em contexto de imagem é preservado.
+  Esquemas `data:image/svg+xml` e `data:text/html` permanecem bloqueados.
+- `encryption.xml` com somente o algoritmo
+  `http://www.idpf.org/2008/embedding` e fontes existentes indica
+  ofuscação IDPF, não prova de DRM. Algoritmos desconhecidos seguem alertados.
+- Relatórios TXT e JSON incluem versão do aplicativo, SHA-256 do arquivo
+  carregado no momento da exportação e opções selecionadas naquele instante.
+  Esses campos não certificam conformidade de conteúdo nem preservam
+  automaticamente o hash original anterior à troca de capa.
+- O reparo recusa entregar cópia quando detecta perda de palavras originais.
+  Essa proteção não substitui revisão de formatação e semântica.
