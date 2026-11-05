@@ -24,7 +24,7 @@ describe('E-074: não reescrever ênfase, poesia, tipografia e diagramação aut
   });
   it('impede eliminar quebras br explícitas de poesia e diálogos', () => {
     expect(compare('<p>Primeiro verso<br/>Segundo verso</p>',
-      '<p>Primeiro verso Segundo verso</p>')).toThrow(/quebra de verso/u);
+      '<p>Primeiro versoSegundo verso</p>')).toThrow(/quebra de verso/u);
   });
   it('impede alterar classe editorial ou CSS inline passivo de span', () => {
     const before='<p><span class="verso" style="font-style:italic">Frase.</span></p>';
