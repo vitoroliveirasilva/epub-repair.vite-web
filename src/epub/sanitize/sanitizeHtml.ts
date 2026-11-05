@@ -19,6 +19,7 @@ export interface SanitizeHtmlOptions {
   sanitizeScripts: boolean;
   removeRemoteResourceLinks: boolean;
   kindleSafeMode: boolean;
+  replaceMissingImagesWithText?: boolean;
 }
 
 export function sanitizeHtmlDocument(
@@ -64,7 +65,9 @@ export function sanitizeHtmlDocument(
     }
   }
 
-  output = replaceMissingImages(output, options, actions);
+  if (options.replaceMissingImagesWithText) {
+    output = replaceMissingImages(output, options, actions);
+  }
   output = replaceBrokenKindleEmbeds(output, options.filePath, actions);
 
   if (options.removeRemoteResourceLinks) {
@@ -269,17 +272,22 @@ function removeBrokenResourceAttributes(
   actions: RepairAction[],
 ): string {
   let changed = false;
-  const output = text.replace(
-    /\s(?:src|poster|data|xlink:href)\s*=\s*(["'])(.*?)\1/giu,
-    (full, _quote: string, value: string) => {
-      const raw = value.trim();
-      if (!raw || raw.startsWith('#') || isRemoteUrl(raw) || raw.startsWith('kindle:embed:'))
-        return full;
-      const resolved = resolveReference(options.filePath, raw);
-      if (resolved.safe && options.existingFiles.has(resolved.path)) return full;
-      changed = true;
-      return '';
-    },
+  const output = text.replace(/<[^>]+>/giu, (tag) =>
+    tag.replace(
+      /\s(?:src|poster|data|xlink:href)\s*=\s*(["'])(.*?)\1/giu,
+      (full, _quote: string, value: string) => {
+        // O marcador altera o conteúdo editorial e exige opt-in. Sem ele, manter o img.
+        if (!options.replaceMissingImagesWithText &&
+            /^<img\b/iu.test(tag) && /^\s+src\s*=/iu.test(full)) return full;
+        const raw = value.trim();
+        if (!raw || raw.startsWith('#') || isRemoteUrl(raw) || raw.startsWith('kindle:embed:'))
+          return full;
+        const resolved = resolveReference(options.filePath, raw);
+        if (resolved.safe && options.existingFiles.has(resolved.path)) return full;
+        changed = true;
+        return '';
+      },
+    ),
   );
 
   if (changed) {

@@ -28,6 +28,7 @@ export function repairContentDocuments(
         kindleSafeMode: options.kindleSafeMode,
         removeRemoteResourceLinks: options.removeRemoteResourceLinks,
         sanitizeScripts: options.sanitizeScripts,
+        replaceMissingImagesWithText: options.replaceMissingImagesWithText,
       });
       if (result.changed) {
         files.set(item.resolvedPath, encoder.encode(result.text));

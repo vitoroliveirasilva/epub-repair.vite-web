@@ -94,4 +94,5 @@ export const DEFAULT_REPAIR_OPTIONS: RepairOptions = {
   sanitizeScripts: true,
   removeRemoteResourceLinks: false,
   repairCssReferences: true,
+  replaceMissingImagesWithText: false,
 };

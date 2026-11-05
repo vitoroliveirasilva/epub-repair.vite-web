@@ -53,6 +53,11 @@ const options: readonly RepairOptionDescriptor[] = [
     'Desmarcado por padrão: preserva links, imagens e fontes externas. Marque somente se quiser eliminá-los.',
   ],
   ['repairCssReferences', 'Corrigir CSS', 'Corrige referências ausentes ou perigosas sem remover fontes e estilos externos legítimos.'],
+  [
+    'replaceMissingImagesWithText',
+    'Substituir imagens ausentes por texto (opcional)',
+    'Desmarcado por padrão: altera visualmente o livro, substituindo cada imagem ausente por marcador textual.',
+  ],
 ];
 
 export function renderOptionsPanel(state: AppState, onChange: () => void): HTMLElement {

@@ -13,6 +13,8 @@ export interface RepairOptions {
   sanitizeScripts: boolean;
   removeRemoteResourceLinks: boolean;
   repairCssReferences: boolean;
+  /** Opt-in: transforma imagens ausentes em marcadores textuais visíveis. */
+  replaceMissingImagesWithText: boolean;
 }
 
 export interface RepairAction {
