@@ -75,6 +75,38 @@ describe('Resguardo de conteúdo e recursos do EPUB', () => {
     expect(auditPreservation(original, files, pkg, pkg)).toEqual([]);
   });
 
+  it('E-065: não permite perder âncoras mantendo o mesmo texto', async () => {
+    const original = await loadEpub('livro.epub', await buildKindleIssueEpub());
+    const pkg = parsePackageDocument(original).packageInfo;
+    if (!pkg) throw new Error('OPF ausente');
+    const path = 'OEBPS/Text/chapter1.xhtml';
+    const markup = new TextDecoder().decode(original.files.get(path)!.bytes)
+      .replace('<h1>', '<h1 id="capitulo">');
+    original.files.get(path)!.bytes = new TextEncoder().encode(markup);
+    const files = new Map(Array.from(original.files, ([key, entry]) => [key, entry.bytes]));
+    files.set(path, new TextEncoder().encode(markup.replace(' id="capitulo"', '')));
+    expect(() => auditPreservation(original, files, pkg, pkg)).toThrow(/âncora editorial/u);
+  });
+
+  it('E-065: não permite remover remissão interna nem reordenar capítulos', async () => {
+    const original = await loadEpub('livro.epub', await buildKindleIssueEpub());
+    const pkg = parsePackageDocument(original).packageInfo;
+    if (!pkg) throw new Error('OPF ausente');
+    const path = 'OEBPS/Text/chapter1.xhtml';
+    const markup = new TextDecoder().decode(original.files.get(path)!.bytes)
+      .replace('</body>', '<a href="chapter2.xhtml#nota">Ver nota</a></body>');
+    original.files.get(path)!.bytes = new TextEncoder().encode(markup);
+    const files = new Map(Array.from(original.files, ([key, entry]) => [key, entry.bytes]));
+    files.set(path, new TextEncoder().encode(
+      markup.replace('<a href="chapter2.xhtml#nota">Ver nota</a>', '<span>Ver nota</span>'),
+    ));
+    expect(() => auditPreservation(original, files, pkg, pkg)).toThrow(/remissão interna/u);
+    files.set(path, new TextEncoder().encode(markup));
+    expect(() => auditPreservation(original, files, pkg, {
+      ...pkg, spine: [...pkg.spine].reverse(),
+    })).toThrow(/ordem ou repetição/u);
+  });
+
   it('E-064/E-066: auditoria preserva texto e bytes de recursos não modificados', async () => {
     const original = await loadEpub('livro.epub', await buildKindleIssueEpub());
     const pkg = parsePackageDocument(original).packageInfo;
