@@ -130,9 +130,7 @@ async function runAsync(
 async function copyCurrentReport(state: AppState, rerender: () => void): Promise<void> {
   if (!state.report) return;
   try {
-    const evidence = state.payload
-      ? await createReportEvidence(state.payload.file.name, state.payload.bytes, state.options)
-      : undefined;
+    const evidence = await createEvidenceForReport(state);
     await navigator.clipboard.writeText(buildTextReport(state.report, state.repairResult, evidence));
     state.message = 'Relatório copiado para a área de transferência.';
     state.error = undefined;
@@ -144,9 +142,7 @@ async function copyCurrentReport(state: AppState, rerender: () => void): Promise
 
 async function downloadCurrentReport(state: AppState, format: 'txt' | 'json'): Promise<void> {
   if (!state.report) return;
-  const evidence = state.payload
-    ? await createReportEvidence(state.payload.file.name, state.payload.bytes, state.options)
-    : undefined;
+  const evidence = await createEvidenceForReport(state);
   const content =
     format === 'json'
       ? buildJsonReport(state.report, state.repairResult, evidence)
@@ -157,6 +153,15 @@ async function downloadCurrentReport(state: AppState, format: 'txt' | 'json'): P
     new Blob([content], { type: mimeType }),
     makeReportFileName(state.report.fileName, format),
   );
+}
+
+async function createEvidenceForReport(state: AppState) {
+  const original = state.originalSource ?? (state.payload
+    ? { fileName: state.payload.file.name, bytes: state.payload.bytes }
+    : undefined);
+  return original
+    ? createReportEvidence(original.fileName, original.bytes, state.options, state.lastRepairOptions)
+    : undefined;
 }
 
 function renderAppHeader(): HTMLElement {

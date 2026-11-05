@@ -17,6 +17,9 @@ export async function loadFileIntoState(file: File, state: AppState): Promise<vo
   state.repairResult = undefined;
   state.report = undefined;
   state.coverImage = undefined;
+  state.originalSource = undefined;
+  state.lastRepairOptions = undefined;
+  state.payload = undefined;
 
   if (!file.name.toLowerCase().endsWith('.epub')) {
     throw new Error('Selecione um arquivo .epub.');
@@ -28,10 +31,9 @@ export async function loadFileIntoState(file: File, state: AppState): Promise<vo
     );
   }
 
-  state.payload = {
-    file,
-    bytes: new Uint8Array(await file.arrayBuffer()),
-  };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  state.payload = { file, bytes };
+  state.originalSource = { fileName: file.name, bytes };
   state.message = 'Arquivo carregado localmente.';
 }
 
@@ -86,6 +88,7 @@ export async function repairCurrentFile(state: AppState): Promise<void> {
     }
 
     state.repairResult = result;
+    state.lastRepairOptions = { ...state.options };
     state.report = result.after;
     state.message = hasManualReviewIssues(result.after)
       ? 'Alterações aplicadas, mas ainda existem pendências que exigem revisão manual.'
@@ -138,6 +141,7 @@ export async function applyCoverReplacementToCurrentFile(state: AppState): Promi
     state.repairResult = result;
     state.report = result.after;
     state.coverImage = undefined;
+    state.lastRepairOptions = undefined;
     state.message = 'Capa aplicada e EPUB revalidado.';
   } finally {
     state.busy = false;

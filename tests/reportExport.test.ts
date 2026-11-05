@@ -52,6 +52,23 @@ describe('report export helpers', () => {
     expect(json.evidence.selectedOptions.repairManifest).toBe(true);
   });
 
+  it('E-084: opções usadas permanecem congeladas mesmo se usuário altera as atuais', async () => {
+    const used = { ...DEFAULT_REPAIR_OPTIONS };
+    const current = { ...used, removeRemoteResourceLinks: true };
+    const evidence = await createReportEvidence('original.epub',
+      new TextEncoder().encode('livro original'), current, used);
+    used.sanitizeScripts = false;
+    expect(evidence.appliedRepairOptions?.sanitizeScripts).toBe(true);
+    expect(evidence.selectedOptions.removeRemoteResourceLinks).toBe(true);
+    expect(evidence.appliedRepairOptions?.removeRemoteResourceLinks).toBe(false);
+    const reportText = buildTextReport(report, undefined, evidence);
+    expect(reportText).toContain('Opções efetivamente usadas no último reparo');
+    const json = JSON.parse(buildJsonReport(report, undefined, evidence)) as {
+      evidence: typeof evidence;
+    };
+    expect(json.evidence.sourceFileName).toBe('original.epub');
+  });
+
   it('exports text report with score breakdown and cover status', () => {
     const text = buildTextReport(report);
 

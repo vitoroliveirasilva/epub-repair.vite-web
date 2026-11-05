@@ -11,6 +11,8 @@ export type ReportViewMode = 'simple' | 'technical';
 
 export interface AppState {
   payload?: EpubFilePayload | undefined;
+  originalSource?: { fileName: string; bytes: Uint8Array } | undefined;
+  lastRepairOptions?: RepairOptions | undefined;
   report?: ValidationReport | undefined;
   repairResult?: RepairResult | undefined;
   coverImage?: CoverImageInput | undefined;

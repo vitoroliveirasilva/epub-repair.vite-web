@@ -17,6 +17,8 @@ export interface ReportEvidence {
   sourceSha256: string | null;
   generatedAt: string;
   selectedOptions: RepairOptions;
+  /** Snapshot das opções efetivamente usadas no último reparo, se houve. */
+  appliedRepairOptions?: RepairOptions | undefined;
 }
 
 /** Evidência local, calculada apenas quando o usuário solicita relatório. */
@@ -24,6 +26,7 @@ export async function createReportEvidence(
   sourceFileName: string,
   bytes: Uint8Array,
   selectedOptions: RepairOptions,
+  appliedRepairOptions?: RepairOptions,
 ): Promise<ReportEvidence> {
   let sourceSha256: string | null = null;
   try {
@@ -44,6 +47,7 @@ export async function createReportEvidence(
     sourceSha256,
     generatedAt: new Date().toISOString(),
     selectedOptions: { ...selectedOptions },
+    ...(appliedRepairOptions ? { appliedRepairOptions: { ...appliedRepairOptions } } : {}),
   };
 }
 
@@ -66,6 +70,9 @@ export function buildTextReport(
       `SHA-256 do arquivo carregado: ${evidence.sourceSha256 ?? 'indisponível'}`,
       `Relatório emitido: ${evidence.generatedAt}`,
       `Opções selecionadas agora (podem diferir das usadas no reparo): ${JSON.stringify(evidence.selectedOptions)}`,
+      ...(evidence.appliedRepairOptions
+        ? [`Opções efetivamente usadas no último reparo: ${JSON.stringify(evidence.appliedRepairOptions)}`]
+        : []),
     ] : []),
     `Fatais: ${report.stats.fatalCount} | Erros: ${report.stats.errorCount} | Avisos: ${report.stats.warningCount} | Informações: ${report.stats.infoCount}`,
     `Reparos obrigatórios: ${getRequiredRepairableCount(report)} | Otimizações opcionais: ${getOptionalOptimizationCount(report)}`,
