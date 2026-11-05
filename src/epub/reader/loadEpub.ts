@@ -17,7 +17,17 @@ class ZipIntegrityError extends Error {
   }
 }
 
-export async function loadEpub(fileName: string, bytes: Uint8Array): Promise<LoadedEpub> {
+export interface ZipLoadProgress {
+  completed: number;
+  total: number;
+  path?: string | undefined;
+}
+
+export async function loadEpub(
+  fileName: string,
+  bytes: Uint8Array,
+  onProgress?: (progress: ZipLoadProgress) => void,
+): Promise<LoadedEpub> {
   const raw = bytes.length <= MAX_FILE_SIZE_BYTES
     ? parseZipCentralDirectory(bytes)
     : {
@@ -77,7 +87,10 @@ export async function loadEpub(fileName: string, bytes: Uint8Array): Promise<Loa
   let totalUncompressedBytes = 0;
   const rawByPath = new Map(raw.entries.map((entry) => [entry.fileName, entry]));
 
-  for (const [originalName, zipEntry] of Object.entries(zip.files)) {
+  const entries = Object.entries(zip.files);
+  const progressTotal = entries.filter(([, item]) => !item.dir).length;
+  let progressCompleted = 0;
+  for (const [originalName, zipEntry] of entries) {
     const archivedName = (zipEntry as JSZip.JSZipObject & {
       unsafeOriginalName?: string;
     }).unsafeOriginalName ?? originalName;
@@ -140,6 +153,12 @@ export async function loadEpub(fileName: string, bytes: Uint8Array): Promise<Loa
         bytes: entryBytes,
         directory: false,
         unsafeOriginalName: normalized.original === normalized.path ? undefined : normalized.original,
+      });
+      progressCompleted += 1;
+      onProgress?.({
+        completed: progressCompleted,
+        total: progressTotal,
+        path: normalized.path,
       });
     } catch (error) {
       return {

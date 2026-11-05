@@ -1,4 +1,5 @@
 import type { RepairAction, RepairOptions, RepairResult } from '../model/repairTypes';
+import type { LoadedEpub } from '../model/epubTypes';
 import { loadEpub } from '../reader/loadEpub';
 import { inspectEpub, inspectLoadedEpub } from '../validation/validateEpub';
 import { DEFAULT_REPAIR_OPTIONS, EPUB_MIME, SYSTEM_FILE_PATTERNS } from '../utils/constants';
@@ -25,8 +26,9 @@ export async function repairEpub(
   bytes: Uint8Array,
   options: RepairOptions = DEFAULT_REPAIR_OPTIONS,
   mode: RepairRunMode = 'repair',
+  preloaded?: LoadedEpub,
 ): Promise<RepairResult> {
-  const loaded = await loadEpub(fileName, bytes);
+  const loaded = preloaded ?? await loadEpub(fileName, bytes);
   const before = inspectLoadedEpub(fileName, bytes.length, loaded);
   const warnings: string[] = [];
 

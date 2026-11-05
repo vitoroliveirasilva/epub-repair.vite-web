@@ -29,7 +29,7 @@ describe('E-062: proteção CSP/Netlify compatível com app EPUB 100% local', ()
     expect(values('base-uri')).toEqual(["'none'"]);
     expect(values('form-action')).toEqual(["'none'"]);
     expect(values('frame-ancestors')).toEqual(["'none'"]);
-    expect(values('worker-src')).toEqual(["'none'"]);
+    expect(values('worker-src')).toEqual(["'self'"]);
   });
   it('declara proteções básicas de cabeçalho no deploy Netlify', () => {
     expect(config).toMatch(/Strict-Transport-Security\s*=\s*"max-age=31536000"/u);
