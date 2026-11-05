@@ -96,7 +96,61 @@ function createInvalidEpub2(): Promise<Uint8Array> {
   return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
 }
 
+
+type MimetypeVariant = 'mimetype-compressed' | 'mimetype-wrong-content' | 'mimetype-out-of-order';
+
+/** Mesmo livro EPUB3 válido, com erro físico OCF isolado no mimetype. */
+async function makeMimetypeVariant(mode: MimetypeVariant): Promise<Uint8Array> {
+  const original = await JSZip.loadAsync(await createInvalidEpub());
+  const out = new JSZip();
+  const originalContainer = original.file('META-INF/container.xml');
+  if (!originalContainer) throw new Error('Fixture sem container OCF');
+  if (mode === 'mimetype-out-of-order') {
+    out.file('META-INF/container.xml', await originalContainer.async('uint8array'));
+  }
+  out.file('mimetype', mode === 'mimetype-wrong-content'
+    ? 'application/epub+zip\n' : 'application/epub+zip', {
+    compression: mode === 'mimetype-compressed' ? 'DEFLATE' : 'STORE',
+  });
+  for (const [name, file] of Object.entries(original.files)) {
+    if (file.dir || (mode === 'mimetype-out-of-order' && name === 'META-INF/container.xml')) {
+      continue;
+    }
+    out.file(name, await file.async('uint8array'));
+  }
+  return out.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+}
+
 describe('Fixture sintética de conformidade oficial', () => {
+
+  for (const variant of [
+    'mimetype-compressed', 'mimetype-wrong-content', 'mimetype-out-of-order',
+  ] as const) {
+    it('E-030/E-091: EPUBCheck diferencial de ' + variant, async () => {
+      const original = await makeMimetypeVariant(variant);
+      const before = await inspectEpub('original-' + variant + '.epub', original);
+      const expected = variant === 'mimetype-compressed' ? 'MIME_COMPRESSED'
+        : variant === 'mimetype-out-of-order' ? 'MIME_NOT_FIRST' : 'MIME_INVALID_CONTENT';
+      expect(before.issues.some((issue) => issue.code === expected)).toBe(true);
+      const repaired = await repairEpub('original-' + variant + '.epub', original, {
+        ...DEFAULT_REPAIR_OPTIONS, conservativeMode: true,
+      });
+      expect(repaired.changed).toBe(true);
+      expect(repaired.blob).toBeDefined();
+      expect(repaired.after.stats.fatalCount).toBe(0);
+      expect(repaired.after.issues.some((issue) => issue.code === expected)).toBe(false);
+      const bytes = new Uint8Array(await repaired.blob!.arrayBuffer());
+      const outputDir = process.env.EPUBCHECK_FIXTURE_OUTPUT;
+      if (outputDir) {
+        await mkdir(outputDir, { recursive: true });
+        await writeFile(join(outputDir, 'original-invalid-' + variant + '.epub'),
+          Buffer.from(original));
+        await writeFile(join(outputDir, 'repaired-valid-' + variant + '.epub'),
+          Buffer.from(bytes));
+      }
+    });
+  }
+
   it('E-091: EPUBCheck verifica também um reparo de EPUB 2 com NCX válido', async () => {
     const source = await createInvalidEpub2();
     const before = await inspectEpub('original-epub2.epub', source);
