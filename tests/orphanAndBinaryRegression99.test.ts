@@ -49,6 +49,32 @@ describe('Resguardo de conteúdo e recursos do EPUB', () => {
     expect(report.stats.securityScore).toBeLessThan(100);
   });
 
+  it('E-064: bloqueia perda acidental de parágrafos durante sanitização', async () => {
+    const original = await loadEpub('livro.epub', await buildKindleIssueEpub());
+    const pkg = parsePackageDocument(original).packageInfo;
+    expect(pkg).toBeDefined();
+    if (!pkg) return;
+    const files = new Map(Array.from(original.files, ([path, entry]) => [path, entry.bytes]));
+    const chapterPath = 'OEBPS/Text/chapter1.xhtml';
+    const markup = new TextDecoder().decode(files.get(chapterPath));
+    files.set(chapterPath, new TextEncoder().encode(
+      markup.replace('Texto com entidade frágil&nbsp;para fixture.', 'Texto cortado.'),
+    ));
+    expect(() => auditPreservation(original, files, pkg, pkg)).toThrow(/texto editorial/u);
+  });
+
+  it('E-064: aceita alteração de codificação equivalente sem mexer no texto', async () => {
+    const original = await loadEpub('livro.epub', await buildKindleIssueEpub());
+    const pkg = parsePackageDocument(original).packageInfo;
+    expect(pkg).toBeDefined();
+    if (!pkg) return;
+    const files = new Map(Array.from(original.files, ([path, entry]) => [path, entry.bytes]));
+    const path = 'OEBPS/Text/chapter1.xhtml';
+    const markup = new TextDecoder().decode(files.get(path));
+    files.set(path, new TextEncoder().encode(markup.replace(/&nbsp;/gu, '&#160;')));
+    expect(auditPreservation(original, files, pkg, pkg)).toEqual([]);
+  });
+
   it('E-064/E-066: auditoria preserva texto e bytes de recursos não modificados', async () => {
     const original = await loadEpub('livro.epub', await buildKindleIssueEpub());
     const pkg = parsePackageDocument(original).packageInfo;

@@ -38,6 +38,8 @@ export function auditPreservation(
   }
 
   const changedText: string[] = [];
+  const potentiallyLostText: string[] = [];
+  const unverifiableText: string[] = [];
   for (const item of before.manifest) {
     if (!item.exists || !HTML_MEDIA_TYPES.has(item.mediaType)) continue;
     const oldBytes = original.files.get(item.resolvedPath)?.bytes;
@@ -48,14 +50,35 @@ export function auditPreservation(
     }
     const oldText = extractReadableText(textDecoder.decode(oldBytes));
     const newText = extractReadableText(textDecoder.decode(newBytes));
-    if (oldText !== undefined && newText !== undefined && oldText !== newText) {
+    if (oldText === undefined || newText === undefined) {
+      if (!sameBytes(oldBytes, newBytes)) unverifiableText.push(item.resolvedPath);
+    } else if (oldText !== newText) {
       changedText.push(item.resolvedPath);
+      if (!containsOriginalWordsInOrder(oldText, newText)) {
+        potentiallyLostText.push(item.resolvedPath);
+      }
     }
   }
+  // Nunca baixar silenciosamente um livro quando uma sanitização omitiu texto legível.
+  // Conteúdo ativo de <script>/<style> não entra na comparação.
+  if (potentiallyLostText.length > 0) {
+    throw new Error(
+      `A correção alteraria ou removeria texto editorial em ${potentiallyLostText.length} arquivo(s): ` +
+      potentiallyLostText.slice(0, 5).join(', ') +
+      '. O EPUB não foi liberado; revise os capítulos antes de tentar outro reparo.',
+    );
+  }
   if (changedText.length > 0) {
-    warnings.push(`O texto de ${changedText.length} documento(s) mudou ou foi removido; ` +
-      `verifique as alterações: ${changedText.slice(0, 5).join(', ')}` +
-      (changedText.length > 5 ? ', ...' : ''));
+    warnings.push(
+      `Houve acréscimos ou alterações não destrutivas detectáveis em ${changedText.length} documento(s). ` +
+      `Revise o texto: ${changedText.slice(0, 5).join(', ')}`,
+    );
+  }
+  if (unverifiableText.length > 0) {
+    warnings.push(
+      `Não foi possível comparar o texto de ${unverifiableText.length} documento(s) modificado(s) ` +
+      'por erro de parsing; revisão editorial manual necessária.',
+    );
   }
 
   // Reparo estrutural não pode regravar imagens/fontes sem ação explícita.
@@ -91,4 +114,19 @@ function sameBytes(left: Uint8Array, right: Uint8Array): boolean {
   if (left.length !== right.length) return false;
   for (let i = 0; i < left.length; i += 1) if (left[i] !== right[i]) return false;
   return true;
+}
+
+/** Comparação conservadora: texto de capítulos deve permanecer legível e na mesma ordem.
+ * Autoriza acréscimos (como aviso sobre imagem ausente), mas não elimina palavras originais.
+ */
+function containsOriginalWordsInOrder(before: string, after: string): boolean {
+  const originalWords = before.trim().split(/\s+/u).filter(Boolean);
+  if (originalWords.length === 0) return true;
+  const afterWords = after.trim().split(/\s+/u).filter(Boolean);
+  let cursor = 0;
+  for (const word of afterWords) {
+    if (word === originalWords[cursor]) cursor += 1;
+    if (cursor === originalWords.length) return true;
+  }
+  return false;
 }
