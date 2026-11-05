@@ -26,24 +26,6 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
     if (!file) continue;
     const text = new TextDecoder('utf-8', { fatal: false }).decode(file.bytes);
 
-    if (/<script\b|\son[a-z]+\s*=|<(?:iframe|embed|object|foreignobject|animate|set)\b/iu.test(text)) {
-      issues.push(
-        createIssue({
-          code: /<(?:iframe|embed|object|foreignobject)\b/iu.test(text)
-            ? 'CONTENT_UNSAFE_EMBED'
-            : 'CONTENT_SCRIPTED',
-          severity: 'warning',
-          title: /<(?:iframe|embed|object|foreignobject)\b/iu.test(text)
-            ? 'Conteúdo com iframe/embed/object'
-            : 'Conteúdo com script ou handler inline',
-          detail:
-            'Recursos interativos ou scripts podem gerar rejeição, falhas ou comportamento estranho no Kindle.',
-          file: item.resolvedPath,
-          repairable: true,
-        }),
-      );
-    }
-
     if (item.mediaType === 'application/xhtml+xml' || item.mediaType === 'image/svg+xml') {
       try {
         parseXml(text, 'application/xhtml+xml');
@@ -98,10 +80,15 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
         : parseXml(text.replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml');
       let unsafeUrl = false;
       let activeHandler = false;
+      let unsafeEmbed = false;
+      const embedded = new Set(['iframe', 'frame', 'frameset', 'embed', 'object',
+        'foreignobject', 'applet', 'portal']);
+      const scripted = new Set(['script', 'animate', 'animatemotion', 'animatetransform', 'set']);
       for (const element of Array.from(doc.getElementsByTagName('*'))) {
         const name = element.localName.toLowerCase();
-        if (name === 'script' || (name === 'meta' &&
-          (element.getAttribute('http-equiv') ?? '').toLowerCase() === 'refresh')) {
+        if (embedded.has(name)) unsafeEmbed = true;
+        if (scripted.has(name) || (name === 'meta' &&
+          (element.getAttribute('http-equiv') ?? '').trim().toLowerCase() === 'refresh')) {
           activeHandler = true;
         }
         for (const attr of Array.from(element.attributes)) {
@@ -133,12 +120,22 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
           repairable: true,
         }));
       }
+      if (unsafeEmbed) {
+        issues.push(createIssue({
+          code: 'CONTENT_UNSAFE_EMBED',
+          severity: 'warning',
+          title: 'Elemento interativo reconhecido estruturalmente',
+          detail: 'iframe, frame, object, embed ou elemento equivalente exige revisão.',
+          file: item.resolvedPath,
+          repairable: true,
+        }));
+      }
       if (activeHandler) {
         issues.push(createIssue({
           code: 'CONTENT_SCRIPTED',
           severity: 'warning',
           title: 'Conteúdo ativo reconhecido pela estrutura do documento',
-          detail: 'Script, evento inline ou redirecionamento HTML precisa de revisão.',
+          detail: 'Script, animação ativa, evento inline ou redirecionamento HTML precisa de revisão.',
           file: item.resolvedPath,
           repairable: true,
         }));
