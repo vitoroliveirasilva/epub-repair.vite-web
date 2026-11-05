@@ -77,6 +77,7 @@ export function auditPreservation(
       compareInternalTargets(oldMarkup, newMarkup, item.resolvedPath);
       compareEditorialBlocks(oldMarkup, newMarkup, item.resolvedPath);
       compareSpecialMarkup(oldMarkup, newMarkup, item.resolvedPath);
+      compareTypographyPreservation(oldMarkup, newMarkup, item.resolvedPath);
     }
     const oldText = extractReadableText(oldMarkup);
     const newText = extractReadableText(newMarkup);
@@ -223,6 +224,58 @@ function compareEditorialBlocks(before: string, after: string, path: string): vo
 }
 
 /** IDs e links editoriais internos não podem desaparecer por efeito colateral do sanitizer. */
+
+/**
+ * Preserva as escolhas de tipografia e os limites de versos/diálogos.
+ * O reparo não é editor literário: tags inline e quebras explícitas já
+ * existentes não podem desaparecer apenas porque o texto final é igual.
+ */
+function compareTypographyPreservation(before: string, after: string, path: string): void {
+  const oldDoc = parseReadableDocument(before);
+  const newDoc = parseReadableDocument(after);
+  if (!oldDoc || !newDoc) return;
+  const typographic = /^(?:em|i|strong|b|u|s|small|sup|sub|span|cite|q|blockquote|pre|code|br|wbr)$/iu;
+  const nodes = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
+    .filter((element) => typographic.test(element.localName))
+    // Um elemento dentro de script/iframe não é tipografia da obra.
+    .filter((element) => !Array.from(element.getElementsByTagName('*')).some((node) =>
+      ['script', 'style', 'iframe', 'object'].includes(node.localName.toLowerCase())));
+  const original = nodes(oldDoc);
+  const output = nodes(newDoc);
+  let index = 0;
+  for (const element of original) {
+    const name = element.localName;
+    const lang = element.getAttribute('lang') ?? element.getAttribute('xml:lang') ?? '';
+    const originalClass = element.getAttribute('class') ?? '';
+    const originalStyle = element.getAttribute('style')?.trim() ?? '';
+    const text = (element.textContent ?? '').replace(/\s+/gu, ' ').trim();
+    const exactPre = /^(?:pre|code)$/iu.test(name);
+    // O CSS com URLs pode ser neutralizado por opt-in ou por ameaça real.
+    // Estilos editoriais sem URL são obrigatoriamente preservados.
+    const protectStyle = originalStyle && !/(?:url\s*\(|@import|expression\s*\()/iu.test(originalStyle);
+    let found = false;
+    for (; index < output.length; index += 1) {
+      const candidate = output[index]!;
+      if (candidate.localName !== name ||
+          (candidate.getAttribute('lang') ?? candidate.getAttribute('xml:lang') ?? '') !== lang ||
+          (candidate.getAttribute('class') ?? '') !== originalClass ||
+          (protectStyle && candidate.getAttribute('style')?.trim() !== originalStyle)) {
+        continue;
+      }
+      const afterText = (candidate.textContent ?? '').replace(/\s+/gu, ' ').trim();
+      if ((exactPre && candidate.textContent !== element.textContent) ||
+          (!exactPre && !containsOriginalWordsInOrder(text, afterText))) continue;
+      found = true;
+      index += 1;
+      break;
+    }
+    if (!found) {
+      throw new Error('O reparo removeria formatação, ênfase, espaçamento ou ' +
+        'quebra de verso editorial em ' + path + ' (' + name + ').');
+    }
+  }
+}
+
 function compareInternalTargets(before: string, after: string, path: string): void {
   const original = parseReadableDocument(before);
   const output = parseReadableDocument(after);
