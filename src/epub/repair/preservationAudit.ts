@@ -58,6 +58,7 @@ export function auditPreservation(
   }
 
   warnings.push(...auditNavigationPreservation(original, output, before));
+  auditMediaOverlayPreservation(original, output, before, after);
 
   const changedText: string[] = [];
   const potentiallyLostText: string[] = [];
@@ -128,6 +129,36 @@ export function auditPreservation(
     }
   }
   return warnings;
+}
+
+
+/**
+ * As referências entre XHTML e SMIL são editoriais. Um reparo de EPUB,
+ * que não edita narração, nunca deve reconstruí-las nem substituir bytes
+ * de SMIL sem solicitação explícita e verificação de sincronização.
+ */
+function auditMediaOverlayPreservation(
+  original: LoadedEpub,
+  output: ReadonlyMap<string, Uint8Array>,
+  before: PackageDocumentInfo,
+  after: PackageDocumentInfo,
+): void {
+  const outputByPath = new Map(after.manifest.map((item) => [item.resolvedPath, item]));
+  for (const item of before.manifest) {
+    if (!item.exists) continue;
+    const current = outputByPath.get(item.resolvedPath);
+    if (item.mediaOverlay && current?.mediaOverlay !== item.mediaOverlay) {
+      throw new Error('O reparo alteraria o vínculo editorial entre conteúdo e Media Overlay: ' +
+        item.resolvedPath);
+    }
+    if (item.mediaType !== 'application/smil+xml') continue;
+    const was = original.files.get(item.resolvedPath)?.bytes;
+    const now = output.get(item.resolvedPath);
+    if (!was || !now || !sameBytes(was, now)) {
+      throw new Error('O reparo alteraria bytes de sincronização SMIL sem autorização: ' +
+        item.resolvedPath);
+    }
+  }
 }
 
 function extractReadableText(markup: string): string | undefined {
