@@ -5,6 +5,7 @@ import { loadEpub } from '../src/epub/reader/loadEpub';
 import { parsePackageDocument } from '../src/epub/validation/opfParser';
 import { repairEpub } from '../src/epub/repair/repairEpub';
 import { DEFAULT_REPAIR_OPTIONS } from '../src/epub/utils/constants';
+import { hasManualReviewIssues } from '../src/epub/utils/reportGuards';
 
 beforeAll(() => {
   if (typeof Blob.prototype.arrayBuffer === 'function') return;
@@ -88,6 +89,10 @@ describe('E-029: múltiplas renditions/rootfiles sem perda de dados', () => {
       expect(await output.file(name)!.async('uint8array'))
         .toEqual(original.files.get(name)!.bytes);
     }
+    const selectedOpf = await output.file('EPUB/content.opf')!.async('string');
+    expect(selectedOpf).not.toContain('../OPS/');
+    expect(selectedOpf).not.toContain('../LEGACY/');
+    expect(hasManualReviewIssues(repaired.after)).toBe(true);
     expect(repaired.after.packageInfo?.opfPath).toBe('EPUB/content.opf');
     expect(repaired.after.issues.some((i) => i.code === 'CONTAINER_MULTIPLE_ROOTFILES'))
       .toBe(true);

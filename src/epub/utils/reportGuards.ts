@@ -10,7 +10,11 @@ export function hasResidualActiveContent(report: ValidationReport | undefined): 
 
 /** Alertas graves sem solução automática disponível não significam EPUB pronto. */
 export function hasManualReviewIssues(report: ValidationReport | undefined): boolean {
-  return hasResidualActiveContent(report) || Boolean(report?.issues.some((issue) =>
+  // O app valida uma rendition por vez; a presença de outros rootfiles
+  // nunca significa EPUB globalmente validado, mesmo se todos os scores forem altos.
+  return hasResidualActiveContent(report) ||
+    Boolean(report?.packageInfo && report.packageInfo.rootfileCount > 1) ||
+    Boolean(report?.issues.some((issue) =>
     !issue.repairable &&
     (issue.severity === 'fatal' || issue.severity === 'error' || issue.severity === 'warning'),
   ));

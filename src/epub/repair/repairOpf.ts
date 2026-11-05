@@ -253,6 +253,20 @@ function repairManifest(
       })
       .filter(Boolean),
   );
+  // O EPUB com múltiplas renditions não permite atribuir órfãos à edição
+  // ativa com confiança: eles podem pertencer ao OPF de outra rendition.
+  // Mantê-los no ZIP e registrar a decisão em vez de cruzar manifests.
+  if (pkg.rootfileCount > 1) {
+    actions.push({
+      type: 'skipped',
+      title: 'Manifest de outras renditions preservado',
+      detail: 'O container possui múltiplos OPFs. Recursos não declarados no OPF ' +
+        'ativo não serão adotados automaticamente, pois podem pertencer a outra rendition.',
+      file: pkg.opfPath,
+    });
+    return;
+  }
+
   for (const path of loaded.files.keys()) {
     if (path === 'mimetype' || path === 'META-INF/container.xml' || path === pkg.opfPath) continue;
     if (SYSTEM_FILE_PATTERNS.some((pattern) => pattern.test(path))) continue;
