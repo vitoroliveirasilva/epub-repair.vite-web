@@ -1,14 +1,14 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 05/11/2026 (execução 4, CI final aprovada) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 05/11/2026 (execução 5, CI Node 20/22 e EPUBCheck aprovada) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
 | Situação | Itens |
 | --- | ---: |
-| Concluídos no escopo definido, com CI Node 20/22 aprovada | **26** |
-| Parcialmente tratados, com testes/validação adicionais necessários | **50** |
-| Não iniciados ou ainda não evidenciados | **23** |
+| Concluídos no escopo definido, com CI Node 20/22 aprovada | **29** |
+| Parcialmente tratados, com testes/validação adicionais necessários | **52** |
+| Não iniciados ou ainda não evidenciados | **18** |
 | Total | **99** |
 
 ## Regras de classificação
@@ -49,16 +49,16 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-022 | P1 | Caminhos com %23, %25, %2F, #, ?, Unicode NFC/NFD | Concluído · CI |
 | E-023 | P1 | Colisões depois de decodificação, normalização ou diferença de caixa | Parcial |
 | E-024 | P1 | Consistência entre nomes do diretório central e nomes vistos pelo JSZip | Parcial |
-| E-025 | P1 | Extra fields Unicode, data descriptors, tamanhos e offsets extremos | Pendente |
+| E-025 | P1 | Extra fields Unicode, data descriptors, tamanhos e offsets extremos | Parcial |
 | E-026 | P1 | Sobreposição de payload ZIP, entrada duplicada e polyglots | Parcial |
 | E-027 | P1 | Arquivos e diretórios com nomes especiais ou caminhos relativos anômalos | Parcial |
-| E-028 | P1 | EPUB multipartes/ZIP64/criptografia rejeitados com diagnóstico preciso | Pendente |
+| E-028 | P1 | EPUB multipartes/ZIP64/criptografia rejeitados com diagnóstico preciso | Concluído · CI |
 | E-029 | P1 | Manifest e container com múltiplos rootfiles/renditions | Parcial |
 | E-030 | P1 | mimetype duplicado, diretórios primeiro, extras e arquivos de tamanho zero | Parcial |
 | E-031 | P1 | Picos de memória ao carregar/decompactar/revalidar várias vezes | Pendente |
 | E-032 | P2 | Progresso, cancelamento e execução em Worker para EPUBs grandes | Pendente |
 | E-033 | P2 | Preservação de encoding/declaracão XML ao reescrever XHTML/OPF | Pendente |
-| E-034 | P2 | Tamanhos declarados ZIP diferentes dos fluxos descompactados | Pendente |
+| E-034 | P2 | Tamanhos declarados ZIP diferentes dos fluxos descompactados | Concluído · CI |
 | E-035 | P0 | EPUBCheck oficial integrado à validação de arquivos reparados no CI | Concluído · CI |
 | E-036 | P1 | Matriz separada EPUB 2, EPUB 3.0/3.2/3.3 e EPUB 3.4 | Parcial |
 | E-037 | P1 | Links internos com fragmento inexistente (#id) | Parcial |
@@ -71,8 +71,8 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-044 | P1 | Spine linear, page-progression-direction, documentos estrangeiros e fallbacks | Parcial |
 | E-045 | P1 | Controle de arquivos remotos permitidos por tipo, propriedade e versão | Parcial |
 | E-046 | P1 | Fontes obfuscadas/legalmente ofuscadas e META-INF/encryption.xml | Concluído · CI |
-| E-047 | P1 | Media Overlays/SMIL, sincronização de áudio e vídeos, quando presentes | Pendente |
-| E-048 | P1 | Metadados fixed-layout e documentos SVG no spine | Pendente |
+| E-047 | P1 | Media Overlays/SMIL, sincronização de áudio e vídeos, quando presentes | Parcial |
+| E-048 | P1 | Metadados fixed-layout e documentos SVG no spine | Concluído · CI |
 | E-049 | P2 | MathML, ruby, RTL, escrita vertical e idiomas mistos | Pendente |
 | E-050 | P2 | Declarações de imagem de capa em OPF/guide/nav/cover-image | Pendente |
 | E-051 | P0 | Verificação dos arquivos JS/binários não mencionados no fluxo de sanitização | Parcial |
@@ -284,3 +284,43 @@ e diagnóstico não equivalem a suporte pleno.
 4. E-073, E-076, E-089 e E-090: diffs editoriais visuais e matriz de leitores/browsers.
 5. E-095, E-096 e E-098: cobertura/limites de performance, proteção de branches
    e pré-condições de release.
+
+## Execução 5: fechamento de ZIP, layout fixo e preservação editorial
+
+**Base:** 26 concluídos, 50 parciais, 23 pendentes.
+**Atual:** **29 concluídos, 52 parciais, 18 pendentes**.
+
+- **81/99 itens receberam algum avanço** (inclui itens parciais).
+- **70/99 ainda não estão integralmente concluídos**: 52 parciais e 18 pendentes.
+- **3 itens encerrados por critério verificável:** E-028 (rejeição explícita ZIP64/multipartes/criptografia), E-034 (tamanho declarado versus fluxo real ZIP), E-048 (metadados de layout fixo, viewport XHTML, SVG viewBox e overrides por itemref).
+- **2 itens passaram de pendentes a parciais:** E-025 (extra fields, ZIP64, data descriptors e proteção de offset) e E-047 (validação não destrutiva de SMIL, clipes de áudio, fragmentos e sincronização temporal).
+- **P0/P1 existentes reforçados, sem conclusão prematura:** E-024, E-052, E-064, E-065, E-071, E-077. Regressões adicionais conferem a identidade extraída via JSZip, conservam links/âncoras e rejeitam fusão silenciosa de parágrafos.
+
+### Evidência de commits e CI
+
+| Commit | Entrega |
+| --- | --- |
+| `aad6a4c` | E-025/E-028: validar data descriptors, campos Unicode extras e formatos ZIP recusados com erro específico |
+| `bce712a`, `afb2896` | E-024/E-034: comparar tamanho descompactado e CRC real; conferir identidade de entradas no diretório central versus JSZip |
+| `af89edf` | E-047: nova inspeção de media overlays SMIL sem reescrever áudio nem texto sincronizado |
+| `6894de6`, `d34e0f6`, `f401258` | E-064/E-065/E-071: preservar parágrafos, headings, âncoras legadas e propriedade linear dos capítulos; manter regressões antigas |
+| `a0560e2` | E-048: validar viewport/layout fixo e documentos SVG no spine |
+| `e27c017` | E-052/E-077: classificar a cópia pelo relatório final, não por alertas do arquivo original |
+| `dab0ab9`, `467a1c9` | Corrigir sintaxe dos testes TypeScript para manter CI verde |
+
+**CI verificada antes desta atualização documental:** [run 42070073476](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42070073476), com aprovação de Node.js 20, Node.js 22 e EPUBCheck 5.4.0. O commit somente documental subsequente requer sua própria confirmação de CI.
+
+### Restrições ainda abertas
+
+- E-025: corpus de extremos, combinações legais de extra fields e tamanhos/offsets de 64 bits ainda precisa ampliar.
+- E-047: validar ainda SMIL/áudio/vídeo em leitores reais, múltiplos perfis e sincronização temporal de mídia real.
+- E-048 está concluído no escopo de **diagnóstico técnico de fixed layout**; **não** equivale a homologação visual de páginas fixas em leitores. E-076 continua pendente.
+- E-064/E-065: preservar apresentação visual, notas complexas e comparar EPUBs reais ainda precisa de homologação. Nenhum reparo autoriza alteração editorial silenciosa.
+- Links/fontes HTTP e HTTPS legítimos continuam permitidos; o aplicativo não é um antivírus e não oferece garantia universal contra malware.
+- `prod` permanece na v2.2.0, sem merge nem release. O PR rascunho #30 foi criado somente para disparar testes, não para publicação.
+
+### Próxima prioridade de consolidação
+
+1. Encerrar os **5 P0 parciais** com testes adversariais e preservação provada (E-051, E-052, E-064, E-065, E-086).
+2. Consolidar os P1 de segurança ZIP/XML/CSS/SVG e conformidade EPUB; medir casos legítimos para evitar falsos positivos.
+3. Homologar leitores reais, navegadores, memória e desempenho antes de elevar confiança da versão.
