@@ -1,3 +1,4 @@
+import packageInfo from '../../package.json';
 import {
   getOptionalOptimizationCount,
   getRequiredRepairableCount,
@@ -6,10 +7,51 @@ import {
   type CoverReportInfo,
   type Issue,
   type RepairResult,
+  type RepairOptions,
   type ValidationReport,
 } from '../epub';
 
-export function buildTextReport(report: ValidationReport, repair?: RepairResult): string {
+export interface ReportEvidence {
+  appVersion: string;
+  sourceFileName: string;
+  sourceSha256: string | null;
+  generatedAt: string;
+  selectedOptions: RepairOptions;
+}
+
+/** Evidência local, calculada apenas quando o usuário solicita relatório. */
+export async function createReportEvidence(
+  sourceFileName: string,
+  bytes: Uint8Array,
+  selectedOptions: RepairOptions,
+): Promise<ReportEvidence> {
+  let sourceSha256: string | null = null;
+  try {
+    if (globalThis.crypto?.subtle) {
+      // A cópia evita BufferSource com memória compartilhada e não persiste dados.
+      const safeBytes = new Uint8Array(bytes.byteLength);
+      safeBytes.set(bytes);
+      const digest = await globalThis.crypto.subtle.digest('SHA-256', safeBytes);
+      sourceSha256 = Array.from(new Uint8Array(digest))
+        .map((byte) => byte.toString(16).padStart(2, '0')).join('');
+    }
+  } catch {
+    // O relatório nunca inventa um hash quando o browser não oferece Web Crypto.
+  }
+  return {
+    appVersion: packageInfo.version,
+    sourceFileName,
+    sourceSha256,
+    generatedAt: new Date().toISOString(),
+    selectedOptions: { ...selectedOptions },
+  };
+}
+
+export function buildTextReport(
+  report: ValidationReport,
+  repair?: RepairResult,
+  evidence?: ReportEvidence,
+): string {
   const lines = [
     `Arquivo: ${report.fileName}`,
     `OPF: ${report.opfPath ?? 'não encontrado'}`,
@@ -17,7 +59,14 @@ export function buildTextReport(report: ValidationReport, repair?: RepairResult)
     `Score Kindle: ${report.stats.kindleScore}`,
     `Score estrutura: ${report.stats.structureScore}`,
     `Score compatibilidade: ${report.stats.compatibilityScore}`,
-    `Score segurança: ${report.stats.securityScore}`,
+    `Score segurança: ${report.stats.securityScore} (heurístico, não é antivírus)`,
+    ...(evidence ? [
+      `EPUB Repair: v${evidence.appVersion}`,
+      `Arquivo carregado no momento da emissão: ${evidence.sourceFileName}`,
+      `SHA-256 do arquivo carregado: ${evidence.sourceSha256 ?? 'indisponível'}`,
+      `Relatório emitido: ${evidence.generatedAt}`,
+      `Opções selecionadas agora (podem diferir das usadas no reparo): ${JSON.stringify(evidence.selectedOptions)}`,
+    ] : []),
     `Fatais: ${report.stats.fatalCount} | Erros: ${report.stats.errorCount} | Avisos: ${report.stats.warningCount} | Informações: ${report.stats.infoCount}`,
     `Reparos obrigatórios: ${getRequiredRepairableCount(report)} | Otimizações opcionais: ${getOptionalOptimizationCount(report)}`,
     '',
@@ -65,10 +114,11 @@ function operationReportTitle(repair: RepairResult): string {
   return 'Reparo';
 }
 
-export function buildJsonReport(report: ValidationReport, repair?: RepairResult): string {
+export function buildJsonReport(report: ValidationReport, repair?: RepairResult, evidence?: ReportEvidence): string {
   return JSON.stringify(
     {
       report: toSerializableReport(report),
+      evidence,
       repair: repair
         ? {
             fileName: repair.fileName,

@@ -7,7 +7,7 @@ import {
   repairCurrentFile,
 } from './actions';
 import { createInitialState, type AppState } from './state';
-import { buildJsonReport, buildTextReport, makeReportFileName } from '../ui/copyReport';
+import { buildJsonReport, buildTextReport, createReportEvidence, makeReportFileName } from '../ui/copyReport';
 import { renderControls } from '../ui/components/Controls';
 import { renderCoverChanger } from '../ui/components/CoverChanger';
 import { renderStatusMessage } from '../ui/components/ErrorPanel';
@@ -58,10 +58,10 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
                 void copyCurrentReport(state, rerender);
               },
               downloadTextReport: () => {
-                downloadCurrentReport(state, 'txt');
+                void downloadCurrentReport(state, 'txt');
               },
               downloadJsonReport: () => {
-                downloadCurrentReport(state, 'json');
+                void downloadCurrentReport(state, 'json');
               },
             }),
             renderCoverChanger(state, {
@@ -118,7 +118,10 @@ async function runAsync(
 async function copyCurrentReport(state: AppState, rerender: () => void): Promise<void> {
   if (!state.report) return;
   try {
-    await navigator.clipboard.writeText(buildTextReport(state.report, state.repairResult));
+    const evidence = state.payload
+      ? await createReportEvidence(state.payload.file.name, state.payload.bytes, state.options)
+      : undefined;
+    await navigator.clipboard.writeText(buildTextReport(state.report, state.repairResult, evidence));
     state.message = 'Relatório copiado para a área de transferência.';
     state.error = undefined;
   } catch {
@@ -127,13 +130,15 @@ async function copyCurrentReport(state: AppState, rerender: () => void): Promise
   rerender();
 }
 
-function downloadCurrentReport(state: AppState, format: 'txt' | 'json'): void {
+async function downloadCurrentReport(state: AppState, format: 'txt' | 'json'): Promise<void> {
   if (!state.report) return;
-
+  const evidence = state.payload
+    ? await createReportEvidence(state.payload.file.name, state.payload.bytes, state.options)
+    : undefined;
   const content =
     format === 'json'
-      ? buildJsonReport(state.report, state.repairResult)
-      : buildTextReport(state.report, state.repairResult);
+      ? buildJsonReport(state.report, state.repairResult, evidence)
+      : buildTextReport(state.report, state.repairResult, evidence);
   const mimeType =
     format === 'json' ? 'application/json;charset=utf-8' : 'text/plain;charset=utf-8';
   downloadBlob(

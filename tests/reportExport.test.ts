@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ValidationReport } from '../src/epub';
-import { buildJsonReport, buildTextReport, makeReportFileName } from '../src/ui/copyReport';
+import { buildJsonReport, buildTextReport, createReportEvidence, makeReportFileName } from '../src/ui/copyReport';
+import { DEFAULT_REPAIR_OPTIONS } from '../src/epub/utils/constants';
 
 const report: ValidationReport = {
   fileName: 'Livro Teste.epub',
@@ -31,6 +32,26 @@ const report: ValidationReport = {
 };
 
 describe('report export helpers', () => {
+  it('E-084: versão, opções e SHA-256 verificável no relatório TXT/JSON', async () => {
+    const evidence = await createReportEvidence(
+      'livro.epub', new TextEncoder().encode('abc'), DEFAULT_REPAIR_OPTIONS,
+    );
+    expect(evidence.appVersion).toBe('2.2.0');
+    expect(evidence.sourceFileName).toBe('livro.epub');
+    expect(evidence.sourceSha256).toBe(
+      'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+    );
+    const text = buildTextReport(report, undefined, evidence);
+    expect(text).toContain('SHA-256 do arquivo carregado');
+    expect(text).toContain(evidence.sourceSha256);
+    expect(text).toContain('podem diferir das usadas no reparo');
+    const json = JSON.parse(buildJsonReport(report, undefined, evidence)) as {
+      evidence: typeof evidence;
+    };
+    expect(json.evidence.sourceSha256).toBe(evidence.sourceSha256);
+    expect(json.evidence.selectedOptions.repairManifest).toBe(true);
+  });
+
   it('exports text report with score breakdown and cover status', () => {
     const text = buildTextReport(report);
 
