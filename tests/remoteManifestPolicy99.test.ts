@@ -56,8 +56,7 @@ describe('E-045: publicação com recursos remotos legítimos por versão e MIME
     const chapter = { ...item('chapter','chapter.xhtml','application/xhtml+xml'),
       resolvedPath: path, exists: true, remote: false };
     const pkg = version('3.3', [chapter]);
-    const loaded = { files: new Map([[path, { bytes: new TextEncoder().encode(markup) }]]) }
-      as unknown as LoadedEpub;
+    const loaded = { files: new Map([[path, { bytes: new TextEncoder().encode(markup) }]]) } as unknown as LoadedEpub;
     expect(validateManifestContentProperties(loaded,pkg).map((i) => i.context))
       .toContain('remote-resources');
     chapter.properties.push('remote-resources');
@@ -70,8 +69,7 @@ describe('E-045: publicação com recursos remotos legítimos por versão e MIME
     const chapter = { ...item('chapter','chapter.xhtml','application/xhtml+xml'),
       resolvedPath:path, exists:true, remote:false };
     const pkg = version('3.3',[chapter]);
-    const loaded = { files: new Map([[path,{bytes:new TextEncoder().encode(markup)}]]) }
-      as unknown as LoadedEpub;
+    const loaded = { files: new Map([[path,{bytes:new TextEncoder().encode(markup)}]]) } as unknown as LoadedEpub;
     expect(validateManifestContentProperties(loaded,pkg)).toEqual([]);
   });
 });
