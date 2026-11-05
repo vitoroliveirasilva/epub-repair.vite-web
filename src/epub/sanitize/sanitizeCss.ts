@@ -1,4 +1,5 @@
 import type { RepairAction } from '../model/repairTypes';
+import { containsDangerousCss } from './sanitizeActiveContent';
 import {
   decodeCssEscapes,
   isInlineFontDataUrl,
@@ -22,15 +23,21 @@ export function sanitizeCssDocument(
   const actions: RepairAction[] = [];
   let changed = false;
 
-  let output = text.replace(/@font-face\s*\{[^{}]*\}/giu, (block) => {
+  // Comentários CSS são conteúdo inerte: não reescrever URLs que aparecem
+  // em comentários do livro. O parser considera aspas e escapes.
+  const fontCommented = commentPositionGuard(text);
+  let output = text.replace(/@font-face\s*\{[^{}]*\}/giu, (block, offset: number) => {
+    if (fontCommented(offset)) return block;
     const sanitized = sanitizeFontFaceBlock(block, filePath, existingFiles, removeRemoteResourceLinks);
     if (sanitized !== block) changed = true;
     return sanitized;
   });
 
+  const importCommented = commentPositionGuard(output);
   output = output.replace(
     /@import\s+(?:url\(\s*)?(?:(["'])(.*?)\1|([^"'\s);]+))\s*\)?[^;]*;/giu,
-    (full, _quote: string, quotedValue: string, unquotedValue: string) => {
+    (full, _quote: string, quotedValue: string, unquotedValue: string, offset: number) => {
+      if (importCommented(offset)) return full;
       const rawValue = quotedValue || unquotedValue || '';
       if (isUnsafeCssReference(filePath, rawValue.trim(), existingFiles, removeRemoteResourceLinks)) {
         changed = true;
@@ -40,9 +47,11 @@ export function sanitizeCssDocument(
     },
   );
 
+  const urlCommented = commentPositionGuard(output);
   output = output.replace(
     /url\(\s*(["']?)(.*?)\1\s*\)/giu,
-    (full, _quote: string, rawValue: string) => {
+    (full, _quote: string, rawValue: string, offset: number) => {
+      if (urlCommented(offset)) return full;
       const value = rawValue.trim();
       if (!value || value.startsWith('#')) return full;
       if (isUnsafeCssReference(filePath, value, existingFiles, removeRemoteResourceLinks)) {
@@ -52,6 +61,13 @@ export function sanitizeCssDocument(
       return full;
     },
   );
+
+  // CSS ofuscado que escapou dos padrões de substituição não pode ser
+  // exportado como se tivesse sido saneado. Falhar sem modificar o arquivo.
+  if (containsDangerousCss(output)) {
+    throw new Error('CSS com escape, comentário ou declaração ativa não ' +
+      'neutralizável automaticamente em ' + filePath + '. Revisão manual necessária.');
+  }
 
   if (changed) {
     actions.push({
@@ -159,4 +175,33 @@ function splitTopLevelCss(input: string, separator: ',' | ';'): string[] {
   }
   parts.push(input.slice(start));
   return parts;
+}
+
+/** Identifica intervalos de comentário CSS sem confundir /* dentro de strings. */
+function commentPositionGuard(source: string): (offset: number) => boolean {
+  const ranges: Array<[number, number]> = [];
+  let quote = '';
+  for (let i = 0; i < source.length; i += 1) {
+    const char = source[i] ?? '';
+    if (quote) {
+      if (char === '\\') i += 1;
+      else if (char === quote) quote = '';
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (char === '/' && source[i + 1] === '*') {
+      const close = source.indexOf('*/', i + 2);
+      const end = close < 0 ? source.length : close + 2;
+      ranges.push([i, end]);
+      i = end - 1;
+    }
+  }
+  let current = 0;
+  return (offset: number) => {
+    while (current < ranges.length && ranges[current]![1] <= offset) current += 1;
+    return current < ranges.length && ranges[current]![0] <= offset;
+  };
 }

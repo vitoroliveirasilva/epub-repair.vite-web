@@ -23,6 +23,31 @@ describe('cssReferences', () => {
     expect(result.text).toContain('p{color:blue}');
   });
 
+  it('E-054: não reescreve URLs em comentários, inclusive exemplos de javascript', () => {
+    const original = '/* url("javascript:alert(1)") @import "bad.css"; */' +
+      'p{color:blue;background:url("https://cdn.example/img.png")}';
+    const result = sanitizeCssDocument('OPS/css/main.css', original,
+      new Set(['OPS/css/main.css']));
+    expect(result.changed).toBe(false);
+    expect(result.text).toBe(original);
+  });
+
+  it('E-054: bloqueia CSS ativo disfarçado por escapes sem prometer limpeza', () => {
+    const obfuscated = 'p{color:blue;background:u\\\\72l("javascript:alert(1)")}';
+    expect(() => sanitizeCssDocument('OPS/css/main.css', obfuscated,
+      new Set(['OPS/css/main.css']))).toThrow(/Revisão manual/u);
+  });
+
+  it('E-054: preserva URL HTTPS e remove URL executável direta', () => {
+    const original = 'p{background:url("https://cdn.example/img.png")}' +
+      '.bad{background:url("javascript:alert(1)")}';
+    const cleaned = sanitizeCssDocument('OPS/css/main.css', original,
+      new Set(['OPS/css/main.css']));
+    expect(cleaned.text).toContain('https://cdn.example/img.png');
+    expect(cleaned.text).not.toContain('javascript:');
+    expect(cleaned.changed).toBe(true);
+  });
+
   it('detecta url e import', () => {
     const refs = extractCssResourceReferences(
       '@import "base.css"; body{background:url("../img/a.png")}',
