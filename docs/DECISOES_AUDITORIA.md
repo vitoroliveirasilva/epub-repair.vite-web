@@ -82,3 +82,15 @@ Para evidências e estados individuais, ver [Auditoria 99](AUDITORIA_99_PROGRESS
 - Todos os 12 P0 estão encerrados no escopo automatizado definido, **sem substituir auditoria de segurança, antivírus ou testes em leitores físicos**.
 
 Referência completa: [Auditoria 99 / execução 8](AUDITORIA_99_PROGRESSO.md).
+
+## Execução 9: fallbacks e recursos dependentes
+
+- Um recurso estrangeiro só substitui documento do spine com fallback XHTML/SVG **local e verificável**. Fontes, áudio e conteúdo extra fora da ordem de leitura não são julgados capítulos.
+- Formatos estrangeiros embutidos (por exemplo HEIC) precisam de fallback core conforme o contexto; nenhum substituto é inventado ou apagado.
+- Recursos remotos HTTPS de áudio, vídeo e fontes são legítimos e não equivalem a malware. URLs HTTP recebem informação sobre transporte/compatibilidade, não rótulo de ameaça.
+- OPF com timestamp inválido e metadados prefixados ambíguos recebe diagnóstico; o reparo não altera datas/autoria arbitrariamente.
+- Media Overlays/SMIL precisam permanecer byte a byte intactos quando a operação não contempla editar narração; os vínculos `media-overlay` também não podem desaparecer.
+- A inspeção inicial agora reutiliza os dados já abertos pelo leitor ZIP no reparo, sem dispensar a verificação estrutural final.
+- Homologações de reprodução áudio/texto e dispositivos físicos continuam limitações externas, mesmo com critérios automatizados E-047 encerrados.
+
+Veja [auditoria de 99 itens, execução 9](AUDITORIA_99_PROGRESSO.md).

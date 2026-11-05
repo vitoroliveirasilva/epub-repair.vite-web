@@ -1,13 +1,13 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 05/11/2026 (execução 8, CI Node 20/22 e EPUBCheck aprovada) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 05/11/2026 (execução 9, CI Node 20/22 e EPUBCheck; confirmar último run da dev) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
 | Situação | Itens |
 | --- | ---: |
-| Concluídos no escopo definido, com CI Node 20/22 aprovada | **67** |
-| Parcialmente tratados, com testes/validação adicionais necessários | **24** |
+| Concluídos no escopo definido, com CI Node 20/22 aprovada | **72** |
+| Parcialmente tratados, com testes/validação adicionais necessários | **19** |
 | Não iniciados ou ainda não evidenciados | **8** |
 | Total | **99** |
 
@@ -65,13 +65,13 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-038 | P1 | Links de nav.xhtml e seus fragmentos, hierarquia toc e estrutura de lista | Concluído · CI |
 | E-039 | P1 | NAV/NCX com URLs escapadas, fragmentos, âncoras internas e caracteres especiais | Concluído · CI |
 | E-040 | P1 | Suporte a page-list, landmarks e guide sem destruí-los | Concluído · CI |
-| E-041 | P1 | Validação de fallback e ciclos de referência de recursos foreign | Parcial |
+| E-041 | P1 | Validação de fallback e ciclos de referência de recursos foreign | Concluído · CI |
 | E-042 | P1 | Validar propriedades required do manifest: nav, cover-image, scripted, remote-resources etc | Concluído · CI |
-| E-043 | P1 | Metadados package unique-identifier, dcterms:modified, prefix, refines e vínculos | Parcial |
-| E-044 | P1 | Spine linear, page-progression-direction, documentos estrangeiros e fallbacks | Parcial |
-| E-045 | P1 | Controle de arquivos remotos permitidos por tipo, propriedade e versão | Parcial |
+| E-043 | P1 | Metadados package unique-identifier, dcterms:modified, prefix, refines e vínculos | Concluído · CI |
+| E-044 | P1 | Spine linear, page-progression-direction, documentos estrangeiros e fallbacks | Concluído · CI |
+| E-045 | P1 | Controle de arquivos remotos permitidos por tipo, propriedade e versão | Concluído · CI |
 | E-046 | P1 | Fontes obfuscadas/legalmente ofuscadas e META-INF/encryption.xml | Concluído · CI |
-| E-047 | P1 | Media Overlays/SMIL, sincronização de áudio e vídeos, quando presentes | Parcial |
+| E-047 | P1 | Media Overlays/SMIL, sincronização de áudio e vídeos, quando presentes | Concluído · CI |
 | E-048 | P1 | Metadados fixed-layout e documentos SVG no spine | Concluído · CI |
 | E-049 | P2 | MathML, ruby, RTL, escrita vertical e idiomas mistos | Parcial |
 | E-050 | P2 | Declarações de imagem de capa em OPF/guide/nav/cover-image | Concluído · CI |
@@ -432,3 +432,34 @@ e diagnóstico não equivalem a suporte pleno.
 6. E-062: configurações Netlify testadas estaticamente, não demonstram os headers servidos em produção.
 
 **Branch `prod` intacta na v2.2.0; nenhuma release nem merge efetuados.**
+
+## Execução 9: fallbacks, semântica OPF, SMIL e descompactação única
+
+**Antes:** 67 concluídos, 24 parciais, 8 pendentes.  
+**Atual:** **72 concluídos, 19 parciais, 8 pendentes**.
+
+**Cinco critérios fechados nesta rodada:** E-041, E-043, E-044, E-045, E-047.
+**Dois critérios com avanços adicionais, ainda parciais:** E-031 e E-047 inicialmente estava parcial, mas seu critério automatizável de não danificar o vínculo áudio/texto foi encerrado após incluir proteção de preservação. O restante da homologação audiovisual física segue pendente como validação externa.
+**91/99 possuem avanço; 27/99 não estão totalmente concluídos.**
+
+| Item | Evidências implementadas |
+| --- | --- |
+| E-041 | `b207d60`, `6afbaa1`, `2cc4493`, `4687dab`, `c3b2bbb`: fallback IDREF/cadeia, ciclo e destino core, material estrangeiro no spine, imagem HEIC incorporada no XHTML, XHTML remoto inválido como fallback de leitura; evita fabricar capítulos |
+| E-043 | `aee7775`, `24d162b`, `eadf614`: unique-identifier/DC, dcterms:modified UTC exato (sem aceitar datas impossíveis), prefixos registrados e referenciados, refs inválidas sem alterar metadados |
+| E-044 | `b207d60`, `de69091`, `273af4e`: direções RTL/LTR/default, linear=yes/no, páginas auxiliares, fallback XHTML/SVG para documentos estrangeiros do spine |
+| E-045 | `0f57b9b`, `c6fe0fa`, `c3532b0`: políticas EPUB 2/3 para recursos remotos por MIME; áudio, vídeo, fontes HTTPS mantidos; HTTP é informação de transporte, não malware; property remote-resources exige recurso incorporado, não hyperlink |
+| E-047 | `f0e1bf1`, `09f7605`, `4d7b5ab`: SMIL IDs únicos, namespace real, MIME e links dos alvos, tempos de clipes; auditoria impede modificar bytes SMIL ou desfazer media-overlay ao reparar |
+| E-031 (parcial) | `3b1544f`: a inspeção inicial e o reparo reutilizam a mesma descompactação, eliminando segunda carga completa; tests/singleLoadRepair99.test.ts compara os relatórios. **Picos reais em navegadores ainda não medidos.** |
+
+### Validação, riscos e limites
+
+- **Gates:** Node.js 20 e 22 (TypeScript, ESLint, testes, build), EPUBCheck 5.4.0; consultar o último run na [CI da dev](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions?query=branch%3Adev). Nenhum estado foi promovido para produção.
+- **P0:** 12 concluídos, 0 parciais, 0 pendentes. Fechamento **no escopo automatizado**, não garantia absoluta.
+- **P1:** 52 concluídos, 14 parciais, 2 pendentes.
+- **P2:** 8 concluídos, 5 parciais, 6 pendentes.
+- **E-047:** preserve bytes e vínculos SMIL; **não** afirma playback ou sincronia perfeita em Kindle Previewer, Apple Books ou outros leitores reais.
+- **E-045:** recursos HTTPS legítimos não são classificados como malware; manifest remoto inválido é conformidade e requer revisão, não remoção automática.
+- **E-031:** nenhuma alegação de consumo máximo de RAM em dispositivo móvel; apenas regressões e redução estrutural de cópias.
+- Próximas frentes: **E-032/E-080** Worker/fila/cancelamento, **E-031/E-096** medidas em dispositivos, **E-089/E-090** leitores e browsers reais, **E-059** verificação AV externa opt-in.
+
+**Preservação de produção:** `prod` permanece v2.2.0, sem merge, tag ou release desta auditoria.

@@ -2,6 +2,17 @@
 
 Alterações na branch `dev` **ainda não publicadas**. O pacote e a branch `prod` continuam em **v2.2.0**. Esta página documenta desenvolvimento e não representa uma nova release.
 
+## Unreleased: execução 9 (05/11/2026)
+
+- Fallbacks de tipos estrangeiros, incluindo imagens HEIC em XHTML e fallback XHTML/SVG no spine. Nenhum conteúdo de leitura é inventado.
+- Validação de datas UTC, unique-identifier, prefixos e refines do OPF sem alteração arbitrária dos metadados.
+- Verificação de conteúdo remoto por MIME e versão EPUB, preservando fontes e links HTTPS legítimos.
+- Media Overlays: IDs, namespaces, fontes MIME e integridade dos vínculos/bytes SMIL antes/depois do reparo.
+- Reutilização dos arquivos ZIP já descompactados entre inspeção inicial e reparo, com regressões de equivalência de relatório.
+- Matriz de testes da ordem de leitura e recursos estrangeiros.
+
+**Auditoria:** 72 concluídos, 19 parciais e 8 pendentes. Leitores e navegadores físicos permanecem fora da cobertura automatizada.
+
 ## Unreleased: execução 8 (05/11/2026)
 
 - Corrigida a perda de referências a renditions secundárias quando o container possui múltiplos rootfiles válidos.
