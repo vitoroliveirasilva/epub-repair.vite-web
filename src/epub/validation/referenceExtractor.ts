@@ -84,16 +84,18 @@ export function extractDocumentResourceReferences(doc: Document): ResourceRefere
 
   // Kindle embeds que existem como texto visível também são detectados;
   // ignorar comentários, CDATA isolada e pseudo-atributos dentro deles.
-  const visit = (node: Node): void => {
-    if (node.nodeType === 8) return; // Node.COMMENT_NODE
+  const nodes: Node[] = [doc.documentElement];
+  while (nodes.length > 0) {
+    const node = nodes.pop()!;
+    if (node.nodeType === 8) continue; // Comentário XML/HTML
     if (node.nodeType === 3) {
       for (const match of (node.nodeValue ?? '').matchAll(/kindle:embed:[^\s"'<>)]*/giu)) {
         const raw = match[0];
         if (raw) refs.push({ attr: 'kindle:embed', value: raw, raw });
       }
     }
-    for (const child of Array.from(node.childNodes)) visit(child);
-  };
-  visit(doc.documentElement);
+    // Pilha explícita evita stack overflow em documentos XHTML aninhados.
+    for (const child of Array.from(node.childNodes).reverse()) nodes.push(child);
+  }
   return refs;
 }

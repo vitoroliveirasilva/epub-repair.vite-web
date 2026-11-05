@@ -13,11 +13,11 @@ function fixture(content: string, available: string[] = []) {
   for (const path of available) files.set(path, {
     path, directory: false, bytes: new TextEncoder().encode('<svg/>'),
   });
-  const loaded = { files } as LoadedEpub;
+  const loaded = { files } as unknown as LoadedEpub;
   const pkg = { manifest: [{
     id: 'c', href: 'chapter.xhtml', mediaType: 'application/xhtml+xml',
     properties: [], pathSafe: true, resolvedPath: name, exists: true,
-  }] } as PackageDocumentInfo;
+  }] } as unknown as PackageDocumentInfo;
   return validateContentReferences(loaded, pkg);
 }
 const wrap = (body: string) =>

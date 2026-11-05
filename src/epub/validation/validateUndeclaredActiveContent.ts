@@ -25,7 +25,7 @@ export function validateUndeclaredActiveContent(
   for (const [path, entry] of loaded.files) {
     if (declared.has(path)) continue;
     if (!/\.(?:xhtml?|svg|css)$/iu.test(path)) continue;
-    let active = false;
+    let active: boolean;
     try {
       // Não transformar bytes corrompidos em texto de substituição silencioso.
       const text = new TextDecoder('utf-8', { fatal: true }).decode(entry.bytes);
