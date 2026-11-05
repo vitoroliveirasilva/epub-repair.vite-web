@@ -13,7 +13,7 @@ import {
 } from '../utils/pathUtils';
 import { parseXml } from '../utils/xmlUtils';
 import { containsDangerousCss, shouldRemoveUrl } from '../sanitize/sanitizeActiveContent';
-import { extractHtmlResourceReferences } from './referenceExtractor';
+import { extractDocumentResourceReferences } from './referenceExtractor';
 
 export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
   const issues: Issue[] = [];
@@ -25,6 +25,7 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
     const file = loaded.files.get(item.resolvedPath);
     if (!file) continue;
     const text = new TextDecoder('utf-8', { fatal: false }).decode(file.bytes);
+    let contentDoc: Document | undefined;
 
     if (item.mediaType === 'application/xhtml+xml' || item.mediaType === 'image/svg+xml') {
       try {
@@ -78,6 +79,7 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
       const doc = item.mediaType === 'text/html'
         ? new DOMParser().parseFromString(text, 'text/html')
         : parseXml(text.replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml');
+      contentDoc = doc;
       let unsafeUrl = false;
       let activeHandler = false;
       let unsafeEmbed = false;
@@ -144,7 +146,7 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
       // XHTML inválido já é diagnosticado como CONTENT_INVALID_XML.
     }
 
-    for (const ref of extractHtmlResourceReferences(text)) {
+    for (const ref of contentDoc ? extractDocumentResourceReferences(contentDoc) : []) {
       if (!ref.value || isInternalAnchor(ref.raw)) continue;
 
       if (ref.value.startsWith('kindle:embed:')) {
