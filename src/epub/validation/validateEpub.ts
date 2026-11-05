@@ -8,6 +8,7 @@ import { validateContentReferences } from './validateContentReferences';
 import { validateCssReferences } from './validateCssReferences';
 import { validateKindleCompatibility } from './validateKindleCompatibility';
 import { validateNavigation } from './validateNavigation';
+import { validateInternalAnchors } from './validateInternalAnchors';
 import { validateOpf } from './validateOpf';
 import { validateZipAndOcf } from './validateZip';
 import { validateSuspiciousResources } from './validateSuspiciousResources';
@@ -34,6 +35,7 @@ export async function inspectEpub(fileName: string, bytes: Uint8Array): Promise<
   if (parsed.packageInfo) {
     issues.push(...validateOpf(parsed.packageInfo, loaded));
     issues.push(...validateNavigation(loaded, parsed.packageInfo));
+    issues.push(...validateInternalAnchors(loaded, parsed.packageInfo));
     issues.push(...validateContentReferences(loaded, parsed.packageInfo));
     issues.push(...validateCssReferences(loaded, parsed.packageInfo));
     issues.push(...validateKindleCompatibility(loaded, parsed.packageInfo));

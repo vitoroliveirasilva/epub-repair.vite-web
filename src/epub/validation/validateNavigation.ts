@@ -35,6 +35,26 @@ export function validateNavigation(loaded: LoadedEpub, pkg: PackageDocumentInfo)
             ?? '';
           return /(^|\s)toc($|\s)/u.test(navType);
         });
+        if (hasToc) {
+          const toc = Array.from(doc.getElementsByTagName('*')).find((element) => {
+            if (element.localName !== 'nav') return false;
+            const navType = element.getAttributeNS('http://www.idpf.org/2007/ops', 'type')
+              ?? element.getAttribute('epub:type') ?? '';
+            return /(^|\s)toc($|\s)/u.test(navType);
+          });
+          const hasLinks = toc && Array.from(toc.getElementsByTagName('*'))
+            .some((element) => element.localName === 'a' && Boolean(element.getAttribute('href')));
+          if (!hasLinks) {
+            issues.push(createIssue({
+              code: 'NAV_EMPTY',
+              severity: 'warning',
+              title: 'Índice EPUB 3 sem links navegáveis',
+              detail: 'O nav.xhtml possui um toc, mas não contém destinos navegáveis.',
+              file: pkg.navItem.resolvedPath,
+              repairable: false,
+            }));
+          }
+        }
         if (!hasToc) {
           issues.push(
             createIssue({

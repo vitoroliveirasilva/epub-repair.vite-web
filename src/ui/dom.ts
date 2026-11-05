@@ -52,5 +52,6 @@ export function downloadBlob(blob: Blob, fileName: string): void {
   document.body.append(anchor);
   anchor.click();
   anchor.remove();
-  URL.revokeObjectURL(url);
+  // Safari/WebKit pode precisar do ObjectURL após o evento click.
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

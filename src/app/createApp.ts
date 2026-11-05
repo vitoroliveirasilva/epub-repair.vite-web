@@ -100,6 +100,8 @@ async function runAsync(
   rerender: () => void,
   task: () => Promise<void>,
 ): Promise<void> {
+  // Impede duas operações simultâneas de misturar estado de livros diferentes.
+  if (state.busy) return;
   try {
     state.error = undefined;
     state.busy = true;
