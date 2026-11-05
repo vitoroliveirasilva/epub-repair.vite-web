@@ -3,13 +3,12 @@ import { describe, expect, it } from 'vitest';
 
 const config = readFileSync('netlify.toml', 'utf8');
 const csp = /Content-Security-Policy\s*=\s*"([^"]+)"/u.exec(config)?.[1] ?? '';
-const directives = Object.fromEntries(csp.split(';').map((fragment) => fragment.trim())
-  .filter(Boolean)
-  .map((directive) => {
-    const [name, ...values] = directive.split(/\s+/u);
-    return [name, values];
-  }));
-const values = (name: string): string[] => directives[name] ?? [];
+const directives = new Map<string, string[]>();
+for (const fragment of csp.split(';')) {
+  const [name, ...args] = fragment.trim().split(/\s+/u);
+  if (name) directives.set(name, args);
+}
+const values = (name: string): string[] => directives.get(name) ?? [];
 
 describe('E-062: proteção CSP/Netlify compatível com app EPUB 100% local', () => {
   it('nega scripts remotos, inline e código avaliado dinamicamente', () => {
