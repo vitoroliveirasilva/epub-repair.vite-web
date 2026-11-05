@@ -8,7 +8,7 @@ import { loadEpub } from '../src/epub/reader/loadEpub';
 class MockWorker {
   readonly handlers = new Map<string, Set<(event: Event) => void>>();
   readonly terminate = vi.fn();
-  readonly postMessage = vi.fn((_request: unknown) => {});
+  readonly postMessage = vi.fn();
   addEventListener(type: string, listener: (event: Event) => void): void {
     const handlers = this.handlers.get(type) ?? new Set();
     handlers.add(listener);

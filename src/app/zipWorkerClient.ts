@@ -88,7 +88,7 @@ export async function loadEpubInWorker(
       worker.postMessage(request);
     } catch (error) {
       cleanup();
-      reject(error);
+      reject(error instanceof Error ? error : new Error('Worker não iniciou.'));
     }
   });
 }
