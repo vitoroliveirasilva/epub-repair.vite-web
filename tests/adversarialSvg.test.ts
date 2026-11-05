@@ -45,6 +45,32 @@ describe('SVG e XML adversariais dentro de EPUBs', () => {
     expect(doc.getElementById('keep')?.textContent).toBe('Conteúdo legítimo');
   });
 
+  it('E-055: preserva imagem raster embutida no SVG, mas não data:SVG executável', async () => {
+    const { sanitizeActiveContentMarkup } = await import(
+      '../src/epub/sanitize/sanitizeActiveContent'
+    );
+    const original = '<svg xmlns="http://www.w3.org/2000/svg" ' +
+      'xmlns:xlink="http://www.w3.org/1999/xlink">' +
+      '<image id="raster" xlink:href="data:image/png;base64,AAECAw=="/>' +
+      '<image id="active" href="data:image/svg+xml;base64,PHN2Zz4="/>' +
+      '<image id="external" href="https://example.org/capa.png"/>' +
+      '<a id="link" xlink:href="data:image/png;base64,AAECAw=="><text>Texto</text></a>' +
+      '<foreignObject><p xmlns="http://www.w3.org/1999/xhtml">HTML ativo</p></foreignObject>' +
+      '</svg>';
+    const cleaned = sanitizeActiveContentMarkup(original, 'OPS/figure.svg', {
+      sanitizeScripts: true, kindleSafeMode: true, removeRemoteResourceLinks: false,
+    });
+    const parsed = new DOMParser().parseFromString(cleaned.text, 'image/svg+xml');
+    expect(parsed.getElementById('raster')?.getAttribute('xlink:href'))
+      .toBe('data:image/png;base64,AAECAw==');
+    expect(parsed.getElementById('active')?.hasAttribute('href')).toBe(false);
+    expect(parsed.getElementById('external')?.getAttribute('href'))
+      .toBe('https://example.org/capa.png');
+    expect(parsed.getElementById('link')?.hasAttribute('xlink:href')).toBe(false);
+    expect(parsed.getElementsByTagName('foreignObject')).toHaveLength(0);
+    expect(parsed.getElementById('link')?.textContent).toBe('Texto');
+  });
+
   it('E-053/E-055: detecta URL executável codificada como entidade antes do reparo', async () => {
     const zip = await JSZip.loadAsync(await buildKindleIssueEpub());
     const chapter = await zip.file('OEBPS/Text/chapter1.xhtml')!.async('string');

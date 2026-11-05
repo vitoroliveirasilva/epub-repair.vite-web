@@ -117,7 +117,12 @@ export function sanitizeActiveContentMarkup(
 
       if (
         (urlAttributes.has(attrName) || urlAttributes.has(attrLocal)) &&
-        shouldRemoveUrl(value, options, attrLocal)
+        shouldRemoveUrl(
+          value, options,
+          element.namespaceURI === 'http://www.w3.org/2000/svg' &&
+            (name === 'image' || name === 'feimage') &&
+            attrLocal === 'href' ? 'svg-image-href' : attrLocal,
+        )
       ) {
         element.removeAttributeNode(attribute);
         changed = true;
@@ -143,7 +148,8 @@ export function shouldRemoveUrl(
   // eslint-disable-next-line no-control-regex -- controles escondem schemes executáveis
   const normalized = url.replace(/[\u0000-\u0020\u007f]/gu, '').toLowerCase();
   if (!normalized) return false;
-  if (['src', 'srcset', 'poster'].includes(attribute) && isSafeInlineImageDataUrl(normalized)) {
+  if (['src', 'srcset', 'poster', 'svg-image-href'].includes(attribute) &&
+      isSafeInlineImageDataUrl(normalized)) {
     return false; // Dados raster embutidos não são conexões de rede.
   }
   if (isRemoteUrl(normalized) && options.removeRemoteResourceLinks) return true;
