@@ -7,6 +7,8 @@ import { repairEpub } from '../src/epub/repair/repairEpub';
 import { auditPreservation } from '../src/epub/repair/preservationAudit';
 import { loadEpub } from '../src/epub/reader/loadEpub';
 import { parsePackageDocument } from '../src/epub/validation/opfParser';
+import { repairOpfDocument } from '../src/epub/repair/repairOpf';
+import { DEFAULT_REPAIR_OPTIONS } from '../src/epub/utils/constants';
 
 // O jsdom não implementa Blob.arrayBuffer; navegadores modernos implementam.
 beforeAll(() => {
@@ -47,6 +49,22 @@ describe('Resguardo de conteúdo e recursos do EPUB', () => {
     expect(report.issues.some((issue) => issue.code === 'PACKAGE_SUSPICIOUS_EXECUTABLE'))
       .toBe(true);
     expect(report.stats.securityScore).toBeLessThan(100);
+  });
+
+  it('E-051: não declara script órfão nem o considera automaticamente malware', async () => {
+    const zip = await JSZip.loadAsync(await buildKindleIssueEpub());
+    zip.file('OEBPS/Scripts/extra.js', 'console.log("script EPUB 3 legado")');
+    const bytes = await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+    const report = await inspectEpub('livro.epub', bytes);
+    expect(report.issues.some((issue) =>
+      issue.code === 'PACKAGE_UNDECLARED_SCRIPT' && !issue.repairable)).toBe(true);
+    const loaded = await loadEpub('livro.epub', bytes);
+    const pkg = parsePackageDocument(loaded).packageInfo;
+    if (!pkg) throw new Error('OPF não encontrado');
+    const fixed = repairOpfDocument(loaded, pkg, 'livro.epub', DEFAULT_REPAIR_OPTIONS);
+    expect(fixed.opfText).not.toContain('Scripts/extra.js');
+    expect(fixed.actions.some((action) => action.type === 'skipped' &&
+      action.file === 'OEBPS/Scripts/extra.js')).toBe(true);
   });
 
   it('E-064: bloqueia perda acidental de parágrafos durante sanitização', async () => {
