@@ -393,7 +393,7 @@ e diagnóstico não equivalem a suporte pleno.
 ### Pendências e limites após execução 7
 
 1. **P0 E-052:** concluir prova adversarial abrangente dos recursos ativos, inclusive órfãos; não limpar nem excluir silenciosamente material do autor.
-2. **P1 E-031, E-047, E-049, E-069, E-080, E-082, E-089, E-090:** casos grandes e memória real, sincronização audiovisual, idioma/escrita complexos, OCR, fila/cancelamento, Safari/iOS e leitores externos.
-3. **P2 E-096 e E-099:** benchmark maior e workflow semanal realmente ativo somente após promoção aprovada para a branch padrão.
+2. **P1 E-031, E-047, E-069, E-080, E-082, E-089 e E-090:** casos grandes e memória real, sincronização audiovisual, OCR, fila/cancelamento, Safari/iOS e leitores externos.
+3. **P2 E-049, E-096 e E-099:** escrita vertical/idiomas mistos, benchmark maior e workflow semanal realmente ativo somente após promoção aprovada para a branch padrão.
 
 **Produção:** nenhum merge, nenhuma tag, nenhuma release. A `prod` mantém a v2.2.0.
