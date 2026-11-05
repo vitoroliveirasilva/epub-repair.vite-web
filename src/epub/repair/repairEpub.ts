@@ -11,7 +11,7 @@ import { auditPreservation } from './preservationAudit';
 import { createTextFileDiffs } from './textFileDiff';
 import { assertNoNewCriticalIssues } from './repairSafety';
 import { ensureContainerFile } from './repairContainer';
-import { repairContentDocuments } from './repairContentDocuments';
+import { repairActiveContentOnly, repairContentDocuments } from './repairContentDocuments';
 import { repairImageCompatibility } from './repairImages';
 import { repairKindleCompatibility } from './repairKindleCompatibility';
 import { repairOpfDocument } from './repairOpf';
@@ -141,21 +141,28 @@ export async function repairEpub(
     actions.push(ensureContainerFile(files, parsed.packageInfo.opfPath));
   }
 
+  // Inspecionar o manifest efetivo também em modo conservador. O OPF reparado
+  // pode declarar XHTML/SVG/CSS que antes eram órfãos no pacote.
+  const currentOpf = files.get(parsed.packageInfo.opfPath);
+  const currentPkg = currentOpf
+    ? parseOpfDocument(
+        parseXml(new TextDecoder('utf-8').decode(currentOpf)),
+        parsed.packageInfo.opfPath,
+        files,
+      )
+    : parsed.packageInfo;
   if (!options.conservativeMode) {
-    // A lista de recursos do OPF reparado pode conter arquivos antes órfãos.
-    // Sanitizar o manifest efetivo, não somente o original.
-    const currentOpf = files.get(parsed.packageInfo.opfPath);
-    const currentPkg = currentOpf
-      ? parseOpfDocument(
-          parseXml(new TextDecoder('utf-8').decode(currentOpf)),
-          parsed.packageInfo.opfPath,
-          files,
-        )
-      : parsed.packageInfo;
     actions.push(...repairContentDocuments(files, loaded, currentPkg, options));
   } else {
+    // O modo conservador não reescreve conteúdo por compatibilidade, mas
+    // respeita o opt-in explícito de remover scripts ou recursos remotos.
+    actions.push(...repairActiveContentOnly(files, currentPkg, options));
     warnings.push(
-      'O modo conservador está ativo, então XHTML, CSS e imagens foram preservados sempre que possível.',
+      options.sanitizeScripts
+        ? 'Modo conservador: somente elementos ativos e URLs selecionadas foram neutralizados; ' +
+          'a tipografia e os recursos não perigosos foram preservados sempre que possível.'
+        : 'Modo conservador: scripts foram preservados por escolha do usuário; ' +
+          'conteúdo ativo residual exige revisão manual.',
     );
   }
 

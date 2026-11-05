@@ -13,7 +13,7 @@ const options: readonly RepairOptionDescriptor[] = [
   [
     'conservativeMode',
     'Modo conservador',
-    'Preserva XHTML, CSS e imagens; corrige principalmente pacote, OPF, capa, container e NCX.',
+    'Preserva textos e recursos passivos. Scripts e URLs são removidos apenas quando suas opções de limpeza estiverem ativas.',
   ],
   [
     'stripSystemFiles',

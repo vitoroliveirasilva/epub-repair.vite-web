@@ -4,7 +4,9 @@ import type { RepairAction, RepairOptions } from '../model/repairTypes';
 import { CSS_MEDIA_TYPES, HTML_MEDIA_TYPES } from '../utils/constants';
 import { sanitizeCssDocument } from '../sanitize/sanitizeCss';
 import { sanitizeHtmlDocument } from '../sanitize/sanitizeHtml';
-import { sanitizeActiveContentMarkup } from '../sanitize/sanitizeActiveContent';
+import { containsDangerousCss, sanitizeActiveContentMarkup } from '../sanitize/sanitizeActiveContent';
+import { extractCssResourceReferences } from '../validation/referenceExtractor';
+import { decodeCssEscapes, resolveReference } from '../utils/pathUtils';
 
 export function repairContentDocuments(
   files: Map<string, Uint8Array>,
@@ -71,5 +73,74 @@ export function repairContentDocuments(
     }
   }
 
+  return actions;
+}
+
+/**
+ * Modo conservador: sanitizar apenas riscos ativos que o usuário optou remover.
+ * Não substituir imagens, reorganizar XHTML, corrigir CSS faltante ou apagar
+ * fontes externas HTTP/HTTPS legítimas. Recursos órfãos permanecem revisáveis.
+ */
+export function repairActiveContentOnly(
+  files: Map<string, Uint8Array>,
+  pkg: PackageDocumentInfo,
+  options: RepairOptions,
+): RepairAction[] {
+  if (!options.sanitizeScripts && !options.removeRemoteResourceLinks) return [];
+  const actions: RepairAction[] = [];
+  const decoder = new TextDecoder('utf-8', { fatal: false });
+  const encoder = new TextEncoder();
+  const processed = new Set<string>();
+
+  for (const item of pkg.manifest) {
+    const path = item.resolvedPath;
+    if (!item.exists || processed.has(path)) continue;
+    processed.add(path);
+    const bytes = files.get(path);
+    if (!bytes) continue;
+    const original = decoder.decode(bytes);
+    if (HTML_MEDIA_TYPES.has(item.mediaType) || item.mediaType === 'image/svg+xml') {
+      const cleaned = sanitizeActiveContentMarkup(original, path, {
+        sanitizeScripts: options.sanitizeScripts,
+        kindleSafeMode: false,
+        removeRemoteResourceLinks: options.removeRemoteResourceLinks,
+      });
+      if (cleaned.changed) {
+        files.set(path, encoder.encode(cleaned.text));
+        actions.push({
+          type: 'updated',
+          title: 'Conteúdo ativo neutralizado no modo conservador',
+          detail: 'Scripts, eventos e URLs incompatíveis com as opções selecionadas foram ' +
+            'neutralizados, preservando texto e recursos passivos sempre que possível.',
+          file: path,
+        });
+      }
+      continue;
+    }
+    if (item.mediaType !== 'text/css' ||
+        (!containsDangerousCss(original) && !options.removeRemoteResourceLinks)) continue;
+
+    // Para este modo, arquivos locais ausentes não são uma justificativa para
+    // eliminar o estilo: declarar provisoriamente os caminhos como existentes.
+    const knownResources = new Set(files.keys());
+    for (const reference of extractCssResourceReferences(original)) {
+      const normalized = decodeCssEscapes(reference.value);
+      const target = resolveReference(path, normalized);
+      if (target.safe) knownResources.add(target.path);
+    }
+    const cleaned = sanitizeCssDocument(
+      path, original, knownResources, options.removeRemoteResourceLinks,
+    );
+    if (cleaned.changed) {
+      files.set(path, encoder.encode(cleaned.text));
+      actions.push({
+        type: 'updated',
+        title: 'CSS ativo neutralizado no modo conservador',
+        detail: 'URLs perigosas foram neutralizadas sem remover fontes legítimas nem ' +
+          'referências locais apenas porque o arquivo está ausente.',
+        file: path,
+      });
+    }
+  }
   return actions;
 }

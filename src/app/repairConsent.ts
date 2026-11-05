@@ -19,7 +19,7 @@ export function potentialEditorialChanges(
     (codes.has('CONTENT_UNSAFE_EMBED') || codes.has('CONTENT_KINDLE_EMBED_BROKEN'))) {
     changes.push('Recursos interativos e proprietários podem ser removidos ou virarem marcadores.');
   }
-  if (!options.conservativeMode && options.sanitizeScripts &&
+  if (options.sanitizeScripts &&
     (codes.has('CONTENT_SCRIPTED') || codes.has('CONTENT_UNSAFE_STYLE') ||
       codes.has('CONTENT_UNSAFE_URL'))) {
     changes.push('Scripts, eventos e URLs executáveis podem ser neutralizados.');
