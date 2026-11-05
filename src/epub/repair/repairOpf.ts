@@ -23,7 +23,7 @@ import {
   findFirstByLocalName,
   getAttr,
   parseXml,
-  serializeXml,
+  serializeXmlPreservingDeclaration,
 } from '../utils/xmlUtils';
 import {
   buildNavDocument,
@@ -53,7 +53,8 @@ export function repairOpfDocument(
   const opfFile = loaded.files.get(pkg.opfPath);
   if (!opfFile) throw new Error('OPF não encontrado para reparo.');
 
-  const doc = parseXml(decodeUtf8ForRewrite(opfFile.bytes, pkg.opfPath));
+  const opfSource = decodeUtf8ForRewrite(opfFile.bytes, pkg.opfPath);
+  const doc = parseXml(opfSource);
   const packageElement = findFirstByLocalName(doc, 'package') ?? doc.documentElement;
   const metadata = ensureChild(doc, packageElement, 'metadata');
   const manifest = ensureChild(doc, packageElement, 'manifest');
@@ -69,7 +70,7 @@ export function repairOpfDocument(
   ensureNavigationFiles(doc, manifest, spine, loaded, pkg, filesToAdd, actions, options);
 
   return {
-    opfText: serializeXml(doc),
+    opfText: serializeXmlPreservingDeclaration(doc, opfSource),
     filesToAdd,
     actions,
   };

@@ -1,7 +1,8 @@
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction } from '../model/repairTypes';
 import { isRemoteUrl, resolveFromDir } from '../utils/pathUtils';
-import { childElementsByLocalName, findFirstByLocalName, parseXml, serializeXml } from
+import { childElementsByLocalName, findFirstByLocalName, parseXml,
+  serializeXmlPreservingDeclaration } from
   '../utils/xmlUtils';
 import { decodeUtf8ForRewrite } from '../utils/textEncoding';
 import { inferRequiredManifestProperties } from '../validation/validateManifestContentProperties';
@@ -18,7 +19,8 @@ export function synchronizeManifestProperties(
   if (!pkg.version.trim().startsWith('3')) return [];
   const opfBytes = files.get(pkg.opfPath);
   if (!opfBytes) return [];
-  const doc = parseXml(decodeUtf8ForRewrite(opfBytes, pkg.opfPath));
+  const opfSource = decodeUtf8ForRewrite(opfBytes, pkg.opfPath);
+  const doc = parseXml(opfSource);
   const manifest = findFirstByLocalName(doc, 'manifest');
   if (!manifest) return [];
   const updates: Array<{ id: string; values: string[] }> = [];
@@ -41,7 +43,7 @@ export function synchronizeManifestProperties(
   }
 
   if (updates.length === 0) return [];
-  files.set(pkg.opfPath, new TextEncoder().encode(serializeXml(doc)));
+  files.set(pkg.opfPath, new TextEncoder().encode(serializeXmlPreservingDeclaration(doc, opfSource)));
   return updates.map((update) => ({
     type: 'updated' as const,
     title: 'Propriedades obrigatórias adicionadas ao manifest',

@@ -38,6 +38,16 @@ export function serializeXml(doc: Document): string {
   return new XMLSerializer().serializeToString(doc);
 }
 
+/** Não perder a declaração de encoding/standalone ao serializar OPF/NCX.
+ * A rotina de regravação já recusa charsets não-UTF-8 antes desta função.
+ */
+export function serializeXmlPreservingDeclaration(doc: Document, original: string): string {
+  const serialized = serializeXml(doc);
+  if (/^\s*<\?xml\b/iu.test(serialized)) return serialized;
+  const declaration = /^\s*(<\?xml\s+[^?]*\?>)/iu.exec(original)?.[1];
+  return declaration ? declaration + '\n' + serialized : serialized;
+}
+
 export function escapeXml(value: string): string {
   return value
     .replace(/&/g, '&amp;')

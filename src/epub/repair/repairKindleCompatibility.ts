@@ -8,7 +8,7 @@ import {
   findByLocalName,
   getAttr,
   parseXml,
-  serializeXml,
+  serializeXmlPreservingDeclaration,
 } from '../utils/xmlUtils';
 
 const TEXT_ENCODER = new TextEncoder();
@@ -34,8 +34,10 @@ function repairNcxCompatibility(
   if (!bytes) return actions;
 
   let doc: Document;
+  let ncxSource: string;
   try {
-    doc = parseXml(decodeUtf8ForRewrite(bytes, pkg.ncxItem.resolvedPath));
+    ncxSource = decodeUtf8ForRewrite(bytes, pkg.ncxItem.resolvedPath);
+    doc = parseXml(ncxSource);
   } catch {
     return actions;
   }
@@ -56,7 +58,7 @@ function repairNcxCompatibility(
 
   const titleChanged = normalizeNcxTitle(doc, pkg.metadata.title);
   if (playOrderChanged || titleChanged) {
-    files.set(pkg.ncxItem.resolvedPath, TEXT_ENCODER.encode(serializeXml(doc)));
+    files.set(pkg.ncxItem.resolvedPath, TEXT_ENCODER.encode(serializeXmlPreservingDeclaration(doc, ncxSource)));
   }
 
   if (playOrderChanged) {

@@ -23,7 +23,7 @@ import {
   findFirstByLocalName,
   getAttr,
   parseXml,
-  serializeXml,
+  serializeXmlPreservingDeclaration,
 } from '../utils/xmlUtils';
 import type { CoverImageInput, SupportedCoverMediaType } from './coverImageInput';
 
@@ -65,7 +65,8 @@ export async function replaceEpubCover(
   if (!opfFile) throw new Error('OPF não encontrado para troca de capa.');
 
   const files = cloneLoadedFiles(loaded);
-  const doc = parseXml(decodeUtf8ForRewrite(opfFile.bytes, parsed.packageInfo.opfPath));
+  const opfSource = decodeUtf8ForRewrite(opfFile.bytes, parsed.packageInfo.opfPath);
+  const doc = parseXml(opfSource);
   const packageElement = findFirstByLocalName(doc, 'package') ?? doc.documentElement;
   const metadata = ensureChild(doc, packageElement, 'metadata');
   const manifest = ensureChild(doc, packageElement, 'manifest');
@@ -92,7 +93,7 @@ export async function replaceEpubCover(
   ensureSingleCoverImageProperty(manifest, coverItem);
 
   files.set(coverPath, coverImage.bytes);
-  files.set(parsed.packageInfo.opfPath, new TextEncoder().encode(serializeXml(doc)));
+  files.set(parsed.packageInfo.opfPath, new TextEncoder().encode(serializeXmlPreservingDeclaration(doc, opfSource)));
 
   const actions: RepairAction[] = [
     {
