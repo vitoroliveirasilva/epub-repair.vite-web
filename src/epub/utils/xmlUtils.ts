@@ -2,16 +2,19 @@ export function parseXml(
   text: string,
   mimeType: DOMParserSupportedType = 'application/xml',
 ): Document {
-  if (/<!ENTITY\b/iu.test(text)) {
+  // Comentários e CDATA podem citar uma declaração maliciosa literalmente.
+  // Escanear apenas tokens XML efetivos evita alarmes falsos sem relaxar o parser.
+  const structural = text.replace(/<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>/gu, '');
+  if (/<!ENTITY\b/iu.test(structural)) {
     throw new Error('Entidades XML personalizadas não são permitidas por segurança.');
   }
-  if (/<!DOCTYPE\b/iu.test(text)) {
+  if (/<!DOCTYPE\b/iu.test(structural)) {
     // NCX EPUB 2 tradicional e XHTML legado usam DTDs públicas. Não resolvemos
     // nenhuma entidade externa; subconjuntos internos e DTDs desconhecidas são recusados.
-    const doctype = text.match(/<!DOCTYPE\s+[^>]*>/iu)?.[0] ?? '';
+    const doctype = structural.match(/<!DOCTYPE\s+[^>]*>/iu)?.[0] ?? '';
     const legacyNcx = /^<!DOCTYPE\s+ncx\s+PUBLIC\s+["']-\/\/NISO\/\/DTD ncx 2005-1\/\/EN["']\s+["']https?:\/\/www\.daisy\.org\/z3986\/2005\/ncx-2005-1\.dtd["']\s*>$/iu;
     const legacyXhtml = /^<!DOCTYPE\s+html\s+PUBLIC\s+["']-\/\/W3C\/\/DTD XHTML 1\.1\/\/EN["']\s+["']https?:\/\/www\.w3\.org\/TR\/xhtml11\/DTD\/xhtml11\.dtd["']\s*>$/iu;
-    if (!doctype || /<!DOCTYPE\s+[^>]*\[/iu.test(text) ||
+    if (!doctype || /<!DOCTYPE\s+[^>]*\[/iu.test(structural) ||
         (!legacyNcx.test(doctype) && !legacyXhtml.test(doctype))) {
       throw new Error('DOCTYPE com subconjunto interno ou DTD externa não permitida.');
     }
