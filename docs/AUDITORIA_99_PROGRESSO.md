@@ -1,14 +1,14 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 05/11/2026 (execução 10, CI Node 20/22 e EPUBCheck aprovada) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 05/11/2026 (execução 11, CI Node 20/22, EPUBCheck 5.4.0 e browsers aprovados) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
 | Situação | Itens |
 | --- | ---: |
-| Concluídos no escopo definido, com CI Node 20/22 aprovada | **75** |
-| Parcialmente tratados, com testes/validação adicionais necessários | **21** |
-| Não iniciados ou ainda não evidenciados | **3** |
+| Concluídos no escopo definido, com CI Node 20/22 aprovada | **81** |
+| Parcialmente tratados, com testes/validação adicionais necessários | **16** |
+| Não iniciados ou ainda não evidenciados | **2** |
 | Total | **99** |
 
 ## Regras de classificação
@@ -73,17 +73,17 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-046 | P1 | Fontes obfuscadas/legalmente ofuscadas e META-INF/encryption.xml | Concluído · CI |
 | E-047 | P1 | Media Overlays/SMIL, sincronização de áudio e vídeos, quando presentes | Concluído · CI |
 | E-048 | P1 | Metadados fixed-layout e documentos SVG no spine | Concluído · CI |
-| E-049 | P2 | MathML, ruby, RTL, escrita vertical e idiomas mistos | Parcial |
+| E-049 | P2 | MathML, ruby, RTL, escrita vertical e idiomas mistos | Concluído · CI |
 | E-050 | P2 | Declarações de imagem de capa em OPF/guide/nav/cover-image | Concluído · CI |
 | E-051 | P0 | Verificação dos arquivos JS/binários não mencionados no fluxo de sanitização | Concluído · CI |
 | E-052 | P0 | Sanitização de todo conteúdo ativo em cada modo de reparo, inclusive conservador | Concluído · CI |
 | E-053 | P1 | Atributos URL que usam entidades, controles, espaços e codificações alternativas | Concluído · CI |
-| E-054 | P1 | CSS url(), @import, escapes e comentários com sintaxe adversarial | Parcial |
-| E-055 | P1 | SVG com URI/script/eventos/namespace e recursos incorporados | Parcial |
+| E-054 | P1 | CSS url(), @import, escapes e comentários com sintaxe adversarial | Concluído · CI |
+| E-055 | P1 | SVG com URI/script/eventos/namespace e recursos incorporados | Concluído · CI |
 | E-056 | P1 | XML com DTD/XInclude/entidades externas e DOCTYPE incomum | Concluído · CI |
 | E-057 | P1 | data: image/font (passivo) versus data: HTML/SVG executável | Concluído · CI |
 | E-058 | P1 | Detectar MIME por assinatura para anexos suspeitos (sem executar arquivos) | Concluído · CI |
-| E-059 | P1 | Scan AV opcional fora do navegador, sem alegar antivírus integrado | Parcial |
+| E-059 | P1 | Scan AV opcional fora do navegador, sem alegar antivírus integrado | Concluído · CI |
 | E-060 | P1 | Modelo de ameaças EPUB e checklist de privacidade de recursos externos | Concluído · CI |
 | E-061 | P1 | Separar score de segurança de inspeção de conformidade e de integridade | Concluído · CI |
 | E-062 | P2 | Headers CSP/Netlify e comportamento de previews/blob/data em navegadores | Parcial |
@@ -93,10 +93,10 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-066 | P1 | Verificar integridade binária das imagens/fontes que não deveriam ser alteradas | Concluído · CI |
 | E-067 | P1 | Validar imagens por dimensões, assinatura, decodificação e pixels quando alteradas | Parcial |
 | E-068 | P1 | Consertos de headings, capítulos, títulos de navegação e sumários editoriais | Parcial |
-| E-069 | P1 | Detectar OCR malformado, quebras artificiais, hifens, cabeçalhos e rodapés | Parcial |
+| E-069 | P1 | Detectar OCR malformado, quebras artificiais, hifens, cabeçalhos e rodapés | Concluído · CI |
 | E-070 | P1 | Diagnóstico de CSS redundante/contraditório ou referências de estilos quebradas | Concluído · CI |
 | E-071 | P1 | Notas de rodapé, backlinks, endnotes, índices e remissões internas | Concluído · CI |
-| E-072 | P1 | Acessibilidade editorial: alt, lang, semântica, nav e leitura assistiva | Parcial |
+| E-072 | P1 | Acessibilidade editorial: alt, lang, semântica, nav e leitura assistiva | Concluído · CI |
 | E-073 | P1 | Fluxo antes/depois com diffs de XHTML, CSS, OPF e NCX | Concluído · CI |
 | E-074 | P2 | Preservar tipografia, itálicos, travessões, espaçamento e estilos de diálogo | Concluído · CI |
 | E-075 | P2 | Tratamento opcional de EXIF/XMP/Photoshop/metadata de imagens | Parcial |
@@ -113,7 +113,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-086 | P0 | Corpus de EPUBs sintéticos derivado dos defeitos reais observados nos chats | Concluído · CI |
 | E-087 | P1 | CI executa em push para prod e PR para prod, não em push para dev | Concluído · CI |
 | E-088 | P1 | Workflow release manual aceita disparo sem condição de sucesso da CI | Concluído · CI |
-| E-089 | P1 | Matriz de browsers Chromium/Firefox/WebKit e dispositivos móveis | Pendente |
+| E-089 | P1 | Matriz de browsers Chromium/Firefox/WebKit e dispositivos móveis | Parcial |
 | E-090 | P1 | Matriz de leitores: Kindle Previewer, Calibre e leitores EPUB 2/3 | Parcial |
 | E-091 | P1 | Regressão diferencial: EPUBCheck original × reparado | Concluído · CI |
 | E-092 | P1 | Validação pós-reparo de conteúdo real e links, não só ZIP/OPF | Concluído · CI |
@@ -499,3 +499,28 @@ CI final anterior à atualização documental: [run 42102087907](https://github.
 5. Todos os 12 P0 permanecem concluídos **somente no escopo de testes e critérios documentados**, não em detecção antivírus universal.
 
 **Produção:** `prod` preservada na `v2.2.0`, sem merge, release, mudança de regras ou tags.
+
+
+## Execução 11: seis encerramentos, proteção CSS/SVG e testes em browsers
+
+**Antes:** 75 concluídos, 21 parciais, 3 pendentes.  
+**Agora:** **81 concluídos, 16 parciais, 2 pendentes**, de 99.  
+**Concluídos nesta execução:** E-049, E-054, E-055, E-059, E-069, E-072.  
+**De pendente a parcial:** E-089. **E-021** recebeu testes adicionais, mas continua parcial por ainda rejeitar nomes CP437 em vez de convertê-los com segurança.
+
+**Distribuição por prioridade:** P0 12/0/0; P1 59/9/0; P2 10/7/2 (concluídos/parciais/pendentes).
+
+| Item | Critério automatizado comprovado e ressalvas |
+| --- | --- |
+| E-049 | `f8c251c`, `9028fe5`: regressões de `ruby`, MathML, direção RTL, idioma por trecho e `writing-mode`; permite `lang`/`xml:lang` equivalente, mas bloqueia perda da informação editorial |
+| E-054 | `16e38dd`, `9410d1d`: CSS com URLs em comentários preservado, HTTPS legítimo mantido, esquema ativo convencional removido e forma ofuscada não neutralizável bloqueada para revisão |
+| E-055 | `29713ef`: preservar `data:image/png` em imagem SVG, sem permitir `data:image/svg+xml`, links `data:` interativos ou elementos ativos |
+| E-059 | `542022f`: `npm run scan:av -- arquivo.epub` invoca `clamscan` local e opcional; separa detecção, falha e resultado sem assinatura. Testes usam **scanner simulado**; ClamAV real não foi executado no CI |
+| E-069 | `0895f89`, `214d250`: heurísticas de OCR para caracteres de substituição, hifenização recorrente, quebras físicas e rodapés; proteção contra falso positivo de diálogo, sempre sem alterar texto |
+| E-072 | `0895f89`, `caf2727`, `934da24`: `aria-describedby`, IDs referenciados duplicados, rótulos de SVG, links sem nome e conflitos de `lang`/`xml:lang`, apenas diagnósticos |
+| E-089 (parcial) | `0895f89`, `4a9aaa1`: smoke end-to-end de Chromium, Firefox e WebKit com viewport desktop e móvel simulado, sem testes em celulares reais |
+| E-021 (parcial) | `0895f89`: nome Unicode válido, CP437 legado inválido e flag UTF-8 mentirosa diagnosticados sem corromper caminhos; conversão CP437 legítima ainda não implementada |
+
+**CI validada:** [Node 20/22 + EPUBCheck 5.4.0 (run 42110160755)](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42110160755) e [Chromium, Firefox e WebKit (run 42109904354)](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42109904354). A última alteração após a matriz de browsers foi somente uma fixture de teste CSS.
+
+**Limitações:** critérios encerrados apenas no escopo de testes automatizados. Não foram executados antivírus real, comparação visual física de leitores Kindle/Apple Books/Calibre, celulares iOS/Android reais nem inspeção universal de malware. **E-076 e E-095 seguem pendentes**; resultados de ClamAV, quando usados, dependem de assinaturas atualizadas. `prod` preservada na `v2.2.0`, sem merge, tag ou release.

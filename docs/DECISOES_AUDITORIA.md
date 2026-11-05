@@ -104,3 +104,15 @@ Veja [auditoria de 99 itens, execução 9](AUDITORIA_99_PROGRESSO.md).
 - EPUBs com notas de rodapé e endnotes são verificados por vínculos semânticos; notas sem backlink explícito são aceitas.
 - EXIF/XMP/Photoshop são diagnosticados informativamente e **não são apagados**: orientação, cor, autoria e dados pessoais podem estar nos metadados.
 - O ruleset remoto "Protect prod" está ativo para `prod`. Nenhum ruleset de `dev` foi encontrado na enumeração de 05/11/2026; os endpoints de branch protection retornaram 403. Uma configuração que obrigue PR na `dev` interromperia o atual compromisso de commits diretos, portanto não foi aplicada.
+
+
+## Execução 11: política de proteção não destrutiva
+
+- Novo comando `scan:av` usa ClamAV instalado localmente; não envia arquivo pela aplicação. Um resultado sem assinatura não comprova ausência de malware e o CI só executa simuladores de scanner.
+- CSS: comentários e HTTPS legítimos não devem gerar reescrita nem falso alarme de ameaça; códigos executáveis que não forem neutralizados exigem revisão manual e interrompem a saída.
+- SVG: somente contextos de imagem podem preservar `data:image` raster; nunca tratar `data:image/svg+xml` ativo como raster seguro.
+- Idiomas, `xml:lang`, escrita vertical e marcações matemáticas devem sobreviver ao reparo. A normalização equivalente de atributos de idioma não é regressão.
+- Diagnósticos de OCR e acessibilidade não autorizam reescrever conteúdo editorial.
+- Matriz desktop e viewport móvel automatizada não significa homologação em dispositivos reais. `prod` permanece intacta.
+
+**Balanço:** 81 concluídos, 16 parciais, 2 pendentes (escopo automatizado); evidências [CI](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42110160755) e [browsers](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42109904354).
