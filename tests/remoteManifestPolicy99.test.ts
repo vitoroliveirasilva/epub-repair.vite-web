@@ -11,7 +11,7 @@ function item(id: string, href: string, mediaType: string, properties: string[] 
 }
 const version = (v: string, entries: ReturnType<typeof item>[]) =>
   ({ version: v, opfPath: 'OPS/book.opf', manifest: entries,
-    spine: [], metadata: {}, rootfileCount: 1 }) as PackageDocumentInfo;
+    spine: [], metadata: {}, rootfileCount: 1 }) as unknown as PackageDocumentInfo;
 const codes = (pkg: PackageDocumentInfo) =>
   validateRemoteManifestResources(pkg).map((issue) => issue.code);
 
