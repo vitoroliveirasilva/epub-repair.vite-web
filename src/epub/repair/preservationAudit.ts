@@ -168,7 +168,7 @@ function compareEditorialBlocks(before: string, after: string, path: string): vo
   if (!original || !repaired) return;
   const blocks = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
     .filter((element) => /^(?:p|li|h[1-6])$/iu.test(element.localName))
-    .map((element) => (element.textContent ?? '').replace(/\\s+/gu, ' ').trim())
+    .map((element) => (element.textContent ?? '').replace(/\s+/gu, ' ').trim())
     .filter(Boolean);
   const beforeBlocks = blocks(original);
   const afterBlocks = blocks(repaired);
