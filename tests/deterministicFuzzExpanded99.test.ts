@@ -39,13 +39,15 @@ describe('E-063/E-094: fuzz adversarial determinístico de parsers', () => {
   it('96 mutações XML/OPF falham de maneira controlada ou produzem DOM válido', () => {
     for (let seed = 0; seed < 96; seed++) {
       const sample = mutate(seed % 2 ? xml : opf, seed);
+      let parsed: Document | undefined;
       try {
-        const doc = parseXml(sample);
-        expect(doc.documentElement).toBeTruthy();
-        expect(doc.getElementsByTagName('parsererror').length).toBe(0);
+        parsed = parseXml(sample);
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
+        continue;
       }
+      expect(parsed.documentElement).toBeTruthy();
+      expect(parsed.getElementsByTagName('parsererror').length).toBe(0);
     }
   });
   it('96 mutações SVG não liberam texto malformado após saneamento', () => {
@@ -54,16 +56,18 @@ describe('E-063/E-094: fuzz adversarial determinístico de parsers', () => {
     };
     for (let seed = 0; seed < 96; seed++) {
       const sample = mutate(svg, seed + 1000);
+      let cleaned: ReturnType<typeof sanitizeActiveContentMarkup>;
       try {
-        const cleaned = sanitizeActiveContentMarkup(sample, 'OPS/a.svg', options);
-        const parsed = new DOMParser().parseFromString(cleaned.text, 'application/xhtml+xml');
-        expect(parsed.getElementsByTagName('parsererror')).toHaveLength(0);
+        cleaned = sanitizeActiveContentMarkup(sample, 'OPS/a.svg', options);
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
+        continue;
       }
+      const parsed = new DOMParser().parseFromString(cleaned.text, 'application/xhtml+xml');
+      expect(parsed.getElementsByTagName('parsererror')).toHaveLength(0);
     }
   });
-  it('96 mutações CSS mantêm origem imutável e diagnosticam perigo residual', () => {
+  it('96 mutações CSS mantêm origem imutável e diagnosticam perigo residual', async () => {
     for (let seed = 0; seed < 96; seed++) {
       const sample = mutate(css, seed + 2000);
       const original = sample;
@@ -72,8 +76,21 @@ describe('E-063/E-094: fuzz adversarial determinístico de parsers', () => {
       expect(sample).toBe(original);
       expect(result.text.length).toBeLessThanOrEqual(original.length + 50);
       if (containsDangerousCss(result.text)) {
-        // O scanner mantém alerta se uma sintaxe não pôde ser neutralizada.
-        expect(containsDangerousCss(result.text)).toBe(true);
+        // Um resíduo perigoso precisa continuar explícito no diagnóstico.
+        const { validateCssReferences } = await import(
+          '../src/epub/validation/validateCssReferences'
+        );
+        const path = 'OPS/styles.css';
+        const bytes = new TextEncoder().encode(result.text);
+        const loaded = { files: new Map([[path, { bytes }]]) };
+        const pkg = { manifest: [{
+          id: 'css', resolvedPath: path, exists: true, mediaType: 'text/css',
+        }] };
+        const warnings = validateCssReferences(
+          loaded as unknown as Parameters<typeof validateCssReferences>[0],
+          pkg as unknown as Parameters<typeof validateCssReferences>[1],
+        );
+        expect(warnings.some((issue) => issue.code === 'CSS_UNSAFE_RESOURCE')).toBe(true);
       }
     }
   });
