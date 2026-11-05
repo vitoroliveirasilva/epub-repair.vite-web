@@ -49,6 +49,8 @@ export function renderRepairSummary(result: RepairResult): HTMLElement {
     root.append(el('p', { className: 'muted repair-warning', text: warning }));
   }
 
+  root.append(renderResidualIssues(result));
+
   if (!result.changed) {
     root.append(el('p', {
       className: 'muted',
@@ -183,5 +185,47 @@ function renderTextChanges(diffs: NonNullable<RepairResult['fileDiffs']>): HTMLE
     );
     details.append(item);
   }
+  return details;
+}
+
+
+function renderResidualIssues(result: RepairResult): HTMLElement {
+  const issues = result.after.issues.filter((item) =>
+    item.severity === 'fatal' || item.severity === 'error' || item.severity === 'warning');
+  const skipped = result.actions.filter((action) => action.type === 'skipped');
+  const details = el('details', {
+    className: 'repair-pending-issues',
+    attrs: { 'aria-label': 'Ações não aplicadas e problemas remanescentes' },
+  });
+  details.append(el('summary', {
+    text: 'Pendências restantes: ' + issues.length +
+      ' · ações não aplicadas: ' + skipped.length,
+  }));
+  const list = el('ul', { className: 'repair-pending-list' });
+  for (const issue of issues) {
+    list.append(el('li', {
+      children: [
+        el('strong', { text: issue.code }),
+        issue.file ? el('code', { text: issue.file }) : undefined,
+        el('span', { text: issue.title }),
+        el('small', { text: issue.repairable
+          ? 'Ainda passível de tentativa automática'
+          : 'Exige revisão manual' }),
+      ],
+    }));
+  }
+  for (const action of skipped) {
+    list.append(el('li', {
+      children: [
+        el('strong', { text: 'Não aplicado: ' + action.title }),
+        action.file ? el('code', { text: action.file }) : undefined,
+        el('span', { text: action.detail }),
+      ],
+    }));
+  }
+  if (issues.length === 0 && skipped.length === 0) {
+    list.append(el('li', { text: 'Nenhum problema pendente ou ação pulada no relatório final.' }));
+  }
+  details.append(list);
   return details;
 }
