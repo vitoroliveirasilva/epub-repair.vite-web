@@ -37,3 +37,21 @@ O arquivo [AUDITORIA_99_PROGRESSO.md](AUDITORIA_99_PROGRESSO.md) é a fonte de
 acompanhamento por item. `Concluído · CI` significa que o comportamento entregue foi
 validado pelos testes disponíveis, **não** cobertura universal de EPUBs. Novas descobertas
 devem criar IDs adicionais, sem forçar o inventário original a continuar em 99.
+
+## Execução 4: decisões e limitações verificadas
+
+- Rejeitar arquivos ZIP ambíguos (registros duplicados/sobrepostos) em vez de fazer
+  escolhas destrutivas; nenhuma entrada é automaticamente escolhida para sobrescrever outra.
+- Tratar EPUB 2 e EPUB 3 separadamente no corpus oficial EPUBCheck.
+- Considerar `originalSource` imutável durante substituição de capa e registrar
+  `lastRepairOptions` apenas para reparos aplicados, separando-os das opções atuais.
+- Manter sumário editorial toc/page-list/landmarks: diagnosticar, não recriar
+  estruturas existentes apenas porque sua semântica diverge do esperado.
+- Neutralizar CSS ativo por declaração quando seguro; uma falha de sanitização
+  ainda deve bloquear ou sinalizar revisão, não assumir ausência de risco.
+- Informar usuários antes de transformações visíveis.
+- Inventariar licenças de dependências em CI como evidência operacional e não
+  como parecer de conformidade jurídica.
+
+Resultado desta execução: **26 concluídos, 50 parciais, 23 pendentes** de 99,
+com CI Node 20/22, EPUBCheck 5.4.0 e testes sintéticos. A `prod` segue intacta.

@@ -1,13 +1,13 @@
 # Matriz de formatos e validação
 
 A ferramenta tem foco em reparos **conservadores e verificáveis** de EPUB 2 e EPUB 3.
-A execução de EPUBCheck no CI valida uma fixture gerada pelo motor, não todos os
+A execução de EPUBCheck no CI valida duas fixtures sintéticas geradas pelo motor (EPUB 2 e 3), não todos os
 livros nem todos os recursos possíveis das especificações.
 
 | Perfil / recurso | Leitura no app | Reparos automáticos | Validação externa |
 | --- | --- | --- | --- |
-| EPUB 2.0/2.0.1 | ZIP, OPF, spine, NCX, imagens, CSS | MIME, container, manifest, NCX ausente quando há destinos válidos | EPUBCheck 5.4.0 no CI, ampliar corpus EPUB2 |
-| EPUB 3.0/3.2 | OPF 3, nav.xhtml, XHTML, fontes e recursos externos | Ajustes estruturais, nav básico quando ausente | Uma fixture EPUB 3 reparada passa no CI |
+| EPUB 2.0/2.0.1 | ZIP, OPF, spine, NCX, imagens, CSS | MIME, container, manifest, NCX ausente quando há destinos válidos | Uma fixture EPUB 2 original/reparada é verificada no EPUBCheck 5.4.0; ampliar corpus |
+| EPUB 3.0/3.2 | OPF 3, nav.xhtml, XHTML, fontes e recursos externos | Ajustes estruturais, nav básico quando ausente | Uma fixture EPUB 3 original/reparada passa pela validação diferencial no CI |
 | EPUB 3.3 | Funcionalidades básicas | Reparo conservador sem converter a edição | Validar novas regras oficiais caso a caso |
 | EPUB 3.4 | Pacote EPUB3 reconhecido; sem suporte completo às novidades | Não presumir cobertura de novos recursos | EPUBCheck 5.4.0 verifica pelas regras EPUB 3.4 |
 | Fontes externas HTTP/HTTPS | Permitidas por padrão | Não remover sem solicitação | Leitura offline depende da fonte |
@@ -20,13 +20,13 @@ livros nem todos os recursos possíveis das especificações.
 
 - `npm ci`, typecheck, lint, testes sintéticos e build em Node.js 20/22.
 - EPUBCheck **5.4.0**, obtido do projeto W3C por release com checksum SHA-256.
-- Um EPUB3 intencionalmente inválido sem `mimetype` é reparado pelo motor e
-  a cópia resultante é validada pelo EPUBCheck.
+- Um EPUB2 e um EPUB3 intencionalmente inválidos sem `mimetype` são reparados
+  pelo motor e suas cópias resultantes são validadas pelo EPUBCheck.
 - A operação idempotente é testada: um segundo reparo sem pendências não altera o EPUB.
 
 ## Limites pendentes
 
-- EPUBCheck precisa validar mais fixtures reais sintetizadas, com EPUB2, foreign resources,
+- EPUBCheck precisa validar mais fixtures complexas sintetizadas, com EPUB2, foreign resources,
   navegação complexa e mídia sincronizada.
 - Validação em Chromium, Firefox, WebKit, Kindle Previewer e Calibre ainda precisa ocorrer.
 - O site estático **não** executa EPUBCheck Java no navegador.
@@ -46,4 +46,15 @@ Referências:
 | ZIP sem UTF-8 confiável | Rejeição segura antes de perda de nomes, conversão CP437 não disponível |
 | Ofuscação IDPF | Informada como fonte ofuscada e não confundida com DRM |
 | Imagens raster data: | Permitidas nos contextos de imagem; SVG/HTML ativos bloqueados |
-| Relatórios técnicos | SHA-256 do arquivo carregado, versão e opções atuais, sem snapshot completo da execução |
+| Relatórios técnicos | SHA-256 do EPUB original, versão, opções atuais e snapshot das opções efetivamente aplicadas |
+
+## Complementos da execução 4
+
+- OPF: validações conservadoras de identidade, modified UTC, links refines,
+  cover-image/nav e direção de leitura RTL/ltr.
+- Navegação EPUB 3: toc, page-list e landmarks validados quanto a duplicação,
+  estrutura de lista e semântica de landmarks.
+- A CI usa EPUBCheck 5.4.0 antes e depois do reparo com fixtures **EPUB 2 e EPUB 3**,
+  mas não demonstra compatibilidade universal em Kindle, Calibre ou navegadores.
+- Regras de DTD e XML preservam padrões tradicionais conhecidos e recusam
+  construções externas não autorizadas.

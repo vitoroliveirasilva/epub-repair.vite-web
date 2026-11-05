@@ -72,9 +72,24 @@ Não há integração antivírus embutida no site e nenhuma alegação de limpez
 - `encryption.xml` com somente o algoritmo
   `http://www.idpf.org/2008/embedding` e fontes existentes indica
   ofuscação IDPF, não prova de DRM. Algoritmos desconhecidos seguem alertados.
-- Relatórios TXT e JSON incluem versão do aplicativo, SHA-256 do arquivo
-  carregado no momento da exportação e opções selecionadas naquele instante.
-  Esses campos não certificam conformidade de conteúdo nem preservam
-  automaticamente o hash original anterior à troca de capa.
+- Relatórios TXT e JSON incluem versão do aplicativo, SHA-256 do EPUB original
+  (preservado em memória mesmo após troca de capa), opções atuais e, quando houve
+  reparo, um snapshot das opções efetivamente aplicadas. Não são assinaturas
+  digitais nem certificam conformidade ou segurança.
 - O reparo recusa entregar cópia quando detecta perda de palavras originais.
   Essa proteção não substitui revisão de formatação e semântica.
+
+## Complementos da execução 4
+
+- ZIPs com entradas duplicadas ou sobreposição de offsets/payloads são recusados,
+  porque não é possível escolher de modo seguro qual versão de um recurso manter.
+- DTD pública tradicional NCX e XHTML1.1 é permitida com padrão estrito; subsets
+  internos, DTD externa arbitrária, entidades personalizadas e XInclude são barrados.
+- XHTML e SVG têm inspeção adicional após decodificação DOM para detectar URLs
+  executáveis com entidades, mantendo recursos HTTP/HTTPS legítimos.
+- Arquivos JavaScript órfãos são preservados, assinalados para revisão manual e não
+  registrados automaticamente no manifest.
+- Alterações sensíveis (remover recursos externos, substituir imagens por texto e
+  neutralizar conteúdo ativo) exigem confirmação antes do reparo.
+- O inventário informativo de licenças complementa `npm audit`, mas não substitui
+  revisão de obrigações legais e dependências transitivas ausentes.
