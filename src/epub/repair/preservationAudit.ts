@@ -399,10 +399,14 @@ function compareSpecialMarkup(before: string, after: string, path: string): void
       .filter((node) => !['script', 'style', 'iframe', 'object', 'embed']
         .includes(node.localName.toLowerCase()))
       .flatMap((node) => {
-        const lang = node.getAttribute('lang') ?? '';
-        const xmlLang = node.getAttributeNS(
+        const rawLang = node.getAttribute('lang') ?? '';
+        const rawXmlLang = node.getAttributeNS(
           'http://www.w3.org/XML/1998/namespace', 'lang',
         ) ?? '';
+        // O normalizador XHTML pode adicionar o alias ausente (lang/xml:lang).
+        // Comparar o idioma efetivo, mas nunca ignorar divergência explícita.
+        const lang = rawLang || rawXmlLang;
+        const xmlLang = rawXmlLang || rawLang;
         const dir = node.getAttribute('dir') ?? '';
         const writingMode = (node.getAttribute('style') ?? '')
           .match(/(?:^|;)\s*(?:-epub-|-webkit-)?writing-mode\s*:\s*([^;}]*)/iu)?.[1]
