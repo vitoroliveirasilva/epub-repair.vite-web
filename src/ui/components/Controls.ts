@@ -135,6 +135,7 @@ function buildPrimaryActionButtons(
       },
     );
     downloadButton.disabled = state.busy;
+    downloadButton.dataset.focusKey = 'epub-download';
 
     if (!flags.canOptimize) return [downloadButton];
 
@@ -144,6 +145,7 @@ function buildPrimaryActionButtons(
       actions.repair,
     );
     optimizeButton.disabled = state.busy;
+    optimizeButton.dataset.focusKey = 'epub-optimize';
     optimizeButton.title = repairButtonTitle(state, false, true);
 
     return [downloadButton, optimizeButton];
@@ -151,6 +153,7 @@ function buildPrimaryActionButtons(
 
   const analyzeButton = button('Verificar EPUB', 'btn btn-secondary', actions.analyze);
   analyzeButton.disabled = !flags.hasFile || state.busy;
+  analyzeButton.dataset.focusKey = 'epub-analyze';
 
   const repairButton = button(
     flags.canRepair
@@ -161,6 +164,7 @@ function buildPrimaryActionButtons(
     'btn btn-primary',
     actions.repair,
   );
+  repairButton.dataset.focusKey = 'epub-repair';
   repairButton.disabled =
     !flags.hasFile ||
     state.busy ||

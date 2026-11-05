@@ -7,6 +7,7 @@ import {
   repairCurrentFile,
 } from './actions';
 import { createInitialState, type AppState } from './state';
+import { captureFocusForRerender } from './focusRestoration';
 import { potentialEditorialChanges } from './repairConsent';
 import { buildJsonReport, buildTextReport, createReportEvidence, makeReportFileName } from '../ui/copyReport';
 import { renderControls } from '../ui/components/Controls';
@@ -27,7 +28,11 @@ export function createApp(root: HTMLElement): void {
   initializeTheme();
   const state = createInitialState();
 
-  const rerender = (): void => render(root, state, rerender);
+  const rerender = (): void => {
+    const restoreFocus = captureFocusForRerender(root);
+    render(root, state, rerender);
+    restoreFocus();
+  };
   render(root, state, rerender);
 }
 
@@ -37,7 +42,7 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
     renderHero(),
     el('main', {
       className: 'layout',
-      attrs: { id: 'app-workspace' },
+      attrs: { id: 'app-workspace', tabindex: '-1' },
       children: [
         el('div', {
           className: 'workspace',
