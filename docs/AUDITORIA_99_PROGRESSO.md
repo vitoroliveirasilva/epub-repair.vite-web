@@ -1,14 +1,14 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 05/11/2026 (execução 5, CI Node 20/22 e EPUBCheck aprovada) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 05/11/2026 (execução 6, CI Node 20/22 e EPUBCheck aprovada) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
 | Situação | Itens |
 | --- | ---: |
-| Concluídos no escopo definido, com CI Node 20/22 aprovada | **29** |
-| Parcialmente tratados, com testes/validação adicionais necessários | **52** |
-| Não iniciados ou ainda não evidenciados | **18** |
+| Concluídos no escopo definido, com CI Node 20/22 aprovada | **49** |
+| Parcialmente tratados, com testes/validação adicionais necessários | **37** |
+| Não iniciados ou ainda não evidenciados | **13** |
 | Total | **99** |
 
 ## Regras de classificação
@@ -35,9 +35,9 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-008 | P1 | Idioma pt-BR usado sem comprovação quando metadado falta ou é inválido | Concluído · CI |
 | E-009 | P1 | JPEG progressivo pode ser convertido no mesmo fluxo de reparo obrigatório | Concluído · CI |
 | E-010 | P1 | Spine vazio é reconstruído seguindo a ordem do manifest, não a ordem editorial | Concluído · CI |
-| E-011 | P1 | Gerador de nav e NCX usa IDs/nomes de arquivos como títulos de sumário | Parcial |
+| E-011 | P1 | Gerador de nav e NCX usa IDs/nomes de arquivos como títulos de sumário | Concluído · CI |
 | E-012 | P1 | Gerador NCX pode emitir navPoint com src vazio quando não há documentos elegíveis | Concluído · CI |
-| E-013 | P1 | Renomear IDs duplicados do manifest não atualiza todas as referências dependentes | Parcial |
+| E-013 | P1 | Renomear IDs duplicados do manifest não atualiza todas as referências dependentes | Concluído · CI |
 | E-014 | P1 | URI remota legítima em item do manifest pode ser tratada como caminho local ausente | Concluído · CI |
 | E-015 | P1 | CSS com url() inválida substituída por none pode produzir declaração inválida em @font-face | Concluído · CI |
 | E-016 | P1 | CSS perigoso embutido pode causar remoção de todo o elemento style | Parcial |
@@ -48,7 +48,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-021 | P1 | Nomes de entrada ZIP não UTF-8 e sinalização de encoding em flags | Parcial |
 | E-022 | P1 | Caminhos com %23, %25, %2F, #, ?, Unicode NFC/NFD | Concluído · CI |
 | E-023 | P1 | Colisões depois de decodificação, normalização ou diferença de caixa | Parcial |
-| E-024 | P1 | Consistência entre nomes do diretório central e nomes vistos pelo JSZip | Parcial |
+| E-024 | P1 | Consistência entre nomes do diretório central e nomes vistos pelo JSZip | Concluído · CI |
 | E-025 | P1 | Extra fields Unicode, data descriptors, tamanhos e offsets extremos | Parcial |
 | E-026 | P1 | Sobreposição de payload ZIP, entrada duplicada e polyglots | Parcial |
 | E-027 | P1 | Arquivos e diretórios com nomes especiais ou caminhos relativos anômalos | Parcial |
@@ -61,10 +61,10 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-034 | P2 | Tamanhos declarados ZIP diferentes dos fluxos descompactados | Concluído · CI |
 | E-035 | P0 | EPUBCheck oficial integrado à validação de arquivos reparados no CI | Concluído · CI |
 | E-036 | P1 | Matriz separada EPUB 2, EPUB 3.0/3.2/3.3 e EPUB 3.4 | Parcial |
-| E-037 | P1 | Links internos com fragmento inexistente (#id) | Parcial |
+| E-037 | P1 | Links internos com fragmento inexistente (#id) | Concluído · CI |
 | E-038 | P1 | Links de nav.xhtml e seus fragmentos, hierarquia toc e estrutura de lista | Parcial |
 | E-039 | P1 | NAV/NCX com URLs escapadas, fragmentos, âncoras internas e caracteres especiais | Parcial |
-| E-040 | P1 | Suporte a page-list, landmarks e guide sem destruí-los | Parcial |
+| E-040 | P1 | Suporte a page-list, landmarks e guide sem destruí-los | Concluído · CI |
 | E-041 | P1 | Validação de fallback e ciclos de referência de recursos foreign | Parcial |
 | E-042 | P1 | Validar propriedades required do manifest: nav, cover-image, scripted, remote-resources etc | Parcial |
 | E-043 | P1 | Metadados package unique-identifier, dcterms:modified, prefix, refines e vínculos | Parcial |
@@ -73,41 +73,41 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-046 | P1 | Fontes obfuscadas/legalmente ofuscadas e META-INF/encryption.xml | Concluído · CI |
 | E-047 | P1 | Media Overlays/SMIL, sincronização de áudio e vídeos, quando presentes | Parcial |
 | E-048 | P1 | Metadados fixed-layout e documentos SVG no spine | Concluído · CI |
-| E-049 | P2 | MathML, ruby, RTL, escrita vertical e idiomas mistos | Pendente |
-| E-050 | P2 | Declarações de imagem de capa em OPF/guide/nav/cover-image | Pendente |
-| E-051 | P0 | Verificação dos arquivos JS/binários não mencionados no fluxo de sanitização | Parcial |
+| E-049 | P2 | MathML, ruby, RTL, escrita vertical e idiomas mistos | Parcial |
+| E-050 | P2 | Declarações de imagem de capa em OPF/guide/nav/cover-image | Concluído · CI |
+| E-051 | P0 | Verificação dos arquivos JS/binários não mencionados no fluxo de sanitização | Concluído · CI |
 | E-052 | P0 | Sanitização de todo conteúdo ativo em cada modo de reparo, inclusive conservador | Parcial |
 | E-053 | P1 | Atributos URL que usam entidades, controles, espaços e codificações alternativas | Parcial |
 | E-054 | P1 | CSS url(), @import, escapes e comentários com sintaxe adversarial | Parcial |
 | E-055 | P1 | SVG com URI/script/eventos/namespace e recursos incorporados | Parcial |
 | E-056 | P1 | XML com DTD/XInclude/entidades externas e DOCTYPE incomum | Parcial |
 | E-057 | P1 | data: image/font (passivo) versus data: HTML/SVG executável | Parcial |
-| E-058 | P1 | Detectar MIME por assinatura para anexos suspeitos (sem executar arquivos) | Parcial |
+| E-058 | P1 | Detectar MIME por assinatura para anexos suspeitos (sem executar arquivos) | Concluído · CI |
 | E-059 | P1 | Scan AV opcional fora do navegador, sem alegar antivírus integrado | Parcial |
 | E-060 | P1 | Modelo de ameaças EPUB e checklist de privacidade de recursos externos | Concluído · CI |
-| E-061 | P1 | Separar score de segurança de inspeção de conformidade e de integridade | Parcial |
+| E-061 | P1 | Separar score de segurança de inspeção de conformidade e de integridade | Concluído · CI |
 | E-062 | P2 | Headers CSP/Netlify e comportamento de previews/blob/data em navegadores | Pendente |
 | E-063 | P2 | Fuzzing determinístico de ZIP/XML/SVG/CSS/OPF e limites contra ReDoS | Parcial |
-| E-064 | P0 | Comparar texto integral pré/pós e avisar alterações não previstas | Parcial |
-| E-065 | P0 | Comparar ordem de leitura, capítulos, IDs e links antes/depois | Parcial |
+| E-064 | P0 | Comparar texto integral pré/pós e avisar alterações não previstas | Concluído · CI |
+| E-065 | P0 | Comparar ordem de leitura, capítulos, IDs e links antes/depois | Concluído · CI |
 | E-066 | P1 | Verificar integridade binária das imagens/fontes que não deveriam ser alteradas | Concluído · CI |
 | E-067 | P1 | Validar imagens por dimensões, assinatura, decodificação e pixels quando alteradas | Parcial |
 | E-068 | P1 | Consertos de headings, capítulos, títulos de navegação e sumários editoriais | Parcial |
 | E-069 | P1 | Detectar OCR malformado, quebras artificiais, hifens, cabeçalhos e rodapés | Pendente |
-| E-070 | P1 | Diagnóstico de CSS redundante/contraditório ou referências de estilos quebradas | Pendente |
+| E-070 | P1 | Diagnóstico de CSS redundante/contraditório ou referências de estilos quebradas | Concluído · CI |
 | E-071 | P1 | Notas de rodapé, backlinks, endnotes, índices e remissões internas | Parcial |
 | E-072 | P1 | Acessibilidade editorial: alt, lang, semântica, nav e leitura assistiva | Parcial |
-| E-073 | P1 | Fluxo antes/depois com diffs de XHTML, CSS, OPF e NCX | Pendente |
+| E-073 | P1 | Fluxo antes/depois com diffs de XHTML, CSS, OPF e NCX | Concluído · CI |
 | E-074 | P2 | Preservar tipografia, itálicos, travessões, espaçamento e estilos de diálogo | Pendente |
 | E-075 | P2 | Tratamento opcional de EXIF/XMP/Photoshop/metadata de imagens | Pendente |
 | E-076 | P2 | Checagem de apresentação em leitores reflowable/fixed layout, imagens e fontes | Pendente |
-| E-077 | P1 | Estados explícitos: seguro para reparar, revisão manual, parcial, otimização, inválido | Parcial |
-| E-078 | P1 | Prévia e confirmação de operações destrutivas antes de executar | Parcial |
-| E-079 | P1 | Indicador de ações não aplicadas e pendências remanescentes por item | Parcial |
+| E-077 | P1 | Estados explícitos: seguro para reparar, revisão manual, parcial, otimização, inválido | Concluído · CI |
+| E-078 | P1 | Prévia e confirmação de operações destrutivas antes de executar | Concluído · CI |
+| E-079 | P1 | Indicador de ações não aplicadas e pendências remanescentes por item | Concluído · CI |
 | E-080 | P1 | Fila e interrupção de tarefas grandes, feedback de processamento real | Pendente |
-| E-081 | P1 | Trocar de arquivo/opções enquanto análise ainda está em execução | Parcial |
+| E-081 | P1 | Trocar de arquivo/opções enquanto análise ainda está em execução | Concluído · CI |
 | E-082 | P1 | Download blob em Safari/iOS, liberação imediata de ObjectURL | Parcial |
-| E-083 | P2 | Teclado, leitor de tela e foco após rerender completo | Pendente |
+| E-083 | P2 | Teclado, leitor de tela e foco após rerender completo | Concluído · CI |
 | E-084 | P2 | Exportar relatório técnico com prova de versão, opções e hash do original | Concluído · CI |
 | E-085 | P2 | Manual de limitações (correção técnica vs editorial vs antivírus vs EPUBCheck) | Concluído · CI |
 | E-086 | P0 | Corpus de EPUBs sintéticos derivado dos defeitos reais observados nos chats | Parcial |
@@ -117,11 +117,11 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-090 | P1 | Matriz de leitores: Kindle Previewer, Calibre e leitores EPUB 2/3 | Parcial |
 | E-091 | P1 | Regressão diferencial: EPUBCheck original × reparado | Parcial |
 | E-092 | P1 | Validação pós-reparo de conteúdo real e links, não só ZIP/OPF | Parcial |
-| E-093 | P1 | Testes de propriedades: idempotência e preservação de bytes em no-op | Parcial |
+| E-093 | P1 | Testes de propriedades: idempotência e preservação de bytes em no-op | Concluído · CI |
 | E-094 | P1 | Testes adversariais com SVG/CSS/XML e ZIP fuzzing recorrente | Parcial |
 | E-095 | P2 | Cobertura de testes e thresholds por módulo crítico | Pendente |
 | E-096 | P2 | Testes de performance/memória com limites documentados | Pendente |
-| E-097 | P2 | Versionamento das decisões, changelog e matriz de suporte | Parcial |
+| E-097 | P2 | Versionamento das decisões, changelog e matriz de suporte | Concluído · CI |
 | E-098 | P2 | Revisar regras de proteção da dev e política de branch/tag | Pendente |
 | E-099 | P2 | Análise periódica de dependências e licenças além do npm audit | Parcial |
 
@@ -324,3 +324,38 @@ e diagnóstico não equivalem a suporte pleno.
 1. Encerrar os **5 P0 parciais** com testes adversariais e preservação provada (E-051, E-052, E-064, E-065, E-086).
 2. Consolidar os P1 de segurança ZIP/XML/CSS/SVG e conformidade EPUB; medir casos legítimos para evitar falsos positivos.
 3. Homologar leitores reais, navegadores, memória e desempenho antes de elevar confiança da versão.
+
+## Execução 6: consolidação de 20 critérios com CI
+
+**Base:** 29 concluídos, 52 parciais, 18 pendentes.
+**Situação atual:** **49 concluídos, 37 parciais, 13 pendentes**.
+
+- **86/99 itens receberam algum avanço** (49 concluídos e 37 parciais).
+- **50/99 ainda não estão totalmente concluídos** (37 parciais e 13 pendentes).
+- **20 itens passaram a concluídos no escopo automatizado definido**: E-011, E-013, E-024, E-037, E-040, E-050, E-051, E-058, E-061, E-064, E-065, E-070, E-073, E-077, E-078, E-079, E-081, E-083, E-093, E-097.
+- **E-049** passou de pendente a parcial: estruturas MathML/ruby e direção RTL agora são preservadas por auditoria, mas escrita vertical, idiomas mistos e prova visual continuam sem homologação.
+
+### Evidência técnica e decisões
+
+| Área | Fechamentos e evidências |
+| --- | --- |
+| P0: inventário/segurança (E-051) | `26a522e` e `30a8d55`/fix `8af4e0d`: JS declarado/órfão, assinatura binária e XHTML/CSS/SVG ativo fora do manifest; sem excluir recursos legítimos automaticamente |
+| P0: fidelidade textual (E-064, E-065) | `8aba69f`/fix `20c499f`: capítulos e `linear`, blocos, âncoras e destinos NCX, MathML/ruby/RTL. Não é verificação visual de leitores |
+| ZIP (E-024) | Exercícios com diretório central, JSZip, CRC, payloads alterados e identidade física, sobre a base segura da execução 5 |
+| Navegação/manifest (E-011, E-013, E-037, E-040) | `e8d0758`, `b721601`, `9e003ab` e `48b5664`/fix `76d1d4e`: títulos editoriais, URLs com fragmentos Unicode, page-list/landmarks/guide, e recusa de IDs duplicados ambíguos sem quebrar referências |
+| Capa e arquivos (E-050, E-058) | `26a522e`, `766ac11`: guide/landmark/meta/cover-image e identificação de assinaturas binárias de anexos suspeitos |
+| Diagnóstico (E-061, E-070) | `766ac11`, `16a967d`: CSS repetido/contraditório apenas informativo e scores separados, sem alegação de antivírus |
+| Relatório e consentimento (E-073, E-077, E-078, E-079) | `5a59573`, `16a967d`, `9f920ec`, `7628d9e`: diferenças por linha com limite, estados claros, confirmação de mudanças e tarefas puladas por item |
+| Concorrência/acessibilidade/testes (E-081, E-083, E-093) | `4276d20`, `401a3b5`, `1d9cc31`: snapshot de opções, bloqueio de ações concorrentes, retenção de foco e testes de no-op/idempotência |
+| Versionamento (E-097) | `a2c837d`: `CHANGELOG.md`, decisões e matriz de compatibilidade atualizados sem publicar release |
+
+**CI verificada para todo o conjunto de código:** [run 42077405185](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42077405185), com Node.js 20/22, lint, typecheck, testes, build e EPUBCheck 5.4.0 aprovados. O commit documental desta auditoria será validado separadamente.
+
+### Priorização para a próxima execução
+
+1. **P0 ainda parciais: E-052 e E-086**. Precisam de cobertura adversarial mais ampla e prova de sanitização em todos os modos, inclusive conservador. A presença de risco residual continua sendo explicitada como revisão manual, não arquivo livre de ameaças.
+2. E-025/E-026/E-030/E-031/E-054/E-055/E-056: corpus maior e picos reais de memória, XML/SVG/CSS e ZIPs extremos.
+3. E-047/E-049/E-076/E-089/E-090: sincronização de áudio/vídeo, composição visual, escrita complexa e testes em leitores/browsers reais.
+4. E-095/E-096/E-098: instrumentação de cobertura/performance e políticas administrativas efetivas de proteção de branches.
+
+**Restrições importantes:** “Concluído · CI” denota aceitação no escopo definido e testes atuais, não imunidade a malware ou compatibilidade universal. O diagnóstico de JavaScript e de HTTP/HTTPS preserva casos legítimos e não prova a ausência de código hostil. E-013 está encerrado pela decisão segura de **não renomear IDs ambíguos automaticamente**, exigindo revisão manual para corrigir a obra. A branch `prod` e a release `v2.2.0` seguem intactas, sem merge.
