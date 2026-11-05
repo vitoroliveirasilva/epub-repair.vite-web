@@ -1,9 +1,22 @@
 // @vitest-environment jsdom
 import JSZip from 'jszip';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { loadEpub } from '../src/epub/reader/loadEpub';
 import { repairEpub } from '../src/epub/repair/repairEpub';
 import { DEFAULT_REPAIR_OPTIONS } from '../src/epub/utils/constants';
+
+beforeAll(() => {
+  // JSDOM no Node.js pode não implementar Blob.arrayBuffer diretamente.
+  if (typeof Blob.prototype.arrayBuffer === 'function') return;
+  Blob.prototype.arrayBuffer = function (): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = () => reject(reader.error ?? new Error('Blob não legível'));
+      reader.readAsArrayBuffer(this);
+    });
+  };
+});
 
 const MIB = 1024 * 1024;
 const MAX_FIXTURE_SECONDS = 30;
