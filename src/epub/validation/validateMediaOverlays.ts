@@ -54,7 +54,8 @@ export function validateMediaOverlays(loaded: LoadedEpub, pkg: PackageDocumentIn
         'O documento deve ter raiz smil no namespace SMIL oficial.');
       continue;
     }
-    const nodes = Array.from(doc.getElementsByTagName('*'));
+    const nodes = Array.from(doc.getElementsByTagName('*'))
+      .filter((node) => SMIL_NAMESPACE.test(node.namespaceURI ?? ''));
     const bodies = nodes.filter((node) => node.localName === 'body');
     const pars = nodes.filter((node) => node.localName === 'par');
     if (bodies.length !== 1 || pars.length === 0) {
@@ -64,12 +65,31 @@ export function validateMediaOverlays(loaded: LoadedEpub, pkg: PackageDocumentIn
       continue;
     }
 
+    // Mesmo se o SMIL tem um body, não confiar em estruturas importadas
+    // de outro namespace para fabricar sincronizações.
+    const identities = new Set<string>();
+    for (const node of nodes) {
+      const identity = node.getAttribute('id')?.trim();
+      if (!identity) continue;
+      if (identities.has(identity)) {
+        notify('MEDIA_OVERLAY_DUPLICATE_ID', item.resolvedPath,
+          'Identificador SMIL duplicado',
+          'Dois elementos SMIL declaram o mesmo id, tornando referências ambíguas.',
+          identity);
+      }
+      identities.add(identity);
+    }
+
     for (const [index, par] of pars.entries()) {
       const children = Array.from(par.children);
-      const texts = children.filter((node) => node.localName === 'text');
-      const audios = children.filter((node) => node.localName === 'audio');
+      const texts = children.filter((node) => node.localName === 'text' &&
+        SMIL_NAMESPACE.test(node.namespaceURI ?? ''));
+      const audios = children.filter((node) => node.localName === 'audio' &&
+        SMIL_NAMESPACE.test(node.namespaceURI ?? ''));
       const reference = `par ${index + 1}`;
-      if (texts.length !== 1 || audios.length > 1) {
+      if (texts.length !== 1 || audios.length > 1 ||
+          children.some((node) => !SMIL_NAMESPACE.test(node.namespaceURI ?? '') ||
+            !['text', 'audio'].includes(node.localName))) {
         notify('MEDIA_OVERLAY_INVALID_STRUCTURE', item.resolvedPath,
           'Par SMIL sem um único destino textual',
           'Cada par deve ter exatamente um text e no máximo um audio.', reference);
@@ -83,6 +103,14 @@ export function validateMediaOverlays(loaded: LoadedEpub, pkg: PackageDocumentIn
         continue;
       }
       const target = resolveReference(item.resolvedPath, textTarget);
+      const targetItem = pkg.manifest.find((source) => source.resolvedPath === target.path);
+      if (target.safe && loaded.files.has(target.path) &&
+          (!targetItem || !['application/xhtml+xml','image/svg+xml'].includes(targetItem.mediaType))) {
+        notify('MEDIA_OVERLAY_INVALID_TARGET', item.resolvedPath,
+          'Documento textual sincronizado não é conteúdo EPUB declarado',
+          'O elemento text precisa apontar para um XHTML ou SVG declarado no manifest.',
+          textTarget);
+      }
       if (!target.safe || !loaded.files.has(target.path)) {
         notify('MEDIA_OVERLAY_MISSING_RESOURCE', item.resolvedPath,
           'Texto sincronizado não encontrado',
@@ -138,10 +166,19 @@ export function validateMediaOverlays(loaded: LoadedEpub, pkg: PackageDocumentIn
         notify('MEDIA_OVERLAY_MISSING_RESOURCE', item.resolvedPath,
           'Arquivo de áudio ausente',
           'O clipe de áudio não existe no pacote EPUB.', audioRef);
+      } else if (!audioIsRemote && audioTarget) {
+        const audioItem = pkg.manifest.find((source) => source.resolvedPath === audioTarget.path);
+        if (!audioItem || !audioItem.mediaType.toLowerCase().startsWith('audio/')) {
+          notify('MEDIA_OVERLAY_INVALID_TARGET', item.resolvedPath,
+            'Recurso narrado não declarado como áudio',
+            'O arquivo de narração local precisa constar no manifest com MIME audio/*.',
+            audioRef);
+        }
       }
       const begin = parseClock(audio.getAttribute('clipBegin'));
       const end = parseClock(audio.getAttribute('clipEnd'));
-      if (Number.isNaN(begin) || Number.isNaN(end) ||
+      if ((begin !== undefined && !Number.isFinite(begin)) ||
+          (end !== undefined && !Number.isFinite(end)) ||
           (end !== undefined && end <= (begin ?? 0))) {
         notify('MEDIA_OVERLAY_INVALID_TIMING', item.resolvedPath,
           'Intervalo de áudio SMIL inválido',
