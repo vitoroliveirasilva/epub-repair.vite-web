@@ -26,3 +26,30 @@ export function potentialEditorialChanges(
   }
   return changes;
 }
+
+
+/** Descreve as alterações prováveis antes da confirmação, sem inventar resultados. */
+export function buildRepairConsentMessage(
+  options: RepairOptions,
+  report: ValidationReport | undefined,
+): string | undefined {
+  const categories = potentialEditorialChanges(options, report);
+  if (categories.length === 0) return undefined;
+  const relevantCodes = new Set([
+    'CONTENT_MISSING_RESOURCE', 'CONTENT_SCRIPTED', 'CONTENT_UNSAFE_STYLE',
+    'CONTENT_UNSAFE_URL', 'CONTENT_UNSAFE_EMBED', 'CONTENT_KINDLE_EMBED_BROKEN',
+  ]);
+  const files = Array.from(new Set((report?.issues ?? [])
+    .filter((issue) => relevantCodes.has(issue.code) && Boolean(issue.file))
+    .map((issue) => issue.file!)));
+  const limited = files.slice(0, 8);
+  const destinations = limited.length
+    ? '\nArquivos possivelmente afetados:\n' +
+      limited.map((file) => '- ' + file).join('\n') +
+      (files.length > limited.length ? '\n- e mais ' + (files.length - limited.length) + ' arquivo(s)' : '')
+    : '';
+  return 'Esta operação pode modificar o conteúdo do livro:\n\n' +
+    categories.map((reason) => '- ' + reason).join('\n') +
+    destinations + '\n\nAs alterações só serão aplicadas a uma nova cópia. ' +
+    'Deseja continuar?';
+}

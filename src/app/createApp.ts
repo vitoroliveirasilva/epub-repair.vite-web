@@ -8,7 +8,7 @@ import {
 } from './actions';
 import { createInitialState, type AppState } from './state';
 import { captureFocusForRerender } from './focusRestoration';
-import { potentialEditorialChanges } from './repairConsent';
+import { buildRepairConsentMessage } from './repairConsent';
 import { buildJsonReport, buildTextReport, createReportEvidence, makeReportFileName } from '../ui/copyReport';
 import { renderControls } from '../ui/components/Controls';
 import { renderCoverChanger } from '../ui/components/CoverChanger';
@@ -58,11 +58,8 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
                 void runAsync(state, rerender, () => analyzeCurrentFile(state));
               },
               repair: () => {
-                const changes = potentialEditorialChanges(state.options, state.report);
-                if (changes.length > 0) {
-                  const question = 'Esta operação pode modificar o conteúdo do livro:\n\n' +
-                    changes.map((change) => '- ' + change).join('\n') +
-                    '\n\nDeseja gerar uma nova cópia com essas alterações?';
+                const question = buildRepairConsentMessage(state.options, state.report);
+                if (question) {
                   if (!window.confirm(question)) {
                     state.message = 'Operação cancelada. O EPUB original permanece inalterado.';
                     rerender();
@@ -90,6 +87,18 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
                 rerender();
               },
               applyCoverReplacement: () => {
+                if (!state.coverImage) return;
+                const current = state.report?.cover?.exists;
+                const question = current
+                  ? 'A capa atual será substituída por ' + state.coverImage.fileName +
+                    '. A obra original não será alterada. Deseja criar uma nova cópia?'
+                  : 'Uma nova capa será inserida: ' + state.coverImage.fileName +
+                    '. Deseja criar uma nova cópia do EPUB?';
+                if (!window.confirm(question)) {
+                  state.message = 'Troca de capa cancelada; a obra original continua intacta.';
+                  rerender();
+                  return;
+                }
                 void runAsync(state, rerender, () => applyCoverReplacementToCurrentFile(state));
               },
             }),
