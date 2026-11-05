@@ -55,6 +55,59 @@ export function validateNavigation(loaded: LoadedEpub, pkg: PackageDocumentInfo)
             }));
           }
         }
+        // Um único toc é obrigatório. page-list e landmarks são opcionais e únicos.
+        const navs = Array.from(doc.getElementsByTagName('*'))
+          .filter((node) => node.localName === 'nav');
+        for (const kind of ['toc', 'page-list', 'landmarks']) {
+          const selected = navs.filter((node) => {
+            const type = node.getAttributeNS('http://www.idpf.org/2007/ops', 'type')
+              ?? node.getAttribute('epub:type') ?? '';
+            return type.split(/\s+/u).includes(kind);
+          });
+          if (selected.length > 1) {
+            issues.push(createIssue({
+              code: 'NAV_DUPLICATE_TYPE',
+              severity: 'warning',
+              title: 'Navegação EPUB 3 duplicada',
+              detail: `O documento contém mais de um nav do tipo "${kind}".`,
+              file: pkg.navItem.resolvedPath,
+              context: kind,
+              repairable: false,
+            }));
+          }
+          for (const nav of selected) {
+            const lists = Array.from(nav.children).filter((node) => node.localName === 'ol');
+            const entries = lists[0] ? Array.from(lists[0].children) : [];
+            if (lists.length !== 1 || entries.length === 0 ||
+              entries.some((entry) => entry.localName !== 'li')) {
+              issues.push(createIssue({
+                code: 'NAV_INVALID_STRUCTURE',
+                severity: 'warning',
+                title: 'Lista de navegação malformada',
+                detail: `A navegação "${kind}" exige um ol direto contendo li.`,
+                file: pkg.navItem.resolvedPath,
+                context: kind,
+                repairable: false,
+              }));
+            }
+            if (kind === 'landmarks') {
+              const missingType = Array.from(nav.getElementsByTagName('*'))
+                .some((node) => node.localName === 'a' &&
+                  !(node.getAttributeNS('http://www.idpf.org/2007/ops', 'type')
+                    ?? node.getAttribute('epub:type') ?? '').trim());
+              if (missingType) {
+                issues.push(createIssue({
+                  code: 'NAV_LANDMARK_TYPE_MISSING',
+                  severity: 'warning',
+                  title: 'Landmark sem tipo semântico',
+                  detail: 'Todo link de landmarks precisa de epub:type.',
+                  file: pkg.navItem.resolvedPath,
+                  repairable: false,
+                }));
+              }
+            }
+          }
+        }
         if (!hasToc) {
           issues.push(
             createIssue({

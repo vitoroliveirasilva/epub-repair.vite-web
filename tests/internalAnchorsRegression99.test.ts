@@ -51,4 +51,32 @@ describe('Conformidade de links EPUB', () => {
     } as PackageDocumentInfo;
     expect(validateNavigation(loaded, pkg).some((item) => item.code === 'NAV_EMPTY')).toBe(true);
   });
+  it('E-038/E-040: preserva toc, page-list e landmarks válidos, detecta duplicações', () => {
+    const path = 'OPS/nav.xhtml';
+    const toc = '<nav epub:type="toc"><h1>Sumário</h1><ol><li><a href="chapter.xhtml">I</a></li></ol></nav>';
+    const page = '<nav epub:type="page-list"><ol><li><a href="chapter.xhtml#p2">2</a></li></ol></nav>';
+    const landmarks = '<nav epub:type="landmarks"><ol><li>' +
+      '<a epub:type="bodymatter" href="chapter.xhtml">Início</a></li></ol></nav>';
+    const run = (body: string) => {
+      const markup = '<html xmlns="http://www.w3.org/1999/xhtml" ' +
+        'xmlns:epub="http://www.idpf.org/2007/ops"><body>' + body + '</body></html>';
+      const loaded = { files: new Map([[path, { bytes: new TextEncoder().encode(markup) }]]) }
+        as unknown as LoadedEpub;
+      const pkg = {
+        opfPath: 'OPS/book.opf', opfDir: 'OPS', version: '3.0',
+        metadata: {}, manifest: [], spine: [], rootfileCount: 1,
+        navItem: { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml',
+          properties: ['nav'], resolvedPath: path, pathSafe: true, exists: true },
+      } as PackageDocumentInfo;
+      return validateNavigation(loaded, pkg).map((issue) => issue.code);
+    };
+    expect(run(toc + page + landmarks).filter((code) => code.startsWith('NAV_'))).toEqual([]);
+    expect(run(toc + toc)).toContain('NAV_DUPLICATE_TYPE');
+    expect(run(toc + '<nav epub:type="page-list"><div><ol><li>2</li></ol></div></nav>'))
+      .toContain('NAV_INVALID_STRUCTURE');
+    expect(run(toc + '<nav epub:type="landmarks"><ol><li>' +
+      '<a href="chapter.xhtml">Início</a></li></ol></nav>'))
+      .toContain('NAV_LANDMARK_TYPE_MISSING');
+  });
+
 });
