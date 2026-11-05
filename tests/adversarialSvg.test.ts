@@ -45,6 +45,24 @@ describe('SVG e XML adversariais dentro de EPUBs', () => {
     expect(doc.getElementById('keep')?.textContent).toBe('Conteúdo legítimo');
   });
 
+  it('E-053/E-055: detecta URL executável codificada como entidade antes do reparo', async () => {
+    const zip = await JSZip.loadAsync(await buildKindleIssueEpub());
+    const chapter = await zip.file('OEBPS/Text/chapter1.xhtml')!.async('string');
+    zip.file('OEBPS/Text/chapter1.xhtml', chapter.replace('</body>',
+      '<a href="java&#x73;cript:alert(1)">Link</a>' +
+      '<img src="https://example.com/capa.png" alt="Capa remota"/>' +
+      '<img src="data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=" alt="SVG"/>' +
+      '<p onmouseover="alert(1)">Texto preservado</p></body>'));
+    const loaded = await loadEpub('urls-escapadas.epub',
+      await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' }));
+    const pkg = parsePackageDocument(loaded).packageInfo;
+    if (!pkg) throw new Error('Fixture sem pacote OPF');
+    const codes = validateContentReferences(loaded, pkg).map((issue) => issue.code);
+    expect(codes).toContain('CONTENT_UNSAFE_URL');
+    expect(codes).toContain('CONTENT_SCRIPTED');
+    expect(codes).not.toContain('CONTENT_REMOTE_RESOURCE');
+  });
+
   it('rejeita entidades XML personalizadas para evitar amplificação de texto', () => {
     const nested = '<!DOCTYPE root [<!ENTITY data "expandido">]><root>&data;</root>';
     expect(() => parseXml(nested)).toThrow(/Entidades XML/u);
