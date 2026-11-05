@@ -15,6 +15,8 @@ async function packageWithEdit(edit: (opf: string) => string) {
   zip.file('OEBPS/content.opf', edit(await entry.async('string')));
   zip.file('OEBPS/Text/extra.xhtml',
     '<html xmlns="http://www.w3.org/1999/xhtml"><body><p>Apêndice</p></body></html>');
+  zip.file('OEBPS/Text/refs.xhtml',
+    '<html xmlns="http://www.w3.org/1999/xhtml"><body><p>Referências</p></body></html>');
   const loaded = await loadEpub('livro.epub',
     await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' }));
   const pkg = parsePackageDocument(loaded).packageInfo;
@@ -44,7 +46,7 @@ describe('Integridade das dependências de IDs do manifest', () => {
     const { loaded, pkg } = await packageWithEdit((opf) => opf
       .replace('</manifest>',
         '<item id="chapter1" href="Text/extra.xhtml" media-type="application/xhtml+xml"/>' +
-        '<item id="fallbackRef" href="Text/another.xhtml" media-type="application/xhtml+xml" ' +
+        '<item id="fallbackRef" href="Text/refs.xhtml" media-type="application/xhtml+xml" ' +
         'fallback="chapter1" media-overlay="chapter1"/></manifest>')
       .replace('</metadata>',
         '<meta property="title-type" refines="#chapter1">main</meta></metadata>'));
