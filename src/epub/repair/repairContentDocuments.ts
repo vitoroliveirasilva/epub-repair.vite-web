@@ -97,8 +97,13 @@ export function repairActiveContentOnly(
     processed.add(path);
     const bytes = files.get(path);
     if (!bytes) continue;
+    // A verificação de tipo PRECISA preceder a decodificação. Imagens, fontes
+    // e anexos binários nunca devem passar pelo decodificador de XML/CSS.
+    const isMarkup = HTML_MEDIA_TYPES.has(item.mediaType) ||
+      item.mediaType === 'image/svg+xml';
+    if (!isMarkup && item.mediaType !== 'text/css') continue;
     const original = decodeUtf8ForRewrite(bytes, path);
-    if (HTML_MEDIA_TYPES.has(item.mediaType) || item.mediaType === 'image/svg+xml') {
+    if (isMarkup) {
       const cleaned = sanitizeActiveContentMarkup(original, path, {
         sanitizeScripts: options.sanitizeScripts,
         kindleSafeMode: false,
