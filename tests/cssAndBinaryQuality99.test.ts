@@ -42,7 +42,7 @@ describe('E-070: diagnóstico CSS sem mudança editorial', () => {
     const file = 'OPS/main.css';
     const loaded = loadedWith([[file, bytes(content)]]);
     const pkg = { manifest: [{ id: 'css', href: 'main.css', resolvedPath: file,
-      pathSafe: true, exists: true, properties: [], mediaType: 'text/css' }] } as PackageDocumentInfo;
+      pathSafe: true, exists: true, properties: [], mediaType: 'text/css' }] } as unknown as PackageDocumentInfo;
     return validateCssQuality(loaded, pkg);
   };
   it('identifica declaração repetida idêntica', () => {

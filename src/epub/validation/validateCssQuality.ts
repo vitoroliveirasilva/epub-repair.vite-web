@@ -18,7 +18,7 @@ export function validateCssQuality(loaded: LoadedEpub, pkg: PackageDocumentInfo)
     const conflicts = new Set<string>();
     // Remover comentários antes de inspecionar seletores planos, sem modificar arquivo.
     const clean = text.replace(/\/\*[\s\S]*?\*\//gu, '');
-    for (const match of clean.matchAll(/(?:^|})\s*([^{}]+)\{([^{}]*)\}/gmu)) {
+    for (const match of clean.matchAll(/(?:^|[}])\s*([^{}]+)\{([^{}]*)\}/gmu)) {
       const selector = (match[1] ?? '').trim();
       if (!selector || selector.startsWith('@') || selector.includes('{')) continue;
       const seen = new Map<string, string>();
