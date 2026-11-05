@@ -189,6 +189,7 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
   let cursor = centralDirOffset;
   let totalUncompressed = 0;
   const seen = new Map<string, number>();
+  const portableNames = new Map<string, string>();
   const localRanges: Array<{ start: number; end: number; name: string }> = [];
 
   for (let index = 0; index < totalEntries; index += 1) {
@@ -426,6 +427,25 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
       );
     }
     seen.set(fileName, seenCount + 1);
+
+    // Sistemas de arquivos/leitores podem tratar diferenças de caixa e formas
+    // Unicode como equivalentes. Não unificar nomes válidos: avisar somente.
+    const portableKey = fileName.normalize('NFC').toLowerCase();
+    const previousPortable = portableNames.get(portableKey);
+    if (previousPortable && previousPortable !== fileName) {
+      issues.push(createIssue({
+        code: 'ZIP_PORTABLE_NAME_COLLISION',
+        severity: 'info',
+        title: 'Arquivos distintos podem colidir em leitores diferentes',
+        detail: 'Os nomes "' + previousPortable + '" e "' + fileName +
+          '" diferem apenas por caixa ou forma Unicode. O EPUB preserva ambos; ' +
+          'confira as referências em leitores com sistema de arquivos insensível a caixa.',
+        file: fileName,
+        repairable: false,
+      }));
+    } else {
+      portableNames.set(portableKey, fileName);
+    }
 
     if (entry.encrypted || (flags & 0x0040) !== 0) {
       issues.push(
