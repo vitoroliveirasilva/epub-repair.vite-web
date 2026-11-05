@@ -5,7 +5,9 @@ import { DEFAULT_REPAIR_OPTIONS, EPUB_MIME, SYSTEM_FILE_PATTERNS } from '../util
 import { makeRepairedFileName } from '../utils/fileName';
 import { normalizeInternalPath } from '../utils/pathUtils';
 import { canOptimizeReport, canRepairReport } from '../utils/reportGuards';
-import { parsePackageDocument } from '../validation/opfParser';
+import { parsePackageDocument, parseOpfDocument } from '../validation/opfParser';
+import { parseXml } from '../utils/xmlUtils';
+import { auditPreservation } from './preservationAudit';
 import { ensureContainerFile } from './repairContainer';
 import { repairContentDocuments } from './repairContentDocuments';
 import { repairImageCompatibility } from './repairImages';
@@ -131,7 +133,17 @@ export async function repairEpub(
   }
 
   if (!options.conservativeMode) {
-    actions.push(...repairContentDocuments(files, loaded, parsed.packageInfo, options));
+    // A lista de recursos do OPF reparado pode conter arquivos antes órfãos.
+    // Sanitizar o manifest efetivo, não somente o original.
+    const currentOpf = files.get(parsed.packageInfo.opfPath);
+    const currentPkg = currentOpf
+      ? parseOpfDocument(
+          parseXml(new TextDecoder('utf-8').decode(currentOpf)),
+          parsed.packageInfo.opfPath,
+          files,
+        )
+      : parsed.packageInfo;
+    actions.push(...repairContentDocuments(files, loaded, currentPkg, options));
   } else {
     warnings.push(
       'O modo conservador está ativo, então XHTML, CSS e imagens foram preservados sempre que possível.',
@@ -163,6 +175,13 @@ export async function repairEpub(
   const outputFileName = makeRepairedFileName(fileName);
   const after = await inspectEpub(outputFileName, afterBytes);
   assertNoNewCriticalIssues(before, after);
+  warnings.push(...auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo));
+  const activeAfter = after.issues.some((issue) =>
+    /^(?:CONTENT_(?:SCRIPTED|UNSAFE|KINDLE_EMBED)|CSS_UNSAFE)/u.test(issue.code),
+  );
+  if (activeAfter) {
+    warnings.push('Ainda há sinais de conteúdo ativo ou URLs perigosas: este EPUB exige revisão antes de uso.');
+  }
 
   return {
     blob,

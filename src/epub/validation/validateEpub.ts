@@ -10,6 +10,7 @@ import { validateKindleCompatibility } from './validateKindleCompatibility';
 import { validateNavigation } from './validateNavigation';
 import { validateOpf } from './validateOpf';
 import { validateZipAndOcf } from './validateZip';
+import { validateSuspiciousResources } from './validateSuspiciousResources';
 
 export async function inspectEpub(fileName: string, bytes: Uint8Array): Promise<ValidationReport> {
   const loaded = await loadEpub(fileName, bytes);
@@ -26,6 +27,7 @@ export async function inspectEpub(fileName: string, bytes: Uint8Array): Promise<
   }
 
   issues.push(...validateZipAndOcf(loaded));
+  issues.push(...validateSuspiciousResources(loaded));
   const parsed = parsePackageDocument(loaded);
   issues.push(...parsed.issues);
 
