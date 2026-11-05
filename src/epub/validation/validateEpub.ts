@@ -12,6 +12,8 @@ import { validateInternalAnchors } from './validateInternalAnchors';
 import { validateOpf } from './validateOpf';
 import { validateZipAndOcf } from './validateZip';
 import { validateSuspiciousResources } from './validateSuspiciousResources';
+import { validateImageResources } from './validateImageResources';
+import { validateAccessibility } from './validateAccessibility';
 
 export async function inspectEpub(fileName: string, bytes: Uint8Array): Promise<ValidationReport> {
   const loaded = await loadEpub(fileName, bytes);
@@ -38,6 +40,8 @@ export async function inspectEpub(fileName: string, bytes: Uint8Array): Promise<
     issues.push(...validateInternalAnchors(loaded, parsed.packageInfo));
     issues.push(...validateContentReferences(loaded, parsed.packageInfo));
     issues.push(...validateCssReferences(loaded, parsed.packageInfo));
+    issues.push(...validateImageResources(loaded, parsed.packageInfo));
+    issues.push(...validateAccessibility(loaded, parsed.packageInfo));
     issues.push(...validateKindleCompatibility(loaded, parsed.packageInfo));
     issues.push(...detectOrphanResources(loaded, parsed.packageInfo));
   }

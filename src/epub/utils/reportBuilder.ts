@@ -64,7 +64,7 @@ function isStructureIssue(issue: Issue): boolean {
 }
 
 function isCompatibilityIssue(issue: Issue): boolean {
-  return /^(?:KINDLE|OPF_(?:LANGUAGE|DATE|PACKAGE|COVER)|NCX_(?:PLAYORDER|SPINE|CONTENT)|XHTML|IMAGE_PROGRESSIVE|CONTENT_(?:KINDLE|MISSING_FRAGMENT))/u.test(
+  return /^(?:KINDLE|OPF_(?:LANGUAGE|DATE|PACKAGE|COVER)|NCX_(?:PLAYORDER|SPINE|CONTENT)|XHTML|IMAGE_|CONTENT_(?:KINDLE|MISSING_FRAGMENT|IMAGE_ALT))/u.test(
     issue.code,
   );
 }
