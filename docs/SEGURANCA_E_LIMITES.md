@@ -44,6 +44,20 @@ editoriais. EPUBCheck valida conformidade técnica e **não é antivírus**.
 
 ## Inspeção antivírus opcional
 
+Também existe um comando local opcional para quem usa Node.js e possui o **ClamAV CLI**
+instalado, com assinaturas atualizadas:
+```bash
+npm run scan:av -- "/caminho/do/livro.epub"
+```
+A variável `CLAMSCAN_BIN` pode apontar para o executável `clamscan` instalado.
+O arquivo permanece **somente no computador**; nenhuma integração de antivírus
+é executada dentro do navegador ou do site hospedado. O script não extrai nem
+modifica o EPUB. Códigos de saída: **0** sem assinatura conhecida detectada,
+**1** detecção, **2** falha/inconclusivo, **64** entrada inválida. Testes automatizados
+usam um scanner simulado e **não substituem uma varredura real**. O scanner depende
+de atualizações da base de assinaturas e pode ter falsos negativos.
+Mesmo com resultado 0, o arquivo **não está comprovadamente livre de malware**.
+
 Para arquivos de procedência desconhecida, use um antivírus local confiável antes de
 abrir o EPUB em programas que executem conteúdo ativo. Não faça upload de obras privadas
 a serviços públicos de escaneamento sem considerar privacidade e direitos de distribuição.

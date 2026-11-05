@@ -166,6 +166,15 @@ Esse comportamento evita que o usuário baixe um arquivo aparentemente "corrigid
 * A conversão de JPEG progressivo para baseline depende do suporte do navegador
 * A troca de capa não altera direitos autorais nem valida a procedência da imagem escolhida pelo usuário
 
+## Verificação antivírus local opcional
+
+Se houver ClamAV (`clamscan`) instalado e atualizado na sua máquina,
+é possível executar `npm run scan:av -- "meu-livro.epub"` **fora do navegador**.
+Nenhum arquivo é transmitido para servidor. Consulte
+[segurança e limites](docs/SEGURANCA_E_LIMITES.md#inspeção-antivírus-opcional)
+para interpretar os códigos de retorno e limitações. A ferramenta web
+não possui scanner integrado e esse comando não certifica ausência de malware.
+
 ## Como rodar localmente
 
 ```bash
