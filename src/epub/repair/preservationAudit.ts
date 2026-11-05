@@ -332,7 +332,7 @@ function compareSvgPreservation(before: string, after: string, path: string): vo
           .filter((attr) => !attr.name.toLowerCase().startsWith('on') &&
             !['style', 'href', 'xlink:href', 'src', 'data'].includes(attr.name.toLowerCase()))
           .map((attr) => [attr.name, attr.value])
-          .sort(([a], [b]) => a.localeCompare(b));
+          .sort((left, right) => (left[0] ?? '').localeCompare(right[0] ?? ''));
         const visible = node.localName === 'text' || node.localName === 'tspan'
           ? (node.textContent ?? '').replace(/\s+/gu, ' ').trim() : '';
         return JSON.stringify([node.namespaceURI, node.localName, attrs, visible]);
