@@ -95,4 +95,78 @@ describe('E-052: saneamento e diagnóstico em modo conservador', () => {
     expect(hasManualReviewIssues(result.after)).toBe(true);
     expect(result.warnings.some((message) => message.includes('revisão manual'))).toBe(true);
   });
+
+  it('o fluxo normal também neutraliza conteúdo ativo e mantém URLs benignas', async () => {
+    const input = await fixture();
+    const immutable = new Uint8Array(input);
+    const result = await repairEpub('livro.epub', input, {
+      ...DEFAULT_REPAIR_OPTIONS, conservativeMode: false, sanitizeScripts: true,
+    });
+    expect(result.changed).toBe(true);
+    expect(result.blob).toBeDefined();
+    const output = await JSZip.loadAsync(await result.blob!.arrayBuffer());
+    const page = await output.file('OPS/chapter.xhtml')!.async('string');
+    const style = await output.file('OPS/style.css')!.async('string');
+    const svg = await output.file('OPS/image.svg')!.async('string');
+    expect(page).toContain('O texto original permanece aqui.');
+    expect(page).toContain('https://example.org/fonte');
+    expect(page).not.toContain('<script');
+    expect(style).not.toContain('javascript:');
+    expect(style).toContain('https://example.org/fonte.woff2');
+    expect(svg).not.toContain('onload=');
+    expect(hasResidualActiveContent(result.after)).toBe(false);
+    expect(input).toEqual(immutable);
+  });
+
+  it('o fluxo normal com opt-out não deve classificar saída ativa como pronta', async () => {
+    const input = await fixture();
+    const result = await repairEpub('livro.epub', input, {
+      ...DEFAULT_REPAIR_OPTIONS, conservativeMode: false,
+      sanitizeScripts: false, kindleSafeMode: false,
+    });
+    expect(result.changed).toBe(true);
+    expect(result.blob).toBeDefined();
+    const output = await JSZip.loadAsync(await result.blob!.arrayBuffer());
+    expect(await output.file('OPS/chapter.xhtml')!.async('string'))
+      .toContain('<script>alert(4)</script>');
+    expect(hasManualReviewIssues(result.after)).toBe(true);
+    expect(result.warnings.some((message) => message.includes('revisão manual'))).toBe(true);
+  });
+
+  it('scripts JS declarados e órfãos permanecem inventariados em todos os modos', async () => {
+    const zip = await JSZip.loadAsync(await fixture());
+    zip.file('OPS/app.js', 'document.title = "Código EPUB3 legítimo";');
+    zip.file('OPS/orphan.xhtml', '<html xmlns="http://www.w3.org/1999/xhtml">' +
+      '<body><script>alert(9)</script></body></html>');
+    const opf = await zip.file('OPS/book.opf')!.async('string');
+    zip.file('OPS/book.opf', opf.replace('</manifest>',
+      '<item id="app" href="app.js" media-type="text/javascript"/></manifest>'));
+    const raw = await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+    const initial = await inspectEpub('scripts.epub', raw);
+    expect(initial.issues.map((issue) => issue.code)).toContain('PACKAGE_DECLARED_SCRIPT');
+    expect(hasManualReviewIssues(initial)).toBe(true);
+    for (const conservativeMode of [true, false]) {
+      const result = await repairEpub('scripts.epub', raw, {
+        ...DEFAULT_REPAIR_OPTIONS, conservativeMode, sanitizeScripts: true,
+      });
+      expect(result.blob).toBeDefined();
+      const output = await JSZip.loadAsync(await result.blob!.arrayBuffer());
+      expect(await output.file('OPS/app.js')!.async('string'))
+        .toContain('document.title');
+      expect(hasManualReviewIssues(result.after)).toBe(true);
+      expect(result.after.issues.map((issue) => issue.code))
+        .toContain('PACKAGE_DECLARED_SCRIPT');
+      expect(result.warnings.some((message) => message.includes('revisão manual')))
+        .toBe(true);
+    }
+  }, 20_000);
+
+  it('otimização opcional não mascara conteúdo ativo nem altera scripts de origem', async () => {
+    const raw = await fixture();
+    const result = await repairEpub('livro.epub', raw, DEFAULT_REPAIR_OPTIONS, 'optimization');
+    expect(result.changed).toBe(false);
+    expect(result.after).toEqual(result.before);
+    expect(result.blob).toBeUndefined();
+    expect(hasResidualActiveContent(result.after)).toBe(true);
+  });
 });
