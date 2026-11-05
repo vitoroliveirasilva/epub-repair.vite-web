@@ -3,6 +3,7 @@ import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { Issue } from '../model/issueTypes';
 import { createIssue } from '../utils/issueFactory';
 import { findByLocalName, findFirstByLocalName, parseXml } from '../utils/xmlUtils';
+import { validateManifestContentProperties } from './validateManifestContentProperties';
 
 const MODIFIED_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/u;
 
@@ -114,5 +115,6 @@ export function validatePackageSemantics(loaded: LoadedEpub, pkg: PackageDocumen
     }));
   }
 
+  issues.push(...validateManifestContentProperties(loaded, pkg));
   return issues;
 }
