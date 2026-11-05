@@ -24,7 +24,9 @@ function readUInt32LE(bytes: Uint8Array, offset: number): number {
 }
 
 function decodeFileName(bytes: Uint8Array): string {
-  return new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+  // Não converter bytes CP437/charset legado silenciosamente em U+FFFD.
+  // Arquivos com nomes sem UTF-8 confiável exigem conversão manual para evitar colisões.
+  return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
 }
 
 export function parseZipCentralDirectory(bytes: Uint8Array): {
@@ -128,6 +130,34 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
     const fileNameStart = cursor + 46;
     const fileNameEnd = fileNameStart + fileNameLength;
     const nextCursor = fileNameEnd + extraLength + commentLength;
+
+    if (nextCursor > centralDirEnd) {
+      issues.push(createIssue({
+        code: 'ZIP_INVALID',
+        severity: 'fatal',
+        title: 'Entrada ZIP ultrapassa os limites do diretório central',
+        detail: 'O nome, os campos extras ou o comentário excedem a área reservada.',
+        repairable: false,
+      }));
+      break;
+    }
+
+    try {
+      decodeFileName(bytes.subarray(fileNameStart, fileNameEnd));
+    } catch {
+      issues.push(createIssue({
+        code: 'ZIP_UNSUPPORTED_FILENAME_ENCODING',
+        severity: 'fatal',
+        title: 'Nome de arquivo ZIP possui codificação não suportada',
+        detail: (flags & 0x0800) !== 0
+          ? 'O nome está marcado como UTF-8, mas contém bytes inválidos.'
+          : 'Nome com codificação legada ou ambígua (por exemplo CP437). ' +
+            'Converter externamente para UTF-8 antes de reparar evita nomes corrompidos.',
+        repairable: false,
+      }));
+      break;
+    }
+
     const localNameLength =
       localHeaderOffset + 30 <= centralDirOffset
         ? readUInt16LE(bytes, localHeaderOffset + 26)

@@ -47,6 +47,31 @@ describe('arquivos EPUB maliciosos e ZIPs corrompidos', () => {
     expect(loaded.issues.some((issue) => /CRC32/u.test(issue.detail))).toBe(true);
   });
 
+  it('E-021: rejeita nomes ZIP CP437 não decodificáveis sem corromper nomes', async () => {
+    const original = await buildKindleIssueEpub();
+    const input = corrupt(original, ({ view, central, local }) => {
+      // Substitui o primeiro byte do nome nos dois cabeçalhos por byte CP437 não UTF-8.
+      view.setUint8(local + 30, 0x82);
+      view.setUint8(central + 46, 0x82);
+    });
+    const issues = parseZipCentralDirectory(input).issues;
+    expect(issues.some((issue) => issue.code === 'ZIP_UNSUPPORTED_FILENAME_ENCODING'))
+      .toBe(true);
+    expect((await loadEpub('cp437.epub', input)).validZip).toBe(false);
+  });
+
+  it('E-024: acusa UTF-8 inválido mesmo com bit de codificação ativado', async () => {
+    const original = await buildKindleIssueEpub();
+    const input = corrupt(original, ({ view, central, local }) => {
+      view.setUint16(central + 8, view.getUint16(central + 8, true) | 0x0800, true);
+      view.setUint16(local + 6, view.getUint16(local + 6, true) | 0x0800, true);
+      view.setUint8(local + 30, 0xc3);
+      view.setUint8(central + 46, 0xc3);
+    });
+    expect(parseZipCentralDirectory(input).issues.some((issue) =>
+      issue.code === 'ZIP_UNSUPPORTED_FILENAME_ENCODING')).toBe(true);
+  });
+
   it('rejeita nome local divergente do diretório central', async () => {
     const original = await buildKindleIssueEpub();
     const input = corrupt(original, ({ view, local }) => {
@@ -99,6 +124,20 @@ describe('arquivos EPUB maliciosos e ZIPs corrompidos', () => {
     });
     const loaded = await loadEpub('encrypted.epub', input);
     expect(loaded.issues.some((issue) => issue.code === 'ZIP_ENCRYPTED_ENTRY')).toBe(true);
+  });
+
+  it('E-063: 128 mutações determinísticas não provocam exceção no parser ZIP', async () => {
+    const original = await buildKindleIssueEpub();
+    const { central, local, eocd } = headers(original);
+    const regions = [local, local + 6, local + 14, local + 18, local + 26, central,
+      central + 8, central + 16, central + 24, central + 28, central + 42,
+      eocd + 4, eocd + 10, eocd + 16];
+    for (let iteration = 0; iteration < 128; iteration += 1) {
+      const mutated = new Uint8Array(original);
+      const offset = regions[iteration % regions.length]! + Math.floor(iteration / regions.length) % 4;
+      mutated[offset] = mutated[offset]! ^ ((iteration * 131 + 17) & 0xff);
+      expect(() => parseZipCentralDirectory(mutated)).not.toThrow();
+    }
   });
 
   it('permanece controlado ao ler 28 mutações de metadados ZIP', async () => {
