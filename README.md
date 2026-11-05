@@ -16,6 +16,8 @@ Ferramenta **front-end estática** para validar, reparar, trocar capa e reempaco
 
 O projeto não possui backend, banco de dados nem integração com APIs externas.  Sendo assim, o EPUB é carregado, analisado, alterado e baixado localmente no navegador do usuário.
 
+Consulte as [limitações de processamento e cancelamento](docs/WORKER_PROCESSING.md) e a [política de branches](docs/BRANCH_POLICY.md).
+
 ## Privacidade e segurança
 
 * O arquivo EPUB **não é enviado para servidor**
@@ -34,6 +36,8 @@ O projeto não possui backend, banco de dados nem integração com APIs externas
 ## Principais funcionalidades
 
 * Validação local de EPUB
+* Extração ZIP via Web Worker de mesma origem quando disponível, com progresso por arquivo e cancelamento
+* Progresso real de recompactação, sem inventar porcentagens para a validação XML
 * Reparo técnico seguro para problemas estruturais e de compatibilidade
 * Separação entre **reparos obrigatórios** e **otimizações opcionais**
 * Troca ou adição de capa com imagem enviada pelo usuário

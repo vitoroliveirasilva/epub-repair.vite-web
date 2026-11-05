@@ -94,3 +94,13 @@ Referência completa: [Auditoria 99 / execução 8](AUDITORIA_99_PROGRESSO.md).
 - Homologações de reprodução áudio/texto e dispositivos físicos continuam limitações externas, mesmo com critérios automatizados E-047 encerrados.
 
 Veja [auditoria de 99 itens, execução 9](AUDITORIA_99_PROGRESSO.md).
+
+## Execução 10: Worker parcial, metadados e estrutura editorial
+
+- O Worker local executa a extração ZIP limitada e transfere buffers válidos de volta ao navegador principal; não chama DOMParser nem canvas em Worker.
+- O botão **Cancelar** termina imediatamente a extração via Worker. As etapas de XML/DOM, imagens e alguns blocos de compressão ainda não são interrompíveis no meio de uma operação síncrona, e o sistema descarta qualquer resultado após o sinal de abort.
+- A CSP foi atualizada para `worker-src 'self'`, sem permitir `blob:` ou `data:` em scripts.
+- A preservação editorial confere também tags de ênfase, quebras de verso, spans com classes, estilos inline passivos e pré-formatação de código.
+- EPUBs com notas de rodapé e endnotes são verificados por vínculos semânticos; notas sem backlink explícito são aceitas.
+- EXIF/XMP/Photoshop são diagnosticados informativamente e **não são apagados**: orientação, cor, autoria e dados pessoais podem estar nos metadados.
+- O ruleset remoto "Protect prod" está ativo para `prod`. Nenhum ruleset de `dev` foi encontrado na enumeração de 05/11/2026; os endpoints de branch protection retornaram 403. Uma configuração que obrigue PR na `dev` interromperia o atual compromisso de commits diretos, portanto não foi aplicada.

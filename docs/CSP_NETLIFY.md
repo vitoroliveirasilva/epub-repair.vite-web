@@ -17,7 +17,11 @@ a resposta HTTP do Netlify em produção. `npm run dev` e `vite preview`
 não representam os headers finais do Netlify. O CSP não substitui varredura
 do EPUB nem comprova ausência de malware.
 
-No momento `worker-src 'none'` bloqueia Workers por projeto. Quando o
-worker de análise assíncrona (E-032) for implementado, a CSP terá de ser
-revisada junto com teste em navegador real para permitir apenas Workers
-estáticos originados do próprio domínio.
+Agora `worker-src 'self'` permite exclusivamente Workers com scripts
+originados do próprio domínio. O arquivo `src/app/zipLoadWorker.ts` é
+empacotado pelo Vite como Worker estático, sem `blob:` em `worker-src`.
+
+A etapa de descompactação acontece no Worker quando suportado. A leitura de
+DOM/XML, o reempacotamento e a auditoria final ainda ocorrem no contexto
+principal. O suporte real em Safari/iOS e os headers de produção continuam
+sujeitos a homologação, inclusive a ausência de `unsafe-eval`.
