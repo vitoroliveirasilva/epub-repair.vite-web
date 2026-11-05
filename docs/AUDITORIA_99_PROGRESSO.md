@@ -1,14 +1,14 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 05/11/2026 (execução 9, CI Node 20/22 e EPUBCheck; confirmar último run da dev) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 05/11/2026 (execução 10, CI Node 20/22 e EPUBCheck aprovada) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
 | Situação | Itens |
 | --- | ---: |
-| Concluídos no escopo definido, com CI Node 20/22 aprovada | **72** |
-| Parcialmente tratados, com testes/validação adicionais necessários | **19** |
-| Não iniciados ou ainda não evidenciados | **8** |
+| Concluídos no escopo definido, com CI Node 20/22 aprovada | **75** |
+| Parcialmente tratados, com testes/validação adicionais necessários | **21** |
+| Não iniciados ou ainda não evidenciados | **3** |
 | Total | **99** |
 
 ## Regras de classificação
@@ -56,7 +56,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-029 | P1 | Manifest e container com múltiplos rootfiles/renditions | Concluído · CI |
 | E-030 | P1 | mimetype duplicado, diretórios primeiro, extras e arquivos de tamanho zero | Concluído · CI |
 | E-031 | P1 | Picos de memória ao carregar/decompactar/revalidar várias vezes | Parcial |
-| E-032 | P2 | Progresso, cancelamento e execução em Worker para EPUBs grandes | Pendente |
+| E-032 | P2 | Progresso, cancelamento e execução em Worker para EPUBs grandes | Parcial |
 | E-033 | P2 | Preservação de encoding/declaracão XML ao reescrever XHTML/OPF | Concluído · CI |
 | E-034 | P2 | Tamanhos declarados ZIP diferentes dos fluxos descompactados | Concluído · CI |
 | E-035 | P0 | EPUBCheck oficial integrado à validação de arquivos reparados no CI | Concluído · CI |
@@ -95,16 +95,16 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-068 | P1 | Consertos de headings, capítulos, títulos de navegação e sumários editoriais | Parcial |
 | E-069 | P1 | Detectar OCR malformado, quebras artificiais, hifens, cabeçalhos e rodapés | Parcial |
 | E-070 | P1 | Diagnóstico de CSS redundante/contraditório ou referências de estilos quebradas | Concluído · CI |
-| E-071 | P1 | Notas de rodapé, backlinks, endnotes, índices e remissões internas | Parcial |
+| E-071 | P1 | Notas de rodapé, backlinks, endnotes, índices e remissões internas | Concluído · CI |
 | E-072 | P1 | Acessibilidade editorial: alt, lang, semântica, nav e leitura assistiva | Parcial |
 | E-073 | P1 | Fluxo antes/depois com diffs de XHTML, CSS, OPF e NCX | Concluído · CI |
-| E-074 | P2 | Preservar tipografia, itálicos, travessões, espaçamento e estilos de diálogo | Pendente |
-| E-075 | P2 | Tratamento opcional de EXIF/XMP/Photoshop/metadata de imagens | Pendente |
+| E-074 | P2 | Preservar tipografia, itálicos, travessões, espaçamento e estilos de diálogo | Concluído · CI |
+| E-075 | P2 | Tratamento opcional de EXIF/XMP/Photoshop/metadata de imagens | Parcial |
 | E-076 | P2 | Checagem de apresentação em leitores reflowable/fixed layout, imagens e fontes | Pendente |
 | E-077 | P1 | Estados explícitos: seguro para reparar, revisão manual, parcial, otimização, inválido | Concluído · CI |
 | E-078 | P1 | Prévia e confirmação de operações destrutivas antes de executar | Concluído · CI |
 | E-079 | P1 | Indicador de ações não aplicadas e pendências remanescentes por item | Concluído · CI |
-| E-080 | P1 | Fila e interrupção de tarefas grandes, feedback de processamento real | Pendente |
+| E-080 | P1 | Fila e interrupção de tarefas grandes, feedback de processamento real | Parcial |
 | E-081 | P1 | Trocar de arquivo/opções enquanto análise ainda está em execução | Concluído · CI |
 | E-082 | P1 | Download blob em Safari/iOS, liberação imediata de ObjectURL | Parcial |
 | E-083 | P2 | Teclado, leitor de tela e foco após rerender completo | Concluído · CI |
@@ -116,13 +116,13 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-089 | P1 | Matriz de browsers Chromium/Firefox/WebKit e dispositivos móveis | Pendente |
 | E-090 | P1 | Matriz de leitores: Kindle Previewer, Calibre e leitores EPUB 2/3 | Parcial |
 | E-091 | P1 | Regressão diferencial: EPUBCheck original × reparado | Concluído · CI |
-| E-092 | P1 | Validação pós-reparo de conteúdo real e links, não só ZIP/OPF | Parcial |
+| E-092 | P1 | Validação pós-reparo de conteúdo real e links, não só ZIP/OPF | Concluído · CI |
 | E-093 | P1 | Testes de propriedades: idempotência e preservação de bytes em no-op | Concluído · CI |
 | E-094 | P1 | Testes adversariais com SVG/CSS/XML e ZIP fuzzing recorrente | Concluído · CI |
 | E-095 | P2 | Cobertura de testes e thresholds por módulo crítico | Pendente |
 | E-096 | P2 | Testes de performance/memória com limites documentados | Parcial |
 | E-097 | P2 | Versionamento das decisões, changelog e matriz de suporte | Concluído · CI |
-| E-098 | P2 | Revisar regras de proteção da dev e política de branch/tag | Pendente |
+| E-098 | P2 | Revisar regras de proteção da dev e política de branch/tag | Parcial |
 | E-099 | P2 | Análise periódica de dependências e licenças além do npm audit | Parcial |
 
 ## Commits desta execução
@@ -463,3 +463,39 @@ e diagnóstico não equivalem a suporte pleno.
 - Próximas frentes: **E-032/E-080** Worker/fila/cancelamento, **E-031/E-096** medidas em dispositivos, **E-089/E-090** leitores e browsers reais, **E-059** verificação AV externa opt-in.
 
 **Preservação de produção:** `prod` permanece v2.2.0, sem merge, tag ou release desta auditoria.
+
+## Execução 10: Worker de ZIP, cancelamento, conteúdo editorial e pós-reparo
+
+**Antes:** 72 concluídos, 19 parciais, 8 pendentes.  
+**Agora:** **75 concluídos, 21 parciais, 3 pendentes**.
+
+- **Concluídos no critério automatizado:** E-071, E-074, E-092.
+- **Avançaram de pendentes a parciais:** E-032, E-075, E-080, E-098.
+- **Com algum avanço:** 96/99 itens. **Ainda sem conclusão integral:** 24/99 (21 parciais e 3 pendentes).
+- **Distribuição:** P0 12/0/0, P1 54/13/1, P2 9/8/2 (concluído/parcial/pendente).
+
+### Entregas e evidências
+
+| Item | Implementação e verificação |
+| --- | --- |
+| E-032 (parcial) | `3370e6d`, `83b7973`: Worker de mesma origem para extrair ZIP/CRC com progresso por entrada, transferência dos buffers extraídos, fallback sem Worker; não moveu o parser DOM nem o reempacotamento para a thread |
+| E-080 (parcial) | `83b7973`, `ad1a375`: estado de processamento, botão Cancelar, `AbortController` terminando Worker, descarte de respostas tardias, checkpoints nos reparos/capa, progresso de recompactação por porcentagem real JSZip. Não há fila persistente nem interrupção imediata de código DOM síncrono |
+| E-074 | `2ce6e0f`, `634777d`: guarda editorial de tags de ênfase/negrito, `br`, `pre`, `code`, classes e CSS inline não perigoso; teste evita perda de formatação mesmo quando texto continua igual |
+| E-071 | `83340ae`: validar noteref, footnotes/endnotes, backlinks explícitos e alvos XHTML, sem inventar IDs ou tornar backlink obrigatório |
+| E-072 (continua parcial) | `a1aae82`: avisos de `aria-labelledby` quebrado e SVG sem nome acessível, com exceção para SVG decorativo e `alt=""` intencional |
+| E-075 (parcial) | `1cdb5e5`, `7f6805b`, `b8972e1`: inventário não destrutivo EXIF/XMP/Photoshop em JPEG/PNG/WebP; **não remove metadados, não altera perfis ICC nem afirma limpeza de privacidade** |
+| E-092 | `7056de4`: reabrir saída ZIP, comparar relatório independente e testar rejeição de novos links/fragmentos e imagens quebrados, mantendo HTTPS legítimo |
+| E-098 (parcial) | `fd43310`: consulta de ruleset ativo de `prod` e documentação operacional. A proteção legada específica retorna 403; `dev` não tem ruleset visível; nenhum bloqueio de push ou tag foi criado |
+| CSP e documentação | `3370e6d`, `fd43310`: `worker-src 'self'` no Netlify, sem `blob:` para scripts; documentação de limitações e políticas em `docs/WORKER_PROCESSING.md` e `docs/BRANCH_POLICY.md` |
+
+### Evidência e limitações
+
+CI final anterior à atualização documental: [run 42102087907](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42102087907), com qualidade Node 20/22 e EPUBCheck 5.4.0 aprovados.
+
+1. O Worker mantém a UI responsiva na extração do ZIP, mas o parse XHTML/DOM ainda ocupa a thread principal. O cancelamento durante compressão ou DOM síncrono pode esperar até o próximo checkpoint; o EPUB incompleto não é entregue.
+2. A transferência Worker reduz cópia dos buffers de saída, mas a entrada é temporariamente clonada para o Worker: **não afirmar redução do pico total de memória sem medição em browser real**.
+3. Nenhum perfil de cor, EXIF, XMP, Photoshop ou metadado autoral é apagado.
+4. `E-076`, `E-089` e `E-095` permanecem pendentes: homologação visual em leitores, testes reais nos browsers e thresholds instrumentados de cobertura por módulo.
+5. Todos os 12 P0 permanecem concluídos **somente no escopo de testes e critérios documentados**, não em detecção antivírus universal.
+
+**Produção:** `prod` preservada na `v2.2.0`, sem merge, release, mudança de regras ou tags.

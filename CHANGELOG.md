@@ -2,6 +2,19 @@
 
 Alterações na branch `dev` **ainda não publicadas**. O pacote e a branch `prod` continuam em **v2.2.0**. Esta página documenta desenvolvimento e não representa uma nova release.
 
+## Unreleased: execução 10 (05/11/2026)
+
+- Extração ZIP/CRC em Web Worker same-origin com progresso real, cancelamento e fallback seguro em navegadores sem Worker.
+- Botão de cancelamento, bloqueio de resultados atrasados, checkpoints no reparo/troca de capa e progresso de recompactação JSZip.
+- Guarda editorial contra perda de itálicos, negrito, espaços em código, estilos seguros, classes, versos e diálogos.
+- Diagnósticos conservadores de `noteref`/notas/backlinks, `aria-labelledby` e nome acessível de SVG inline.
+- Inventário não destrutivo de EXIF/XMP/Photoshop em imagens JPEG/PNG/WebP.
+- Regressões de revalidação independente da saída ZIP, links e imagens e gate contra novos erros.
+- Documentação da CSP Worker e verificação remota do ruleset real da `prod`.
+
+**Auditoria:** 75 concluídos, 21 parciais e 3 pendentes. 
+O processamento DOM ainda não pode ser cancelado no meio de uma fase síncrona; não houve homologação física em leitores/navegadores.
+
 ## Unreleased: execução 9 (05/11/2026)
 
 - Fallbacks de tipos estrangeiros, incluindo imagens HEIC em XHTML e fallback XHTML/SVG no spine. Nenhum conteúdo de leitura é inventado.
