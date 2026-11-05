@@ -9,6 +9,7 @@ import { validateCssReferences } from './validateCssReferences';
 import { validateKindleCompatibility } from './validateKindleCompatibility';
 import { validateNavigation } from './validateNavigation';
 import { validateInternalAnchors } from './validateInternalAnchors';
+import { validateFootnotes } from './validateFootnotes';
 import { validateOpf } from './validateOpf';
 import { validateZipAndOcf } from './validateZip';
 import { validateSuspiciousResources } from './validateSuspiciousResources';
@@ -62,6 +63,7 @@ export function inspectLoadedEpub(
     issues.push(...validateUndeclaredActiveContent(loaded, parsed.packageInfo));
     issues.push(...validateNavigation(loaded, parsed.packageInfo));
     issues.push(...validateInternalAnchors(loaded, parsed.packageInfo));
+    issues.push(...validateFootnotes(loaded, parsed.packageInfo));
     issues.push(...validateContentReferences(loaded, parsed.packageInfo));
     issues.push(...validateCssReferences(loaded, parsed.packageInfo));
     issues.push(...validateCssQuality(loaded, parsed.packageInfo));
