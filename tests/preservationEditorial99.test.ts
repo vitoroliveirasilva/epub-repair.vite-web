@@ -14,8 +14,7 @@ function compare(original: string, updated: string, changedLinear?: string) {
     id: 'capitulo', href: 'Text/capitulo.xhtml', mediaType: 'application/xhtml+xml',
     properties: [], exists: true, pathSafe: true, resolvedPath: path,
   };
-  const loaded = { files: new Map([[path, { bytes: encoder.encode(original) }]]) }
-    as unknown as LoadedEpub;
+  const loaded = { files: new Map([[path, { bytes: encoder.encode(original) }]]) } as unknown as LoadedEpub;
   const pkg = { opfPath: 'OPS/content.opf', opfDir: 'OPS', metadata: {}, version: '3.3',
     manifest: [item], spine: [{ idref: 'capitulo', linear: 'yes', manifestItem: item }],
     rootfileCount: 1 } as PackageDocumentInfo;
