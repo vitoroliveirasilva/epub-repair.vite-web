@@ -8,6 +8,7 @@ import {
   isInvalidOpfDate,
 } from '../utils/kindleCompatibility';
 import { areEquivalentMediaTypes, guessMediaType } from '../utils/mediaTypes';
+import { validateManifestFallbacks } from './validateManifestFallbacks';
 
 export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issue[] {
   const issues: Issue[] = [];
@@ -288,5 +289,6 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
     );
   }
 
+  issues.push(...validateManifestFallbacks(pkg));
   return issues;
 }
