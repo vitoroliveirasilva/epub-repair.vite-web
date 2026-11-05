@@ -46,7 +46,8 @@ export function validateEditorialOcrQuality(
       ] as const) {
         const label = (value ?? '').trim().replace(/\s+/gu, ' ');
         if (label.length < 12 || label.length > 80 ||
-            label.split(' ').length < 3 || !/[\p{L}]/u.test(label)) continue;
+            label.split(' ').length < 3 || !/[\p{L}]/u.test(label) ||
+            /^[—–"“'«]/u.test(label) || /[.!?…]$/u.test(label)) continue;
         const key = position + ': ' + label.toLocaleLowerCase();
         const locations = runningText.get(key) ?? new Set<string>();
         locations.add(item.resolvedPath);
