@@ -1,12 +1,25 @@
 // @vitest-environment jsdom
 import JSZip from 'jszip';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { buildKindleIssueEpub } from './helpers/syntheticEpub';
 import { inspectEpub } from '../src/epub/validation/validateEpub';
 import { repairEpub } from '../src/epub/repair/repairEpub';
 import { auditPreservation } from '../src/epub/repair/preservationAudit';
 import { loadEpub } from '../src/epub/reader/loadEpub';
 import { parsePackageDocument } from '../src/epub/validation/opfParser';
+
+// O jsdom não implementa Blob.arrayBuffer; navegadores modernos implementam.
+beforeAll(() => {
+  if (typeof Blob.prototype.arrayBuffer === 'function') return;
+  Blob.prototype.arrayBuffer = function (): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsArrayBuffer(this);
+    });
+  };
+});
 
 describe('Resguardo de conteúdo e recursos do EPUB', () => {
   it('E-004: sanitiza XHTML órfão quando passa a constar no manifest', async () => {
