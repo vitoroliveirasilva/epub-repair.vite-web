@@ -5,7 +5,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { inspectEpub } from '../src/epub/validation/validateEpub';
 import { repairEpub } from '../src/epub/repair/repairEpub';
-import { DEFAULT_REPAIR_OPTIONS, EPUB_MIME } from '../src/epub/utils/constants';
+import { DEFAULT_REPAIR_OPTIONS } from '../src/epub/utils/constants';
 
 beforeAll(() => {
   // Vitest/jsdom ainda não fornece Blob.arrayBuffer.
@@ -22,7 +22,7 @@ beforeAll(() => {
 
 function createInvalidEpub(): Promise<Uint8Array> {
   const zip = new JSZip();
-  zip.file('mimetype', EPUB_MIME, { compression: 'DEFLATE' });
+  // Simula omissão do mimetype: diagnóstico oficial inequívoco e reparável.
   zip.file('META-INF/container.xml',
     '<?xml version="1.0" encoding="UTF-8"?>' +
     '<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0">' +
@@ -62,7 +62,7 @@ describe('Fixture sintética de conformidade oficial', () => {
   it('E-035/E-091: gera original inválido e EPUB corrigido para EPUBCheck externo', async () => {
     const original = await createInvalidEpub();
     const before = await inspectEpub('fixture.epub', original);
-    expect(before.issues.some((issue) => issue.code === 'MIME_COMPRESSED')).toBe(true);
+    expect(before.issues.some((issue) => issue.code === 'MIME_MISSING')).toBe(true);
 
     const result = await repairEpub('fixture.epub', original, {
       ...DEFAULT_REPAIR_OPTIONS,
@@ -72,7 +72,7 @@ describe('Fixture sintética de conformidade oficial', () => {
     expect(result.blob).toBeDefined();
     expect(result.after.validZip).toBe(true);
     expect(result.after.stats.fatalCount).toBe(0);
-    expect(result.after.issues.some((issue) => issue.code === 'MIME_COMPRESSED')).toBe(false);
+    expect(result.after.issues.some((issue) => issue.code === 'MIME_MISSING')).toBe(false);
 
     const outputDir = process.env.EPUBCHECK_FIXTURE_OUTPUT;
     if (outputDir && result.blob) {
