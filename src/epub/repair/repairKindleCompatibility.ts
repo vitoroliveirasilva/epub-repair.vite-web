@@ -1,6 +1,7 @@
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction, RepairOptions } from '../model/repairTypes';
 import { HTML_MEDIA_TYPES } from '../utils/constants';
+import { decodeUtf8ForRewrite } from '../utils/textEncoding';
 import { isInvalidLanguageTag, normalizeLanguageTag } from '../utils/kindleCompatibility';
 import {
   childElementsByLocalName,
@@ -10,7 +11,6 @@ import {
   serializeXml,
 } from '../utils/xmlUtils';
 
-const TEXT_DECODER = new TextDecoder('utf-8', { fatal: false });
 const TEXT_ENCODER = new TextEncoder();
 
 export function repairKindleCompatibility(
@@ -35,7 +35,7 @@ function repairNcxCompatibility(
 
   let doc: Document;
   try {
-    doc = parseXml(TEXT_DECODER.decode(bytes));
+    doc = parseXml(decodeUtf8ForRewrite(bytes, pkg.ncxItem.resolvedPath));
   } catch {
     return actions;
   }
@@ -97,7 +97,7 @@ function repairXhtmlCompatibility(
     const bytes = files.get(item.resolvedPath);
     if (!bytes) continue;
 
-    const original = TEXT_DECODER.decode(bytes);
+    const original = decodeUtf8ForRewrite(bytes, item.resolvedPath);
     let output = original;
     const fileActions: RepairAction[] = [];
 

@@ -3,6 +3,7 @@ import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction, RepairOptions } from '../model/repairTypes';
 import { RELEVANT_MEDIA_TYPES, SYSTEM_FILE_PATTERNS } from '../utils/constants';
 import { deriveTitleFromFileName } from '../utils/fileName';
+import { decodeUtf8ForRewrite } from '../utils/textEncoding';
 import {
   isInvalidOpfDate,
   normalizeOpfDate,
@@ -52,7 +53,7 @@ export function repairOpfDocument(
   const opfFile = loaded.files.get(pkg.opfPath);
   if (!opfFile) throw new Error('OPF não encontrado para reparo.');
 
-  const doc = parseXml(new TextDecoder('utf-8', { fatal: false }).decode(opfFile.bytes));
+  const doc = parseXml(decodeUtf8ForRewrite(opfFile.bytes, pkg.opfPath));
   const packageElement = findFirstByLocalName(doc, 'package') ?? doc.documentElement;
   const metadata = ensureChild(doc, packageElement, 'metadata');
   const manifest = ensureChild(doc, packageElement, 'manifest');

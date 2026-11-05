@@ -9,6 +9,7 @@ import { inspectEpub } from '../validation/validateEpub';
 import { parsePackageDocument } from '../validation/opfParser';
 import { makeRepairedFileName } from '../utils/fileName';
 import { guessMediaType } from '../utils/mediaTypes';
+import { decodeUtf8ForRewrite } from '../utils/textEncoding';
 import {
   basename,
   encodePathForXml,
@@ -64,7 +65,7 @@ export async function replaceEpubCover(
   if (!opfFile) throw new Error('OPF não encontrado para troca de capa.');
 
   const files = cloneLoadedFiles(loaded);
-  const doc = parseXml(new TextDecoder('utf-8', { fatal: false }).decode(opfFile.bytes));
+  const doc = parseXml(decodeUtf8ForRewrite(opfFile.bytes, parsed.packageInfo.opfPath));
   const packageElement = findFirstByLocalName(doc, 'package') ?? doc.documentElement;
   const metadata = ensureChild(doc, packageElement, 'metadata');
   const manifest = ensureChild(doc, packageElement, 'manifest');

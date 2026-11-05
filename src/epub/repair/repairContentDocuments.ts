@@ -7,6 +7,7 @@ import { sanitizeHtmlDocument } from '../sanitize/sanitizeHtml';
 import { containsDangerousCss, sanitizeActiveContentMarkup } from '../sanitize/sanitizeActiveContent';
 import { extractCssResourceReferences } from '../validation/referenceExtractor';
 import { decodeCssEscapes, resolveReference } from '../utils/pathUtils';
+import { decodeUtf8ForRewrite } from '../utils/textEncoding';
 
 export function repairContentDocuments(
   files: Map<string, Uint8Array>,
@@ -16,7 +17,6 @@ export function repairContentDocuments(
 ): RepairAction[] {
   const actions: RepairAction[] = [];
   const existingFiles = new Set(files.keys());
-  const decoder = new TextDecoder('utf-8', { fatal: false });
   const encoder = new TextEncoder();
 
   for (const item of pkg.manifest) {
@@ -24,7 +24,7 @@ export function repairContentDocuments(
     if (!entry || !files.has(item.resolvedPath)) continue;
 
     if (HTML_MEDIA_TYPES.has(item.mediaType)) {
-      const result = sanitizeHtmlDocument(decoder.decode(entry.bytes), {
+      const result = sanitizeHtmlDocument(decodeUtf8ForRewrite(entry.bytes, item.resolvedPath), {
         filePath: item.resolvedPath,
         existingFiles,
         kindleSafeMode: options.kindleSafeMode,
@@ -44,7 +44,7 @@ export function repairContentDocuments(
       (options.sanitizeScripts || options.removeRemoteResourceLinks)
     ) {
       const result = sanitizeActiveContentMarkup(
-        decoder.decode(entry.bytes),
+        decodeUtf8ForRewrite(entry.bytes, item.resolvedPath),
         item.resolvedPath,
         options,
       );
@@ -62,7 +62,7 @@ export function repairContentDocuments(
     if (options.repairCssReferences && CSS_MEDIA_TYPES.has(item.mediaType)) {
       const result = sanitizeCssDocument(
         item.resolvedPath,
-        decoder.decode(entry.bytes),
+        decodeUtf8ForRewrite(entry.bytes, item.resolvedPath),
         existingFiles,
         options.removeRemoteResourceLinks,
       );
@@ -88,7 +88,6 @@ export function repairActiveContentOnly(
 ): RepairAction[] {
   if (!options.sanitizeScripts && !options.removeRemoteResourceLinks) return [];
   const actions: RepairAction[] = [];
-  const decoder = new TextDecoder('utf-8', { fatal: false });
   const encoder = new TextEncoder();
   const processed = new Set<string>();
 
@@ -98,7 +97,7 @@ export function repairActiveContentOnly(
     processed.add(path);
     const bytes = files.get(path);
     if (!bytes) continue;
-    const original = decoder.decode(bytes);
+    const original = decodeUtf8ForRewrite(bytes, path);
     if (HTML_MEDIA_TYPES.has(item.mediaType) || item.mediaType === 'image/svg+xml') {
       const cleaned = sanitizeActiveContentMarkup(original, path, {
         sanitizeScripts: options.sanitizeScripts,
