@@ -42,7 +42,7 @@ describe('E-047: travar perda de sincronização durante reparo técnico', () =>
   it('recusa perder media-overlay ao regravar OPF', () => {
     const x=fixture();
     const after={...x.pkg,manifest:x.pkg.manifest.map(i=>
-      i.id==='chapter'?{...i,mediaOverlay:undefined}:i)} as PackageDocumentInfo;
+      i.id==='chapter'?{...i,mediaOverlay:undefined}:i)};
     expect(()=>auditPreservation(x.loaded,x.output,x.pkg,after))
       .toThrow(/vínculo editorial/u);
   });
