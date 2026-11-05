@@ -1,0 +1,66 @@
+name: Browser compatibility smoke (Chromium, Firefox, WebKit)
+
+on:
+  push:
+    branches: [dev, prod]
+    paths:
+      - 'src/**'
+      - 'tests/browser-smoke.mjs'
+      - 'vite.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/browser-matrix.yml'
+  pull_request:
+    branches: [dev, prod]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browser-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    name: Browser smoke / ${{ matrix.browser }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+      - name: Install application from lockfile
+        run: npm ci
+      - name: Install isolated Playwright test harness
+        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.55.1
+      - name: Install supported browser and OS libraries
+        run: npx playwright install --with-deps "${{ matrix.browser }}"
+      - name: Start static app locally and smoke browser
+        shell: bash
+        env:
+          BROWSER: ${{ matrix.browser }}
+        run: |
+          set -euo pipefail
+          npm run dev -- --host 127.0.0.1 > "${RUNNER_TEMP}/vite-server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for i in $(seq 1 60); do
+            if curl --silent --fail http://127.0.0.1:5173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail http://127.0.0.1:5173/ > /dev/null
+          node tests/browser-smoke.mjs
+      - name: Upload server diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vite-logs-${{ matrix.browser }}
+          path: ${{ runner.temp }}/vite-server.log
+          retention-days: 3
