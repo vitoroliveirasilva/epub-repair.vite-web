@@ -37,10 +37,13 @@ function inspectChain(
     if (!next) return { kind: 'missing', core, document };
     if (visited.has(next.id)) return { kind: 'cycle', core, document };
     visited.add(next.id);
-    if ((!next.remote && !next.exists) || !next.pathSafe) {
+    const mediaType = normalizedType(next);
+    // Um XHTML/SVG remoto não pode substituir um documento de leitura que
+    // precisa estar dentro do container. Fontes/áudio externos seguem válidos.
+    if ((!next.remote && !next.exists) || !next.pathSafe ||
+        (next.remote && CONTENT_DOCUMENTS.has(mediaType))) {
       return { kind: 'missing-file', core, document };
     }
-    const mediaType = normalizedType(next);
     if (CORE_MEDIA.has(mediaType)) core = true;
     if (CONTENT_DOCUMENTS.has(mediaType)) document = true;
     item = next;

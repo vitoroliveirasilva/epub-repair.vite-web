@@ -31,6 +31,14 @@ describe('E-041/E-044: cadeias fallback EPUB3 e documentos estrangeiros no spine
     ];
     expect(validate(manifest,['pdf'])).toEqual([]);
   });
+  it('não aceita XHTML remoto como destino editorial de fallback do spine', () => {
+    const pdf = item('pdf','application/pdf','online');
+    const remote = { ...item('online','application/xhtml+xml'),
+      href:'https://example.org/chapter.xhtml', resolvedPath:'https://example.org/chapter.xhtml',
+      remote:true, exists:false };
+    expect(validate([pdf,remote],['pdf'])).toContain(
+      'OPF_SPINE_FOREIGN_FALLBACK_MISSING');
+  });
   it('não marca fallback de PDF para PNG como documento de leitura no spine', () => {
     const manifest = [item('pdf','application/pdf','png'),item('png','image/png')];
     expect(validate(manifest,['pdf'])).toContain('OPF_SPINE_FOREIGN_FALLBACK_MISSING');
