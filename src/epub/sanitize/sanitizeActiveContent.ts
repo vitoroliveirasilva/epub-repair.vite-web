@@ -66,8 +66,13 @@ export function sanitizeActiveContentMarkup(
     if (options.sanitizeScripts && name === 'style' && containsDangerousCss(element.textContent ?? '')) {
       // Preservar regras benignas em vez de descartar toda a tipografia da obra.
       const sanitized = sanitizeDangerousEmbeddedCss(element.textContent ?? '');
-      if (containsDangerousCss(sanitized)) element.remove();
-      else element.textContent = sanitized;
+      if (containsDangerousCss(sanitized)) {
+        throw new Error(
+          'CSS embutido ofuscado ou incomum exige revisão manual em ' + filePath +
+          ': não é seguro descartar o bloco <style> nem afirmar que foi neutralizado.',
+        );
+      }
+      element.textContent = sanitized;
       changed = true;
       continue;
     }
@@ -79,8 +84,13 @@ export function sanitizeActiveContentMarkup(
 
       if (options.sanitizeScripts && attrName === 'style' && containsDangerousCss(value)) {
         const sanitized = sanitizeDangerousEmbeddedCss(value);
-        if (containsDangerousCss(sanitized)) element.removeAttributeNode(attribute);
-        else element.setAttribute(attrName, sanitized);
+        if (containsDangerousCss(sanitized)) {
+          throw new Error(
+            'CSS inline ofuscado ou incomum exige revisão manual em ' + filePath +
+            ': a propriedade não será apagada sem comprovação.',
+          );
+        }
+        element.setAttribute(attrName, sanitized);
         changed = true;
         continue;
       }
@@ -143,16 +153,19 @@ export function shouldRemoveUrl(
 
 /** Usa somente URLs ativas como sinal de risco; fontes e @import HTTPS não são perigosos por si. */
 export function containsDangerousCss(text: string): boolean {
-  if (/expression\s*\(|behavior\s*:|-moz-binding\s*:/iu.test(text)) return true;
+  // CSS permite escapes e comentários entre partes de tokens. Canonicalizar
+  // para DETECÇÃO apenas; nunca reescrever todo o CSS com esta transformação.
+  const canonical = decodeCssEscapes(text.replace(/\/\*[\s\S]*?\*\//gu, ''));
+  if (/expression\s*\(|behavior\s*:|-moz-binding\s*:/iu.test(canonical)) return true;
 
-  for (const match of text.matchAll(/url\(\s*(["']?)(.*?)\1\s*\)/giu)) {
+  for (const match of canonical.matchAll(/url\(\s*(["']?)(.*?)\1\s*\)/giu)) {
     const value = decodeCssEscapes(match[2] ?? '');
     if (isRemoteUrl(value) && !isSafeRemoteResourceUrl(value) && !isInlineFontDataUrl(value)) {
       return true;
     }
   }
 
-  for (const match of text.matchAll(/@import\s+(?:url\(\s*)?(?:(["'])(.*?)\1|([^"'\s);]+))/giu)) {
+  for (const match of canonical.matchAll(/@import\s+(?:url\(\s*)?(?:(["'])(.*?)\1|([^"'\s);]+))/giu)) {
     const value = decodeCssEscapes(match[2] || match[3] || '');
     if (isRemoteUrl(value) && !isSafeRemoteResourceUrl(value)) return true;
   }

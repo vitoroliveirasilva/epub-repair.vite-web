@@ -82,6 +82,32 @@ describe('testes adversariais de sanitização XHTML no DOM', () => {
     expect(doc.getElementsByTagName('p')[0]?.textContent).toBe('Texto preservado');
   });
 
+
+  it('E-016/E-054: CSS ofuscado não provoca descarte silencioso do style', () => {
+    const original = xhtml(
+      '<style>p{color:blue;width:expre\\73sion(alert(1));font-weight:bold}</style>' +
+      '<p>Capítulo intacto</p>',
+    );
+    expect(() => sanitizeActiveContentMarkup(original, filePath, options))
+      .toThrow(/revisão manual/u);
+  });
+
+  it('E-054: reconhece escapes CSS, comentários maliciosos e URLs ofuscadas', async () => {
+    const { containsDangerousCss } = await import('../src/epub/sanitize/sanitizeActiveContent');
+    expect(containsDangerousCss('p{width:expre\\73sion(alert(1));}')).toBe(true);
+    expect(containsDangerousCss('p{background:u\\72l("javascript:alert(1)")}')).toBe(true);
+    expect(containsDangerousCss('p{background:url("j\\61vascript:alert(1)")}')).toBe(true);
+    expect(containsDangerousCss('p{width:expre/**/ssion(alert(1))}')).toBe(true);
+    expect(containsDangerousCss('/* expression(alert(1)) */ p{color:blue}')).toBe(false);
+    expect(containsDangerousCss('@font-face{src:url("https://fonts.example/font.woff2")}'))
+      .toBe(false);
+  });
+
+  it('E-016: CSS inline difícil de sanitizar bloqueia o reparo sem perder o parágrafo', () => {
+    const original = xhtml('<p style="color:red;width:expre\\73sion(alert(1))">Texto</p>');
+    expect(() => sanitizeActiveContentMarkup(original, filePath, options))
+      .toThrow(/revisão manual/u);
+  });
   it('remove javascript ofuscado por entidade HTML, handlers e scripts sem perder o texto', () => {
     const input = xhtml(
       '<p id="texto">Capítulo válido</p><a href="java&#x73;cript:alert(1)" onclick="alert(2)">Continuar</a>' +
