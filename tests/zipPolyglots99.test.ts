@@ -37,9 +37,10 @@ describe('E-026: ZIP polyglots versus metadados ZIP legítimos', () => {
   });
   it('rejeita payload posterior ao EOCD não declarado como comentário ZIP', async () => {
     const original = await base();
-    const appended = new Uint8Array(original.length + 17);
+    const trailer = new TextEncoder().encode('<script>1</script>');
+    const appended = new Uint8Array(original.length + trailer.length);
     appended.set(original);
-    appended.set(new TextEncoder().encode('<script>1</script>'), original.length);
+    appended.set(trailer, original.length);
     const result = parseZipCentralDirectory(appended);
     expect(result.issues.some((issue) => issue.severity === 'fatal')).toBe(true);
   });
