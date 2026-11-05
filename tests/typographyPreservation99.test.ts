@@ -13,8 +13,7 @@ function compare(before: string, after: string) {
   const pkg={opfPath:'OPS/book.opf',opfDir:'OPS',version:'3.3',
     metadata:{},manifest:[entry],spine:[{idref:'c',manifestItem:entry}],
     rootfileCount:1} as PackageDocumentInfo;
-  const original={files:new Map([[path,{bytes:new TextEncoder().encode(wrap(before))}]])}
-    as unknown as LoadedEpub;
+  const original={files:new Map([[path,{bytes:new TextEncoder().encode(wrap(before))}]])} as unknown as LoadedEpub;
   const output=new Map([[path,new TextEncoder().encode(wrap(after))]]);
   return ()=>auditPreservation(original,output,pkg,pkg);
 }
