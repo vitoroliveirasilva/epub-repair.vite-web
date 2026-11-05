@@ -70,3 +70,15 @@ com CI Node 20/22, EPUBCheck 5.4.0 e testes sintéticos. A `prod` segue intacta.
 - Não fazer merge de `dev` em `prod` nem release automático a partir deste inventário. `prod` continua em `v2.2.0`.
 
 Para evidências e estados individuais, ver [Auditoria 99](AUDITORIA_99_PROGRESSO.md).
+
+## Execução 8: segurança e múltiplas renditions
+
+- Scripts e recursos EPUB 3 legítimos podem ser mantidos por decisão explícita; continuam rastreados como revisão manual caso não sejam neutralizados. A interface não equipara recurso JavaScript a malware.
+- XHTML/CSS/SVG não declarados são inspecionados sem executar nem apagar seu conteúdo; XML/encoding inválido mantém alerta.
+- Referências só são avaliadas em atributos DOM reais e texto visível, não em comentários ou exemplos escapados da obra.
+- A presença de vários rootfiles em `container.xml` **não é motivo para reconstruí-lo**: isto anteriormente perdia edições secundárias. Foram adicionados testes byte a byte do container e dos recursos de outras renditions.
+- Manifests de edições secundárias não serão mesclados ao OPF ativo sem decisão editorial.
+- A CSP atual proíbe Workers enquanto o item E-032 não está implementado.
+- Todos os 12 P0 estão encerrados no escopo automatizado definido, **sem substituir auditoria de segurança, antivírus ou testes em leitores físicos**.
+
+Referência completa: [Auditoria 99 / execução 8](AUDITORIA_99_PROGRESSO.md).

@@ -1,14 +1,14 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 05/11/2026 (execução 7, CI Node 20/22 e EPUBCheck aprovada) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 05/11/2026 (execução 8, CI Node 20/22 e EPUBCheck aprovada) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
 | Situação | Itens |
 | --- | ---: |
-| Concluídos no escopo definido, com CI Node 20/22 aprovada | **61** |
-| Parcialmente tratados, com testes/validação adicionais necessários | **29** |
-| Não iniciados ou ainda não evidenciados | **9** |
+| Concluídos no escopo definido, com CI Node 20/22 aprovada | **67** |
+| Parcialmente tratados, com testes/validação adicionais necessários | **24** |
+| Não iniciados ou ainda não evidenciados | **8** |
 | Total | **99** |
 
 ## Regras de classificação
@@ -50,10 +50,10 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-023 | P1 | Colisões depois de decodificação, normalização ou diferença de caixa | Concluído · CI |
 | E-024 | P1 | Consistência entre nomes do diretório central e nomes vistos pelo JSZip | Concluído · CI |
 | E-025 | P1 | Extra fields Unicode, data descriptors, tamanhos e offsets extremos | Concluído · CI |
-| E-026 | P1 | Sobreposição de payload ZIP, entrada duplicada e polyglots | Parcial |
-| E-027 | P1 | Arquivos e diretórios com nomes especiais ou caminhos relativos anômalos | Parcial |
+| E-026 | P1 | Sobreposição de payload ZIP, entrada duplicada e polyglots | Concluído · CI |
+| E-027 | P1 | Arquivos e diretórios com nomes especiais ou caminhos relativos anômalos | Concluído · CI |
 | E-028 | P1 | EPUB multipartes/ZIP64/criptografia rejeitados com diagnóstico preciso | Concluído · CI |
-| E-029 | P1 | Manifest e container com múltiplos rootfiles/renditions | Parcial |
+| E-029 | P1 | Manifest e container com múltiplos rootfiles/renditions | Concluído · CI |
 | E-030 | P1 | mimetype duplicado, diretórios primeiro, extras e arquivos de tamanho zero | Concluído · CI |
 | E-031 | P1 | Picos de memória ao carregar/decompactar/revalidar várias vezes | Parcial |
 | E-032 | P2 | Progresso, cancelamento e execução em Worker para EPUBs grandes | Pendente |
@@ -63,7 +63,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-036 | P1 | Matriz separada EPUB 2, EPUB 3.0/3.2/3.3 e EPUB 3.4 | Parcial |
 | E-037 | P1 | Links internos com fragmento inexistente (#id) | Concluído · CI |
 | E-038 | P1 | Links de nav.xhtml e seus fragmentos, hierarquia toc e estrutura de lista | Concluído · CI |
-| E-039 | P1 | NAV/NCX com URLs escapadas, fragmentos, âncoras internas e caracteres especiais | Parcial |
+| E-039 | P1 | NAV/NCX com URLs escapadas, fragmentos, âncoras internas e caracteres especiais | Concluído · CI |
 | E-040 | P1 | Suporte a page-list, landmarks e guide sem destruí-los | Concluído · CI |
 | E-041 | P1 | Validação de fallback e ciclos de referência de recursos foreign | Parcial |
 | E-042 | P1 | Validar propriedades required do manifest: nav, cover-image, scripted, remote-resources etc | Concluído · CI |
@@ -76,8 +76,8 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-049 | P2 | MathML, ruby, RTL, escrita vertical e idiomas mistos | Parcial |
 | E-050 | P2 | Declarações de imagem de capa em OPF/guide/nav/cover-image | Concluído · CI |
 | E-051 | P0 | Verificação dos arquivos JS/binários não mencionados no fluxo de sanitização | Concluído · CI |
-| E-052 | P0 | Sanitização de todo conteúdo ativo em cada modo de reparo, inclusive conservador | Parcial |
-| E-053 | P1 | Atributos URL que usam entidades, controles, espaços e codificações alternativas | Parcial |
+| E-052 | P0 | Sanitização de todo conteúdo ativo em cada modo de reparo, inclusive conservador | Concluído · CI |
+| E-053 | P1 | Atributos URL que usam entidades, controles, espaços e codificações alternativas | Concluído · CI |
 | E-054 | P1 | CSS url(), @import, escapes e comentários com sintaxe adversarial | Parcial |
 | E-055 | P1 | SVG com URI/script/eventos/namespace e recursos incorporados | Parcial |
 | E-056 | P1 | XML com DTD/XInclude/entidades externas e DOCTYPE incomum | Concluído · CI |
@@ -86,7 +86,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-059 | P1 | Scan AV opcional fora do navegador, sem alegar antivírus integrado | Parcial |
 | E-060 | P1 | Modelo de ameaças EPUB e checklist de privacidade de recursos externos | Concluído · CI |
 | E-061 | P1 | Separar score de segurança de inspeção de conformidade e de integridade | Concluído · CI |
-| E-062 | P2 | Headers CSP/Netlify e comportamento de previews/blob/data em navegadores | Pendente |
+| E-062 | P2 | Headers CSP/Netlify e comportamento de previews/blob/data em navegadores | Parcial |
 | E-063 | P2 | Fuzzing determinístico de ZIP/XML/SVG/CSS/OPF e limites contra ReDoS | Parcial |
 | E-064 | P0 | Comparar texto integral pré/pós e avisar alterações não previstas | Concluído · CI |
 | E-065 | P0 | Comparar ordem de leitura, capítulos, IDs e links antes/depois | Concluído · CI |
@@ -397,3 +397,38 @@ e diagnóstico não equivalem a suporte pleno.
 3. **P2 E-049, E-096 e E-099:** escrita vertical/idiomas mistos, benchmark maior e workflow semanal realmente ativo somente após promoção aprovada para a branch padrão.
 
 **Produção:** nenhum merge, nenhuma tag, nenhuma release. A `prod` mantém a v2.2.0.
+
+## Execução 8: fechamento dos P0 e proteção de múltiplas renditions
+
+**Estado anterior:** 61 concluídos, 29 parciais, 9 pendentes.
+**Agora:** **67 concluídos, 24 parciais, 8 pendentes.** Todos os **12 P0 concluídos nos critérios automatizados definidos**; isso não equivale a certificação de segurança nem ausência de malware.
+
+- **Concluídos nesta rodada:** E-026, E-027, E-029, E-039, E-052, E-053.
+- **De pendente a parcial:** E-062.
+- **91/99 itens com avanço comprovado** (67 concluídos, 24 parciais).
+- **32/99 ainda sem encerramento integral** (24 parciais, 8 pendentes).
+
+### Evidências de código e testes
+
+| Escopo | Alterações e verificação |
+| --- | --- |
+| E-052 (P0): sanitização/alerta | `d1b5ae6`, `37cca56`, `2848155`, `19d6862`, `180ebba`: scripts, embeds, eventos, SVG/CSS e órfãos inspecionados por DOM; reparo normal/conservador/opt-out/otimização cobertos por regressões; JS declarado legítimo é preservado mas **exige revisão manual**, não tem falso parecer de segurança |
+| E-053 (P1): URLs adversariais | `d1b5ae6`, `2848155`: decodificação de entidades, sinais executáveis, srcset e URL de atributo real; comentários e código editorial escapado não contam como referências |
+| E-027 (P1): nomes ZIP | `089cde3`: round-trip físico e lógico de `#`, `?`, `%`, espaço, caracteres Unicode e formas NFC/NFD |
+| E-039 (P1): fragmentos NAV/NCX | `9379ecf`: nomes percent-encoded, Unicode, âncora legada, page-list e destino não encontrado, sem exigir índice item a item |
+| E-029 (P1): várias renditions | `b4a2365`, `9e53727`, `1bc3d26`, `1109315`: **corrigida perda real de rootfiles** causada por reconstrução indevida de `container.xml`; não adotar arquivos de outra edição; compare o container e OPFs secundários byte a byte |
+| E-026 (P1): ZIP ambíguo | `9330a4d`, `a4c301e`: duplicação/sobreposição já cobertas, polyglots com cabeçalho executável/HTML e trailer incompatível rejeitados, comentários ZIP verdadeiros preservados |
+| E-062 (P2, parcial) | `410b15e`, `55d8a21`: asserções de CSP/Netlify em testes; falta validação real das respostas HTTP e comportamento de navegadores/WebKit |
+
+**CI validada:** [GitHub Actions / 42093937447](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42093937447): lint, TypeScript, testes e build em Node.js 20 e 22; EPUBCheck 5.4.0 concluídos com sucesso.
+
+### Restrições de confiança e ações prioritárias
+
+1. O gate P0 E-052 considera um resultado **parcial com revisão manual** quando JavaScript legítimo declarado, payload órfão ou qualquer conteúdo ativo residual permanece, inclusive por opt-out. Não remove arbitrariamente arquivos JS legítimos de EPUB 3, nem afirma ausência de malware.
+2. E-029 trata **uma rendition ativa por análise**. Outras edições são preservadas integralmente e exigem inspeção própria. Múltiplos rootfiles não são erro de segurança por si sós.
+3. E-032/E-080: execução via Worker, progresso e cancelamento. A CSP atual contém `worker-src 'none'` e precisará mudar com testes reais antes dessa evolução.
+4. E-031/E-096: benchmark sintético não comprova consumo de memória em livros grandes ou dispositivos modestos.
+5. E-047/E-049/E-089/E-090: sincronização audiovisual, escrita complexa e leitores/browsers reais seguem sem homologação universal.
+6. E-062: configurações Netlify testadas estaticamente, não demonstram os headers servidos em produção.
+
+**Branch `prod` intacta na v2.2.0; nenhuma release nem merge efetuados.**

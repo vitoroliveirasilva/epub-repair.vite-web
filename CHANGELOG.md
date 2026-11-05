@@ -2,6 +2,18 @@
 
 Alterações na branch `dev` **ainda não publicadas**. O pacote e a branch `prod` continuam em **v2.2.0**. Esta página documenta desenvolvimento e não representa uma nova release.
 
+## Unreleased: execução 8 (05/11/2026)
+
+- Corrigida a perda de referências a renditions secundárias quando o container possui múltiplos rootfiles válidos.
+- Manifests de edições diferentes não são fundidos automaticamente e revisões parciais ficam identificadas.
+- Inspeção estrutural de scripts/embeds e extração de links reais sem falso positivo em comentários ou código editorial.
+- Inventário de JavaScript declarado e órfão, incluindo avisos de revisão manual nos modos de reparo e otimização.
+- Proteção de nomes ZIP e validação de anchors/fragmentos Unicode em NAV/NCX.
+- Regressões de payloads polyglot ZIP e respeito a comentários ZIP legítimos.
+- Testes da configuração CSP/Netlify; comportamento real em WebKit e headers HTTP ainda pendente.
+
+**Auditoria:** 67 concluídos, 24 parciais e 8 pendentes, conforme o [quadro por item](docs/AUDITORIA_99_PROGRESSO.md).
+
 ## Unreleased: auditoria dos 99 itens, execuções 1 a 6 (05/11/2026)
 
 ### Segurança de entradas e integridade
