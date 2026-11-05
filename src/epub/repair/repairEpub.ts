@@ -236,5 +236,10 @@ function shouldNormalizeMimetype(
 }
 
 function shouldRebuildContainer(issues: { code: string }[]): boolean {
-  return issues.some((issue) => issue.code.startsWith('CONTAINER_'));
+  // Múltiplos rootfiles podem representar renditions legítimas. Este aviso
+  // informativo NUNCA autoriza substituir o container e perder outras edições.
+  const missingOrBroken = new Set([
+    'CONTAINER_MISSING', 'CONTAINER_INVALID_XML', 'CONTAINER_NO_ROOTFILE',
+  ]);
+  return issues.some((issue) => missingOrBroken.has(issue.code));
 }
