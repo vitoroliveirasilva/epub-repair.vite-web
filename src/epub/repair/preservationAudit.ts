@@ -57,6 +57,8 @@ export function auditPreservation(
     }
   }
 
+  warnings.push(...auditNavigationPreservation(original, output, before));
+
   const changedText: string[] = [];
   const potentiallyLostText: string[] = [];
   const unverifiableText: string[] = [];
@@ -73,6 +75,7 @@ export function auditPreservation(
     if (!sameBytes(oldBytes, newBytes)) {
       compareInternalTargets(oldMarkup, newMarkup, item.resolvedPath);
       compareEditorialBlocks(oldMarkup, newMarkup, item.resolvedPath);
+      compareSpecialMarkup(oldMarkup, newMarkup, item.resolvedPath);
     }
     const oldText = extractReadableText(oldMarkup);
     const newText = extractReadableText(newMarkup);
@@ -223,4 +226,79 @@ function parseReadableDocument(markup: string): Document | undefined {
     markup.replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml',
   );
   return doc.getElementsByTagName('parsererror').length > 0 ? undefined : doc;
+}
+
+
+/**
+ * Referências do sumário EPUB 3 e NCX são editoriais, não enumeram o spine.
+ * Nunca permitir que sanitização ou normalização silenciosamente perca links
+ * que existiam antes, mesmo quando o destino original já era problemático.
+ */
+function auditNavigationPreservation(
+  original: LoadedEpub,
+  output: ReadonlyMap<string, Uint8Array>,
+  before: PackageDocumentInfo,
+): string[] {
+  const notes: string[] = [];
+  for (const item of [before.navItem, before.ncxItem]) {
+    if (!item?.exists) continue;
+    const oldBytes = original.files.get(item.resolvedPath)?.bytes;
+    const newBytes = output.get(item.resolvedPath);
+    if (!oldBytes || !newBytes) {
+      throw new Error('O reparo removeria um arquivo de navegação existente: ' + item.resolvedPath);
+    }
+    if (sameBytes(oldBytes, newBytes)) continue;
+    const oldDoc = parseReadableDocument(textDecoder.decode(oldBytes));
+    const newDoc = parseReadableDocument(textDecoder.decode(newBytes));
+    if (!oldDoc || !newDoc) {
+      notes.push('Não foi possível comparar todos os links do índice em ' + item.resolvedPath +
+        '; revise manualmente o sumário.');
+      continue;
+    }
+    const targets = (doc: Document): string[] => Array.from(doc.getElementsByTagName('*'))
+      .flatMap((node) => {
+        if (node.localName === 'a') return [node.getAttribute('href') ?? ''];
+        if (node.localName === 'content') return [node.getAttribute('src') ?? ''];
+        return [];
+      }).filter(Boolean);
+    const oldTargets = targets(oldDoc);
+    const newTargets = targets(newDoc);
+    if (oldTargets.join('\u0000') !== newTargets.join('\u0000')) {
+      throw new Error('O reparo alteraria destinos ou ordem do sumário em ' + item.resolvedPath);
+    }
+  }
+  return notes;
+}
+
+/**
+ * Proteger blocos semânticos especiais. Uma alteração em texto/estrutura MathML,
+ * ruby ou direção explícita não pode ser tratada como sanitização inofensiva.
+ * Marcação e estilos devem ser preservados; leitura visual real permanece pendente.
+ */
+function compareSpecialMarkup(before: string, after: string, path: string): void {
+  const oldDoc = parseReadableDocument(before);
+  const newDoc = parseReadableDocument(after);
+  if (!oldDoc || !newDoc) return;
+  const semantic = (doc: Document): string[] => Array.from(doc.getElementsByTagName('*'))
+    .filter((node) => ['math', 'mrow', 'mi', 'mn', 'mo', 'msup', 'msub', 'mfrac',
+      'ruby', 'rb', 'rt', 'rp', 'rtc', 'bdo', 'bdi'].includes(node.localName))
+    .map((node) => [
+      node.namespaceURI ?? '',
+      node.localName,
+      node.getAttribute('dir') ?? '',
+      (node.textContent ?? '').replace(/\s+/gu, ' ').trim(),
+    ].join('|'));
+  if (semantic(oldDoc).join('\u0000') !== semantic(newDoc).join('\u0000')) {
+    throw new Error('O reparo alteraria a semântica MathML/ruby/RTL em ' + path);
+  }
+  const directional = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
+    .filter((node) => Boolean(node.getAttribute('dir')?.trim()))
+    .map((node) => node.localName + '|' + node.getAttribute('dir'));
+  const beforeDirections = directional(oldDoc);
+  const afterDirections = directional(newDoc);
+  for (const direction of beforeDirections) {
+    if (!afterDirections.includes(direction)) {
+      throw new Error('O reparo perderia uma direção de leitura explícita em ' + path);
+    }
+  }
 }
