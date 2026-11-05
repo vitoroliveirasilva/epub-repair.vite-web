@@ -14,9 +14,10 @@ export function detectOrphanResources(loaded: LoadedEpub, pkg: PackageDocumentIn
     if (reserved.has(fileName) || declared.has(fileName)) continue;
     if (SYSTEM_FILE_PATTERNS.some((pattern) => pattern.test(fileName))) continue;
     const mediaType = guessMediaType(fileName);
-    if (!mediaType || !RELEVANT_MEDIA_TYPES.has(mediaType)) continue;
+    if ((!mediaType || !RELEVANT_MEDIA_TYPES.has(mediaType)) &&
+        !/\.(?:js|mjs|cjs)$/iu.test(fileName)) continue;
 
-    if (mediaType === 'text/javascript') {
+    if (mediaType === 'text/javascript' || /\.(?:js|mjs|cjs)$/iu.test(fileName)) {
       issues.push(createIssue({
         code: 'PACKAGE_UNDECLARED_SCRIPT',
         severity: 'warning',
