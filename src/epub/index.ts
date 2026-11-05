@@ -5,6 +5,7 @@ export { readCoverImageFile, MAX_COVER_IMAGE_SIZE_BYTES } from './cover/coverIma
 export {
   canOptimizeReport,
   hasManualReviewIssues,
+  hasResidualActiveContent,
   canRepairReport,
   getOptionalOptimizationCount,
   getRequiredRepairableCount,

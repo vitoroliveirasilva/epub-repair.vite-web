@@ -4,7 +4,7 @@ import { inspectEpub } from '../validation/validateEpub';
 import { DEFAULT_REPAIR_OPTIONS, EPUB_MIME, SYSTEM_FILE_PATTERNS } from '../utils/constants';
 import { makeRepairedFileName } from '../utils/fileName';
 import { normalizeInternalPath } from '../utils/pathUtils';
-import { canOptimizeReport, canRepairReport } from '../utils/reportGuards';
+import { canOptimizeReport, canRepairReport, hasResidualActiveContent } from '../utils/reportGuards';
 import { parsePackageDocument, parseOpfDocument } from '../validation/opfParser';
 import { parseXml } from '../utils/xmlUtils';
 import { auditPreservation } from './preservationAudit';
@@ -79,6 +79,9 @@ export async function repairEpub(
     const outName = makeRepairedFileName(fileName);
     const after = await inspectEpub(outName, new Uint8Array(await blob.arrayBuffer()));
     assertNoNewCriticalIssues(before, after);
+    if (hasResidualActiveContent(after)) {
+      warnings.push('Otimização concluída, mas ainda existem recursos suspeitos ou conteúdo ativo a revisar.');
+    }
     return { blob, fileName: outName, before, after, actions: applied, warnings, changed: true, operation };
   }
 
@@ -162,9 +165,11 @@ export async function repairEpub(
       after: before,
       actions: [],
       warnings: [
-        operation === 'optimization'
-          ? 'A otimização opcional foi avaliada, mas nenhuma alteração automática foi aplicada.'
-          : 'Nenhuma alteração automática foi aplicada.',
+        hasResidualActiveContent(before)
+          ? 'Nenhuma alteração foi aplicada e o EPUB ainda contém sinais de conteúdo ativo ou recursos suspeitos.'
+          : operation === 'optimization'
+            ? 'A otimização opcional foi avaliada, mas nenhuma alteração automática foi aplicada.'
+            : 'Nenhuma alteração automática foi aplicada.',
       ],
       changed: false,
       operation,
@@ -177,11 +182,8 @@ export async function repairEpub(
   const after = await inspectEpub(outputFileName, afterBytes);
   assertNoNewCriticalIssues(before, after);
   warnings.push(...auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo));
-  const activeAfter = after.issues.some((issue) =>
-    /^(?:CONTENT_(?:SCRIPTED|UNSAFE|KINDLE_EMBED)|CSS_UNSAFE)/u.test(issue.code),
-  );
-  if (activeAfter) {
-    warnings.push('Ainda há sinais de conteúdo ativo ou URLs perigosas: este EPUB exige revisão antes de uso.');
+  if (hasResidualActiveContent(after)) {
+    warnings.push('O reparo ainda apresenta conteúdo ativo ou recursos suspeitos: exige revisão manual.');
   }
 
   return {

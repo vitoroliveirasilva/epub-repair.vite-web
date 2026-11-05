@@ -24,6 +24,19 @@ export function auditPreservation(
     warnings.push('A ordem ou a composição do spine mudou: confirme manualmente a sequência dos capítulos.');
   }
 
+  const originalReadingPaths = before.spine
+    .map((item) => item.manifestItem)
+    .filter((item) => item?.exists)
+    .map((item) => item!.resolvedPath);
+  const finalReadingPaths = new Set(
+    after.spine.map((item) => item.manifestItem?.resolvedPath).filter(Boolean),
+  );
+  for (const path of originalReadingPaths) {
+    if (!output.has(path) || !finalReadingPaths.has(path)) {
+      throw new Error(`O reparo perdeu um documento da ordem de leitura: ${path}`);
+    }
+  }
+
   const changedText: string[] = [];
   for (const item of before.manifest) {
     if (!item.exists || !HTML_MEDIA_TYPES.has(item.mediaType)) continue;
