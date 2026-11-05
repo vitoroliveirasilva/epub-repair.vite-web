@@ -16,7 +16,7 @@ export function validateEditorialOcrQuality(
 ): Issue[] {
   const issues: Issue[] = [];
   const pageLabels = new Map<string, Set<string>>();
-  const paragraphsByPath = new Map<string, string[]>();
+  const runningText = new Map<string, Set<string>>();
   for (const item of pkg.manifest) {
     if (!item.exists || !HTML_TYPES.has(item.mediaType)) continue;
     const bytes = loaded.files.get(item.resolvedPath)?.bytes;
@@ -36,8 +36,42 @@ export function validateEditorialOcrQuality(
     const paragraphs = Array.from(content.getElementsByTagName('*'))
       .filter((element) => element.localName.toLowerCase() === 'p')
       .map((element) => element.textContent ?? '');
-    paragraphsByPath.set(item.resolvedPath, paragraphs);
     const visible = paragraphs.join('\n');
+    // Texto curto repetido nas extremidades de >=3 arquivos pode ter vindo
+    // de cabeçalho/rodapé de páginas digitalizadas. Não editar nem pressupor erro.
+    if (paragraphs.length >= 3) {
+      for (const [position, value] of [
+        ['início', paragraphs[0]],
+        ['fim', paragraphs[paragraphs.length - 1]],
+      ] as const) {
+        const label = (value ?? '').trim().replace(/\s+/gu, ' ');
+        if (label.length < 12 || label.length > 80 ||
+            label.split(' ').length < 3 || !/[\p{L}]/u.test(label)) continue;
+        const key = position + ': ' + label.toLocaleLowerCase();
+        const locations = runningText.get(key) ?? new Set<string>();
+        locations.add(item.resolvedPath);
+        runningText.set(key, locations);
+      }
+    }
+    // Reconhecer quebra de linha artificial apenas quando há recorrência em
+    // parágrafos longos. Versos curtos e uma quebra isolada não são suspeitos.
+    const hardWrapped = paragraphs.filter((paragraph) => {
+      const lines = paragraph.split(/\r?\n/u).map((line) => line.trim()).filter(Boolean);
+      return lines.length >= 5 && lines.every((line) => line.length >= 20 &&
+        line.length <= 90) && lines.slice(0, -1).every((line) =>
+        !/[.!?;:…]$/u.test(line));
+    }).length;
+    if (hardWrapped >= 2) {
+      issues.push(createIssue({
+        code: 'CONTENT_OCR_SUSPECT',
+        severity: 'info',
+        title: 'Possíveis quebras artificiais de linhas de OCR',
+        detail: hardWrapped + ' parágrafos extensos contêm várias quebras físicas ' +
+          'sem pontuação terminal. Verifique se a diagramação original foi importada como texto.',
+        file: item.resolvedPath,
+        repairable: false,
+      }));
+    }
     const replacementChars = (visible.match(/\uFFFD/gu) ?? []).length;
     // Um único hífen de fim de linha pode ser estilístico. Exigir recorrência.
     const splitWords = (visible.match(/[\p{L}]{3,}-[ \t]*\r?\n[ \t]*[\p{L}]{3,}/gu) ?? []).length;
@@ -64,6 +98,19 @@ export function validateEditorialOcrQuality(
       locations.add(item.resolvedPath);
       pageLabels.set(key, locations);
     }
+  }
+
+  for (const [label, locations] of runningText) {
+    if (locations.size < 3) continue;
+    issues.push(createIssue({
+      code: 'CONTENT_OCR_SUSPECT',
+      severity: 'info',
+      title: 'Possível cabeçalho ou rodapé repetido no texto',
+      detail: 'A mesma linha aparece no ' + label.split(': ')[0] + ' de ' +
+        locations.size + ' capítulos. Pode ser conteúdo editorial legítimo; revise visualmente.',
+      context: label.slice(0, 100),
+      repairable: false,
+    }));
   }
 
   for (const [format, locations] of pageLabels) {

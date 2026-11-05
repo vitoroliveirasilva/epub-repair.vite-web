@@ -22,6 +22,17 @@ describe('E-072: rótulos acessíveis e SVG inline não destrutivos', () => {
     expect(check('<h2 id="first">Título</h2><p id="last">Autor</p>' +
       '<section aria-labelledby="first last"><p>Texto</p></section>')).toEqual([]);
   });
+  it('diagnostica aria-describedby ausente sem reescrever o documento', () => {
+    const issues = check('<p id="legenda">Descrição</p>' +
+      '<figure aria-describedby="legenda ausente">Gráfico</figure>');
+    expect(issues.map((i) => i.code)).toEqual(['CONTENT_ARIA_DESCRIBED_BY_MISSING']);
+    expect(issues[0]?.context).toBe('ausente');
+    expect(issues[0]?.repairable).toBe(false);
+  });
+  it('aceita descrição acessível com múltiplos identificadores existentes', () => {
+    expect(check('<p id="a">Uma</p><p id="b">Duas</p>' +
+      '<figure aria-describedby="a b">Imagem</figure>')).toEqual([]);
+  });
   it('trata SVG decorativo como válido e não exige descrição textual', () => {
     expect(check('<svg:svg aria-hidden="true"><svg:circle r="2"/></svg:svg>')).toEqual([]);
   });

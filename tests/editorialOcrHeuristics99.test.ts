@@ -45,6 +45,30 @@ describe('E-069: OCR sem reparo editorial especulativo', () => {
       '<p>O verso vem abaixo:\nAs palavras respiram.</p><p>Capítulo</p>';
     expect(check([body, body, body])).toEqual([]);
   });
+  it('encontra rodapé repetido em três capítulos sem classificar conteúdo como malicioso', () => {
+    const repeated = '<p>Identificação editorial da digitalização</p>';
+    const issues = check([
+      '<p>Primeiro capítulo</p><p>Conteúdo um</p>' + repeated,
+      '<p>Segundo capítulo</p><p>Conteúdo dois</p>' + repeated,
+      '<p>Terceiro capítulo</p><p>Conteúdo três</p>' + repeated,
+    ]);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.title).toMatch(/rodapé/u);
+    expect(issues[0]?.severity).toBe('info');
+    expect(issues[0]?.repairable).toBe(false);
+  });
+  it('sinaliza quebras físicas reiteradas em dois parágrafos longos', () => {
+    const wrapped = ['Trecho longo de texto contínuo que continua aqui',
+      'A próxima frase segue sem pontuação alguma',
+      'Outra linha que provavelmente foi quebrada',
+      'Uma sequência longa de texto sem pontuação',
+      'A quinta linha encerra mais um fragmento de texto'].join('\n');
+    const issues = check(['<p>' + wrapped + '</p><p>' + wrapped + '</p>']);
+    expect(issues.some((i) => i.title.includes('quebras artificiais'))).toBe(true);
+  });
+  it('não confunde versos curtos e repetidos com quebra OCR', () => {
+    expect(check(['<p>Lua no céu\nVerso seguinte\nOutro verso\nMais um\nFim</p>'])).toEqual([]);
+  });
   it('não marca texto OCR suspeito após somente uma quebra legítima', () => {
     expect(check(['<p>Não\nquebrar indevidamente a obra.</p>'])).toEqual([]);
   });

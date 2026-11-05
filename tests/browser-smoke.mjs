@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import JSZip from 'jszip';
-import { chromium, firefox, webkit } from 'playwright';
+import { pathToFileURL } from 'node:url';
+
+// O harness fica fora de node_modules do projeto para não alterar package-lock.
+const playwrightPath = process.env.PLAYWRIGHT_MODULE;
+assert.ok(playwrightPath, 'PLAYWRIGHT_MODULE não configurado');
+const { chromium, firefox, webkit } = await import(pathToFileURL(playwrightPath).href);
 
 const browsers = { chromium, firefox, webkit };
 const selected = process.env.BROWSER ?? 'chromium';

@@ -54,6 +54,25 @@ export function validateAccessibility(loaded: LoadedEpub, pkg: PackageDocumentIn
       }));
     }
 
+    // Relações ARIA quebradas podem deixar descrições invisíveis ao leitor
+    // de tela. Detectar sem reescrever IDs ou conteúdo editorial.
+    const missingDescriptions = elements.flatMap((element) => {
+      const ids = element.getAttribute('aria-describedby')?.trim().split(/\s+/u) ?? [];
+      return ids.filter((id) => id && !existingIds.has(id));
+    });
+    if (missingDescriptions.length > 0) {
+      issues.push(createIssue({
+        code: 'CONTENT_ARIA_DESCRIBED_BY_MISSING',
+        severity: 'warning',
+        title: 'Descrição acessível aponta para identificador inexistente',
+        detail: 'aria-describedby referencia ' + missingDescriptions.length +
+          ' identificador(es) ausente(s). Revise a relação sem editar o texto automaticamente.',
+        file: item.resolvedPath,
+        context: [...new Set(missingDescriptions)].join(', '),
+        repairable: false,
+      }));
+    }
+
     const inlineSvg = elements.filter((element) =>
       element.localName === 'svg' &&
       element.namespaceURI === 'http://www.w3.org/2000/svg' &&

@@ -39,13 +39,18 @@ jobs:
       - name: Install application from lockfile
         run: npm ci
       - name: Install isolated Playwright test harness
-        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.55.1
+        run: |
+          # Isolar o harness evita o erro npm Arborist "edgesOut" ao modificar
+          # node_modules de uma instalação reproduzível com npm ci.
+          mkdir -p "${RUNNER_TEMP}/browser-harness"
+          npm install --prefix "${RUNNER_TEMP}/browser-harness" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.55.1
       - name: Install supported browser and OS libraries
-        run: npx playwright install --with-deps "${{ matrix.browser }}"
+        run: "${RUNNER_TEMP}/browser-harness/node_modules/.bin/playwright" install --with-deps "${{ matrix.browser }}"
       - name: Start static app locally and smoke browser
         shell: bash
         env:
           BROWSER: ${{ matrix.browser }}
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/browser-harness/node_modules/playwright/index.mjs
         run: |
           set -euo pipefail
           npm run dev -- --host 127.0.0.1 > "${RUNNER_TEMP}/vite-server.log" 2>&1 &
