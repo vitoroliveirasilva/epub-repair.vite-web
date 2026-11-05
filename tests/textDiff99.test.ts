@@ -48,7 +48,7 @@ describe('E-073: comparação técnica verificável antes/depois do EPUB', () =>
       kindleScore: 100, structureScore: 100, compatibilityScore: 100, securityScore: 100,
       fatalCount: 0, errorCount: 0, warningCount: 0, infoCount: 0,
       repairableCount: 0, totalFiles: 2,
-    }} as ValidationReport;
+    }} as unknown as ValidationReport;
     const repair: RepairResult = {
       before: report, after: report, fileName: 'Livro-corrigido.epub',
       operation: 'repair', changed: true, actions: [], warnings: [], fileDiffs: diffs,
