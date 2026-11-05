@@ -19,7 +19,8 @@ export function decodeUriSafe(value: string): string {
 
 export function normalizeInternalPath(input: string): NormalizedPathResult {
   const original = input;
-  const decoded = decodeUriSafe(stripFragmentAndQuery(input.trim())).replace(/\\/g, '/');
+  // Um nome físico ZIP não é uma URI; preservar #, ?, % e espaços.
+  const decoded = input.replace(/\\/g, '/');
   const absolute = decoded.startsWith('/') || /^[a-zA-Z]:\//.test(decoded);
   const hasControlCharacter = containsControlCharacter(decoded);
   const parts: string[] = [];

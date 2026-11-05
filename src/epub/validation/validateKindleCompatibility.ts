@@ -105,7 +105,7 @@ function validateNcxKindleRules(loaded: LoadedEpub, pkg: PackageDocumentInfo): I
           'Um ou mais itens do sumário NCX apontam para arquivos que não existem ou têm caminho inseguro.',
         file: pkg.ncxItem.resolvedPath,
         context: missingContentTargets.join(', '),
-        repairable: true,
+        repairable: false,
       }),
     );
   }

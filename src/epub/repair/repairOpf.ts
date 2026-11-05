@@ -10,7 +10,7 @@ import {
   normalizeOpfDate,
   findCoverImageCandidate,
 } from '../utils/kindleCompatibility';
-import { guessMediaType } from '../utils/mediaTypes';
+import { areEquivalentMediaTypes, guessMediaType } from '../utils/mediaTypes';
 import {
   basename,
   encodePathForXml,
@@ -216,7 +216,7 @@ function repairManifest(
     }
 
     const guessed = guessMediaType(currentPath);
-    if (guessed && mediaType !== guessed && mediaType !== 'image/jpg') {
+    if (guessed && !areEquivalentMediaTypes(mediaType, guessed)) {
       item.setAttribute('media-type', guessed);
       actions.push({
         type: 'updated',
@@ -430,9 +430,10 @@ function ensureNavigationFiles(
 
   if (options.generateNcx && shouldCreateNcx(pkg) && !currentNcxId) {
     const ncxPath = pkg.ncxItem?.resolvedPath || `${pkg.opfDir ? `${pkg.opfDir}/` : ''}toc.ncx`;
-    const ncxId = pkg.ncxItem?.id || makeUniqueId('ncx', usedIds);
+    const ncxId = makeUniqueId(pkg.ncxItem?.id || 'ncx', usedIds);
     filesToAdd.set(ncxPath, buildNcxDocument(pkg, ncxPath));
-    if (!pkg.ncxItem) {
+    // A entrada NCX ausente pode ter sido removida ao reparar o manifest.
+    if (!childElementsByLocalName(manifest, 'item').some((item) => getAttr(item, 'id') === ncxId)) {
       const item = doc.createElementNS(OPF_NS, 'item');
       item.setAttribute('id', ncxId);
       item.setAttribute('href', encodePathForXml(relativePath(pkg.opfDir, ncxPath)));

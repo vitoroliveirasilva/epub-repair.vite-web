@@ -7,7 +7,7 @@ import {
   isInvalidLanguageTag,
   isInvalidOpfDate,
 } from '../utils/kindleCompatibility';
-import { guessMediaType } from '../utils/mediaTypes';
+import { areEquivalentMediaTypes, guessMediaType } from '../utils/mediaTypes';
 
 export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issue[] {
   const issues: Issue[] = [];
@@ -145,7 +145,7 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
     }
 
     const guessed = guessMediaType(item.resolvedPath);
-    if (guessed && item.mediaType && item.mediaType !== guessed && item.mediaType !== 'image/jpg') {
+    if (guessed && item.mediaType && !areEquivalentMediaTypes(item.mediaType, guessed)) {
       issues.push(
         createIssue({
           code: 'OPF_BAD_MEDIA_TYPE',
