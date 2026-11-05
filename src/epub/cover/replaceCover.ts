@@ -41,12 +41,20 @@ export async function replaceEpubCover(
   fileName: string,
   bytes: Uint8Array,
   coverImage: CoverImageInput,
+  signal?: AbortSignal,
 ): Promise<RepairResult> {
+  const canceled = (): void => {
+    if (signal?.aborted) throw new DOMException(
+      'Operação cancelada pelo usuário.', 'AbortError');
+  };
+  canceled();
   const before = await inspectEpub(fileName, bytes);
+  canceled();
   if (before.stats.fatalCount > 0) {
     throw new Error('Não é seguro substituir a capa de um EPUB com problemas fatais.');
   }
   const loaded = await loadEpub(fileName, bytes);
+  canceled();
 
   if (!loaded.validZip) {
     throw new Error(
@@ -111,10 +119,13 @@ export async function replaceEpubCover(
       file: parsed.packageInfo.opfPath,
     },
   ];
+  canceled();
   const blob = await rebuildEpubZip(files);
+  canceled();
   const afterBytes = new Uint8Array(await blob.arrayBuffer());
   const outputFileName = makeRepairedFileName(fileName, '-capa');
   const after = await inspectEpub(outputFileName, afterBytes);
+  canceled();
   assertNoNewCriticalIssues(before, after);
   const warnings = buildCoverReplacementWarnings(before, after);
   if (after.stats.errorCount > 0) {

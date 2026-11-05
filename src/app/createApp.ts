@@ -6,7 +6,7 @@ import {
   loadFileIntoState,
   repairCurrentFile,
 } from './actions';
-import { createInitialState, type AppState } from './state';
+import { createInitialState, type AppState, type ProcessingProgress } from './state';
 import { captureFocusForRerender } from './focusRestoration';
 import { buildRepairConsentMessage } from './repairConsent';
 import { buildJsonReport, buildTextReport, createReportEvidence, makeReportFileName } from '../ui/copyReport';
@@ -19,6 +19,7 @@ import { renderOptionsPanel } from '../ui/components/OptionsPanel';
 import { renderRepairSummary } from '../ui/components/RepairSummary';
 import { renderUploader } from '../ui/components/Uploader';
 import { downloadBlob, el } from '../ui/dom';
+import { abortProcessingError } from './zipWorkerClient';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -48,14 +49,14 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
           className: 'workspace',
           children: [
             renderUploader(state, (file) => {
-              void runAsync(state, rerender, async () => {
-                await loadFileIntoState(file, state);
-                await analyzeCurrentFile(state);
+              void runAsync(state, rerender, async (ctx) => {
+                await loadFileIntoState(file, state, ctx.signal);
+                await analyzeCurrentFile(state, ctx);
               });
             }),
             renderControls(state, {
               analyze: () => {
-                void runAsync(state, rerender, () => analyzeCurrentFile(state));
+                void runAsync(state, rerender, (ctx) => analyzeCurrentFile(state, ctx));
               },
               repair: () => {
                 const question = buildRepairConsentMessage(state.options, state.report);
@@ -66,7 +67,7 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
                     return;
                   }
                 }
-                void runAsync(state, rerender, () => repairCurrentFile(state));
+                void runAsync(state, rerender, (ctx) => repairCurrentFile(state, ctx));
               },
               copy: () => {
                 void copyCurrentReport(state, rerender);
@@ -77,10 +78,16 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
               downloadJsonReport: () => {
                 void downloadCurrentReport(state, 'json');
               },
+              cancel: () => {
+                state.processingProgress = { phase: 'Interrompendo operação...' };
+                state.processingController?.abort();
+                rerender();
+              },
             }),
             renderCoverChanger(state, {
               selectCoverImage: (file) => {
-                void runAsync(state, rerender, () => loadCoverImageIntoState(file, state));
+                void runAsync(state, rerender, (ctx) =>
+                  loadCoverImageIntoState(file, state, ctx.signal));
               },
               clearCoverImage: () => {
                 clearCoverImageFromState(state);
@@ -99,7 +106,8 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
                   rerender();
                   return;
                 }
-                void runAsync(state, rerender, () => applyCoverReplacementToCurrentFile(state));
+                void runAsync(state, rerender, (ctx) =>
+                  applyCoverReplacementToCurrentFile(state, ctx.signal));
               },
             }),
             renderStatusMessage(state.message, state.error),
@@ -124,19 +132,46 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
 async function runAsync(
   state: AppState,
   rerender: () => void,
-  task: () => Promise<void>,
+  task: (context: {
+    signal: AbortSignal;
+    onProgress: (progress: ProcessingProgress) => void;
+  }) => Promise<void>,
 ): Promise<void> {
-  // Impede duas operações simultâneas de misturar estado de livros diferentes.
+  // Um único job ativo evita misturar resultados de livros diferentes.
   if (state.busy) return;
+  const controller = new AbortController();
+  let lastProgressKey = '';
   try {
     state.error = undefined;
     state.busy = true;
+    state.processingController = controller;
+    state.processingProgress = { phase: 'Preparando operação local...' };
     rerender();
-    await task();
+    await task({
+      signal: controller.signal,
+      onProgress: (progress) => {
+        if (controller.signal.aborted) return;
+        const fraction = progress.total && progress.completed !== undefined
+          ? Math.floor((progress.completed / progress.total) * 20) : undefined;
+        const key = progress.phase + '|' + (fraction ?? '');
+        if (key === lastProgressKey) return;
+        lastProgressKey = key;
+        state.processingProgress = progress;
+        rerender();
+      },
+    });
+    if (controller.signal.aborted) throw abortProcessingError();
   } catch (error) {
-    state.error = error instanceof Error ? error.message : 'Não foi possível concluir a ação.';
+    if (error instanceof Error && error.name === 'AbortError') {
+      state.message = 'Operação cancelada. Nenhum resultado parcial foi publicado.';
+      state.error = undefined;
+    } else {
+      state.error = error instanceof Error ? error.message : 'Não foi possível concluir a ação.';
+    }
   } finally {
     state.busy = false;
+    state.processingController = undefined;
+    state.processingProgress = undefined;
     rerender();
   }
 }

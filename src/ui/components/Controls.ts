@@ -17,6 +17,7 @@ export function renderControls(
     copy: () => void;
     downloadTextReport: () => void;
     downloadJsonReport: () => void;
+    cancel?: (() => void) | undefined;
   },
 ): HTMLElement {
   const hasFile = Boolean(state.payload);
@@ -96,14 +97,7 @@ export function renderControls(
       }),
       renderTechnicalReportTools(hasReport, copyButton, textReportButton, jsonReportButton),
       state.busy
-        ? el('div', {
-            className: 'working',
-            attrs: { role: 'status' },
-            children: [
-              el('span', { attrs: { 'aria-hidden': 'true' } }),
-              'Processando estrutura do EPUB...',
-            ],
-          })
+        ? renderProcessingStatus(state, actions.cancel)
         : undefined,
     ],
   });
@@ -307,4 +301,37 @@ function renderTechnicalReportTools(
   );
 
   return details;
+}
+
+
+function renderProcessingStatus(state: AppState, cancel?: () => void): HTMLElement {
+  const progress = state.processingProgress;
+  const haveCount = progress?.completed !== undefined && Boolean(progress.total);
+  const current = progress?.completed ?? 0;
+  const total = progress?.total ?? 0;
+  const cancelButton = cancel ? button('Cancelar operação', 'btn btn-ghost', cancel) : undefined;
+  if (cancelButton) {
+    cancelButton.dataset.focusKey = 'epub-cancel-processing';
+    cancelButton.disabled = state.processingController?.signal.aborted ?? false;
+  }
+  return el('div', {
+    className: 'working processing-status',
+    attrs: { role: 'status', 'aria-live': 'polite' },
+    children: [
+      el('span', { attrs: { 'aria-hidden': 'true' } }),
+      el('div', {
+        className: 'processing-status-content',
+        children: [
+          el('strong', { text: progress?.phase ?? 'Processando estrutura do EPUB...' }),
+          haveCount ? el('progress', {
+            attrs: { max: String(total), value: String(current),
+              'aria-label': 'Arquivos EPUB descompactados' },
+          }) : undefined,
+          haveCount ? el('small', { text: current + ' de ' + total +
+            ' entradas do ZIP descompactadas' }) : undefined,
+        ],
+      }),
+      cancelButton,
+    ],
+  });
 }

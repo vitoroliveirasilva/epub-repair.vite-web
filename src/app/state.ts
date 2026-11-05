@@ -9,6 +9,12 @@ import type {
 
 export type ReportViewMode = 'simple' | 'technical';
 
+export interface ProcessingProgress {
+  phase: string;
+  completed?: number | undefined;
+  total?: number | undefined;
+}
+
 export interface AppState {
   payload?: EpubFilePayload | undefined;
   originalSource?: { fileName: string; bytes: Uint8Array } | undefined;
@@ -17,6 +23,9 @@ export interface AppState {
   repairResult?: RepairResult | undefined;
   coverImage?: CoverImageInput | undefined;
   busy: boolean;
+  /** O usuário pode interromper o Worker que extrai entradas ZIP. */
+  processingController?: AbortController | undefined;
+  processingProgress?: ProcessingProgress | undefined;
   message?: string | undefined;
   error?: string | undefined;
   options: RepairOptions;

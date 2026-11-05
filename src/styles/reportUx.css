@@ -467,3 +467,31 @@
   font-size: 0.75rem;
   line-height: 1.45;
 }
+
+
+/* Progresso real da extração ZIP no Worker e controle de cancelamento. */
+.processing-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.processing-status-content {
+  display: grid;
+  gap: 0.25rem;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.processing-status-content strong {
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.processing-status-content progress {
+  display: block;
+  width: 100%;
+  height: 0.65rem;
+  accent-color: var(--color-accent);
+}
+.processing-status-content small {
+  color: var(--color-text-muted);
+}

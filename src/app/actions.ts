@@ -3,15 +3,46 @@ import {
   canRepairReport,
   hasOptionalOptimizations,
   hasManualReviewIssues,
-  inspectEpub,
   MAX_FILE_SIZE_BYTES,
   readCoverImageFile,
   repairEpub,
   replaceEpubCover,
 } from '../epub';
-import type { AppState } from './state';
+import type { AppState, ProcessingProgress } from './state';
+import { loadEpubInWorker, throwIfProcessingAborted } from './zipWorkerClient';
+import { inspectLoadedEpub } from '../epub/validation/validateEpub';
 
-export async function loadFileIntoState(file: File, state: AppState): Promise<void> {
+export interface ProcessingContext {
+  signal?: AbortSignal | undefined;
+  onProgress?: ((progress: ProcessingProgress) => void) | undefined;
+}
+
+function publishProgress(context: ProcessingContext, phase: string,
+  completed?: number, total?: number): void {
+  context.onProgress?.({ phase,
+    ...(completed !== undefined ? { completed } : {}),
+    ...(total !== undefined ? { total } : {}),
+  });
+}
+
+async function loadZipForTask(
+  state: AppState,
+  context: ProcessingContext,
+) {
+  if (!state.payload) throw new Error('Envie um EPUB antes de processar.');
+  publishProgress(context, 'Descompactando EPUB no Worker...');
+  const loaded = await loadEpubInWorker(state.payload.file.name, state.payload.bytes, {
+    signal: context.signal,
+    onProgress: ({ completed, total }) => {
+      publishProgress(context, 'Descompactando entradas do EPUB...', completed, total);
+    },
+  });
+  throwIfProcessingAborted(context.signal);
+  return loaded;
+}
+
+
+export async function loadFileIntoState(file: File, state: AppState, signal?: AbortSignal): Promise<void> {
   state.error = undefined;
   state.message = undefined;
   state.repairResult = undefined;
@@ -32,35 +63,54 @@ export async function loadFileIntoState(file: File, state: AppState): Promise<vo
   }
 
   const bytes = new Uint8Array(await file.arrayBuffer());
+  throwIfProcessingAborted(signal);
   state.payload = { file, bytes };
   state.originalSource = { fileName: file.name, bytes };
   state.message = 'Arquivo carregado localmente.';
 }
 
-export async function analyzeCurrentFile(state: AppState): Promise<void> {
+export async function analyzeCurrentFile(
+  state: AppState,
+  context: ProcessingContext = {},
+): Promise<void> {
   if (!state.payload) throw new Error('Envie um EPUB antes de analisá-lo.');
   state.busy = true;
   state.error = undefined;
   try {
-    state.report = await inspectEpub(state.payload.file.name, state.payload.bytes);
+    const loaded = await loadZipForTask(state, context);
+    publishProgress(context, 'Validando XML, links e recursos...');
+    // Entregar a UI um frame para mostrar a fase antes da validação síncrona.
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    throwIfProcessingAborted(context.signal);
+    const report = inspectLoadedEpub(state.payload.file.name, state.payload.bytes.length, loaded);
+    throwIfProcessingAborted(context.signal);
+    state.report = report;
     state.repairResult = undefined;
-    state.message = canRepairReport(state.report)
+    state.message = canRepairReport(report)
       ? 'Análise concluída no navegador.'
-      : readyWithoutRequiredRepairMessage(state.report);
+      : readyWithoutRequiredRepairMessage(report);
   } finally {
     state.busy = false;
   }
 }
 
-export async function repairCurrentFile(state: AppState): Promise<void> {
+export async function repairCurrentFile(
+  state: AppState,
+  context: ProcessingContext = {},
+): Promise<void> {
   if (!state.payload) throw new Error('Envie um EPUB antes de repará-lo.');
   state.busy = true;
   state.error = undefined;
   // Snapshot antes do primeiro await: alterações na UI não afetam o job ativo.
   const appliedOptions = { ...state.options };
   try {
-    const currentReport =
-      state.report ?? (await inspectEpub(state.payload.file.name, state.payload.bytes));
+    const loaded = await loadZipForTask(state, context);
+    publishProgress(context, 'Conferindo estrutura e preparando reparo...');
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    throwIfProcessingAborted(context.signal);
+    const currentReport = state.report ??
+      inspectLoadedEpub(state.payload.file.name, state.payload.bytes.length, loaded);
+    throwIfProcessingAborted(context.signal);
     state.report = currentReport;
 
     const canRunRequiredRepair = canRepairReport(currentReport);
@@ -72,12 +122,16 @@ export async function repairCurrentFile(state: AppState): Promise<void> {
       return;
     }
 
+    publishProgress(context, 'Recompactando e revalidando o EPUB...');
     const result = await repairEpub(
       state.payload.file.name,
       state.payload.bytes,
       appliedOptions,
       canRunOptionalOptimization ? 'optimization' : 'repair',
+      loaded,
+      context.signal,
     );
+    throwIfProcessingAborted(context.signal);
     if (!result.changed || !result.blob) {
       state.repairResult = result.actions.length > 0 ? result : undefined;
       state.report = result.after;
@@ -104,10 +158,12 @@ export async function repairCurrentFile(state: AppState): Promise<void> {
   }
 }
 
-export async function loadCoverImageIntoState(file: File, state: AppState): Promise<void> {
+export async function loadCoverImageIntoState(file: File, state: AppState, signal?: AbortSignal): Promise<void> {
   if (!state.payload) throw new Error('Envie um EPUB antes de escolher uma capa.');
 
-  state.coverImage = await readCoverImageFile(file);
+  const image = await readCoverImageFile(file);
+  throwIfProcessingAborted(signal);
+  state.coverImage = image;
   state.repairResult = undefined;
   state.error = undefined;
   state.message = 'Nova capa carregada, confira a prévia e aplique quando quiser.';
@@ -118,7 +174,7 @@ export function clearCoverImageFromState(state: AppState): void {
   state.message = 'Seleção de capa removida.';
 }
 
-export async function applyCoverReplacementToCurrentFile(state: AppState): Promise<void> {
+export async function applyCoverReplacementToCurrentFile(state: AppState, signal?: AbortSignal): Promise<void> {
   if (!state.payload) throw new Error('Envie um EPUB antes de trocar a capa.');
   if (!state.coverImage) throw new Error('Escolha uma imagem de capa antes de aplicar.');
 
@@ -129,13 +185,16 @@ export async function applyCoverReplacementToCurrentFile(state: AppState): Promi
       state.payload.file.name,
       state.payload.bytes,
       state.coverImage,
+      signal,
     );
+    throwIfProcessingAborted(signal);
 
     if (!result.blob) {
       throw new Error('Não foi possível gerar o EPUB com a nova capa.');
     }
 
     const outputBytes = new Uint8Array(await result.blob.arrayBuffer());
+    throwIfProcessingAborted(signal);
     state.payload = {
       file: new File([result.blob], result.fileName, { type: 'application/epub+zip' }),
       bytes: outputBytes,

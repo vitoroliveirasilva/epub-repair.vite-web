@@ -27,8 +27,15 @@ export async function repairEpub(
   options: RepairOptions = DEFAULT_REPAIR_OPTIONS,
   mode: RepairRunMode = 'repair',
   preloaded?: LoadedEpub,
+  signal?: AbortSignal,
 ): Promise<RepairResult> {
+  const canceled = (): void => {
+    if (signal?.aborted) throw new DOMException(
+      'Operação cancelada pelo usuário.', 'AbortError');
+  };
+  canceled();
   const loaded = preloaded ?? await loadEpub(fileName, bytes);
+  canceled();
   const before = inspectLoadedEpub(fileName, bytes.length, loaded);
   const warnings: string[] = [];
 
@@ -69,6 +76,7 @@ export async function repairEpub(
     const optimizedFiles = new Map<string, Uint8Array>();
     for (const [path, entry] of loaded.files) optimizedFiles.set(path, entry.bytes);
     const attempted = await repairImageCompatibility(optimizedFiles, parsed.packageInfo, options);
+    canceled();
     const applied = attempted.filter((action) => action.type !== 'skipped');
     warnings.push(...attempted.filter((action) => action.type === 'skipped')
       .map((action) => `Não aplicado: ${action.title}. ${action.detail}`));
@@ -81,8 +89,10 @@ export async function repairEpub(
       };
     }
     const blob = await rebuildEpubZip(optimizedFiles);
+    canceled();
     const outName = makeRepairedFileName(fileName);
     const after = await inspectEpub(outName, new Uint8Array(await blob.arrayBuffer()));
+    canceled();
     assertNoNewCriticalIssues(before, after);
     if (hasResidualActiveContent(after)) {
       warnings.push('Otimização concluída, mas ainda existem recursos suspeitos ou conteúdo ativo a revisar.');
@@ -199,10 +209,13 @@ export async function repairEpub(
     };
   }
 
+  canceled();
   const blob = await rebuildEpubZip(files);
+  canceled();
   const afterBytes = new Uint8Array(await blob.arrayBuffer());
   const outputFileName = makeRepairedFileName(fileName);
   const after = await inspectEpub(outputFileName, afterBytes);
+  canceled();
   assertNoNewCriticalIssues(before, after);
   warnings.push(...auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo));
   const fileDiffs = createTextFileDiffs(new Map(Array.from(loaded.files, ([name, entry]) =>
