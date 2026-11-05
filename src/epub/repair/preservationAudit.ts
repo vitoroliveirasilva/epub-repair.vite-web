@@ -37,6 +37,15 @@ export function auditPreservation(
     }
   }
 
+  // Validar não só a presença, mas também a ordem e multiplicidade das páginas
+  // de leitura que já existiam antes do reparo.
+  const surviving = after.spine
+    .map((item) => item.manifestItem?.resolvedPath)
+    .filter((path): path is string => Boolean(path && originalReadingPaths.includes(path)));
+  if (surviving.join('\u0000') !== originalReadingPaths.join('\u0000')) {
+    throw new Error('A operação alterou a ordem ou repetição de capítulos já existentes.');
+  }
+
   const changedText: string[] = [];
   const potentiallyLostText: string[] = [];
   const unverifiableText: string[] = [];
@@ -48,8 +57,13 @@ export function auditPreservation(
       changedText.push(item.resolvedPath);
       continue;
     }
-    const oldText = extractReadableText(textDecoder.decode(oldBytes));
-    const newText = extractReadableText(textDecoder.decode(newBytes));
+    const oldMarkup = textDecoder.decode(oldBytes);
+    const newMarkup = textDecoder.decode(newBytes);
+    if (!sameBytes(oldBytes, newBytes)) {
+      compareInternalTargets(oldMarkup, newMarkup, item.resolvedPath);
+    }
+    const oldText = extractReadableText(oldMarkup);
+    const newText = extractReadableText(newMarkup);
     if (oldText === undefined || newText === undefined) {
       if (!sameBytes(oldBytes, newBytes)) unverifiableText.push(item.resolvedPath);
     } else if (oldText !== newText) {
@@ -129,4 +143,43 @@ function containsOriginalWordsInOrder(before: string, after: string): boolean {
     if (cursor === originalWords.length) return true;
   }
   return false;
+}
+
+/** IDs e links editoriais internos não podem desaparecer por efeito colateral do sanitizer. */
+function compareInternalTargets(before: string, after: string, path: string): void {
+  const original = parseReadableDocument(before);
+  const output = parseReadableDocument(after);
+  if (!original || !output) return; // Já há alerta de comparação textual inconclusiva.
+  const elements = (doc: Document): Element[] => Array.from(doc.getElementsByTagName('*'))
+    .filter((element) => element.localName !== 'script' && element.localName !== 'style');
+  const ids = (doc: Document) => new Set(elements(doc)
+    .map((element) => element.getAttribute('id')).filter(Boolean));
+  const originalIds = ids(original);
+  const afterIds = ids(output);
+  for (const id of originalIds) {
+    if (!afterIds.has(id)) {
+      throw new Error(`O reparo removeria uma âncora editorial (${id}) em ${path}.`);
+    }
+  }
+  const links = (doc: Document) => new Set(elements(doc)
+    .filter((element) => element.localName === 'a')
+    .map((element) => element.getAttribute('href') ?? '')
+    .filter((href) => Boolean(href) && (
+      href.startsWith('#') || (!/^(?:[a-z][a-z0-9+.-]*:|\/\/)/iu.test(href) &&
+        !href.startsWith('kindle:embed:'))
+    )));
+  const remaining = links(output);
+  for (const href of links(original)) {
+    if (!remaining.has(href)) {
+      throw new Error(`O reparo removeria uma remissão interna (${href}) em ${path}.`);
+    }
+  }
+}
+
+function parseReadableDocument(markup: string): Document | undefined {
+  if (typeof DOMParser === 'undefined') return undefined;
+  const doc = new DOMParser().parseFromString(
+    markup.replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml',
+  );
+  return doc.getElementsByTagName('parsererror').length > 0 ? undefined : doc;
 }
