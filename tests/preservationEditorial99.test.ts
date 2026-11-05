@@ -72,6 +72,26 @@ describe('E-064/E-065: proteção de texto e estrutura editorial antes/depois', 
     expect(compare(before, after)).toThrow(/direção de leitura/u);
   });
 
+  it('E-049: protege idiomas mistos em div, não apenas em spans', () => {
+    const before = markup('<div lang="ar" xml:lang="ar" dir="rtl">' +
+      '<p>قراءة باللغة العربية</p></div><p lang="pt-BR">Texto em português.</p>');
+    const after = markup('<div dir="rtl"><p>قراءة باللغة العربية</p></div>' +
+      '<p lang="pt-BR">Texto em português.</p>');
+    expect(compare(before, after)).toThrow(/idioma misto/u);
+    expect(compare(before, before)).not.toThrow();
+  });
+
+  it('E-049: impede perder escrita vertical e variação MathML', () => {
+    const before = markup('<div style="writing-mode:vertical-rl">' +
+      '<p>Texto que lê na vertical.</p></div>' +
+      '<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">' +
+      '<mi mathvariant="bold">x</mi></math>');
+    const withoutVertical = before.replace('writing-mode:vertical-rl', 'color:blue');
+    expect(compare(before, withoutVertical)).toThrow(/escrita vertical/u);
+    const alteredMath = before.replace('mathvariant="bold"', 'mathvariant="italic"');
+    expect(compare(before, alteredMath)).toThrow(/variante matemática|MathML/u);
+  });
+
   it('recusa fusão de dois parágrafos sem apagar nenhuma palavra', () => {
     const before = markup('<p>Primeiro parágrafo.</p><p>Segundo parágrafo.</p>');
     const after = markup('<p>Primeiro parágrafo. Segundo parágrafo.</p>');

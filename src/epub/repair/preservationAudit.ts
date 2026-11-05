@@ -390,6 +390,44 @@ function compareSpecialMarkup(before: string, after: string, path: string): void
       throw new Error('O reparo perderia uma direção de leitura explícita em ' + path);
     }
   }
+
+  // E-049: preservar idioma por trecho e modo de escrita vertical, inclusive
+  // fora de span/ruby. Conteúdos mistos podem ter vários idiomas e direções.
+  // A ordem relativa de todos os marcadores originais deve sobreviver.
+  const readingMarkers = (doc: Document): string[] =>
+    Array.from(doc.getElementsByTagName('*'))
+      .filter((node) => !['script', 'style', 'iframe', 'object', 'embed']
+        .includes(node.localName.toLowerCase()))
+      .flatMap((node) => {
+        const lang = node.getAttribute('lang') ?? '';
+        const xmlLang = node.getAttributeNS(
+          'http://www.w3.org/XML/1998/namespace', 'lang',
+        ) ?? '';
+        const dir = node.getAttribute('dir') ?? '';
+        const writingMode = (node.getAttribute('style') ?? '')
+          .match(/(?:^|;)\s*(?:-epub-|-webkit-)?writing-mode\s*:\s*([^;}]*)/iu)?.[1]
+          ?.trim().toLowerCase() ?? '';
+        const mathVariant = node.getAttribute('mathvariant') ?? '';
+        const mathDisplay = node.localName === 'math'
+          ? (node.getAttribute('display') ?? '') : '';
+        if (!lang && !xmlLang && !dir && !writingMode &&
+            !mathVariant && !mathDisplay) return [];
+        return [JSON.stringify([
+          node.namespaceURI, node.localName, lang, xmlLang, dir,
+          writingMode, mathVariant, mathDisplay,
+        ])];
+      });
+  const beforeMarkers = readingMarkers(oldDoc);
+  const afterMarkers = readingMarkers(newDoc);
+  let cursor = 0;
+  for (const marker of beforeMarkers) {
+    const index = afterMarkers.indexOf(marker, cursor);
+    if (index < 0) {
+      throw new Error('O reparo alteraria idioma misto, variante matemática ' +
+        'ou modo de escrita vertical em ' + path);
+    }
+    cursor = index + 1;
+  }
 }
 
 
