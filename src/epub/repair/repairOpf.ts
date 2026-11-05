@@ -256,6 +256,15 @@ function repairManifest(
     if (SYSTEM_FILE_PATTERNS.some((pattern) => pattern.test(path))) continue;
     const mediaType = guessMediaType(path);
     if (!mediaType || !RELEVANT_MEDIA_TYPES.has(mediaType)) continue;
+    if (mediaType === 'text/javascript') {
+      actions.push({
+        type: 'skipped',
+        title: 'Script sem declaração preservado para revisão',
+        detail: 'O arquivo JS não foi inserido automaticamente no manifest.',
+        file: path,
+      });
+      continue;
+    }
     const href = relativePath(pkg.opfDir, path);
     if (declaredPaths.has(path)) continue;
     const item = doc.createElementNS(OPF_NS, 'item');

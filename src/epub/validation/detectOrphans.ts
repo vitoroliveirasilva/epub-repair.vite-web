@@ -16,6 +16,19 @@ export function detectOrphanResources(loaded: LoadedEpub, pkg: PackageDocumentIn
     const mediaType = guessMediaType(fileName);
     if (!mediaType || !RELEVANT_MEDIA_TYPES.has(mediaType)) continue;
 
+    if (mediaType === 'text/javascript') {
+      issues.push(createIssue({
+        code: 'PACKAGE_UNDECLARED_SCRIPT',
+        severity: 'warning',
+        title: 'JavaScript fora do manifest precisa de revisão',
+        detail: 'O script pode ser legítimo em EPUB 3. Não foi classificado como malware, ' +
+          'mas também não deve ser declarado automaticamente sem confirmar seu uso.',
+        file: fileName,
+        repairable: false,
+      }));
+      continue;
+    }
+
     issues.push(
       createIssue({
         code: 'ORPHAN_RESOURCE',
