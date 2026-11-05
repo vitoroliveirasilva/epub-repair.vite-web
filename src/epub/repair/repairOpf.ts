@@ -1,7 +1,7 @@
 import type { LoadedEpub } from '../model/epubTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction, RepairOptions } from '../model/repairTypes';
-import { HTML_MEDIA_TYPES, RELEVANT_MEDIA_TYPES, SYSTEM_FILE_PATTERNS } from '../utils/constants';
+import { RELEVANT_MEDIA_TYPES, SYSTEM_FILE_PATTERNS } from '../utils/constants';
 import { deriveTitleFromFileName } from '../utils/fileName';
 import {
   isInvalidOpfDate,
