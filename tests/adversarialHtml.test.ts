@@ -23,6 +23,24 @@ function parse(text: string): Document {
 }
 
 describe('testes adversariais de sanitização XHTML no DOM', () => {
+  it('E-016: CSS perigoso não elimina regras e estilos legítimos do XHTML', () => {
+    const original = xhtml(
+      '<style>p{color:blue}.bad{background:url("javascript:alert(1)")}</style>' +
+      '<p style="color:red;background:url(&quot;javascript:alert(2)&quot;)">Texto preservado</p>',
+    );
+    const result = sanitizeActiveContentMarkup(original, filePath, {
+      ...options, removeRemoteResourceLinks: false,
+    });
+    const doc = parse(result.text);
+    expect(result.changed).toBe(true);
+    expect(doc.getElementsByTagName('style')).toHaveLength(1);
+    expect(doc.getElementsByTagName('style')[0]?.textContent).toContain('color:blue');
+    expect(doc.getElementsByTagName('style')[0]?.textContent).not.toContain('javascript:');
+    expect(doc.getElementsByTagName('p')[0]?.getAttribute('style')).toContain('color:red');
+    expect(doc.getElementsByTagName('p')[0]?.getAttribute('style')).not.toContain('javascript:');
+    expect(doc.getElementsByTagName('p')[0]?.textContent).toBe('Texto preservado');
+  });
+
   it('remove javascript ofuscado por entidade HTML, handlers e scripts sem perder o texto', () => {
     const input = xhtml(
       '<p id="texto">Capítulo válido</p><a href="java&#x73;cript:alert(1)" onclick="alert(2)">Continuar</a>' +

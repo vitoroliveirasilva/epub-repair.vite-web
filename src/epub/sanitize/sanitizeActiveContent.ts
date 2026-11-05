@@ -62,7 +62,10 @@ export function sanitizeActiveContentMarkup(
     }
 
     if (options.sanitizeScripts && name === 'style' && containsDangerousCss(element.textContent ?? '')) {
-      element.remove();
+      // Preservar regras benignas em vez de descartar toda a tipografia da obra.
+      const sanitized = sanitizeDangerousEmbeddedCss(element.textContent ?? '');
+      if (containsDangerousCss(sanitized)) element.remove();
+      else element.textContent = sanitized;
       changed = true;
       continue;
     }
@@ -72,12 +75,15 @@ export function sanitizeActiveContentMarkup(
       const attrLocal = attribute.localName.toLowerCase();
       const value = attribute.value;
 
-      if (
-        (options.sanitizeScripts && (attrName.startsWith('on') || attrName === 'srcdoc' ||
-          attrName === 'nonce' || attrName === 'formaction' || attrName === 'action')) ||
-        (options.sanitizeScripts && attrName === 'style' &&
-          containsDangerousCss(value))
-      ) {
+      if (options.sanitizeScripts && attrName === 'style' && containsDangerousCss(value)) {
+        const sanitized = sanitizeDangerousEmbeddedCss(value);
+        if (containsDangerousCss(sanitized)) element.removeAttributeNode(attribute);
+        else element.setAttribute(attrName, sanitized);
+        changed = true;
+        continue;
+      }
+      if (options.sanitizeScripts && (attrName.startsWith('on') || attrName === 'srcdoc' ||
+        attrName === 'nonce' || attrName === 'formaction' || attrName === 'action')) {
         element.removeAttributeNode(attribute);
         changed = true;
         continue;
@@ -146,4 +152,22 @@ export function containsDangerousCss(text: string): boolean {
   }
 
   return false;
+}
+
+/** Preserva CSS passivo e neutraliza somente links executáveis reconhecíveis.
+ * Em sintaxes impossíveis de sanar, o chamador remove o style inteiro.
+ */
+function sanitizeDangerousEmbeddedCss(css: string): string {
+  let result = css.replace(
+    /@import\s+(?:url\(\s*)?(?:(["'])(.*?)\1|([^"'\s);]+))\s*\)?[^;]*;/giu,
+    (full) => containsDangerousCss(full) ? '' : full,
+  );
+  result = result.replace(/url\(\s*(["']?)(.*?)\1\s*\)/giu, (full, _quote: string, value: string) => {
+    const decoded = decodeCssEscapes(value);
+    if (isRemoteUrl(decoded) && !isSafeRemoteResourceUrl(decoded) && !isInlineFontDataUrl(decoded)) {
+      return 'none';
+    }
+    return full;
+  });
+  return result;
 }

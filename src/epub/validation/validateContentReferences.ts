@@ -10,6 +10,7 @@ import {
   resolveReference,
 } from '../utils/pathUtils';
 import { parseXml } from '../utils/xmlUtils';
+import { containsDangerousCss } from '../sanitize/sanitizeActiveContent';
 import { extractHtmlResourceReferences } from './referenceExtractor';
 
 export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
@@ -58,6 +59,32 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
             repairable: false,
           }),
         );
+      }
+    }
+
+    if (/(?:<style\b|\sstyle\s*=)/iu.test(text)) {
+      try {
+        const doc = item.mediaType === 'text/html'
+          ? new DOMParser().parseFromString(text, 'text/html')
+          : parseXml(text.replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml');
+        const dangerous = Array.from(doc.getElementsByTagName('*')).some((element) =>
+          (element.localName.toLowerCase() === 'style' &&
+            containsDangerousCss(element.textContent ?? '')) ||
+          (element.hasAttribute('style') &&
+            containsDangerousCss(element.getAttribute('style') ?? '')),
+        );
+        if (dangerous) {
+          issues.push(createIssue({
+            code: 'CONTENT_UNSAFE_STYLE',
+            severity: 'warning',
+            title: 'CSS embutido contém expressão ou URL perigosa',
+            detail: 'Uma declaração CSS ativa precisa ser neutralizada sem remover estilos seguros.',
+            file: item.resolvedPath,
+            repairable: true,
+          }));
+        }
+      } catch {
+        // XHTML/XML inválido é registrado separadamente.
       }
     }
 
