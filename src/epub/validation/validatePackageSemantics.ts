@@ -7,6 +7,74 @@ import { validateManifestContentProperties } from './validateManifestContentProp
 
 const MODIFIED_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/u;
 
+const PACKAGE_RESERVED_PREFIXES = new Set([
+  'a11y', 'dcterms', 'marc', 'media', 'onix', 'rendition', 'schema', 'xsd',
+]);
+
+function validModifiedTimestamp(value: string): boolean {
+  if (!MODIFIED_UTC.test(value)) return false;
+  const time = new Date(value);
+  if (Number.isNaN(time.valueOf())) return false;
+  // Date.parse aceita 30 de fevereiro por normalização: rejeitar a correção silenciosa.
+  return time.toISOString().replace(/\.000Z$/u, 'Z') === value;
+}
+
+function validatePackagePrefixes(doc: Document, opfPath: string, root: Element): Issue[] {
+  const issues: Issue[] = [];
+  const attribute = root.getAttribute('prefix') ?? '';
+  const mappings = new Map<string, string>();
+  const pattern = /(?:^|\s)([\p{L}_][\p{L}\p{N}._-]*):[ \t]+([^\s]+)/gu;
+  const remains = attribute.replace(pattern, ' ').trim();
+  let invalid = Boolean(remains);
+  for (const match of attribute.matchAll(pattern)) {
+    const name = match[1] ?? '';
+    const url = match[2] ?? '';
+    if (name === '_' || mappings.has(name) || !url ||
+        (/^(?:javascript|data|file):/iu.test(url))) {
+      invalid = true;
+    }
+    mappings.set(name, url);
+  }
+  if (invalid) {
+    issues.push(createIssue({
+      code: 'OPF_PREFIX_INVALID',
+      severity: 'warning',
+      title: 'Declaração de prefixos do OPF inválida ou ambígua',
+      detail: 'O atributo prefix exige pares NCName: URI, sem duplicações, ' +
+        'esquemas executáveis nem redefinição de "_". Não houve reescrita automática.',
+      file: opfPath,
+      repairable: false,
+    }));
+  }
+  const missing = new Set<string>();
+  for (const node of Array.from(doc.getElementsByTagName('*'))) {
+    for (const name of ['property', 'scheme']) {
+      const value = node.getAttribute(name)?.trim();
+      if (!value) continue;
+      const colon = value.indexOf(':');
+      if (colon <= 0) continue;
+      const prefix = value.slice(0, colon);
+      if (!mappings.has(prefix) && !PACKAGE_RESERVED_PREFIXES.has(prefix)) {
+        missing.add(prefix);
+      }
+    }
+  }
+  for (const prefix of missing) {
+    issues.push(createIssue({
+      code: 'OPF_PREFIX_UNDECLARED',
+      severity: 'warning',
+      title: 'Metadado usa prefixo sem mapeamento',
+      detail: 'O prefixo "' + prefix + ':" usado em metadado não é reservado ' +
+        'nem foi declarado no atributo prefix do package.',
+      file: opfPath,
+      context: prefix,
+      repairable: false,
+    }));
+  }
+  return issues;
+}
+
+
 /** Diagnósticos conformes ao OPF sem inventar ordem, identificadores ou metadados. */
 export function validatePackageSemantics(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
   const bytes = loaded.files.get(pkg.opfPath)?.bytes;
@@ -26,6 +94,7 @@ export function validatePackageSemantics(loaded: LoadedEpub, pkg: PackageDocumen
   const key = packageElement?.getAttribute('unique-identifier')?.trim();
   const unique = metadata
     ? findByLocalName(metadata, 'identifier').filter((element) =>
+      element.namespaceURI === 'http://purl.org/dc/elements/1.1/' &&
       element.getAttribute('id') === key && Boolean(element.textContent?.trim()))
     : [];
   if (!key || unique.length !== 1) {
@@ -39,14 +108,17 @@ export function validatePackageSemantics(loaded: LoadedEpub, pkg: PackageDocumen
     }));
   }
 
+  if (isEpub3 && packageElement) {
+    issues.push(...validatePackagePrefixes(doc, pkg.opfPath, packageElement));
+  }
+
   if (isEpub3) {
     const modified = metadata
       ? findByLocalName(metadata, 'meta')
         .filter((element) => element.getAttribute('property') === 'dcterms:modified')
       : [];
     const value = modified[0]?.textContent?.trim() ?? '';
-    if (modified.length !== 1 || !MODIFIED_UTC.test(value) ||
-      Number.isNaN(Date.parse(value))) {
+    if (modified.length !== 1 || !validModifiedTimestamp(value)) {
       issues.push(createIssue({
         code: 'OPF_MODIFIED_INVALID',
         severity: 'warning',
