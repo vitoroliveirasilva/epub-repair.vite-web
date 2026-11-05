@@ -439,7 +439,7 @@ e diagnóstico não equivalem a suporte pleno.
 **Atual:** **72 concluídos, 19 parciais, 8 pendentes**.
 
 **Cinco critérios fechados nesta rodada:** E-041, E-043, E-044, E-045, E-047.
-**Dois critérios com avanços adicionais, ainda parciais:** E-031 e E-047 inicialmente estava parcial, mas seu critério automatizável de não danificar o vínculo áudio/texto foi encerrado após incluir proteção de preservação. O restante da homologação audiovisual física segue pendente como validação externa.
+**Critério com avanço adicional, ainda parcial:** E-031 (memória real em browsers). **E-047 foi encerrado no critério automatizado de não danificar a sincronização áudio/texto**, após incluir proteção de preservação; testes de reprodução em leitores físicos ainda não foram realizados.
 **91/99 possuem avanço; 27/99 não estão totalmente concluídos.**
 
 | Item | Evidências implementadas |
