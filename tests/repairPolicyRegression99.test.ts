@@ -56,6 +56,28 @@ describe('Políticas conservadoras de reparo', () => {
     expect(ui.textContent).not.toContain('EPUB corrigido pronto');
   });
 
+
+  it('E-052: status pós-reparo usa o relatório final, não alertas já resolvidos', () => {
+    const state: AppState = createInitialState();
+    const before = {
+      validZip: true, issues: [{ code: 'CONTENT_SCRIPTED', severity: 'warning',
+        repairable: true }], stats: { fatalCount: 0, errorCount: 0, warningCount: 1 },
+    } as unknown as ValidationReport;
+    const after = {
+      validZip: true, issues: [], stats: { fatalCount: 0, errorCount: 0, warningCount: 0 },
+    } as unknown as ValidationReport;
+    state.report = before;
+    state.repairResult = {
+      blob: new Blob(['epub']), fileName: 'teste-corrigido.epub',
+      before, after, actions: [], warnings: [], changed: true,
+      operation: 'repair',
+    };
+    const ui = renderControls(state, uiActions);
+    expect(ui.textContent).toContain('EPUB corrigido pronto');
+    expect(ui.textContent).toContain('Baixar EPUB corrigido');
+    expect(ui.textContent).not.toContain('Cópia parcial');
+  });
+
   it('E-079: operação somente pulada não anuncia download inexistente', () => {
     const state: AppState = createInitialState();
     const report = {

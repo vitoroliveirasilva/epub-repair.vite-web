@@ -121,7 +121,7 @@ function buildPrimaryActionButtons(
 ): HTMLButtonElement[] {
   if (flags.hasRepair) {
     const downloadButton = button(
-      hasManualReviewIssues(state.report)
+      hasManualReviewIssues(state.repairResult?.after ?? state.report)
         ? 'Baixar cópia parcial (revisar)'
         : state.repairResult?.operation === 'cover-replacement'
         ? 'Baixar EPUB com nova capa'
@@ -173,7 +173,7 @@ function buildPrimaryActionButtons(
 
 function controlsTitle(state: AppState): string {
   if (state.repairResult?.changed && state.repairResult.blob) {
-    if (hasManualReviewIssues(state.report)) return 'Cópia parcial gerada: revisão manual necessária';
+    if (hasManualReviewIssues(state.repairResult.after)) return 'Cópia parcial gerada: revisão manual necessária';
     if (state.repairResult.operation === 'cover-replacement') return 'EPUB com nova capa pronto para baixar';
     if (state.repairResult.operation === 'optimization') return 'EPUB otimizado pronto para baixar';
     return 'EPUB corrigido pronto para ser baixado';
@@ -191,7 +191,8 @@ function controlsTitle(state: AppState): string {
 }
 
 function controlsDescription(state: AppState): string {
-  if (state.repairResult?.changed && state.repairResult.blob && hasManualReviewIssues(state.report)) {
+  if (state.repairResult?.changed && state.repairResult.blob &&
+      hasManualReviewIssues(state.repairResult.after)) {
     return 'A cópia contém correções parciais, mas ainda há alertas que exigem revisão humana. ' +
       'Não considere o EPUB seguro ou pronto para distribuição.';
   }
