@@ -6,11 +6,12 @@ import {
 } from '../utils/constants';
 import type { EpubEntry, LoadedEpub } from '../model/epubTypes';
 import { createIssue } from '../utils/issueFactory';
+import type { IssueCode } from '../model/issueTypes';
 import { normalizeInternalPath } from '../utils/pathUtils';
 import { parseZipCentralDirectory } from './rawZipInspector';
 
 class ZipIntegrityError extends Error {
-  constructor(readonly code: string, message: string) {
+  constructor(readonly code: IssueCode, message: string) {
     super(message);
     this.name = 'ZipIntegrityError';
   }

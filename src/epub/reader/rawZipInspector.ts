@@ -1,5 +1,5 @@
 import type { ZipEntryInfo } from '../model/epubTypes';
-import type { Issue } from '../model/issueTypes';
+import type { Issue, IssueCode } from '../model/issueTypes';
 import { createIssue } from '../utils/issueFactory';
 import {
   MAX_ZIP_COMPRESSION_RATIO,
@@ -24,7 +24,7 @@ function readUInt32LE(bytes: Uint8Array, offset: number): number {
 }
 
 
-type ExtraFieldProblem = { code: string; title: string; detail: string };
+type ExtraFieldProblem = { code: IssueCode; title: string; detail: string };
 
 function filenameCrc32(bytes: Uint8Array): number {
   let crc = 0xffffffff;
@@ -160,7 +160,7 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
   const centralDirOffset = readUInt32LE(bytes, eocdOffset + 16);
   const centralDirEnd = centralDirOffset + centralDirSize;
 
-  const rejectArchive = (code: string, title: string, detail: string) => ({
+  const rejectArchive = (code: IssueCode, title: string, detail: string) => ({
     entries,
     issues: [createIssue({ code, severity: 'fatal' as const, title, detail, repairable: false })],
   });
