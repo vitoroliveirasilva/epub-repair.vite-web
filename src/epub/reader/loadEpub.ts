@@ -116,13 +116,15 @@ export async function loadEpub(fileName: string, bytes: Uint8Array): Promise<Loa
     }
 
     try {
-      const remaining = MAX_ZIP_UNCOMPRESSED_BYTES - totalUncompressedBytes;
-      const unpacked = await readZipEntryLimited(zipEntry, Math.min(MAX_ZIP_ENTRY_BYTES, remaining));
       const metadata = rawByPath.get(normalized.path);
       if (!metadata) {
         throw new ZipIntegrityError('ZIP_JSZIP_ENTRY_MISMATCH',
           'A entrada do JSZip não corresponde a um registro do diretório central.');
       }
+      const remaining = MAX_ZIP_UNCOMPRESSED_BYTES - totalUncompressedBytes;
+      const unpacked = await readZipEntryLimited(
+        zipEntry, Math.min(MAX_ZIP_ENTRY_BYTES, remaining), metadata.uncompressedSize,
+      );
       if (unpacked.bytes.length !== metadata.uncompressedSize) {
         throw new ZipIntegrityError('ZIP_SIZE_MISMATCH',
           'O tamanho real descompactado difere do declarado no diretório central ZIP.');
@@ -215,14 +217,22 @@ const CRC32_TABLE = Uint32Array.from({ length: 256 }, (_, index) => {
 function readZipEntryLimited(
   entry: JSZip.JSZipObject,
   maxBytes: number,
+  expectedBytes: number,
 ): Promise<{ bytes: Uint8Array; crc32: number }> {
+  if (!Number.isSafeInteger(expectedBytes) || expectedBytes < 0 ||
+      expectedBytes > maxBytes) {
+    return Promise.reject(new ZipIntegrityError('ZIP_RESOURCE_LIMIT',
+      'A entrada declara um tamanho descompactado acima do limite disponível.'));
+  }
   return new Promise((resolve, reject) => {
     // JSZip 3.x implementa internalStream em JSZipObject, mas não o expõe na interface pública.
     // O tipo limitado documenta somente a superfície utilizada pelo leitor por blocos.
     const stream = (entry as JSZip.JSZipObject & {
       internalStream(type: 'uint8array'): JSZip.JSZipStreamHelper<Uint8Array>;
     }).internalStream('uint8array');
-    const chunks: Uint8Array[] = [];
+    // Pré-alocação estritamente limitada pelo diretório central validado.
+    // Elimina a segunda cópia integral que antes juntava todos os chunks.
+    const output = new Uint8Array(expectedBytes);
     let length = 0;
     let crc = 0xffffffff;
     let settled = false;
@@ -231,32 +241,31 @@ function readZipEntryLimited(
       if (settled) return;
       settled = true;
       stream.pause();
-      chunks.length = 0;
       reject(error);
     };
 
     stream
       .on('data', (chunk) => {
         if (settled) return;
-        if (chunk.length > maxBytes - length) {
-          fail(new Error('O conteúdo descompactado excede o limite de memória permitido.'));
+        if (chunk.length > maxBytes - length || chunk.length > output.length - length) {
+          fail(new ZipIntegrityError('ZIP_SIZE_MISMATCH',
+            'O fluxo descompactado ultrapassa o tamanho declarado no diretório central.'));
           return;
         }
+        output.set(chunk, length);
         length += chunk.length;
         for (const byte of chunk) {
           crc = CRC32_TABLE[(crc ^ byte) & 0xff]! ^ (crc >>> 8);
         }
-        chunks.push(chunk);
       })
       .on('error', fail)
       .on('end', () => {
         if (settled) return;
         settled = true;
-        const output = new Uint8Array(length);
-        let offset = 0;
-        for (const chunk of chunks) {
-          output.set(chunk, offset);
-          offset += chunk.length;
+        if (length !== expectedBytes) {
+          reject(new ZipIntegrityError('ZIP_SIZE_MISMATCH',
+            'O fluxo descompactado terminou antes de atingir o tamanho declarado.'));
+          return;
         }
         resolve({ bytes: output, crc32: (crc ^ 0xffffffff) >>> 0 });
       })
