@@ -150,7 +150,11 @@ export async function loadEpub(fileName: string, bytes: Uint8Array): Promise<Loa
         issues: [
           ...issues,
           createIssue({
-            code: error instanceof ZipIntegrityError ? error.code : 'ZIP_RESOURCE_LIMIT',
+            code: error instanceof ZipIntegrityError
+              ? error.code
+              : error instanceof Error && /uncompressed data size mismatch/iu.test(error.message)
+                ? 'ZIP_SIZE_MISMATCH'
+                : 'ZIP_RESOURCE_LIMIT',
             severity: 'fatal',
             title: 'Descompactação interrompida por segurança',
             detail: error instanceof Error ? error.message : 'Entrada ZIP inválida ou muito grande.',
