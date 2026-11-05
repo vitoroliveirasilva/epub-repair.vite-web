@@ -3,6 +3,7 @@ import {
   canRepairReport,
   getOptionalOptimizationCount,
   hasOptionalOptimizations,
+  hasManualReviewIssues,
 } from '../../epub';
 import type { AppState } from '../../app/state';
 import { button, el, downloadBlob } from '../dom';
@@ -173,6 +174,9 @@ function controlsTitle(state: AppState): string {
     return 'EPUB com nova capa pronto para baixar';
   if (state.repairResult?.operation === 'optimization') return 'EPUB otimizado pronto para baixar';
   if (state.repairResult) return 'EPUB corrigido pronto para ser baixado';
+  if (state.report && !canRepairReport(state.report) && hasManualReviewIssues(state.report)) {
+    return 'Revisão manual necessária';
+  }
   if (state.report && !canRepairReport(state.report) && hasOptionalOptimizations(state.report)) {
     return 'Seu EPUB está pronto para uso';
   }
@@ -194,6 +198,9 @@ function controlsDescription(state: AppState): string {
   }
   if (state.report?.stats.fatalCount) {
     return 'Encontramos um problema fatal, o reparo automático fica bloqueado para evitar gerar um arquivo incompleto ou pior que o original.';
+  }
+  if (state.report && !canRepairReport(state.report) && hasManualReviewIssues(state.report)) {
+    return 'Há problemas sem correção automática. Confira o relatório antes de usar este EPUB.';
   }
   if (state.report && !canRepairReport(state.report) && hasOptionalOptimizations(state.report)) {
     const count = getOptionalOptimizationCount(state.report);

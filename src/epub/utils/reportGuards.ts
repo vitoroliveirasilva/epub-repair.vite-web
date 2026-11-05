@@ -1,6 +1,14 @@
 import type { ValidationReport } from '../model/epubTypes';
 import type { Issue } from '../model/issueTypes';
 
+/** Alertas graves sem solução automática disponível não significam EPUB pronto. */
+export function hasManualReviewIssues(report: ValidationReport | undefined): boolean {
+  return Boolean(report?.issues.some((issue) =>
+    !issue.repairable &&
+    (issue.severity === 'fatal' || issue.severity === 'error' || issue.severity === 'warning'),
+  ));
+}
+
 export function isRequiredRepairableIssue(issue: Issue): boolean {
   return issue.repairable && issue.severity !== 'info' && issue.severity !== 'success';
 }

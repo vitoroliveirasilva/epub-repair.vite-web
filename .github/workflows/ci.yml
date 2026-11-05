@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - prod
+      - dev
   pull_request:
     branches:
       - prod
+      - dev
   workflow_dispatch:
 
 permissions:

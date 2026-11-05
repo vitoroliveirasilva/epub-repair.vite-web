@@ -58,6 +58,27 @@ export async function repairEpub(
     );
   }
 
+  // Uma otimização isolada não reexecuta reparos do OPF ou do conteúdo.
+  if (mode === 'optimization') {
+    const optimizedFiles = new Map<string, Uint8Array>();
+    for (const [path, entry] of loaded.files) optimizedFiles.set(path, entry.bytes);
+    const applied = (await repairImageCompatibility(optimizedFiles, parsed.packageInfo, options))
+      .filter((action) => action.type !== 'skipped');
+
+    if (applied.length === 0) {
+      return {
+        fileName, before, after: before, actions: [],
+        warnings: ['O navegador não conseguiu aplicar uma otimização opcional.'],
+        changed: false, operation,
+      };
+    }
+    const blob = await rebuildEpubZip(optimizedFiles);
+    const outName = makeRepairedFileName(fileName);
+    const after = await inspectEpub(outName, new Uint8Array(await blob.arrayBuffer()));
+    assertNoNewCriticalIssues(before, after);
+    return { blob, fileName: outName, before, after, actions: applied, warnings, changed: true, operation };
+  }
+
   const actions: RepairAction[] = [];
   const files = new Map<string, Uint8Array>();
 
@@ -118,7 +139,7 @@ export async function repairEpub(
   }
 
   actions.push(...repairKindleCompatibility(files, parsed.packageInfo, options));
-  actions.push(...(await repairImageCompatibility(files, parsed.packageInfo, options)));
+  // E-009: JPEG progressivo só muda na otimização explicitamente solicitada.
 
   const appliedActions = actions.filter((action) => action.type !== 'skipped');
   if (appliedActions.length === 0) {
@@ -141,6 +162,7 @@ export async function repairEpub(
   const afterBytes = new Uint8Array(await blob.arrayBuffer());
   const outputFileName = makeRepairedFileName(fileName);
   const after = await inspectEpub(outputFileName, afterBytes);
+  assertNoNewCriticalIssues(before, after);
 
   return {
     blob,
@@ -168,4 +190,24 @@ function shouldNormalizeMimetype(
 
 function shouldRebuildContainer(issues: { code: string }[]): boolean {
   return issues.some((issue) => issue.code.startsWith('CONTAINER_'));
+}
+
+// Bloqueia regressões fatais/erros críticos em vez de entregar uma cópia pior.
+function assertNoNewCriticalIssues(
+  before: RepairResult['before'],
+  after: RepairResult['after'],
+): void {
+  const isCritical = (issue: { severity: string }) =>
+    issue.severity === 'fatal' || issue.severity === 'error';
+  const known = new Set(
+    before.issues.filter(isCritical).map((issue) => `${issue.code}|${issue.file ?? ''}`),
+  );
+  const added = after.issues.filter(isCritical)
+    .filter((issue) => !known.has(`${issue.code}|${issue.file ?? ''}`));
+  if (added.length > 0) {
+    throw new Error(
+      'O reparo introduziu novos problemas críticos e o EPUB resultante não foi liberado: ' +
+      added.map((issue) => issue.code).join(', '),
+    );
+  }
 }

@@ -2,6 +2,7 @@ import {
   canOptimizeReport,
   canRepairReport,
   hasOptionalOptimizations,
+  hasManualReviewIssues,
   inspectEpub,
   MAX_FILE_SIZE_BYTES,
   readCoverImageFile,
@@ -85,10 +86,13 @@ export async function repairCurrentFile(state: AppState): Promise<void> {
 
     state.repairResult = result;
     state.report = result.after;
-    state.message =
-      result.operation === 'optimization'
-        ? 'Otimização opcional aplicada e EPUB revalidado.'
-        : 'Reparo concluído e revalidado.';
+    state.message = hasManualReviewIssues(result.after)
+      ? 'Alterações aplicadas, mas ainda existem pendências que exigem revisão manual.'
+      : result.after.stats.errorCount > 0 || result.after.stats.warningCount > 0
+        ? 'Alterações aplicadas; confira os alertas remanescentes antes de usar.'
+        : result.operation === 'optimization'
+          ? 'Otimização opcional aplicada e EPUB revalidado.'
+          : 'Reparo concluído e revalidado.';
   } finally {
     state.busy = false;
   }
@@ -140,6 +144,12 @@ export async function applyCoverReplacementToCurrentFile(state: AppState): Promi
 }
 
 function readyWithoutRequiredRepairMessage(report: NonNullable<AppState['report']>): string {
+  if (report.stats.fatalCount > 0) {
+    return 'EPUB inválido: o reparo automático foi bloqueado por problema fatal.';
+  }
+  if (hasManualReviewIssues(report)) {
+    return 'O EPUB tem problemas sem reparo automático. Consulte as pendências para revisão manual.';
+  }
   if (hasOptionalOptimizations(report)) {
     return 'Análise concluída: não há correções obrigatórias. Há apenas melhorias opcionais de compatibilidade.';
   }

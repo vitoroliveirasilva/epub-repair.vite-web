@@ -4,6 +4,7 @@ export { replaceEpubCover } from './cover/replaceCover';
 export { readCoverImageFile, MAX_COVER_IMAGE_SIZE_BYTES } from './cover/coverImageInput';
 export {
   canOptimizeReport,
+  hasManualReviewIssues,
   canRepairReport,
   getOptionalOptimizationCount,
   getRequiredRepairableCount,
