@@ -65,13 +65,15 @@ export async function repairEpub(
   if (mode === 'optimization') {
     const optimizedFiles = new Map<string, Uint8Array>();
     for (const [path, entry] of loaded.files) optimizedFiles.set(path, entry.bytes);
-    const applied = (await repairImageCompatibility(optimizedFiles, parsed.packageInfo, options))
-      .filter((action) => action.type !== 'skipped');
+    const attempted = await repairImageCompatibility(optimizedFiles, parsed.packageInfo, options);
+    const applied = attempted.filter((action) => action.type !== 'skipped');
+    warnings.push(...attempted.filter((action) => action.type === 'skipped')
+      .map((action) => `Não aplicado: ${action.title}. ${action.detail}`));
 
     if (applied.length === 0) {
       return {
-        fileName, before, after: before, actions: [],
-        warnings: ['O navegador não conseguiu aplicar uma otimização opcional.'],
+        fileName, before, after: before, actions: attempted,
+        warnings: [...warnings, 'O navegador não conseguiu aplicar uma otimização opcional.'],
         changed: false, operation,
       };
     }
@@ -82,7 +84,7 @@ export async function repairEpub(
     if (hasResidualActiveContent(after)) {
       warnings.push('Otimização concluída, mas ainda existem recursos suspeitos ou conteúdo ativo a revisar.');
     }
-    return { blob, fileName: outName, before, after, actions: applied, warnings, changed: true, operation };
+    return { blob, fileName: outName, before, after, actions: attempted, warnings, changed: true, operation };
   }
 
   const actions: RepairAction[] = [];
@@ -158,13 +160,17 @@ export async function repairEpub(
   // E-009: JPEG progressivo só muda na otimização explicitamente solicitada.
 
   const appliedActions = actions.filter((action) => action.type !== 'skipped');
+  const skippedActions = actions.filter((action) => action.type === 'skipped');
+  warnings.push(...skippedActions.map((action) =>
+    `Não aplicado: ${action.title}. ${action.detail}`));
   if (appliedActions.length === 0) {
     return {
       fileName,
       before,
       after: before,
-      actions: [],
+      actions: skippedActions,
       warnings: [
+        ...warnings,
         hasResidualActiveContent(before)
           ? 'Nenhuma alteração foi aplicada e o EPUB ainda contém sinais de conteúdo ativo ou recursos suspeitos.'
           : operation === 'optimization'
@@ -191,7 +197,7 @@ export async function repairEpub(
     fileName: outputFileName,
     before,
     after,
-    actions: appliedActions,
+    actions,
     warnings,
     changed: true,
     operation,

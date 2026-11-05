@@ -75,7 +75,7 @@ export async function repairCurrentFile(state: AppState): Promise<void> {
       canRunOptionalOptimization ? 'optimization' : 'repair',
     );
     if (!result.changed || !result.blob) {
-      state.repairResult = undefined;
+      state.repairResult = result.actions.length > 0 ? result : undefined;
       state.report = result.after;
       state.message = hasManualReviewIssues(result.after)
         ? 'Nada foi alterado e ainda existem pendências para revisão manual.'

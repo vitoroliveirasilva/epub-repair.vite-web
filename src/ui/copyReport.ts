@@ -42,7 +42,7 @@ export function buildTextReport(report: ValidationReport, repair?: RepairResult)
       `Depois da operação: ${repair.after.stats.fatalCount} fatais, ${repair.after.stats.errorCount} erros, ${repair.after.stats.warningCount} avisos, score ${repair.after.stats.kindleScore}`,
       `Reparos obrigatórios após operação: ${getRequiredRepairableCount(repair.after)} | Otimizações opcionais após operação: ${getOptionalOptimizationCount(repair.after)}`,
       '',
-      'Alterações aplicadas:',
+      'Ações e pendências:',
       ...(repair.actions.length > 0
         ? repair.actions.map(
             (action) =>

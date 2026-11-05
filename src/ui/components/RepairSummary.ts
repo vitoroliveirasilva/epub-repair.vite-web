@@ -47,8 +47,14 @@ export function renderRepairSummary(result: RepairResult): HTMLElement {
     root.append(el('p', { className: 'muted repair-warning', text: warning }));
   }
 
-  if (!result.changed || result.actions.length === 0) {
-    root.append(el('p', { className: 'empty', text: 'Nada precisou ser alterado.' }));
+  if (!result.changed) {
+    root.append(el('p', {
+      className: 'muted',
+      text: 'Nenhum arquivo foi gerado. Confira as ações não aplicadas abaixo.',
+    }));
+  }
+  if (result.actions.length === 0) {
+    root.append(el('p', { className: 'empty', text: 'Nenhuma ação registrada.' }));
     return root;
   }
 
@@ -81,6 +87,7 @@ function resultEyebrow(result: RepairResult): string {
 }
 
 function resultTitle(result: RepairResult): string {
+  if (!result.changed) return 'Avaliação concluída sem alterações';
   if (result.operation === 'cover-replacement') return 'Capa aplicada';
   if (result.operation === 'optimization') return 'Otimização aplicada';
   return 'Alterações aplicadas';
