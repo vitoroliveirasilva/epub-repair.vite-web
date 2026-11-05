@@ -50,6 +50,9 @@ jobs:
       - name: Audit all dependencies
         run: npm audit --audit-level=moderate
 
+      - name: Review dependency licenses (report only)
+        run: node scripts/audit-licenses.mjs
+
       - name: Typecheck
         run: npm run typecheck
 
