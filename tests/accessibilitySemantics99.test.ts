@@ -33,6 +33,33 @@ describe('E-072: rótulos acessíveis e SVG inline não destrutivos', () => {
     expect(check('<p id="a">Uma</p><p id="b">Duas</p>' +
       '<figure aria-describedby="a b">Imagem</figure>')).toEqual([]);
   });
+  it('sinaliza IDs ARIA duplicados mesmo que todos os alvos existam', () => {
+    const issues = check('<p id="legenda">Texto</p><p id="legenda">Outra legenda</p>' +
+      '<figure aria-describedby="legenda">Imagem</figure>');
+    expect(issues.map((issue) => issue.code)).toEqual(['CONTENT_ARIA_REFERENCE_AMBIGUOUS']);
+    expect(issues[0]?.context).toBe('legenda');
+  });
+  it('identifica idioma incoerente na raiz sem tentar adivinhar a língua correta', () => {
+    const path = 'OPS/chapter.xhtml';
+    const xml = '<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" ' +
+      'xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">' +
+      '<body><p>Texto</p></body></html>';
+    const loaded = { files: new Map([[path, { bytes: new TextEncoder().encode(xml) }]]) }
+      as unknown as LoadedEpub;
+    const pkg = { manifest: [{ id: 'c', resolvedPath: path, exists: true,
+      mediaType: 'application/xhtml+xml' }] } as unknown as PackageDocumentInfo;
+    const issues = validateAccessibility(loaded, pkg);
+    expect(issues.map((issue) => issue.code)).toContain('CONTENT_LANGUAGE_CONFLICT');
+    expect(issues.every((issue) => issue.repairable === false)).toBe(true);
+  });
+  it('distingue links vazios de links com texto, aria-label ou imagem alt', () => {
+    const issues = check('<a href="#destino"></a>' +
+      '<a href="https://example.org">Referência</a>' +
+      '<a href="#fig"><img src="img.png" alt="Figura do livro"/></a>' +
+      '<a href="#top" aria-label="Voltar ao topo"></a>');
+    expect(issues.map((issue) => issue.code)).toEqual(['CONTENT_LINK_NAME_MISSING']);
+    expect(issues[0]?.severity).toBe('info');
+  });
   it('trata SVG decorativo como válido e não exige descrição textual', () => {
     expect(check('<svg:svg aria-hidden="true"><svg:circle r="2"/></svg:svg>')).toEqual([]);
   });

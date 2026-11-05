@@ -73,6 +73,72 @@ export function validateAccessibility(loaded: LoadedEpub, pkg: PackageDocumentIn
       }));
     }
 
+    // Quando dois elementos partilham o mesmo ID referenciado por ARIA,
+    // leitores de tela podem escolher destinos distintos.
+    const idCount = new Map<string, number>();
+    for (const element of elements) {
+      const id = element.getAttribute('id');
+      if (id) idCount.set(id, (idCount.get(id) ?? 0) + 1);
+    }
+    const duplicateTargets = new Set<string>();
+    for (const element of elements) {
+      for (const attribute of ['aria-labelledby', 'aria-describedby']) {
+        for (const id of (element.getAttribute(attribute) ?? '').trim().split(/\s+/u)) {
+          if (id && (idCount.get(id) ?? 0) > 1) duplicateTargets.add(id);
+        }
+      }
+    }
+    if (duplicateTargets.size > 0) {
+      issues.push(createIssue({
+        code: 'CONTENT_ARIA_REFERENCE_AMBIGUOUS',
+        severity: 'warning',
+        title: 'Referência ARIA ambígua por IDs duplicados',
+        detail: 'Há múltiplos destinos para o mesmo identificador ARIA. ' +
+          'Revise IDs e referências sem aplicar renomeação automática.',
+        file: item.resolvedPath,
+        context: [...duplicateTargets].join(', '),
+        repairable: false,
+      }));
+    }
+
+    const root = document.documentElement;
+    const lang = root.getAttribute('lang')?.trim() ?? '';
+    const xmlLang = (root.getAttributeNS(
+      'http://www.w3.org/XML/1998/namespace', 'lang',
+    ) ?? root.getAttribute('xml:lang') ?? '').trim();
+    if (lang && xmlLang && lang.toLowerCase() !== xmlLang.toLowerCase()) {
+      issues.push(createIssue({
+        code: 'CONTENT_LANGUAGE_CONFLICT',
+        severity: 'warning',
+        title: 'Idioma da página diverge entre lang e xml:lang',
+        detail: 'Os atributos lang e xml:lang da raiz não concordam. ' +
+          'Confirme o idioma editorial antes de alterar metadados.',
+        file: item.resolvedPath,
+        repairable: false,
+      }));
+    }
+
+    const unnamedLinks = elements.filter((element) => {
+      if (element.localName.toLowerCase() !== 'a' || !element.hasAttribute('href')) return false;
+      if (element.textContent?.trim() || element.getAttribute('aria-label')?.trim() ||
+          element.getAttribute('title')?.trim() ||
+          element.getAttribute('aria-labelledby')?.trim()) return false;
+      const image = Array.from(element.getElementsByTagName('*')).find((child) =>
+        child.localName.toLowerCase() === 'img' && child.getAttribute('alt')?.trim());
+      return !image;
+    });
+    if (unnamedLinks.length > 0) {
+      issues.push(createIssue({
+        code: 'CONTENT_LINK_NAME_MISSING',
+        severity: 'info',
+        title: 'Link sem nome acessível',
+        detail: unnamedLinks.length + ' link(s) não possui(em) texto, título, ' +
+          'rótulo ARIA ou imagem descritiva. Verifique navegação assistiva.',
+        file: item.resolvedPath,
+        repairable: false,
+      }));
+    }
+
     const inlineSvg = elements.filter((element) =>
       element.localName === 'svg' &&
       element.namespaceURI === 'http://www.w3.org/2000/svg' &&
