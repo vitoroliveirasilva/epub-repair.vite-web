@@ -70,7 +70,7 @@ function isCompatibilityIssue(issue: Issue): boolean {
 }
 
 function isSecurityIssue(issue: Issue): boolean {
-  return /^(?:DRM|PACKAGE_SUSPICIOUS|ZIP_(?:ENCRYPTED|UNSAFE|NAME_COLLISION|RESOURCE_LIMIT)|CONTENT_(?:SCRIPTED|UNSAFE)|CSS_UNSAFE)/u.test(
+  return /^(?:DRM|PACKAGE_SUSPICIOUS|ZIP_(?:ENCRYPTED|UNSAFE|NAME_COLLISION|RESOURCE_LIMIT|DUPLICATE|OVERLAPPING)|CONTENT_(?:SCRIPTED|UNSAFE)|CSS_UNSAFE)/u.test(
     issue.code,
   );
 }
