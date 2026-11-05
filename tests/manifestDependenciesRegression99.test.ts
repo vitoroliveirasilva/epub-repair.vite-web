@@ -39,6 +39,30 @@ describe('Integridade das dependências de IDs do manifest', () => {
       item.title.includes('ID duplicado'))).toBe(true);
   });
 
+
+  it('E-013: mantém dependências spine, fallback, overlay e refines ao recusar ID ambíguo', async () => {
+    const { loaded, pkg } = await packageWithEdit((opf) => opf
+      .replace('</manifest>',
+        '<item id="chapter1" href="Text/extra.xhtml" media-type="application/xhtml+xml"/>' +
+        '<item id="fallbackRef" href="Text/another.xhtml" media-type="application/xhtml+xml" ' +
+        'fallback="chapter1" media-overlay="chapter1"/></manifest>')
+      .replace('</metadata>',
+        '<meta property="title-type" refines="#chapter1">main</meta></metadata>'));
+    const result = repairOpfDocument(loaded, pkg, 'livro.epub', DEFAULT_REPAIR_OPTIONS);
+    const dom = new DOMParser().parseFromString(result.opfText, 'application/xml');
+    const elements = Array.from(dom.getElementsByTagName('*'));
+    const chapter1 = elements.filter((el) =>
+      el.localName === 'item' && el.getAttribute('id') === 'chapter1');
+    expect(chapter1).toHaveLength(2);
+    const ref = elements.find((el) => el.getAttribute('id') === 'fallbackRef');
+    expect(ref?.getAttribute('fallback')).toBe('chapter1');
+    expect(ref?.getAttribute('media-overlay')).toBe('chapter1');
+    const meta = elements.find((el) => el.getAttribute('refines') === '#chapter1');
+    expect(meta?.textContent).toBe('main');
+    expect(result.actions.some((action) =>
+      action.type === 'skipped' && action.title.includes('ID duplicado'))).toBe(true);
+  });
+
   it('E-041: detecta fallback inexistente, referências media-overlay e ciclos', async () => {
     const { loaded, pkg } = await packageWithEdit((opf) => opf
       .replace('id="chapter1" href=', 'id="chapter1" fallback="chapter2" href=')
