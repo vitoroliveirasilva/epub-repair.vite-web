@@ -59,7 +59,7 @@ describe('E-064/E-065: proteção de texto e estrutura editorial antes/depois', 
   it('E-049: proíbe desaparecimento de ruby e fórmulas matemáticas na sanitização', () => {
     const original = markup('<p>Leitura <ruby>漢<rt>kan</rt></ruby> e ' +
       '<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>x</mi></math>.</p>');
-    const withoutRuby = markup('<p>Leitura 漢 kan e ' +
+    const withoutRuby = markup('<p>Leitura 漢kan e ' +
       '<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>x</mi></math>.</p>');
     expect(compare(original, withoutRuby)).toThrow(/MathML\/ruby/u);
     const withoutMath = markup('<p>Leitura <ruby>漢<rt>kan</rt></ruby> e x.</p>');
