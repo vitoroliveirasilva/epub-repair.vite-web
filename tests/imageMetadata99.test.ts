@@ -13,7 +13,7 @@ function check(mime:string,bytes:Uint8Array) {
   const loaded={files:new Map([[path,{bytes}]])} as unknown as LoadedEpub;
   const pkg={manifest:[{id:'image',resolvedPath:path,exists:true,mediaType:mime}]} as unknown as PackageDocumentInfo;
   const issues=validateImageMetadata(loaded,pkg);
-  expect(bytes).toEqual(before);
+  expect(Array.from(bytes)).toEqual(Array.from(before));
   return issues;
 }
 describe('E-075: inventário opt-in futuro EXIF/XMP/Photoshop, sem editar pixels', () => {
