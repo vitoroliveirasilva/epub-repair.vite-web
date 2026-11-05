@@ -32,6 +32,29 @@ describe('Títulos editoriais nos índices criados', () => {
     expect(nav).toContain('xml:lang="en-US"');
     expect(nav).not.toContain('>cap01<');
   });
+
+  it('E-011: prefere título XHTML quando capítulo não tem heading', () => {
+    const book = new Map([
+      ['OPS/Text/chapter01.xhtml', { bytes: new TextEncoder().encode(
+        '<html xmlns="http://www.w3.org/1999/xhtml"><head>' +
+        '<title>Introdução &amp; contexto</title></head><body><p>Texto.</p></body></html>',
+      ) }],
+    ]);
+    const nav = buildNavDocument(fixture('pt-BR'), 'OPS/nav.xhtml', book);
+    expect(nav).toContain('Introdução &amp; contexto');
+    expect(nav).not.toContain('>cap01<');
+  });
+
+  it('E-011: usa rótulo legível de filename se não existe informação editorial', () => {
+    const book = new Map([
+      ['OPS/Text/chapter01.xhtml', { bytes: new TextEncoder().encode(
+        '<html xmlns="http://www.w3.org/1999/xhtml"><body><p>Texto.</p></body></html>',
+      ) }],
+    ]);
+    const nav = buildNavDocument(fixture('pt-BR'), 'OPS/nav.xhtml', book);
+    expect(nav).toContain('>chapter01<');
+    expect(nav).not.toContain('>cap01<');
+  });
   it('E-008: não inventa idioma em navegação gerada', () => {
     const nav = buildNavDocument(fixture('UND'), 'OPS/nav.xhtml', contents);
     expect(nav).not.toContain('lang="pt-BR"');

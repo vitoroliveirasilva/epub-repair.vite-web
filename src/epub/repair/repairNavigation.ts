@@ -80,7 +80,9 @@ function editorialLabel(
   index: number,
   resources?: ReadonlyMap<string, { bytes: Uint8Array }>,
 ): string {
-  const fallback = item.id || basename(item.href) || `Capítulo ${index + 1}`;
+  const rawFilename = basename(item.href).replace(/\.(?:xhtml?|html?)$/iu, '');
+  const readableFilename = rawFilename.replace(/[-_]+/gu, ' ').replace(/\s+/gu, ' ').trim();
+  const fallback = readableFilename || item.id || `Capítulo ${index + 1}`;
   const bytes = resources?.get(item.resolvedPath)?.bytes;
   if (!bytes || typeof DOMParser === 'undefined') return fallback;
 
@@ -93,10 +95,13 @@ function editorialLabel(
       .find((element) => element.localName === 'body');
     const headings = body ? Array.from(body.getElementsByTagName('*')) : [];
     const heading = headings.find((element) =>
-      /^(?:h1|h2|h3)$/u.test(element.localName) && Boolean(element.textContent?.trim()),
+      /^h[1-6]$/u.test(element.localName) && Boolean(element.textContent?.trim()),
     );
-    const text = (heading?.textContent ?? '').replace(/\s+/gu, ' ').trim();
-    return text ? text.slice(0, 180) : fallback;
+    const title = Array.from(doc.getElementsByTagName('*')).find((element) =>
+      element.localName === 'title')?.textContent?.trim();
+    const editorial = (heading?.textContent || title || '').replace(/\s+/gu, ' ').trim();
+    return editorial && !/^(?:untitled|unknown|sem título)$/iu.test(editorial)
+      ? editorial.slice(0, 180) : fallback;
   } catch {
     return fallback;
   }
