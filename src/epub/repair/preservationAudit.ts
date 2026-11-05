@@ -46,6 +46,17 @@ export function auditPreservation(
     throw new Error('A operação alterou a ordem ou repetição de capítulos já existentes.');
   }
 
+  // Uma mudança invisível no valor linear pode alterar a ordem efetiva da leitura.
+  // Não inferir nem alterar silenciosamente quais páginas são auxiliares.
+  for (let index = 0; index < before.spine.length; index += 1) {
+    const original = before.spine[index];
+    const updated = after.spine[index];
+    if (original?.manifestItem?.exists && updated?.manifestItem?.resolvedPath ===
+        original.manifestItem.resolvedPath && original.linear !== updated.linear) {
+      throw new Error('O reparo alteraria a classificação linear de um capítulo existente.');
+    }
+  }
+
   const changedText: string[] = [];
   const potentiallyLostText: string[] = [];
   const unverifiableText: string[] = [];
@@ -61,6 +72,7 @@ export function auditPreservation(
     const newMarkup = textDecoder.decode(newBytes);
     if (!sameBytes(oldBytes, newBytes)) {
       compareInternalTargets(oldMarkup, newMarkup, item.resolvedPath);
+      compareEditorialBlocks(oldMarkup, newMarkup, item.resolvedPath);
     }
     const oldText = extractReadableText(oldMarkup);
     const newText = extractReadableText(newMarkup);
@@ -145,6 +157,32 @@ function containsOriginalWordsInOrder(before: string, after: string): boolean {
   return false;
 }
 
+/**
+ * O texto integral não basta: fundir dois parágrafos preserva as palavras,
+ * mas quebra a semântica de leitura. Conferir parágrafos, itens de lista e headings
+ * na mesma sequência, permitindo apenas acréscimos dentro do bloco original.
+ */
+function compareEditorialBlocks(before: string, after: string, path: string): void {
+  const original = parseReadableDocument(before);
+  const repaired = parseReadableDocument(after);
+  if (!original || !repaired) return;
+  const blocks = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
+    .filter((element) => /^(?:p|li|h[1-6])$/iu.test(element.localName))
+    .map((element) => (element.textContent ?? '').replace(/\\s+/gu, ' ').trim())
+    .filter(Boolean);
+  const beforeBlocks = blocks(original);
+  const afterBlocks = blocks(repaired);
+  let cursor = 0;
+  for (const block of beforeBlocks) {
+    while (cursor < afterBlocks.length &&
+      !containsOriginalWordsInOrder(block, afterBlocks[cursor] ?? '')) cursor += 1;
+    if (cursor >= afterBlocks.length) {
+      throw new Error(`O reparo apagaria, fundiria ou mudaria a ordem de blocos editoriais em ${path}.`);
+    }
+    cursor += 1;
+  }
+}
+
 /** IDs e links editoriais internos não podem desaparecer por efeito colateral do sanitizer. */
 function compareInternalTargets(before: string, after: string, path: string): void {
   const original = parseReadableDocument(before);
@@ -153,7 +191,10 @@ function compareInternalTargets(before: string, after: string, path: string): vo
   const elements = (doc: Document): Element[] => Array.from(doc.getElementsByTagName('*'))
     .filter((element) => element.localName !== 'script' && element.localName !== 'style');
   const ids = (doc: Document) => new Set(elements(doc)
-    .map((element) => element.getAttribute('id')).filter(Boolean));
+    .flatMap((element) => [
+      element.getAttribute('id'),
+      element.localName === 'a' ? element.getAttribute('name') : null,
+    ]).filter((value): value is string => Boolean(value)));
   const originalIds = ids(original);
   const afterIds = ids(output);
   for (const id of originalIds) {
