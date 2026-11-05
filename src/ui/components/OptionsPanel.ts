@@ -66,7 +66,9 @@ export function renderOptionsPanel(state: AppState, onChange: () => void): HTMLE
   for (const [key, label, description] of options) {
     const checkbox = el('input', { attrs: { type: 'checkbox', id: key } });
     checkbox.checked = Boolean(state.options[key]);
+    checkbox.disabled = state.busy;
     checkbox.addEventListener('change', () => {
+      if (state.busy) return;
       state.options[key] = checkbox.checked;
       onChange();
     });

@@ -56,6 +56,8 @@ export async function repairCurrentFile(state: AppState): Promise<void> {
   if (!state.payload) throw new Error('Envie um EPUB antes de repará-lo.');
   state.busy = true;
   state.error = undefined;
+  // Snapshot antes do primeiro await: alterações na UI não afetam o job ativo.
+  const appliedOptions = { ...state.options };
   try {
     const currentReport =
       state.report ?? (await inspectEpub(state.payload.file.name, state.payload.bytes));
@@ -73,7 +75,7 @@ export async function repairCurrentFile(state: AppState): Promise<void> {
     const result = await repairEpub(
       state.payload.file.name,
       state.payload.bytes,
-      state.options,
+      appliedOptions,
       canRunOptionalOptimization ? 'optimization' : 'repair',
     );
     if (!result.changed || !result.blob) {
@@ -88,7 +90,7 @@ export async function repairCurrentFile(state: AppState): Promise<void> {
     }
 
     state.repairResult = result;
-    state.lastRepairOptions = { ...state.options };
+    state.lastRepairOptions = appliedOptions;
     state.report = result.after;
     state.message = hasManualReviewIssues(result.after)
       ? 'Alterações aplicadas, mas ainda existem pendências que exigem revisão manual.'

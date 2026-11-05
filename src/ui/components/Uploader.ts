@@ -11,6 +11,7 @@ export function renderUploader(state: AppState, onFile: (file: File) => void): H
     },
   });
   input.className = 'visually-hidden';
+  input.disabled = state.busy;
 
   const dropzone = el('label', {
     className: 'dropzone',
@@ -19,6 +20,7 @@ export function renderUploader(state: AppState, onFile: (file: File) => void): H
       tabindex: '0',
       role: 'button',
       'aria-label': 'Escolher ou arrastar arquivo EPUB para análise local',
+      'aria-disabled': String(state.busy),
     },
     children: [
       renderDropIcon(),
@@ -34,22 +36,26 @@ export function renderUploader(state: AppState, onFile: (file: File) => void): H
   });
 
   input.addEventListener('change', () => {
+    if (state.busy) return;
     const file = input.files?.[0];
     if (file) onFile(file);
   });
 
   dropzone.addEventListener('dragover', (event) => {
     event.preventDefault();
+    if (state.busy) return;
     dropzone.classList.add('dropzone-active');
   });
   dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dropzone-active'));
   dropzone.addEventListener('drop', (event) => {
     event.preventDefault();
+    if (state.busy) return;
     dropzone.classList.remove('dropzone-active');
     const file = event.dataTransfer?.files[0];
     if (file) onFile(file);
   });
   dropzone.addEventListener('keydown', (event) => {
+    if (state.busy) return;
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       input.click();
