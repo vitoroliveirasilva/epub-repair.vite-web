@@ -44,8 +44,8 @@ describe('E-072: rótulos acessíveis e SVG inline não destrutivos', () => {
     const xml = '<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" ' +
       'xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">' +
       '<body><p>Texto</p></body></html>';
-    const loaded = { files: new Map([[path, { bytes: new TextEncoder().encode(xml) }]]) }
-      as unknown as LoadedEpub;
+    const loaded = { files: new Map([[path, { bytes: new TextEncoder().encode(xml) }]]) } as
+      unknown as LoadedEpub;
     const pkg = { manifest: [{ id: 'c', resolvedPath: path, exists: true,
       mediaType: 'application/xhtml+xml' }] } as unknown as PackageDocumentInfo;
     const issues = validateAccessibility(loaded, pkg);
