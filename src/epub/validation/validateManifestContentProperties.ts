@@ -65,23 +65,17 @@ function isScriptElement(node: Element): boolean {
     /^(?:text|application)\/(?:java|ecma)script(?:;|$)/u.test(type);
 }
 
-/** Inspeção estrutural não executa scripts nem acessa referências de rede. */
-export function validateManifestContentProperties(
-  loaded: LoadedEpub,
-  pkg: PackageDocumentInfo,
-): Issue[] {
-  if (!pkg.version.trim().startsWith('3')) return [];
-  const issues: Issue[] = [];
-  for (const item of pkg.manifest) {
-    if (!item.exists || item.remote) continue;
-    const bytes = loaded.files.get(item.resolvedPath)?.bytes;
-    if (!bytes) continue;
-    const media = item.mediaType.toLowerCase();
+/** Inferência compartilhada entre diagnóstico e correção de metadados, sem rede. */
+export function inferRequiredManifestProperties(
+  mediaType: string,
+  bytes: Uint8Array,
+): ContentProperty[] {
+    const media = mediaType.toLowerCase();
     const isXhtml = media === 'application/xhtml+xml';
     const isSvg = media === 'image/svg+xml';
     const isCss = media === 'text/css';
     const isSmil = media === 'application/smil+xml';
-    if (!isXhtml && !isSvg && !isCss && !isSmil) continue;
+    if (!isXhtml && !isSvg && !isSmil && !isCss) return [];
 
     const required = new Set<ContentProperty>();
     const text = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
@@ -92,7 +86,7 @@ export function validateManifestContentProperties(
       try {
         doc = parseXml(text.replace(/&nbsp;/giu, '&#160;'));
       } catch {
-        continue; // XML inválido tem diagnóstico próprio; não inferir propriedades.
+        return []; // XML inválido já tem diagnóstico próprio.
       }
       for (const node of Array.from(doc.getElementsByTagName('*'))) {
         if (isXhtml || isSvg) {
@@ -121,6 +115,21 @@ export function validateManifestContentProperties(
         }
       }
     }
+  return Array.from(required);
+}
+
+/** Inspeção estrutural não executa scripts nem acessa referências de rede. */
+export function validateManifestContentProperties(
+  loaded: LoadedEpub,
+  pkg: PackageDocumentInfo,
+): Issue[] {
+  if (!pkg.version.trim().startsWith('3')) return [];
+  const issues: Issue[] = [];
+  for (const item of pkg.manifest) {
+    if (!item.exists || item.remote) continue;
+    const bytes = loaded.files.get(item.resolvedPath)?.bytes;
+    if (!bytes) continue;
+    const required = inferRequiredManifestProperties(item.mediaType, bytes);
     for (const property of required) {
       if (item.properties.includes(property)) continue;
       issues.push(createIssue({

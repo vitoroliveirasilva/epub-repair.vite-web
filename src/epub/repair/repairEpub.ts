@@ -15,6 +15,7 @@ import { repairActiveContentOnly, repairContentDocuments } from './repairContent
 import { repairImageCompatibility } from './repairImages';
 import { repairKindleCompatibility } from './repairKindleCompatibility';
 import { repairOpfDocument } from './repairOpf';
+import { synchronizeManifestProperties } from './synchronizeManifestProperties';
 import { rebuildEpubZip } from './rebuildEpubZip';
 
 type RepairRunMode = 'repair' | 'optimization';
@@ -167,6 +168,11 @@ export async function repairEpub(
   }
 
   actions.push(...repairKindleCompatibility(files, parsed.packageInfo, options));
+  // Manifest precisa refletir os recursos efetivos, após a limpeza. Isso
+  // evita avisos novos quando o reparo declara arquivos antes órfãos.
+  if (options.repairManifest) {
+    actions.push(...synchronizeManifestProperties(files, parsed.packageInfo));
+  }
   // E-009: JPEG progressivo só muda na otimização explicitamente solicitada.
 
   const appliedActions = actions.filter((action) => action.type !== 'skipped');
