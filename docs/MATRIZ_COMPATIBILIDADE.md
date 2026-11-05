@@ -58,3 +58,19 @@ Referências:
   mas não demonstra compatibilidade universal em Kindle, Calibre ou navegadores.
 - Regras de DTD e XML preservam padrões tradicionais conhecidos e recusam
   construções externas não autorizadas.
+
+## Complementos da execução 6 (branch dev, ainda não lançados)
+
+| Tema | Situação do motor | O que falta homologar |
+| --- | --- | --- |
+| EPUB 3 fixed-layout | Verifica `rendition:layout`, viewport XHTML e viewBox SVG | Renderização real, viewport de dispositivos e páginas espelhadas |
+| Media Overlays/SMIL | Inspeção de XML, texto, fragmentos, áudio e tempos | Sincronia auditiva real, codecs e leitores |
+| ZIP com data descriptor | Inspeciona CRC e tamanhos, identifica ZIP64 e multipartes | Corpus adversarial maior e limites de memória em dispositivos modestos |
+| CSS e recursos externos | Diagnosticados sem presumir que HTTP/HTTPS são perigosos | Efeitos visuais e disponibilidade offline de fontes remotas |
+| Scripts | Inventário declarado/órfão; executáveis e assinaturas binárias inesperadas avisados | Análise profunda ou AV externo; JavaScript legítimo não equivale a malware |
+| Comparação antes/depois | Diff de XHTML, CSS, OPF e NCX em UI/TXT/JSON, prévia limitada | Diferença visual real, renderização MathML/ruby e EPUBs grandes |
+| Acessibilidade | Retenção de foco e cursor em rerender, status ARIA | Testes de leitor de tela e navegadores reais |
+| Idempotência | Testes de propriedades em múltiplas fixtures EPUB 3 | Corpus diverso de EPUB 2/3 reais e performance |
+| Capa | Validação cruzada do OPF e páginas de capa no guide/landmarks | Casos de capas animadas, múltiplas renditions e leitores |
+
+Os cenários com indicação de cobertura automática não significam certificação de compatibilidade em leitores reais. O EPUBCheck valida as fixtures sintéticas configuradas no CI.

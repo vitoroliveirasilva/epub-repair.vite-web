@@ -55,3 +55,18 @@ devem criar IDs adicionais, sem forçar o inventário original a continuar em 99
 
 Resultado desta execução: **26 concluídos, 50 parciais, 23 pendentes** de 99,
 com CI Node 20/22, EPUBCheck 5.4.0 e testes sintéticos. A `prod` segue intacta.
+
+## Execuções 5 e 6: decisões técnicas
+
+- ZIP/OCF: recusar e diagnosticar ZIP64, arquivos multipartes, compressões incompatíveis, descritores, CRC e tamanhos divergentes antes de confiar em arquivos extraídos.
+- EPUB 3 fixed-layout: verificar dimensões e viewport, não redimensionar nem alterar visual de página automaticamente.
+- SMIL: verificar destino textual, fragmentos, presença de áudio e limites temporais, sem sintetizar ou recodificar narração.
+- A auditoria editorial protege ordem de capítulos, blocos XHTML, âncoras, links NCX e semântica MathML/ruby/RTL, mas ainda não comprova fidelidade visual em leitores físicos.
+- O diagnóstico de scripts distingue JS declarado de recurso órfão. O EPUB 3 admite conteúdo ativo e o relatório não afirma presença de malware por causa de um script legítimo.
+- Executáveis com assinatura conhecida, mesmo sob extensão enganosa, são avisados e não removidos automaticamente.
+- A identificação de CSS redundante ou sobrescrito é informativa: a cascata pode ser intencional, e a ferramenta não reescreve sua apresentação por hipótese.
+- O relatório agora permite conferir diferenças limitadas por linha de OPF/XHTML/CSS/NCX, mantendo a leitura e a produção de relatórios locais.
+- A preservação de foco após rerender e propriedades de no-op/idempotência receberam regressões dedicadas.
+- Não fazer merge de `dev` em `prod` nem release automático a partir deste inventário. `prod` continua em `v2.2.0`.
+
+Para evidências e estados individuais, ver [Auditoria 99](AUDITORIA_99_PROGRESSO.md).

@@ -246,3 +246,4 @@ nem garante conformidade de qualquer livro arbitrário.
 - [Matriz de formatos EPUB e validações](docs/MATRIZ_COMPATIBILIDADE.md)
 - [Decisões técnicas da auditoria](docs/DECISOES_AUDITORIA.md)
 - [Andamento dos 99 itens](docs/AUDITORIA_99_PROGRESSO.md)
+- [Changelog de desenvolvimento e correções](CHANGELOG.md)
