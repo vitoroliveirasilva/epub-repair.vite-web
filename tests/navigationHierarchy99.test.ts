@@ -9,8 +9,7 @@ function validate(inner: string) {
   const doc = '<html xmlns="http://www.w3.org/1999/xhtml" ' +
     'xmlns:epub="http://www.idpf.org/2007/ops"><body>' +
     '<nav epub:type="toc"><ol>' + inner + '</ol></nav></body></html>';
-  const loaded = { files: new Map([[path, { bytes: new TextEncoder().encode(doc) }]]) }
-    as unknown as LoadedEpub;
+  const loaded = { files: new Map([[path, { bytes: new TextEncoder().encode(doc) }]]) } as unknown as LoadedEpub;
   const item = { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml',
     properties: ['nav'], resolvedPath: path, pathSafe: true, exists: true };
   const pkg = { opfPath: 'OPS/book.opf', opfDir: 'OPS', version: '3.3', metadata: {},
