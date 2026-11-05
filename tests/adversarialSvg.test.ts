@@ -50,6 +50,29 @@ describe('SVG e XML adversariais dentro de EPUBs', () => {
     expect(() => parseXml(nested)).toThrow(/Entidades XML/u);
   });
 
+  it('E-056: mantém DOCTYPE público comum de NCX 2005 e XHTML 1.1', () => {
+    const ncx = '<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" ' +
+      '"http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">' +
+      '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/"><navMap/></ncx>';
+    expect(parseXml(ncx).documentElement.localName).toBe('ncx');
+    const xhtml = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" ' +
+      '"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">' +
+      '<html xmlns="http://www.w3.org/1999/xhtml"><body/></html>';
+    expect(parseXml(xhtml, 'application/xhtml+xml').documentElement.localName).toBe('html');
+  });
+
+  it('E-056: rejeita DTD externa desconhecida, subset e inclusão XInclude', () => {
+    expect(() => parseXml('<!DOCTYPE book SYSTEM "file:///etc/passwd"><book/>'))
+      .toThrow(/DOCTYPE/u);
+    expect(() => parseXml('<!DOCTYPE ncx [<!ELEMENT ncx ANY>]><ncx/>'))
+      .toThrow(/DOCTYPE/u);
+    expect(() => parseXml(
+      '<root xmlns:xi="http://www.w3.org/2001/XInclude">' +
+        '<xi:include href="file:///etc/passwd"/></root>',
+    )).toThrow(/XInclude/u);
+    expect(() => parseXml('<root><title>Seguro</title></root>')).not.toThrow();
+  });
+
   it('preserva XML legítimo sem DTDs internos', () => {
     const doc = parseXml('<root><title>Leitura segura</title></root>');
     expect(doc.documentElement.querySelector('title')?.textContent).toBe('Leitura segura');
