@@ -7,6 +7,7 @@ import {
   repairCurrentFile,
 } from './actions';
 import { createInitialState, type AppState } from './state';
+import { potentialEditorialChanges } from './repairConsent';
 import { buildJsonReport, buildTextReport, createReportEvidence, makeReportFileName } from '../ui/copyReport';
 import { renderControls } from '../ui/components/Controls';
 import { renderCoverChanger } from '../ui/components/CoverChanger';
@@ -52,6 +53,17 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
                 void runAsync(state, rerender, () => analyzeCurrentFile(state));
               },
               repair: () => {
+                const changes = potentialEditorialChanges(state.options, state.report);
+                if (changes.length > 0) {
+                  const question = 'Esta operação pode modificar o conteúdo do livro:\n\n' +
+                    changes.map((change) => '- ' + change).join('\n') +
+                    '\n\nDeseja gerar uma nova cópia com essas alterações?';
+                  if (!window.confirm(question)) {
+                    state.message = 'Operação cancelada. O EPUB original permanece inalterado.';
+                    rerender();
+                    return;
+                  }
+                }
                 void runAsync(state, rerender, () => repairCurrentFile(state));
               },
               copy: () => {

@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { renderControls } from '../src/ui/components/Controls';
 import { createInitialState } from '../src/app/state';
+import { potentialEditorialChanges } from '../src/app/repairConsent';
 import type { AppState } from '../src/app/state';
 import { buildKindleIssueEpub } from './helpers/syntheticEpub';
 import { loadEpub } from '../src/epub/reader/loadEpub';
@@ -20,6 +21,22 @@ const uiActions = {
 };
 
 describe('Políticas conservadoras de reparo', () => {
+  it('E-078: alerta antes de substituições, sem criar falso risco em URLs normais', () => {
+    const state = createInitialState();
+    const report = { issues: [
+      { code: 'CONTENT_MISSING_RESOURCE' },
+      { code: 'CONTENT_SCRIPTED' },
+    ] } as unknown as ValidationReport;
+    expect(potentialEditorialChanges(state.options, undefined)).toEqual([]);
+    expect(potentialEditorialChanges(state.options, report).length).toBe(1);
+    state.options.replaceMissingImagesWithText = true;
+    state.options.removeRemoteResourceLinks = true;
+    expect(potentialEditorialChanges(state.options, report).length).toBe(3);
+    state.options.conservativeMode = true;
+    expect(potentialEditorialChanges(state.options, report).length).toBe(2);
+  });
+
+
   it('E-052: não chama cópia com scripts remanescentes de EPUB pronto', () => {
     const state: AppState = createInitialState();
     const report = {
