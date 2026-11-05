@@ -435,3 +435,35 @@
     width: 100%;
   }
 }
+/* Comparação textual auditável: detalhes recolhidos para não sobrecarregar o relatório. */
+.repair-file-diffs {
+  margin: var(--space-4) 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+.repair-file-diffs summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.repair-file-diff {
+  margin-top: var(--space-3);
+  padding: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+.repair-file-diff small {
+  display: block;
+  margin: var(--space-2) 0;
+}
+.repair-diff-preview {
+  max-height: 28rem;
+  margin: var(--space-2) 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  overflow: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  background: var(--color-surface-2);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}

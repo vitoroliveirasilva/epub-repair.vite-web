@@ -4,6 +4,7 @@ import type { RepairAction, RepairResult } from '../model/repairTypes';
 import { loadEpub } from '../reader/loadEpub';
 import { rebuildEpubZip } from '../repair/rebuildEpubZip';
 import { assertNoNewCriticalIssues } from '../repair/repairSafety';
+import { createTextFileDiffs } from '../repair/textFileDiff';
 import { inspectEpub } from '../validation/validateEpub';
 import { parsePackageDocument } from '../validation/opfParser';
 import { makeRepairedFileName } from '../utils/fileName';
@@ -125,6 +126,8 @@ export async function replaceEpubCover(
     after,
     actions,
     warnings,
+    fileDiffs: createTextFileDiffs(new Map(Array.from(loaded.files, ([name, entry]) =>
+      [name, entry.bytes])), files),
     changed: true,
     operation: 'cover-replacement',
   };

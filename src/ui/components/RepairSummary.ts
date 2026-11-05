@@ -43,6 +43,8 @@ export function renderRepairSummary(result: RepairResult): HTMLElement {
         }),
   );
 
+  if (result.fileDiffs?.length) root.append(renderTextChanges(result.fileDiffs));
+
   for (const warning of result.warnings) {
     root.append(el('p', { className: 'muted repair-warning', text: warning }));
   }
@@ -160,4 +162,26 @@ function renderDeltaCard(
       el('span', { text: `${fatal} fatais • ${error} erros • ${warning} avisos` }),
     ],
   });
+}
+
+function renderTextChanges(diffs: NonNullable<RepairResult['fileDiffs']>): HTMLElement {
+  const details = el('details', {
+    className: 'repair-file-diffs',
+    attrs: { 'aria-label': 'Diferenças de arquivos de texto antes e depois' },
+  });
+  details.append(el('summary', {
+    text: 'Comparar texto técnico antes/depois (' + diffs.length + ' arquivo(s))',
+  }));
+  for (const diff of diffs) {
+    const item = el('details', { className: 'repair-file-diff' });
+    item.append(
+      el('summary', { text: diff.path + ' (' + diff.kind + ')' }),
+      el('small', { className: 'muted', text:
+        'Linhas: ' + diff.beforeLines + ' → ' + diff.afterLines +
+        (diff.truncated ? ' · prévia limitada' : '') }),
+      el('pre', { className: 'repair-diff-preview', text: diff.preview }),
+    );
+    details.append(item);
+  }
+  return details;
 }

@@ -1,4 +1,5 @@
 import type { ValidationReport } from './epubTypes';
+import type { TextFileDiff } from '../repair/textFileDiff';
 
 export interface RepairOptions {
   kindleSafeMode: boolean;
@@ -32,6 +33,8 @@ export interface RepairResult {
   before: ValidationReport;
   after: ValidationReport;
   actions: RepairAction[];
+  /** Diff somente-leitura dos recursos textuais modificados, com prévia limitada. */
+  fileDiffs?: TextFileDiff[] | undefined;
   warnings: string[];
   changed: boolean;
   operation: RepairOperation;

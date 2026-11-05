@@ -8,6 +8,7 @@ import { canOptimizeReport, canRepairReport, hasResidualActiveContent } from '..
 import { parsePackageDocument, parseOpfDocument } from '../validation/opfParser';
 import { parseXml } from '../utils/xmlUtils';
 import { auditPreservation } from './preservationAudit';
+import { createTextFileDiffs } from './textFileDiff';
 import { assertNoNewCriticalIssues } from './repairSafety';
 import { ensureContainerFile } from './repairContainer';
 import { repairContentDocuments } from './repairContentDocuments';
@@ -84,7 +85,9 @@ export async function repairEpub(
     if (hasResidualActiveContent(after)) {
       warnings.push('Otimização concluída, mas ainda existem recursos suspeitos ou conteúdo ativo a revisar.');
     }
-    return { blob, fileName: outName, before, after, actions: attempted, warnings, changed: true, operation };
+    return { blob, fileName: outName, before, after, actions: attempted, warnings,
+      fileDiffs: createTextFileDiffs(new Map(Array.from(loaded.files, ([name, entry]) =>
+        [name, entry.bytes])), optimizedFiles), changed: true, operation };
   }
 
   const actions: RepairAction[] = [];
@@ -188,6 +191,8 @@ export async function repairEpub(
   const after = await inspectEpub(outputFileName, afterBytes);
   assertNoNewCriticalIssues(before, after);
   warnings.push(...auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo));
+  const fileDiffs = createTextFileDiffs(new Map(Array.from(loaded.files, ([name, entry]) =>
+    [name, entry.bytes])), files);
   if (hasResidualActiveContent(after)) {
     warnings.push('O reparo ainda apresenta conteúdo ativo ou recursos suspeitos: exige revisão manual.');
   }
@@ -199,6 +204,7 @@ export async function repairEpub(
     after,
     actions,
     warnings,
+    fileDiffs,
     changed: true,
     operation,
   };

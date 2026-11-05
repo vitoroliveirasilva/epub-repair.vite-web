@@ -107,6 +107,12 @@ export function buildTextReport(
         : ['- Nenhuma alteração automática registrada.']),
     );
 
+    if (repair.fileDiffs?.length) {
+      lines.push('', 'Comparação técnica antes/depois:',
+        ...repair.fileDiffs.map((diff) =>
+          '- ' + diff.path + ': ' + diff.kind +
+          (diff.truncated ? ' (prévia limitada)' : '') + '\n' + diff.preview));
+    }
     if (repair.warnings.length > 0) {
       lines.push('', 'Observações:', ...repair.warnings.map((warning) => `- ${warning}`));
     }
@@ -132,6 +138,7 @@ export function buildJsonReport(report: ValidationReport, repair?: RepairResult,
             before: toSerializableReport(repair.before),
             after: toSerializableReport(repair.after),
             actions: repair.actions,
+            fileDiffs: repair.fileDiffs,
             warnings: repair.warnings,
             changed: repair.changed,
             operation: repair.operation,
