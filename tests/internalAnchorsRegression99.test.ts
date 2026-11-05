@@ -60,8 +60,7 @@ describe('Conformidade de links EPUB', () => {
     const run = (body: string) => {
       const markup = '<html xmlns="http://www.w3.org/1999/xhtml" ' +
         'xmlns:epub="http://www.idpf.org/2007/ops"><body>' + body + '</body></html>';
-      const loaded = { files: new Map([[path, { bytes: new TextEncoder().encode(markup) }]]) }
-        as unknown as LoadedEpub;
+      const loaded = { files: new Map([[path, { bytes: new TextEncoder().encode(markup) }]]) } as unknown as LoadedEpub;
       const pkg = {
         opfPath: 'OPS/book.opf', opfDir: 'OPS', version: '3.0',
         metadata: {}, manifest: [], spine: [], rootfileCount: 1,
