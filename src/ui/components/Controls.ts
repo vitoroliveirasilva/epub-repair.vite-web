@@ -6,6 +6,7 @@ import {
   hasManualReviewIssues,
 } from '../../epub';
 import type { AppState } from '../../app/state';
+import { getWorkflowState } from '../../app/workflowState';
 import { button, el, downloadBlob } from '../dom';
 
 export function renderControls(
@@ -176,6 +177,10 @@ function buildPrimaryActionButtons(
 }
 
 function controlsTitle(state: AppState): string {
+  const workflow = getWorkflowState(state);
+  if (workflow === 'invalid') return 'EPUB inválido: revisão necessária';
+  if (workflow === 'processing') return 'Analisando alterações com segurança';
+  if (workflow === 'partial-output') return 'Cópia parcial gerada: revisão manual necessária';
   if (state.repairResult?.changed && state.repairResult.blob) {
     if (hasManualReviewIssues(state.repairResult.after)) return 'Cópia parcial gerada: revisão manual necessária';
     if (state.repairResult.operation === 'cover-replacement') return 'EPUB com nova capa pronto para baixar';
