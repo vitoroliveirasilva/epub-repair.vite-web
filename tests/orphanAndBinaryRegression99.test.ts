@@ -15,7 +15,7 @@ beforeAll(() => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as ArrayBuffer);
-      reader.onerror = () => reject(reader.error);
+      reader.onerror = () => reject(new Error(reader.error?.message ?? 'Falha ao ler Blob de teste.'));
       reader.readAsArrayBuffer(this);
     });
   };
