@@ -46,7 +46,7 @@ describe('E-048: medidas obrigatórias de páginas fixed-layout', () => {
     expect(codes(fixture(xhtml('')))).toContain('FIXED_LAYOUT_MISSING_VIEWPORT');
     expect(codes(fixture(xhtml(
       '<meta name="viewport" content="width=1200,width=1300,height=800"/>',
-    ))).toContain('FIXED_LAYOUT_MISSING_VIEWPORT');
+    )))).toContain('FIXED_LAYOUT_MISSING_VIEWPORT');
   });
   it('aceita SVG com viewBox; recusa geometria ausente', () => {
     expect(codes(fixture(svg('viewBox="0 0 800 600"'), 'image/svg+xml'))).toEqual([]);
