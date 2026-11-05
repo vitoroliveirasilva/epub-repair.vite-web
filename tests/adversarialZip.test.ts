@@ -180,6 +180,73 @@ describe('arquivos EPUB maliciosos e ZIPs corrompidos', () => {
     expect(loaded.issues.some((issue) => issue.code === 'ZIP_ENCRYPTED_ENTRY')).toBe(true);
   });
 
+
+  it('E-025: aceita data descriptor padrão com assinatura e rejeita CRC adulterado', async () => {
+    const zip = new JSZip();
+    zip.file('mimetype', EPUB_MIME, { compression: 'STORE' });
+    zip.file('OPS/chapter.xhtml', '<html><body><p>Texto preservado</p></body></html>');
+    const original = await zip.generateAsync({
+      type: 'uint8array', compression: 'DEFLATE', streamFiles: true,
+    });
+    expect(parseZipCentralDirectory(original).issues.some((issue) => issue.severity === 'fatal'))
+      .toBe(false);
+    expect((await loadEpub('descriptor-valido.epub', original)).validZip).toBe(true);
+
+    const corrupted = new Uint8Array(original);
+    const { view, central } = headers(corrupted);
+    const compressedSize = view.getUint32(central + 20, true);
+    const local = view.getUint32(central + 42, true);
+    const descriptor = local + 30 + view.getUint16(local + 26, true) +
+      view.getUint16(local + 28, true) + compressedSize;
+    expect(view.getUint32(descriptor, true)).toBe(0x08074b50);
+    corrupted[descriptor + 4] = corrupted[descriptor + 4]! ^ 0x80;
+    const issues = parseZipCentralDirectory(corrupted).issues;
+    expect(issues.some((issue) => issue.code === 'ZIP_INVALID_DATA_DESCRIPTOR')).toBe(true);
+    expect((await loadEpub('descriptor-errado.epub', corrupted)).validZip).toBe(false);
+  });
+
+  it('E-028: distingue ZIP64, multipartes e criptografia ZIP de falhas genéricas', async () => {
+    const original = await buildKindleIssueEpub();
+    const zip64 = corrupt(original, ({ view, eocd }) =>
+      view.setUint32(eocd + 12, 0xffffffff, true));
+    expect(parseZipCentralDirectory(zip64).issues.some((x) =>
+      x.code === 'ZIP64_UNSUPPORTED' && x.severity === 'fatal')).toBe(true);
+
+    const multi = corrupt(original, ({ view, eocd }) =>
+      view.setUint16(eocd + 4, 1, true));
+    expect(parseZipCentralDirectory(multi).issues.some((x) =>
+      x.code === 'ZIP_MULTIPART_UNSUPPORTED' && x.severity === 'fatal')).toBe(true);
+
+    const encrypted = corrupt(original, ({ view, central, local }) => {
+      view.setUint16(central + 8, view.getUint16(central + 8, true) | 1, true);
+      view.setUint16(local + 6, view.getUint16(local + 6, true) | 1, true);
+    });
+    const result = await loadEpub('criptografado.epub', encrypted);
+    expect(result.validZip).toBe(false);
+    expect(result.issues.some((x) =>
+      x.code === 'ZIP_ENCRYPTED_ENTRY' && x.severity === 'fatal')).toBe(true);
+  });
+
+  it('E-025: rejeita campos extras malformados e compressão que não é EPUB', async () => {
+    const zip = new JSZip();
+    zip.file('mimetype', EPUB_MIME, { compression: 'STORE' });
+    zip.file('OPS/text.xhtml', '<p>Texto</p>');
+    const original = await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+    const unsupportedMethod = corrupt(original, ({ view, central, local }) => {
+      view.setUint16(central + 10, 12, true);
+      view.setUint16(local + 8, 12, true);
+    });
+    expect(parseZipCentralDirectory(unsupportedMethod).issues.some((x) =>
+      x.code === 'ZIP_UNSUPPORTED_COMPRESSION')).toBe(true);
+
+    const badExtra = corrupt(original, ({ view, central }) => {
+      // Simula cabeçalho de entrada central com comprimentos que avançam além do diretório.
+      view.setUint16(central + 30, 0xffff, true);
+    });
+    expect(parseZipCentralDirectory(badExtra).issues.some((x) =>
+      x.code === 'ZIP_INVALID')).toBe(true);
+  });
+
   it('E-063: 128 mutações determinísticas não provocam exceção no parser ZIP', async () => {
     const original = await buildKindleIssueEpub();
     const { central, local, eocd } = headers(original);
