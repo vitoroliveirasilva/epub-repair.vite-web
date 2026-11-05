@@ -152,6 +152,19 @@ function repairManifest(
 ): void {
   const usedIds = new Set<string>();
   const seenHrefs = new Set<string>();
+  const referencedIds = new Set<string>();
+  for (const element of Array.from(doc.getElementsByTagName('*'))) {
+    for (const attr of ['idref', 'fallback', 'media-overlay', 'toc']) {
+      const target = getAttr(element, attr);
+      if (target) referencedIds.add(target);
+    }
+    if (element.localName === 'meta' && getAttr(element, 'name') === 'cover') {
+      const target = getAttr(element, 'content');
+      if (target) referencedIds.add(target);
+    }
+    const refines = getAttr(element, 'refines');
+    if (refines?.startsWith('#')) referencedIds.add(refines.slice(1));
+  }
 
   for (const item of childElementsByLocalName(manifest, 'item')) {
     const href = getAttr(item, 'href') ?? '';
@@ -184,12 +197,20 @@ function repairManifest(
     }
 
     seenHrefs.add(currentPath);
-    if (!id || usedIds.has(id)) {
+    if (id && usedIds.has(id) && referencedIds.has(id)) {
+      // Referências duplicadas não têm destino confiável: não adivinhar.
+      actions.push({
+        type: 'skipped',
+        title: 'ID duplicado exige revisão manual',
+        detail: `O ID "${id}" é referenciado por outras partes do OPF; não foi renomeado.`,
+        file: pkg.opfPath,
+      });
+    } else if (!id || usedIds.has(id)) {
       item.setAttribute('id', makeUniqueId(basename(href), usedIds));
       actions.push({
         type: 'updated',
         title: 'ID de manifest corrigido',
-        detail: `O item "${href}" recebeu um id único.`,
+        detail: `O item "${href}" recebeu um id único sem quebrar referência existente.`,
         file: pkg.opfPath,
       });
     } else {

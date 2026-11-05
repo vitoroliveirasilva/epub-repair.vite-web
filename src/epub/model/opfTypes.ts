@@ -12,6 +12,7 @@ export interface ManifestItem {
   mediaType: string;
   properties: string[];
   fallback?: string | undefined;
+  mediaOverlay?: string | undefined;
   resolvedPath: string;
   pathSafe: boolean;
   pathReason?: string | undefined;

@@ -111,7 +111,8 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
   const hrefs = new Set<string>();
 
   for (const item of pkg.manifest) {
-    if (!item.id || ids.has(item.id)) {
+    const duplicatedId = Boolean(item.id && ids.has(item.id));
+    if (!item.id || duplicatedId) {
       issues.push(
         createIssue({
           code: 'OPF_DUPLICATE_ID',
@@ -119,7 +120,8 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
           title: 'ID ausente ou duplicado no manifest',
           detail: `O item de href "${item.href}" precisa de um id único.`,
           file: pkg.opfPath,
-          repairable: true,
+          // Um ID duplicado pode ser alvo de spine, fallback ou refines: ambiguidade manual.
+          repairable: !duplicatedId,
         }),
       );
     }
@@ -180,6 +182,49 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
           repairable: true,
         }),
       );
+    }
+  }
+
+  const manifestById = new Map(pkg.manifest.map((item) => [item.id, item]));
+  for (const item of pkg.manifest) {
+    if (item.fallback && !manifestById.has(item.fallback)) {
+      issues.push(createIssue({
+        code: 'OPF_FALLBACK_MISSING',
+        severity: 'warning',
+        title: 'Fallback do manifest aponta para ID ausente',
+        detail: `O item "${item.id}" usa fallback="${item.fallback}" inexistente.`,
+        file: pkg.opfPath,
+        repairable: false,
+      }));
+    }
+    if (item.mediaOverlay && !manifestById.has(item.mediaOverlay)) {
+      issues.push(createIssue({
+        code: 'OPF_MEDIA_OVERLAY_MISSING',
+        severity: 'warning',
+        title: 'Media Overlay aponta para ID ausente',
+        detail: `O item "${item.id}" aponta para media-overlay="${item.mediaOverlay}" inexistente.`,
+        file: pkg.opfPath,
+        repairable: false,
+      }));
+    }
+    const seenFallbackIds = new Set<string>();
+    let current = item;
+    while (current.fallback) {
+      if (seenFallbackIds.has(current.id)) {
+        issues.push(createIssue({
+          code: 'OPF_FALLBACK_CYCLE',
+          severity: 'error',
+          title: 'Ciclo de fallbacks no manifest',
+          detail: `A cadeia de fallback iniciada em "${item.id}" contém uma referência circular.`,
+          file: pkg.opfPath,
+          repairable: false,
+        }));
+        break;
+      }
+      seenFallbackIds.add(current.id);
+      const next = manifestById.get(current.fallback);
+      if (!next) break;
+      current = next;
     }
   }
 

@@ -175,6 +175,7 @@ export function parseOpfDocument(
         'application/octet-stream',
       properties: (getAttr(element, 'properties') ?? '').split(/\s+/u).filter(Boolean),
       fallback: getAttr(element, 'fallback'),
+      mediaOverlay: getAttr(element, 'media-overlay'),
       resolvedPath: resourcePath,
       pathSafe: remote || (!unsafeScheme && Boolean(resolved?.safe)),
       pathReason: unsafeScheme
