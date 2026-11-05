@@ -84,6 +84,7 @@ describe('E-031/E-096: orçamento de recursos em EPUB de 2 MiB', () => {
     }
     const seconds = (performance.now() - started) / 1000;
     const growthMiB = Math.max(0, maximumRss - baseline) / MIB;
+    // eslint-disable-next-line no-console -- métrica informativa anexada ao log da CI
     console.info('EPUB benchmark: ' + seconds.toFixed(2) + 's, +' +
       growthMiB.toFixed(1) + ' MiB RSS amostrado');
     expect(seconds).toBeLessThan(MAX_FIXTURE_SECONDS);
