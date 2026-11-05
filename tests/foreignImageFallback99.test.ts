@@ -16,7 +16,7 @@ function check(fallback?: string, src = 'image.heic', mime = 'image/heic') {
   const local = item('fallback','OPS/image.png','image/png');
   const pkg = { version:'3.3', opfPath:'OPS/book.opf',
     manifest:[source,foreign,local], spine:[], rootfileCount:1,
-    metadata:{} } as PackageDocumentInfo;
+    metadata:{} } as unknown as PackageDocumentInfo;
   const loaded = { files: new Map([[path,{bytes:new TextEncoder().encode(markup)}]]) } as unknown as LoadedEpub;
   return validateManifestFallbacks(pkg, loaded).map((i) => i.code);
 }
