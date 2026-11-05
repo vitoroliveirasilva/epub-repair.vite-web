@@ -119,7 +119,12 @@ export function auditPreservation(
     const newBytes = output.get(item.resolvedPath);
     if (!oldBytes || !newBytes) continue;
     if (!sameBytes(oldBytes, newBytes)) {
-      throw new Error(`O reparo técnico modificou um recurso binário sem autorização: ${item.resolvedPath}`);
+      if (item.mediaType === 'image/svg+xml') {
+        compareSvgPreservation(textDecoder.decode(oldBytes), textDecoder.decode(newBytes),
+          item.resolvedPath);
+      } else {
+        throw new Error(`O reparo técnico modificou um recurso binário sem autorização: ${item.resolvedPath}`);
+      }
     }
   }
   return warnings;
@@ -300,5 +305,39 @@ function compareSpecialMarkup(before: string, after: string, path: string): void
     if (!afterDirections.includes(direction)) {
       throw new Error('O reparo perderia uma direção de leitura explícita em ' + path);
     }
+  }
+}
+
+
+/**
+ * SVG é XML, não binário opaco: somente elementos ativos podem desaparecer e
+ * atributos de evento/URL/style podem ser neutralizados. IDs, texto, geometria
+ * e os atributos estruturais de conteúdo passivo devem permanecer equivalentes.
+ */
+function compareSvgPreservation(before: string, after: string, path: string): void {
+  const original = parseReadableDocument(before);
+  const repaired = parseReadableDocument(after);
+  if (!original || !repaired || original.documentElement.localName !== 'svg' ||
+      repaired.documentElement.localName !== 'svg') {
+    throw new Error('SVG alterado não pode ser auditado com segurança: ' + path);
+  }
+  const active = new Set(['script', 'foreignobject', 'iframe', 'embed', 'object',
+    'animate', 'animatetransform', 'animatemotion', 'set', 'applet', 'portal',
+    'frame', 'frameset']);
+  const signature = (doc: Document): string[] =>
+    Array.from(doc.getElementsByTagName('*'))
+      .filter((node) => !active.has(node.localName.toLowerCase()))
+      .map((node) => {
+        const attrs = Array.from(node.attributes)
+          .filter((attr) => !attr.name.toLowerCase().startsWith('on') &&
+            !['style', 'href', 'xlink:href', 'src', 'data'].includes(attr.name.toLowerCase()))
+          .map((attr) => [attr.name, attr.value])
+          .sort(([a], [b]) => a.localeCompare(b));
+        const visible = node.localName === 'text' || node.localName === 'tspan'
+          ? (node.textContent ?? '').replace(/\s+/gu, ' ').trim() : '';
+        return JSON.stringify([node.namespaceURI, node.localName, attrs, visible]);
+      });
+  if (signature(original).join('\u0000') !== signature(repaired).join('\u0000')) {
+    throw new Error('O reparo de SVG alteraria texto, geometria ou IDs editoriais em ' + path);
   }
 }

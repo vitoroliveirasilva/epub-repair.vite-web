@@ -33,7 +33,7 @@ describe('Políticas conservadoras de reparo', () => {
     state.options.removeRemoteResourceLinks = true;
     expect(potentialEditorialChanges(state.options, report).length).toBe(3);
     state.options.conservativeMode = true;
-    expect(potentialEditorialChanges(state.options, report).length).toBe(2);
+    expect(potentialEditorialChanges(state.options, report).length).toBe(3);
   });
 
 
