@@ -40,6 +40,37 @@ describe('E-051/E-052: recursos ativos não declarados não ficam invisíveis', 
     ]);
     expect(validateUndeclaredActiveContent(source, pkg)).toEqual([]);
   });
+
+  it('detecta style perigoso, meta refresh, srcdoc e srcset executável em órfãos', () => {
+    const source = loaded([
+      ['OPS/with-style.xhtml', '<html xmlns="http://www.w3.org/1999/xhtml"><head>' +
+        '<style>p{width:expression(alert(1));}</style></head><body><p>Texto</p></body></html>'],
+      ['OPS/refresh.xhtml', '<html xmlns="http://www.w3.org/1999/xhtml"><head>' +
+        '<meta http-equiv="refresh" content="0;url=javascript:alert(1)"/></head><body/></html>'],
+      ['OPS/srcdoc.xhtml', '<html xmlns="http://www.w3.org/1999/xhtml"><body>' +
+        '<p srcdoc="&lt;script&gt;alert(1)&lt;/script&gt;">Teste</p></body></html>'],
+      ['OPS/picture.xhtml', '<html xmlns="http://www.w3.org/1999/xhtml"><body>' +
+        '<img srcset="javascript:alert(1) 1x, https://example.org/capa.jpg 2x" /></body></html>'],
+    ]);
+    const warnings = validateUndeclaredActiveContent(source, pkg);
+    expect(warnings).toHaveLength(4);
+    expect(warnings.every((issue) => !issue.repairable)).toBe(true);
+  });
+  it('não marca como ativo um comentário com script nem uma fonte remota legal', () => {
+    const source = loaded([
+      ['OPS/notes.xhtml', '<html xmlns="http://www.w3.org/1999/xhtml"><body>' +
+        '<!-- <script>alert(1)</script> --><p>Fragmento editorial</p></body></html>'],
+      ['OPS/format.css', '@font-face{src:url("https://example.org/font.woff2")}'],
+    ]);
+    expect(validateUndeclaredActiveContent(source, pkg)).toEqual([]);
+  });
+  it('recursos de texto com bytes malformados exigem revisão, não um falso parecer limpo', () => {
+    const source = loaded([['OPS/notes.xhtml', '<html/>']]);
+    source.files.get('OPS/notes.xhtml')!.bytes = Uint8Array.of(0xff, 0xfe, 0x3c, 0x00);
+    expect(validateUndeclaredActiveContent(source, pkg)
+      .map((issue) => issue.code)).toContain('PACKAGE_UNDECLARED_ACTIVE_CONTENT');
+  });
+
   it('inspeção do CSS declarado identifica expression() sem o classificar como remoto', () => {
     const path = 'OPS/style.css';
     const source = loaded([[path, 'p{width: expression(alert(1));font-size:12px}']]);

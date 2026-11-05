@@ -36,6 +36,13 @@ describe('E-061: scores independentes de estrutura, segurança e compatibilidade
     expect(r.stats.compatibilityScore).toBeLessThan(100);
     expect(r.stats.securityScore).toBe(100);
   });
+
+  it('JavaScript declarado exige revisão, sem acusar malware nem penalizar score', () => {
+    const r = makeReport([issue('PACKAGE_DECLARED_SCRIPT', 'info', false)]);
+    expect(r.stats.securityScore).toBe(100);
+    expect(getWorkflowState({ ...createInitialState(), report: r })).toBe('manual-review');
+  });
+
   it('JavaScript EPUB 3 declarado como informação não é malware', () => {
     const r = makeReport([issue('PACKAGE_DECLARED_SCRIPT', 'info', false)]);
     expect(r.stats.securityScore).toBe(100);
