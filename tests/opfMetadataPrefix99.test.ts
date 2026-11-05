@@ -14,7 +14,7 @@ function check(meta: string, extra = '', prefix = '') {
     '<meta property="dcterms:modified">' + meta + '</meta>' + extra +
     '</metadata><manifest/><spine/></package>';
   const loaded = { files: new Map([[path, { bytes: new TextEncoder().encode(source) }]]) } as unknown as LoadedEpub;
-  const pkg = { opfPath: path, version: '3.3', manifest: [], spine: [] } as PackageDocumentInfo;
+  const pkg = { opfPath: path, version: '3.3', manifest: [], spine: [] } as unknown as PackageDocumentInfo;
   return validatePackageSemantics(loaded, pkg).map((x) => x.code);
 }
 
