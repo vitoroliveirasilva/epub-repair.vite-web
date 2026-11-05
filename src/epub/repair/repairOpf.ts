@@ -15,6 +15,7 @@ import {
   makeUniqueId,
   relativePath,
   resolveFromDir,
+  isSafeRemoteResourceUrl,
 } from '../utils/pathUtils';
 import {
   childElementsByLocalName,
@@ -158,14 +159,15 @@ function repairManifest(
     const parsedItem = pkg.manifest.find(
       (manifestItem) => manifestItem.href === href && manifestItem.id === id,
     );
-    const resolvedFromDocument = href ? resolveFromDir(pkg.opfDir, href) : undefined;
-    const currentPath = parsedItem?.resolvedPath ?? resolvedFromDocument?.path;
+    const remote = isSafeRemoteResourceUrl(href);
+    const resolvedFromDocument = href && !remote ? resolveFromDir(pkg.opfDir, href) : undefined;
+    const currentPath = remote ? href : parsedItem?.resolvedPath ?? resolvedFromDocument?.path;
     const mediaType = getAttr(item, 'media-type') ?? '';
     const shouldRemove =
       !href ||
       !currentPath ||
       resolvedFromDocument?.safe === false ||
-      !loaded.files.has(currentPath) ||
+      (!remote && !loaded.files.has(currentPath)) ||
       seenHrefs.has(currentPath);
 
     if (shouldRemove) {
@@ -194,7 +196,7 @@ function repairManifest(
       usedIds.add(id);
     }
 
-    const guessed = guessMediaType(currentPath);
+    const guessed = remote ? undefined : guessMediaType(currentPath);
     if (guessed && !areEquivalentMediaTypes(mediaType, guessed)) {
       item.setAttribute('media-type', guessed);
       actions.push({
@@ -222,7 +224,9 @@ function repairManifest(
     childElementsByLocalName(manifest, 'item')
       .map((item) => {
         const href = getAttr(item, 'href');
-        return href ? resolveFromDir(pkg.opfDir, href).path : '';
+        return href
+          ? isSafeRemoteResourceUrl(href) ? href : resolveFromDir(pkg.opfDir, href).path
+          : '';
       })
       .filter(Boolean),
   );

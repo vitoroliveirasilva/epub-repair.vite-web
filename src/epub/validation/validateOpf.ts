@@ -155,7 +155,7 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
       );
     }
 
-    const guessed = guessMediaType(item.resolvedPath);
+    const guessed = item.remote ? undefined : guessMediaType(item.resolvedPath);
     if (guessed && item.mediaType && !areEquivalentMediaTypes(item.mediaType, guessed)) {
       issues.push(
         createIssue({
@@ -169,7 +169,7 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
       );
     }
 
-    if (!item.exists) {
+    if (!item.exists && !item.remote) {
       issues.push(
         createIssue({
           code: 'OPF_MISSING_RESOURCE',

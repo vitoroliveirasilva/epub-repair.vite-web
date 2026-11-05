@@ -8,7 +8,7 @@ import type {
 } from '../model/opfTypes';
 import { createIssue } from '../utils/issueFactory';
 import { guessMediaType } from '../utils/mediaTypes';
-import { dirname, normalizePath, resolveFromDir } from '../utils/pathUtils';
+import { dirname, isRemoteUrl, isSafeRemoteResourceUrl, normalizePath, resolveFromDir } from '../utils/pathUtils';
 import {
   childElementsByLocalName,
   findByLocalName,
@@ -162,20 +162,26 @@ export function parseOpfDocument(
   const manifestRoot = findFirstByLocalName(doc, 'manifest');
   const manifest = childElementsByLocalName(manifestRoot, 'item').map((element): ManifestItem => {
     const href = getAttr(element, 'href') ?? '';
-    const resolved = resolveFromDir(opfDir, href);
+    const remote = isSafeRemoteResourceUrl(href);
+    const unsafeScheme = isRemoteUrl(href) && !remote;
+    const resolved = remote || unsafeScheme ? undefined : resolveFromDir(opfDir, href);
+    const resourcePath = remote || unsafeScheme ? href : resolved?.path ?? '';
     return {
       id: getAttr(element, 'id') ?? '',
       href,
       mediaType:
         getAttr(element, 'media-type') ??
-        guessMediaType(resolved.path) ??
+        guessMediaType(remote || unsafeScheme ? href.split(/[?#]/u)[0] ?? '' : resourcePath) ??
         'application/octet-stream',
       properties: (getAttr(element, 'properties') ?? '').split(/\s+/u).filter(Boolean),
       fallback: getAttr(element, 'fallback'),
-      resolvedPath: resolved.path,
-      pathSafe: resolved.safe,
-      pathReason: resolved.reason,
-      exists: files.has(resolved.path),
+      resolvedPath: resourcePath,
+      pathSafe: remote || (!unsafeScheme && Boolean(resolved?.safe)),
+      pathReason: unsafeScheme
+        ? 'Esquema de URL não permitido no manifest'
+        : resolved?.reason,
+      exists: !remote && !unsafeScheme && files.has(resourcePath),
+      remote,
     };
   });
 
