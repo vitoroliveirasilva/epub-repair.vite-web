@@ -47,6 +47,23 @@ describe('testes adversariais de sanitização XHTML no DOM', () => {
   });
 
 
+  it('E-016/E-054: neutraliza expression e behavior sem descartar outras declarações', () => {
+    const markup = xhtml(
+      '<style>p{color:blue;width:expression(alert(1));font-weight:bold}</style>' +
+      '<p style="color:red;behavior:url(#plugin);font-style:italic">Conteúdo</p>',
+    );
+    const result = sanitizeActiveContentMarkup(markup, filePath, options);
+    const doc = parse(result.text);
+    const style = doc.getElementsByTagName('style')[0];
+    expect(style?.textContent).toContain('color:blue');
+    expect(style?.textContent).toContain('font-weight:bold');
+    expect(style?.textContent).not.toContain('expression(');
+    const inline = doc.getElementsByTagName('p')[0]?.getAttribute('style') ?? '';
+    expect(inline).toContain('color:red');
+    expect(inline).toContain('font-style:italic');
+    expect(inline).not.toContain('behavior:');
+  });
+
   it('E-016: CSS perigoso não elimina regras e estilos legítimos do XHTML', () => {
     const original = xhtml(
       '<style>p{color:blue}.bad{background:url("javascript:alert(1)")}</style>' +
