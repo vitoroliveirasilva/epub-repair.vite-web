@@ -30,7 +30,7 @@ export function validateInternalAnchors(loaded: LoadedEpub, pkg: PackageDocument
   };
 
   for (const item of pkg.manifest) {
-    if (!item.exists || !HTML_MEDIA_TYPES.has(item.mediaType)) continue;
+    if (!item.exists || !(HTML_MEDIA_TYPES.has(item.mediaType) || item.mediaType === 'image/svg+xml')) continue;
     const source = readDocument(item.resolvedPath);
     if (!source) continue;
 

@@ -35,6 +35,45 @@ describe('Conformidade de links EPUB', () => {
     expect(errors[0]?.repairable).toBe(false);
   });
 
+
+  it('E-037: distingue âncora legada, fragmento Unicode e SVG local de destino inexistente', async () => {
+    const loaded = await loadEpub('book.epub', await buildKindleIssueEpub());
+    const pkg = parsePackageDocument(loaded).packageInfo;
+    if (!pkg) throw new Error('Fixture sem OPF');
+    const source = pkg.manifest.find((x) => x.resolvedPath.endsWith('chapter1.xhtml'))!;
+    const destination = pkg.manifest.find((x) => x.resolvedPath.endsWith('chapter2.xhtml'))!;
+    loaded.files.get(source.resolvedPath)!.bytes = new TextEncoder().encode(html(
+      '<a href="chapter2.xhtml#se%C3%A7%C3%A3o">Unicode válido</a>' +
+      '<a href="chapter2.xhtml#legado">Nome legado</a>' +
+      '<a href="#ausente">Quebrado</a>' +
+      '<a href="https://example.org/page#externo">Externo permitido</a>',
+    ));
+    loaded.files.get(destination.resolvedPath)!.bytes = new TextEncoder().encode(
+      html('<p id="seção">Texto</p><a name="legado">Nota antiga</a>'),
+    );
+    const missing = validateInternalAnchors(loaded, pkg)
+      .filter((x) => x.code === 'CONTENT_MISSING_FRAGMENT');
+    expect(missing).toHaveLength(1);
+    expect(missing[0]?.context).toBe('#ausente');
+  });
+
+  it('E-039: detecta fragmentos do NCX quebrados sem exigir entrada por arquivo', async () => {
+    const loaded = await loadEpub('book.epub', await buildKindleIssueEpub());
+    const pkg = parsePackageDocument(loaded).packageInfo;
+    if (!pkg) throw new Error('Fixture sem OPF');
+    const chapter = pkg.manifest.find((x) => x.resolvedPath.endsWith('chapter1.xhtml'))!;
+    loaded.files.get(chapter.resolvedPath)!.bytes = new TextEncoder().encode(
+      html('<h1 id="intro">Capítulo</h1>'),
+    );
+    const ncx = loaded.files.get(pkg.ncxItem!.resolvedPath)!;
+    const text = new TextDecoder().decode(ncx.bytes);
+    ncx.bytes = new TextEncoder().encode(text.replace('Text/chapter1.xhtml',
+      'Text/chapter1.xhtml#id-inexistente'));
+    const { validateKindleCompatibility } = await import('../src/epub/validation/validateKindleCompatibility');
+    expect(validateKindleCompatibility(loaded, pkg).some((issue) =>
+      issue.code === 'NCX_MISSING_FRAGMENT')).toBe(true);
+  });
+
   it('E-038: índice EPUB3 com toc vazio é um aviso, não índice válido', () => {
     const navPath = 'OPS/nav.xhtml';
     const content = html('<nav xmlns:epub="http://www.idpf.org/2007/ops" epub:type="toc"><ol/></nav>');

@@ -38,6 +38,8 @@ function validateNcxKindleRules(loaded: LoadedEpub, pkg: PackageDocumentInfo): I
   let hasOutOfOrder = false;
   let hasDuplicate = false;
   const missingContentTargets: string[] = [];
+  const brokenFragments: string[] = [];
+  const documents = new Map<string, Document | null>();
 
   for (const [index, navPoint] of navPoints.entries()) {
     const rawPlayOrder = getAttr(navPoint, 'playOrder');
@@ -61,6 +63,29 @@ function validateNcxKindleRules(loaded: LoadedEpub, pkg: PackageDocumentInfo): I
     if (!resolved.safe || !loaded.files.has(resolved.path)) {
       if (missingContentTargets.length < MAX_CONTEXT_ITEMS) {
         missingContentTargets.push(src);
+      }
+    } else if (src.includes('#') && brokenFragments.length < MAX_CONTEXT_ITEMS) {
+      const fragmentRaw = src.slice(src.indexOf('#') + 1);
+      if (fragmentRaw && !/^(?:epubcfi\(|svgView\(|xywh=|t=)/iu.test(fragmentRaw) &&
+          /\.(?:xhtml?|svg)$/iu.test(resolved.path)) {
+        let fragment = '';
+        try { fragment = decodeURIComponent(fragmentRaw); } catch { /* URI inválida já é avaliada alhures. */ }
+        if (fragment) {
+          let target = documents.get(resolved.path);
+          if (target === undefined) {
+            try {
+              const bytes = loaded.files.get(resolved.path)!.bytes;
+              target = parseXml(TEXT_DECODER.decode(bytes).replace(/&nbsp;/giu, '&#160;'),
+                'application/xhtml+xml');
+            } catch { target = null; }
+            documents.set(resolved.path, target);
+          }
+          if (target && !Array.from(target.getElementsByTagName('*')).some((node) =>
+            node.getAttribute('id') === fragment ||
+            (node.localName === 'a' && node.getAttribute('name') === fragment))) {
+            brokenFragments.push(src);
+          }
+        }
       }
     }
     // Caminhos presentes são válidos mesmo quando o TOC cobre apenas seções principais.
@@ -93,6 +118,18 @@ function validateNcxKindleRules(loaded: LoadedEpub, pkg: PackageDocumentInfo): I
         repairable: true,
       }),
     );
+  }
+
+  if (brokenFragments.length > 0) {
+    issues.push(createIssue({
+      code: 'NCX_MISSING_FRAGMENT',
+      severity: 'warning',
+      title: 'Link de sumário NCX aponta para âncora ausente',
+      detail: 'Um destino existente do NCX não contém o fragmento solicitado.',
+      file: pkg.ncxItem.resolvedPath,
+      context: brokenFragments.join(', '),
+      repairable: false,
+    }));
   }
 
   if (missingContentTargets.length > 0) {
