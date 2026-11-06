@@ -25,3 +25,18 @@ A etapa de descompactação acontece no Worker quando suportado. A leitura de
 DOM/XML, o reempacotamento e a auditoria final ainda ocorrem no contexto
 principal. O suporte real em Safari/iOS e os headers de produção continuam
 sujeitos a homologação, inclusive a ausência de `unsafe-eval`.
+
+## Regressão de CSP em browsers (execução 13)
+
+`tests/browser-csp.mjs` aplica o header CSP do `netlify.toml` por
+interceptação na página compilada (`vite preview`) em Chromium, Firefox
+e WebKit, e verifica script inline bloqueado, conexão remota bloqueada,
+raster `data:`/`blob:`, Worker empacotado de mesma origem e download JSON.
+A interface eliminou seu `@import` do Google Fonts porque `style-src
+'self'` bloqueava o download e contrariava a proposta de execução local.
+
+**Exceção expressamente limitada ao laboratório localhost HTTP:** a diretiva
+`upgrade-insecure-requests` permanece no `netlify.toml`, mas é omitida
+**somente no header interceptado do harness**, porque converteria os recursos
+`http://127.0.0.1` para HTTPS em um servidor local sem TLS. Essa exceção
+não significa validação do comportamento do Netlify HTTPS de produção.

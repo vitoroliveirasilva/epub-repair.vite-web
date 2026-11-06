@@ -8,6 +8,13 @@ import { pathToFileURL } from 'node:url';
 const config = readFileSync('netlify.toml', 'utf8');
 const policy = /Content-Security-Policy\s*=\s*"([^"]+)"/u.exec(config)?.[1];
 assert.ok(policy, 'Política CSP não encontrada no netlify.toml');
+// Em HTTP 127.0.0.1 o upgrade-insecure-requests promove os assets para HTTPS
+// sem servidor TLS. Remover SOMENTE a diretiva de upgrade do harness localhost;
+// ela continua ativa e intacta na configuração Netlify de produção (HTTPS).
+const localhostPolicy = policy.split(';').map((value) => value.trim())
+  .filter((value) => value !== 'upgrade-insecure-requests').join('; ');
+assert.ok(policy.includes('upgrade-insecure-requests'));
+assert.equal(localhostPolicy.includes('upgrade-insecure-requests'), false);
 const modulePath = process.env.PLAYWRIGHT_MODULE;
 assert.ok(modulePath, 'PLAYWRIGHT_MODULE ausente');
 const { chromium, firefox, webkit } = await import(pathToFileURL(modulePath).href);
@@ -31,12 +38,12 @@ try {
     const response = await route.fetch();
     await route.fulfill({
       response,
-      headers: { ...response.headers(), 'content-security-policy': policy },
+      headers: { ...response.headers(), 'content-security-policy': localhostPolicy },
     });
   });
 
   const response = await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
-  assert.equal(response?.headers()['content-security-policy'], policy);
+  assert.equal(response?.headers()['content-security-policy'], localhostPolicy);
   try {
     await page.getByRole('heading', { name: /Conserte arquivos EPUB/u })
       .waitFor({ timeout: 15000 });
