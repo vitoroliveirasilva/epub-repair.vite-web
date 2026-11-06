@@ -13,7 +13,7 @@ async function webdriver(method, route, payload) {
     method,
     headers: { 'Content-Type': 'application/json' },
     ...(payload===undefined?{}:{body:JSON.stringify(payload)}),
-    signal: AbortSignal.timeout(240_000),
+    signal: AbortSignal.timeout(route === '/session' ? 720_000 : 180_000),
   });
   const result = await response.json();
   if(!response.ok || result.value?.error){
@@ -55,7 +55,7 @@ const sessionData={capabilities:{alwaysMatch:{
   'appium:safariInitialUrl':'http://127.0.0.1:5173/',
   'appium:noReset':false,
   'appium:newCommandTimeout':180,
-  'appium:wdaLaunchTimeout':180000,
+  'appium:wdaLaunchTimeout':600000,
   'appium:wdaConnectionTimeout':180000,
 }}};
 let session;
