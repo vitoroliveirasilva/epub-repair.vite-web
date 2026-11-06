@@ -57,6 +57,9 @@ const sessionData={capabilities:{alwaysMatch:{
   'appium:newCommandTimeout':180,
   'appium:wdaLaunchTimeout':600000,
   'appium:wdaConnectionTimeout':180000,
+  'appium:showXcodeLog':true,
+  'appium:wdaStartupRetries':1,
+  'appium:useNewWDA':true,
 }}};
 let session;
 try {
