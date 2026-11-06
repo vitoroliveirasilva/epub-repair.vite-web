@@ -87,3 +87,17 @@ O job WebKit mais recente estava em instalação no momento do registro;
 seus smokes menores já haviam passado anteriormente. Não equiparar
 viewport mobile a Safari/iOS físico. O Calibre foi incorporado como
 workflow independente, mas Kindle/AppleBooks permanecem sem homologação.
+
+## Execução 17: navegador em Netlify HTTPS hospedado
+
+`tests/browser-csp.mjs` aceita `EPUB_APP_URL`: no Netlify não aplica
+interceptação e exige que o CSP HTTP REAL coincida exatamente com
+`netlify.toml`. `tests/browser-large-workflow.mjs` também aceita a URL
+e executa EPUB de 12 MiB com três Workers, recompactação e download.
+
+O workflow `.github/workflows/netlify-live-preview.yml` espera a URL
+da PR, valida headers no `curl` e utiliza Playwright Chromium contra
+o deploy-preview HTTPS. Sucesso em [run 42215134060](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42215134060).
+
+A cobertura de Safari/iOS **físico** e de leitores Kindle/Apple Books
+continua ausente e não foi usada para concluir os demais itens.

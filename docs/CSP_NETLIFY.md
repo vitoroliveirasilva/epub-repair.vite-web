@@ -50,3 +50,29 @@ somente em localhost HTTP. O app efetivamente carregou Worker, bloqueou
 scripts inline e rede remota, mostrou imagens `data:` e `blob:` e
 gerou relatório JSON baixável. Esses testes não verificam o servidor
 Netlify implantado nem aparelho Safari/iOS real, por isso E-062 é parcial.
+
+## Execução 17: CSP comprovada no Netlify HTTPS real (E-062)
+
+A [CI 42215134060](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42215134060)
+foi executada contra o deploy-preview do [PR temporário #31](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pull/31),
+com TLS/HTTPS REAL e headers de resposta do Netlify, **sem interceptar ou
+simular o header**. Evidências do job:
+
+- `Content-Security-Policy` devolvida pelo Netlify igual à declarada na
+  `netlify.toml` da `dev`, com `worker-src 'self'`;
+- HSTS `max-age=31536000; includeSubDomains; preload`, `nosniff`,
+  `X-Frame-Options: DENY`;
+- scripts inline e `connect-src` externos bloqueados pelo navegador,
+  imagens passivas `data:` e `blob:` funcionando;
+- download JSON e upload/reparo/download de EPUB 12 MiB com três Workers
+  reais e verificação ZIP posterior.
+
+A versão implantada foi a **`dev` em deploy-preview**, não produção.
+O PR foi **fechado sem merge** após o teste. Com isso E-062 atende ao
+critério de verificação **em hospedagem efetiva** sem quebrar a política
+de preservar produção.
+
+Cuidado: `netlify.toml` da versão antiga em `prod` ainda declara
+`worker-src 'none'`, coerente com a versão v2.2.0. Para lançar
+o novo código em produção, a atualização de CSP deve acompanhar a
+publicação, com a aprovação do fluxo de release.

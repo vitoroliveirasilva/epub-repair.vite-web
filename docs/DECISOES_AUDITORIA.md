@@ -200,3 +200,17 @@ múltiplas análises, incluindo dispositivos com RAM limitada.
   `worker-src 'self'`. Não sincronizar sem revisão/autorização de release.
 
 **93 concluídos / 6 parciais / 0 pendentes** no inventário.
+
+## Execução 17: homologação sem produção
+
+Para validar CSP implantada sem promover `dev`, foi aberto o PR rascunho
+#31 com o objetivo exclusivo de gerar um deploy-preview Netlify.
+O job de CI verificou headers reais e comportamento de scripts, imagens,
+Workers, download e EPUB 12MiB sob HTTPS, com sucesso.
+O PR foi fechado **sem merge** e a `prod` permanece v2.2.0.
+
+É correto concluir **E-062** no escopo da versão `dev` em
+deploy-preview hospedado. Não significa que produção recebeu
+`worker-src 'self'` ou as mudanças de código.
+
+**94 concluídos, 5 parciais, zero pendentes.**

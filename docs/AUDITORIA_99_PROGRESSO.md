@@ -1,13 +1,13 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 06/11/2026 (execução 16: 93/99, Worker ZIP completo, fila cancelável e RSS até 250MiB) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 06/11/2026 (execução 17: 94/99, Netlify CSP HTTPS REAL e Workers homologados sem merge) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
 | Situação | Itens |
 | --- | ---: |
-| Concluídos no escopo definido, com CI Node 20/22 aprovada | **93** |
-| Parcialmente tratados, com testes/validação adicionais necessários | **6** |
+| Concluídos no escopo definido, com CI Node 20/22 aprovada | **94** |
+| Parcialmente tratados, com testes/validação adicionais necessários | **5** |
 | Não iniciados ou ainda não evidenciados | **0** |
 | Total | **99** |
 
@@ -86,7 +86,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-059 | P1 | Scan AV opcional fora do navegador, sem alegar antivírus integrado | Concluído · CI |
 | E-060 | P1 | Modelo de ameaças EPUB e checklist de privacidade de recursos externos | Concluído · CI |
 | E-061 | P1 | Separar score de segurança de inspeção de conformidade e de integridade | Concluído · CI |
-| E-062 | P2 | Headers CSP/Netlify e comportamento de previews/blob/data em navegadores | Parcial |
+| E-062 | P2 | Headers CSP/Netlify e comportamento de previews/blob/data em navegadores | Concluído · CI |
 | E-063 | P2 | Fuzzing determinístico de ZIP/XML/SVG/CSS/OPF e limites contra ReDoS | Concluído · CI |
 | E-064 | P0 | Comparar texto integral pré/pós e avisar alterações não previstas | Concluído · CI |
 | E-065 | P0 | Comparar ordem de leitura, capítulos, IDs e links antes/depois | Concluído · CI |
@@ -679,3 +679,33 @@ apresentação), E-082 (Safari iOS real e ObjectURLs), E-089 (mobile físico),
 E-090 (Kindle Previewer/AppleBooks), E-098 (proteção GitHub `dev`/tags).
 
 A branch `prod` e a release **v2.2.0** não foram alteradas.
+
+## Execução 17: E-062 fechado com Netlify real e sem tocar em produção
+
+**Antes:** 93 concluídos, 6 parciais, zero pendentes.  
+**Agora: 94 concluídos, 5 parciais, zero pendentes.**
+
+**E-062 concluído no deploy-preview real da `dev`:** Em 06/11/2026,
+o [PR de rascunho #31](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pull/31)
+foi usado exclusivamente para disparar [Netlify deploy-preview real](https://6aedc2beab59d63de359f113--epubrepair.netlify.app/),
+sem merge. A [CI 42215134060](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42215134060)
+passou com navegador Chromium usando **HTTPS hospedado**, verificando:
+
+- Headers efetivos de resposta: CSP idêntica à `netlify.toml`,
+  `worker-src 'self'`, `upgrade-insecure-requests`,
+  HSTS, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`;
+- bloqueio de script inline e conexão de rede externa, renderização permitida
+  de imagens `data:`/`blob:`, Worker real e download JSON;
+- importação de **EPUB sintético de 12 MiB** na interface real,
+  processamento com **três Workers**, download e reabertura do EPUB
+  resultante com preservação do conteúdo;
+- PR **fechado sem merge**, sem alterar `prod`, tags ou releases.
+
+**Importante:** a produção `prod` continua na **v2.2.0**, cujo
+`netlify.toml` declara `worker-src 'none'`. O teste de sucesso
+refere-se à **versão da `dev` implantada em deploy-preview HTTPS real**;
+não declarar que a atualização esteja publicada em produção.
+
+**Cinco itens parciais restantes:** E-076, E-082, E-089, E-090 e E-098.
+Dependem principalmente de leitores/dispositivos reais e controle efetivo
+das regras de proteção do GitHub. Código e CI da `dev` mantidos.
