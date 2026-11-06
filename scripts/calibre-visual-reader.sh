@@ -28,22 +28,26 @@ for mode in reflowable fixed-layout; do
   sleep 8
   # Calibre 7 abre tela de boas-vindas "Press any key to continue".
   # Avançar para o capítulo antes de verificar os pixels da ilustração.
-  echo "X11 active window: $(xdotool getactivewindow 2>&1 || true)" >>"$logfile"
-  xdotool mousemove 240 180 click 1 || true
-  focused="$(xdotool search --onlyvisible --pid "$viewer_pid" | tail -n 1 || true)"
-  if [ -n "$focused" ]; then
-    timeout 5s xdotool windowactivate "$focused" || true
-    xdotool key --window "$focused" Return || true
+  echo "X11 active window: $(timeout 3s xdotool getactivewindow 2>&1 || true)" >>"$logfile"
+  if command -v xwininfo >/dev/null; then
+    timeout 3s xwininfo -root -tree >>"$logfile" 2>&1 || true
   fi
-  xdotool key --clearmodifiers Return || true
-  xdotool key --clearmodifiers Right || true
-  sleep 8
+  timeout 3s xdotool mousemove 240 180 click 1 || true
+  focused="$(timeout 4s xdotool search --onlyvisible --pid "$viewer_pid" | tail -n 1 || true)"
+  if [ -n "$focused" ]; then
+    timeout 4s xdotool windowactivate "$focused" || true
+    timeout 3s xdotool windowfocus "$focused" || true
+    timeout 3s xdotool key --window "$focused" Return || true
+  fi
+  timeout 3s xdotool key --clearmodifiers space || true
+  timeout 3s xdotool key --clearmodifiers Right || true
+  sleep 7
   if ! kill -0 "$viewer_pid" 2>/dev/null; then
     echo "Falha ao iniciar o visualizador Calibre: $mode"
     cat "$logfile"
     exit 1
   fi
-  import -window root "$screenshot"
+  timeout 12s import -window root "$screenshot"
   test -s "$screenshot"
   # Verificação do desenho real: a imagem SVG tem regiões sólidas de cor.
   # Não depende de OCR; os títulos e EPUBCheck são testados separadamente.
@@ -64,6 +68,8 @@ if pixels < 2000:
 print(f"PASS E-076 Calibre ebook-viewer {mode} screenshot: "
       f"{pixels} pixels da ilustração, {img.size}")
 PY
-  kill "$viewer_pid" 2>/dev/null || true
-  wait "$viewer_pid" 2>/dev/null || true
+  kill -TERM "$viewer_pid" 2>/dev/null || true
+  # QtWebEngine pode deixar filhos vivos: não bloquear no builtin wait.
+  sleep 1
+  kill -KILL "$viewer_pid" 2>/dev/null || true
 done

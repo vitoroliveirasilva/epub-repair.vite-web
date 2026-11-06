@@ -71,7 +71,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          xvfb-run -a -s "-screen 0 1440x900x24" \
+          timeout 120s xvfb-run -a -s "-screen 0 1440x900x24" \
             bash scripts/calibre-visual-reader.sh \
               "${RUNNER_TEMP}/epub-fixtures" "${RUNNER_TEMP}/calibre-output"
       - name: Save converter logs for regression evidence
