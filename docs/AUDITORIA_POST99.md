@@ -94,3 +94,32 @@ nunca tratados como sucesso enquanto não concluírem upload e download reais.
 - A aprovação de testes desktop e EPUBCheck não substitui validação real de
   downloads em iOS/Android. Não confundir falha de boot/CDP/Appium com defeito demonstrado do app.
 - `prod` só pode receber as alterações após autorização específica; esta rodada altera apenas `dev`.
+
+
+## Quarta auditoria: E-123 a E-131 (06/11/2026)
+
+Todos os nove pontos desta rodada tiveram alterações no código da branch `dev`,
+com testes de regressão em `tests/epub-fourth-wave.test.ts` e
+`tests/epub-third-wave-cover.test.ts`. A homologação completa corresponde
+aos workflows de CI do commit que introduziu estes ajustes.
+
+| ID | Prioridade | Correção e critério de aceite |
+| --- | --- | --- |
+| E-123 | Alta | Exibir `Aplicar reparos restantes` junto ao download da cópia parcial quando o relatório ainda tem problemas reparáveis; não remover botão de download |
+| E-124 | Alta | Uma tentativa de reparo ou otimização sem alterações não descarta `repairResult` anterior nem seu blob |
+| E-125 | Crítica | Havendo problema reparável obrigatório, escolher sempre modo `repair`, ainda que limpeza EXIF tenha sido selecionada; limpeza de metadados segue opt-in |
+| E-126 | Alta | Executar compatibilidade Kindle e sincronização de propriedades com o pacote OPF efetivo após inclusão de recursos órfãos, e não com o manifest original |
+| E-127 | Alta | Percorrer dependências `@import` de CSS declarado e clonar a cadeia que leva à capa, mantendo CSS de capítulos intacto, inclusive em arquivos compartilhados e com imports encadeados |
+| E-128 | Alta | Rejeitar JPEG com dimensões SOF inválidas ou acima do limite **antes** de `createImageBitmap`, `Image` ou conversão JPEG progressiva |
+| E-129 | Média | Validar extensão, tamanho, leitura e cancelamento de novo upload **antes** de substituir o arquivo e a cópia já gerada |
+| E-130 | Média | Pré-filtro de referências de capa trata escapes URI `%xx` sem diferenciar maiúsculas/minúsculas, preservando caracteres Unicode e caminhos legítimos |
+| E-131 | Baixa | Extrair `@import url(...)` apenas uma vez, evitando `CSS_MISSING_RESOURCE` duplicado com contextos `css:url` e `css:import` |
+
+### Proteções mantidas
+
+- Fontes e URLs externas HTTPS legítimas permanecem aceitas.
+- CSS original compartilhado por capítulos não é reescrito para trocar a capa;
+  apenas novos recursos vinculados à página de rosto recebem as referências novas.
+- Testes sintéticos de EPUB e navegador não garantem fidelidade visual absoluta
+  para todos os EPUBs ou dispositivos físicos.
+- A branch `prod` não foi modificada nesta rodada.
