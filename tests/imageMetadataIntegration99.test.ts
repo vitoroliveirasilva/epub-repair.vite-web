@@ -88,7 +88,7 @@ describe('E-075: remover metadados EPUB exige opt-in; integridade e UX', () => {
     const state = createInitialState();
     state.options = selected;
     state.report = before;
-    state.payload = { file: new File([bytes], 'foto.epub'), bytes };
+    state.payload = { file: new File([new Uint8Array(bytes)], 'foto.epub'), bytes };
     const ui = renderControls(state, { analyze: () => {}, repair: () => {},
       copy: () => {}, downloadTextReport: () => {}, downloadJsonReport: () => {} });
     const optimize = [...ui.querySelectorAll('button')].find((x) =>
