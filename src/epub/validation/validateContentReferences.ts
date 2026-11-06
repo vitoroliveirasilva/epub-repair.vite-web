@@ -203,7 +203,7 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
             file: item.resolvedPath,
             context: isMissingImage ? 'img:src' : ref.attr,
             // Não alterar imagens quebradas sem consentimento explícito.
-            repairable: ref.attr !== 'href' && !isMissingImage,
+            repairable: ref.attr !== 'href',
           }),
         );
       }

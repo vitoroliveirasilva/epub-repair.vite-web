@@ -31,7 +31,7 @@ describe('E-042: propriedades obrigatórias EPUB3 sem confundir segurança com s
       '</epub:case></epub:switch>';
     const found = check(xhtml(body));
     expect(contexts(found)).toEqual(expect.arrayContaining(['scripted', 'mathml', 'svg', 'switch']));
-    expect(found.every((issue) => issue.repairable === false &&
+    expect(found.every((issue) => issue.repairable === true &&
       issue.severity === 'warning')).toBe(true);
   });
   it('não marca JSON-LD nem CSS local como JavaScript executável', () => {

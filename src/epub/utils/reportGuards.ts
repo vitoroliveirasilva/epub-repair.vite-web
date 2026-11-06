@@ -16,7 +16,8 @@ export function hasManualReviewIssues(report: ValidationReport | undefined): boo
   return hasResidualActiveContent(report) ||
     // E-101: uma cópia pode ter sido parcialmente reparada, mas ainda conter
     // erros/avisos reparáveis. Jamais rotulá-la como EPUB pronto.
-    Boolean(report?.issues.some(isRequiredRepairableIssue)) ||
+    Boolean(report?.issues.some((issue) => isRequiredRepairableIssue(issue) ||
+      (issue.code === 'CONTENT_MISSING_RESOURCE' && issue.context === 'img:src'))) ||
     Boolean(report?.packageInfo && report.packageInfo.rootfileCount > 1) ||
     Boolean(report?.issues.some((issue) =>
     !issue.repairable &&
@@ -25,7 +26,10 @@ export function hasManualReviewIssues(report: ValidationReport | undefined): boo
 }
 
 export function isRequiredRepairableIssue(issue: Issue): boolean {
-  return issue.repairable && issue.severity !== 'info' && issue.severity !== 'success';
+  // Imagem quebrada exige confirmação explícita antes de ser reparo obrigatório.
+  return issue.repairable && !(issue.code === 'CONTENT_MISSING_RESOURCE' &&
+    issue.context === 'img:src') &&
+    issue.severity !== 'info' && issue.severity !== 'success';
 }
 
 export function isOptionalOptimizationIssue(issue: Issue): boolean {

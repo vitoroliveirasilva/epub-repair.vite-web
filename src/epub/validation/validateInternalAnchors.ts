@@ -14,7 +14,7 @@ export function validateInternalAnchors(loaded: LoadedEpub, pkg: PackageDocument
   const readDocument = (path: string): Document | null => {
     if (parsed.has(path)) return parsed.get(path) ?? null;
     const bytes = loaded.files.get(path)?.bytes;
-    if (!bytes || !/\.(?:xhtml?|svg)$/iu.test(path)) {
+    if (!bytes || !/\.(?:xhtml?|html?|svg)$/iu.test(path)) {
       parsed.set(path, null);
       return null;
     }

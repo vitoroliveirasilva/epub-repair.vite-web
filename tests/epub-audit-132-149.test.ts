@@ -163,8 +163,10 @@ describe('Auditoria E-140 a E-149: parsing e compatibilidade',()=>{
       fakePkg([item('jpg',jpg,'image/jpg')]));
     expect(jpgIssues.some(x=>x.code==='IMAGE_EMBEDDED_METADATA')).toBe(true);
     const png='OPS/photo.png';
-    const bytes=Uint8Array.from([137,80,78,71,13,10,26,10,0,0,0,25,122,84,88,116,
-      ...new TextEncoder().encode('XML:com.adobe.xmp'),0,0,0,0,0,0,0,0,0,0]);
+    const chunk = new Uint8Array(25);
+    chunk.set(new TextEncoder().encode('XML:com.adobe.xmp\0'));
+    const bytes=Uint8Array.of(137,80,78,71,13,10,26,10,0,0,0,25,122,84,88,116,
+      ...chunk,0,0,0,0);
     const pngIssues=validateImageMetadata(fakeLoaded(new Map([[png,resource(png,bytes)]])),
       fakePkg([item('png',png,'image/png')]));
     expect(pngIssues.some(x=>x.code==='IMAGE_EMBEDDED_METADATA')).toBe(true);

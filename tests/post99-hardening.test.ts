@@ -86,7 +86,7 @@ describe('E-109 / E-112: preservar HTML e distinguir remissões editoriais', () 
       manifest:[manifestItem(path, 'application/xhtml+xml')],
     } as unknown as PackageDocumentInfo).filter((issue) => issue.code === 'CONTENT_MISSING_RESOURCE');
     expect(issues.find((issue) => issue.context === 'href')?.repairable).toBe(false);
-    expect(issues.find((issue) => issue.context === 'src')?.repairable).toBe(true);
+    expect(issues.find((issue) => issue.context === 'img:src')?.repairable).toBe(true);
   });
 });
 
