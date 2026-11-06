@@ -2,6 +2,7 @@
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 import { parseZipCentralDirectory } from '../src/epub/reader/rawZipInspector';
+import { loadEpub } from '../src/epub/reader/loadEpub';
 
 async function zipWithName(name: string): Promise<Uint8Array> {
   const zip = new JSZip();
@@ -33,12 +34,29 @@ describe('E-021: nomes ZIP antigos e flags UTF-8 sem corrupção silenciosa', ()
     expect(inspected.entries.some((e) => e.fileName === 'OPS/capítulo.xhtml')).toBe(true);
   });
 
-  it('rejeita CP437 sem flag em vez de transformar caracteres em U+FFFD', async () => {
+  it('decodifica CP437 e extrai os mesmos bytes sem converter para U+FFFD', async () => {
     const source = legacyName(await zipWithName('chapter.xhtml'));
     const inspected = parseZipCentralDirectory(source);
-    expect(inspected.issues.some((i) =>
-      i.code === 'ZIP_UNSUPPORTED_FILENAME_ENCODING' && i.severity === 'fatal')).toBe(true);
-    expect(inspected.entries.some((e) => e.fileName.includes('�'))).toBe(false);
+    expect(inspected.issues.some((i) => i.severity === 'fatal')).toBe(false);
+    expect(inspected.entries.some((e) => e.fileName === 'OPS/chaptér.xhtml')).toBe(true);
+    const loaded = await loadEpub('livro-legacy.epub', source);
+    expect(loaded.validZip).toBe(true);
+    expect(loaded.files.has('OPS/chaptér.xhtml')).toBe(true);
+    expect(new TextDecoder().decode(loaded.files.get('OPS/chaptér.xhtml')?.bytes))
+      .toBe('Texto de prova');
+  });
+
+  it('recusa nomes CP437 que colidem após normalização, sem escolher conteúdo', async () => {
+    const source = new JSZip();
+    source.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
+    source.file('OPS/a.xhtml', 'A');
+    source.file('OPS/A.xhtml', 'B');
+    const bytes = await source.generateAsync({ type: 'uint8array', compression: 'STORE' });
+    const loaded = await loadEpub('a.epub', bytes);
+    expect(loaded.validZip).toBe(true);
+    expect(loaded.files.get('OPS/a.xhtml')?.bytes).toBeDefined();
+    expect(loaded.issues.some((issue) =>
+      issue.code === 'ZIP_PORTABLE_NAME_COLLISION')).toBe(true);
   });
 
   it('rejeita mentira na flag UTF-8 sem inferir o nome da obra', async () => {

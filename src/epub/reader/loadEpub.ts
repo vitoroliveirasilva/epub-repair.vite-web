@@ -9,6 +9,7 @@ import { createIssue } from '../utils/issueFactory';
 import type { IssueCode } from '../model/issueTypes';
 import { normalizeInternalPath } from '../utils/pathUtils';
 import { parseZipCentralDirectory } from './rawZipInspector';
+import { decodeZipFileName } from './zipFileNameEncoding';
 
 class ZipIntegrityError extends Error {
   constructor(readonly code: IssueCode, message: string) {
@@ -58,7 +59,10 @@ export async function loadEpub(
   let zip: JSZip;
 
   try {
-    zip = await JSZip.loadAsync(bytes, { checkCRC32: false });
+    zip = await JSZip.loadAsync(bytes, {
+      checkCRC32: false,
+      decodeFileName: (raw) => decodeZipFileName(raw),
+    });
   } catch (error) {
     return {
       fileName,

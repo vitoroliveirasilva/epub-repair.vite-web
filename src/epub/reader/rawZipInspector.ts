@@ -8,6 +8,7 @@ import {
   MAX_ZIP_UNCOMPRESSED_BYTES,
 } from '../utils/constants';
 import { normalizeInternalPath } from '../utils/pathUtils';
+import { decodeZipFileName } from './zipFileNameEncoding';
 
 function readUInt16LE(bytes: Uint8Array, offset: number): number {
   return bytes[offset]! | (bytes[offset + 1]! << 8);
@@ -71,7 +72,7 @@ function checkExtraFields(
       try {
         const unicodeName = new TextDecoder('utf-8', { fatal: true })
           .decode(bytes.subarray(payload + 5, payload + size));
-        const headerName = decodeFileName(rawName);
+        const headerName = decodeZipFileName(rawName);
         if (unicodeName !== headerName) {
           return { code: 'ZIP_UNSUPPORTED_FILENAME_ENCODING',
             title: 'Nomes divergentes no ZIP',
@@ -108,11 +109,6 @@ function dataDescriptorLength(
   return -1;
 }
 
-function decodeFileName(bytes: Uint8Array): string {
-  // Não converter bytes CP437/charset legado silenciosamente em U+FFFD.
-  // Arquivos com nomes sem UTF-8 confiável exigem conversão manual para evitar colisões.
-  return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-}
 
 export function parseZipCentralDirectory(bytes: Uint8Array): {
   entries: ZipEntryInfo[];
@@ -259,16 +255,13 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
     }
 
     try {
-      decodeFileName(bytes.subarray(fileNameStart, fileNameEnd));
+      decodeZipFileName(bytes.subarray(fileNameStart, fileNameEnd), Boolean(flags & 0x0800));
     } catch {
       issues.push(createIssue({
         code: 'ZIP_UNSUPPORTED_FILENAME_ENCODING',
         severity: 'fatal',
         title: 'Nome de arquivo ZIP possui codificação não suportada',
-        detail: (flags & 0x0800) !== 0
-          ? 'O nome está marcado como UTF-8, mas contém bytes inválidos.'
-          : 'Nome com codificação legada ou ambígua (por exemplo CP437). ' +
-            'Converter externamente para UTF-8 antes de reparar evita nomes corrompidos.',
+        detail: 'O nome está marcado como UTF-8, mas contém bytes inválidos.',
         repairable: false,
       }));
       break;
@@ -336,7 +329,7 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
       }));
       break;
     }
-    const normalized = normalizeInternalPath(decodeFileName(rawName));
+    const normalized = normalizeInternalPath(decodeZipFileName(rawName, Boolean(flags & 0x0800)));
     const localExtraLength = localExtra;
     const fileName = normalized.path || normalized.original;
 
@@ -349,7 +342,7 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
       uncompressedSize,
       crc32,
       extraFieldLength: localExtraLength,
-      isDirectory: decodeFileName(bytes.slice(fileNameStart, fileNameEnd)).endsWith('/'),
+      isDirectory: decodeZipFileName(rawName, Boolean(flags & 0x0800)).endsWith('/'),
     };
 
     // Duas entradas ZIP não podem apontar para o mesmo cabeçalho local ou
