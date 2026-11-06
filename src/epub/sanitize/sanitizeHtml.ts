@@ -33,10 +33,11 @@ export function sanitizeHtmlDocument(
 
   if (options.sanitizeScripts) {
     const before = output;
-    output = output.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/giu, '');
-    output = output.replace(/<script\b[^>]*\/?>/giu, '');
-    output = output.replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/giu, '');
-    output = output.replace(/\s+(?:href|src)\s*=\s*(["'])\s*javascript:[\s\S]*?\1/giu, '');
+    output = outsideHtmlComments(output, (part) => part
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/giu, '')
+      .replace(/<script\b[^>]*\/?>/giu, '')
+      .replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/giu, '')
+      .replace(/\s+(?:href|src)\s*=\s*(["'])\s*javascript:[\s\S]*?\1/giu, ''));
     if (output !== before) {
       actions.push({
         type: 'updated',
@@ -49,14 +50,11 @@ export function sanitizeHtmlDocument(
 
   if (options.kindleSafeMode) {
     const before = output;
-    output = output.replace(
-      /<(iframe|embed|object)\b[^>]*>[\s\S]*?<\/\1\s*>/giu,
-      '<p>[Recurso interativo removido]</p>',
-    );
-    output = output.replace(
-      /<(iframe|embed|object)\b[^>]*\/?>/giu,
-      '<p>[Recurso interativo removido]</p>',
-    );
+    output = outsideHtmlComments(output, (part) => part
+      .replace(/<(iframe|embed|object)\b[^>]*>[\s\S]*?<\/\1\s*>/giu,
+        '<p>[Recurso interativo removido]</p>')
+      .replace(/<(iframe|embed|object)\b[^>]*\/?>/giu,
+        '<p>[Recurso interativo removido]</p>'));
     if (output !== before) {
       actions.push({
         type: 'updated',
@@ -68,17 +66,17 @@ export function sanitizeHtmlDocument(
   }
 
   if (options.replaceMissingImagesWithText) {
-    output = replaceMissingImages(output, options, actions);
+    output = outsideHtmlComments(output, (part) => replaceMissingImages(part, options, actions));
   }
-  output = replaceBrokenKindleEmbeds(output, options.filePath, actions);
+  output = outsideHtmlComments(output, (part) => replaceBrokenKindleEmbeds(part, options.filePath, actions));
 
   if (options.removeRemoteResourceLinks) {
-    output = replaceRemoteAnchors(output, options.filePath, actions);
-    output = removeRemoteResourceAttributes(output, options.filePath, actions);
+    output = outsideHtmlComments(output, (part) => replaceRemoteAnchors(part, options.filePath, actions));
+    output = outsideHtmlComments(output, (part) => removeRemoteResourceAttributes(part, options.filePath, actions));
   }
 
-  output = filterUnsafeSrcset(output, options, actions);
-  output = removeBrokenResourceAttributes(output, options, actions);
+  output = outsideHtmlComments(output, (part) => filterUnsafeSrcset(part, options, actions));
+  output = outsideHtmlComments(output, (part) => removeBrokenResourceAttributes(part, options, actions));
 
   // O parser interpreta entidades e namespaces antes de validar atributos,
   // cobrindo variações que expressões regulares não conseguem reconhecer.
@@ -316,4 +314,10 @@ function escapeHtml(value: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+/** Preserva comentários editoriais que exibem exemplos literais de tags. */
+function outsideHtmlComments(source: string, transform: (part: string) => string): string {
+  return source.split(/(<!--[\s\S]*?-->)/gu).map((part) =>
+    part.startsWith('<!--') && part.endsWith('-->') ? part : transform(part)).join('');
 }

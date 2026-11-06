@@ -58,6 +58,9 @@ export async function replaceEpubCover(
   const loaded = await loadEpub(fileName, bytes);
   canceled();
 
+  if (loaded.files.has('META-INF/signatures.xml')) {
+    throw new Error('Assinatura digital presente: trocar a capa invalidaria a autenticidade do EPUB.');
+  }
   if (!loaded.validZip) {
     throw new Error(
       'Não é seguro trocar a capa: o arquivo não pôde ser aberto como ZIP/EPUB válido.',

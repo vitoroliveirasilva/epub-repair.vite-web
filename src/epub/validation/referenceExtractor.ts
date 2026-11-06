@@ -41,20 +41,45 @@ export function extractHtmlResourceReferences(text: string): ResourceReference[]
 
 export function extractCssResourceReferences(text: string): ResourceReference[] {
   const refs: ResourceReference[] = [];
+  const source = maskCssComments(text);
   const urlRegex = /url\(\s*(["']?)(.*?)\1\s*\)/giu;
   let match: RegExpExecArray | null;
-  while ((match = urlRegex.exec(text)) !== null) {
+  while ((match = urlRegex.exec(source)) !== null) {
     const value = match[2]?.trim();
     if (value) refs.push({ attr: 'css:url', value: stripFragmentAndQuery(value), raw: value });
   }
 
   const importRegex = /@import\s+(?:url\(\s*)?["']([^"']+)["']/giu;
-  while ((match = importRegex.exec(text)) !== null) {
+  while ((match = importRegex.exec(source)) !== null) {
     const value = match[1]?.trim();
     if (value) refs.push({ attr: 'css:import', value: stripFragmentAndQuery(value), raw: value });
   }
 
   return refs;
+}
+
+/** Não considerar URLs de comentários CSS, inclusive em exemplos editoriais. */
+function maskCssComments(source: string): string {
+  const chars = source.split('');
+  let quote = '';
+  for (let index = 0; index < chars.length; index += 1) {
+    const char = chars[index] ?? '';
+    if (quote) {
+      if (char === '\\') index += 1;
+      else if (char === quote) quote = '';
+      continue;
+    }
+    if (char === '"' || char === "'") { quote = char; continue; }
+    if (char === '/' && chars[index + 1] === '*') {
+      const end = source.indexOf('*/', index + 2);
+      const until = end < 0 ? chars.length : end + 2;
+      for (let i = index; i < until; i += 1) {
+        if (chars[i] !== '\n' && chars[i] !== '\r') chars[i] = ' ';
+      }
+      index = until - 1;
+    }
+  }
+  return chars.join('');
 }
 
 function inferAttributeName(raw: string): string {

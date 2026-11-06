@@ -1,6 +1,7 @@
 import type { LoadedEpub } from '../model/epubTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import { HTML_MEDIA_TYPES, IMAGE_MEDIA_TYPES } from '../utils/constants';
+import { stripImageMetadata } from './stripImageMetadata';
 
 const textDecoder = new TextDecoder('utf-8', { fatal: false });
 const FONT_MIME = /^(?:font\/|application\/(?:font-|vnd\.ms-fontobject))/iu;
@@ -14,6 +15,7 @@ export function auditPreservation(
   output: ReadonlyMap<string, Uint8Array>,
   before: PackageDocumentInfo,
   after: PackageDocumentInfo | undefined,
+  approvedMetadataCleanup: ReadonlySet<string> = new Set(),
 ): string[] {
   const warnings: string[] = [];
   if (!after) return ['Não foi possível confirmar a estrutura editorial após o reparo.'];
@@ -124,6 +126,9 @@ export function auditPreservation(
       if (item.mediaType === 'image/svg+xml') {
         compareSvgPreservation(textDecoder.decode(oldBytes), textDecoder.decode(newBytes),
           item.resolvedPath);
+      } else if (approvedMetadataCleanup.has(item.resolvedPath) &&
+          sameBytes(stripImageMetadata(oldBytes, item.mediaType).bytes, newBytes)) {
+        // Somente a transformação exata de metadados previamente autorizada.
       } else {
         throw new Error(`O reparo técnico modificou um recurso binário sem autorização: ${item.resolvedPath}`);
       }

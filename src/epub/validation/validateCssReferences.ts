@@ -6,6 +6,7 @@ import { createIssue } from '../utils/issueFactory';
 import {
   decodeCssEscapes,
   isInlineFontDataUrl,
+  isSafeInlineImageDataUrl,
   isRemoteUrl,
   isSafeRemoteResourceUrl,
   resolveReference,
@@ -40,7 +41,8 @@ export function validateCssReferences(loaded: LoadedEpub, pkg: PackageDocumentIn
       const decodedUrl = decodeCssEscapes(ref.value);
       if (isRemoteUrl(decodedUrl)) {
         // Fontes e estilos externos passivos são intencionais e não são problemas.
-        if (isSafeRemoteResourceUrl(decodedUrl) || isInlineFontDataUrl(decodedUrl)) continue;
+        if (isSafeRemoteResourceUrl(decodedUrl) || isInlineFontDataUrl(decodedUrl) ||
+          isSafeInlineImageDataUrl(decodedUrl)) continue;
         issues.push(
           createIssue({
             code: 'CSS_UNSAFE_RESOURCE',

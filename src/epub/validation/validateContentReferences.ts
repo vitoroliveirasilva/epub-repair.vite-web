@@ -194,7 +194,8 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
             detail: `A referência "${ref.raw}" aponta para "${resolved.path}", mas esse arquivo não foi encontrado no EPUB.`,
             file: item.resolvedPath,
             context: ref.attr,
-            repairable: true,
+            // Links editoriais href exigem destino real e jamais são reconstruídos por inferência.
+            repairable: ref.attr !== 'href',
           }),
         );
       }

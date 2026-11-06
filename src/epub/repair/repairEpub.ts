@@ -68,6 +68,9 @@ export async function repairEpub(
     };
   }
 
+  if (loaded.files.has('META-INF/signatures.xml')) {
+    throw new Error('Arquivo assinado digitalmente. O reparo invalidaria a assinatura; operação bloqueada.');
+  }
   if (!loaded.validZip) {
     throw new Error('Não é seguro reparar: o arquivo não pôde ser aberto como ZIP/EPUB válido.');
   }
@@ -238,7 +241,8 @@ export async function repairEpub(
   const after = await inspectEpub(outputFileName, afterBytes);
   canceled();
   assertNoNewCriticalIssues(before, after);
-  warnings.push(...auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo));
+  warnings.push(...auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo,
+    canStripMetadata ? metadataCandidates : undefined));
   const fileDiffs = createTextFileDiffs(new Map(Array.from(loaded.files, ([name, entry]) =>
     [name, entry.bytes])), files);
   if (hasResidualActiveContent(after)) {

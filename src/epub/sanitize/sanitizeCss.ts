@@ -3,6 +3,7 @@ import { containsDangerousCss } from './sanitizeActiveContent';
 import {
   decodeCssEscapes,
   isInlineFontDataUrl,
+  isSafeInlineImageDataUrl,
   isRemoteUrl,
   isSafeRemoteResourceUrl,
   resolveReference,
@@ -89,7 +90,7 @@ function isUnsafeCssReference(
 ): boolean {
   if (!value || value.startsWith('#')) return false;
   const decoded = decodeCssEscapes(value);
-  if (isInlineFontDataUrl(decoded)) return false;
+  if (isInlineFontDataUrl(decoded) || isSafeInlineImageDataUrl(decoded)) return false;
   if (isRemoteUrl(decoded)) {
     if (isSafeRemoteResourceUrl(decoded)) return removeRemoteResourceLinks;
     return true;

@@ -166,7 +166,8 @@ export function containsDangerousCss(text: string): boolean {
 
   for (const match of canonical.matchAll(/url\(\s*(["']?)(.*?)\1\s*\)/giu)) {
     const value = decodeCssEscapes(match[2] ?? '');
-    if (isRemoteUrl(value) && !isSafeRemoteResourceUrl(value) && !isInlineFontDataUrl(value)) {
+    if (isRemoteUrl(value) && !isSafeRemoteResourceUrl(value) && !isInlineFontDataUrl(value) &&
+        !isSafeInlineImageDataUrl(value)) {
       return true;
     }
   }
@@ -199,7 +200,8 @@ function sanitizeDangerousEmbeddedCss(css: string): string {
   );
   result = result.replace(/url\(\s*(["']?)(.*?)\1\s*\)/giu, (full, _quote: string, value: string) => {
     const decoded = decodeCssEscapes(value);
-    if (isRemoteUrl(decoded) && !isSafeRemoteResourceUrl(decoded) && !isInlineFontDataUrl(decoded)) {
+    if (isRemoteUrl(decoded) && !isSafeRemoteResourceUrl(decoded) && !isInlineFontDataUrl(decoded) &&
+        !isSafeInlineImageDataUrl(decoded)) {
       return 'none';
     }
     return full;
