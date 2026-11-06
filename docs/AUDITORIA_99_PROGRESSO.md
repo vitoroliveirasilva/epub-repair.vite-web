@@ -1,13 +1,13 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 05/11/2026 (execução 13: Node 20/22, EPUBCheck, cobertura e Chromium/Firefox/WebKit aprovados) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 05/11/2026 (execução 14: 89/99, CI EPUBCheck, OSV, SBOM, cobertura e browsers) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
 | Situação | Itens |
 | --- | ---: |
-| Concluídos no escopo definido, com CI Node 20/22 aprovada | **87** |
-| Parcialmente tratados, com testes/validação adicionais necessários | **12** |
+| Concluídos no escopo definido, com CI Node 20/22 aprovada | **89** |
+| Parcialmente tratados, com testes/validação adicionais necessários | **10** |
 | Não iniciados ou ainda não evidenciados | **0** |
 | Total | **99** |
 
@@ -92,7 +92,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-065 | P0 | Comparar ordem de leitura, capítulos, IDs e links antes/depois | Concluído · CI |
 | E-066 | P1 | Verificar integridade binária das imagens/fontes que não deveriam ser alteradas | Concluído · CI |
 | E-067 | P1 | Validar imagens por dimensões, assinatura, decodificação e pixels quando alteradas | Concluído · CI |
-| E-068 | P1 | Consertos de headings, capítulos, títulos de navegação e sumários editoriais | Parcial |
+| E-068 | P1 | Consertos de headings, capítulos, títulos de navegação e sumários editoriais | Concluído · CI |
 | E-069 | P1 | Detectar OCR malformado, quebras artificiais, hifens, cabeçalhos e rodapés | Concluído · CI |
 | E-070 | P1 | Diagnóstico de CSS redundante/contraditório ou referências de estilos quebradas | Concluído · CI |
 | E-071 | P1 | Notas de rodapé, backlinks, endnotes, índices e remissões internas | Concluído · CI |
@@ -123,7 +123,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-096 | P2 | Testes de performance/memória com limites documentados | Parcial |
 | E-097 | P2 | Versionamento das decisões, changelog e matriz de suporte | Concluído · CI |
 | E-098 | P2 | Revisar regras de proteção da dev e política de branch/tag | Parcial |
-| E-099 | P2 | Análise periódica de dependências e licenças além do npm audit | Parcial |
+| E-099 | P2 | Análise periódica de dependências e licenças além do npm audit | Concluído · CI |
 
 ## Commits desta execução
 
@@ -589,3 +589,36 @@ Nenhum item foi encerrado apenas por documentação; o critério de automação
 não significa conformidade editorial, segurança universal nem teste físico.
 
 **Produção:** `prod` ainda em v2.2.0; não houve merge, tag ou release.
+
+## Execução 14: auditoria de dependências, sumário editorial NCX e benchmark sem distorção
+
+**Antes:** 87 concluídos, 12 parciais, 0 pendentes.  
+**Agora: 89 concluídos, 10 parciais, 0 pendentes.**
+
+### Fechamentos comprovados no escopo implementado
+
+| Item | Implementação e evidência |
+| --- | --- |
+| E-068 | `86d9248`, `dd70a51`, `7685368`, `45e35cf`: quando EPUB 3 perdeu NAV mas ainda possui NCX editorial, reconstruir NAV mantendo **três níveis aninhados**, rótulos do autor, fragmentos e escapar XML. Destinos maliciosos/inexistentes ou NCX inválido causam fallback seguro. XHTML e NCX originais preservados; roundtrip e EPUBCheck oficial aprovados. **Não reescrever hierarquia editorial incerta nem corrigir automaticamente títulos sem evidência** |
+| E-099 | `e7b18b2`, `4225fc4`: inventário SPDX de licenças e política de Expressões `AND`/`OR`, detecção de versões divergentes do lockfile, testes adversariais; SBOM CycloneDX e SPDX arquivados; OSV Scanner **v2.7.0** independente de `npm audit`. [Workflow OSV+SBOM+licenças aprovado](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42151432158). **Atenção: cron do GitHub só fica ativo quando o workflow chega à branch padrão `prod`; na `dev` ele executa via push/PR ou disparo manual, não semanalmente ainda. Nenhum merge foi feito** |
+
+### Avanços adicionais, ainda sem conclusão integral
+
+- **E-031/E-096:** `a076ee9` corrigiu um problema de *metodologia* do benchmark anterior: enviar 12 MiB como `Array.from` ao `page.evaluate` contaminava a medição com serialização/transporte Playwright. A CI agora injeta os EPUBs como `File` nativo e mede **somente extração/reparo/revalidação**.
+- Novos dados reais no Chromium Linux [run 42152110422](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42152110422):
+  - 1 MiB: **211 ms**, crescimento amostrado de **+0,1 MiB** de JS heap da aba;
+  - 12 MiB: **1.239 ms**, crescimento amostrado **+3,0 MiB**;
+  - 48 MiB: **4.920 ms**, crescimento amostrado **+0,0 MiB** (amostragem imperfeita de heap JS; não significa memória zero).
+- **O resultado anterior de 59 s e +261,8 MiB não deve ser interpretado como custo de processamento da aplicação**: incluía o transporte do harness de testes; essa comparação não é válida. Ainda não há pico RSS/Worker completo, teste de 250 MiB ou medição em dispositivos modestos.
+- **E-062/E-082/E-089:** ainda exigem homologação do Netlify final e Safari/iOS físico, apesar dos browsers desktop e emulação mobile passarem.
+
+### Evidências
+
+- [CI oficial + EPUBCheck após integração do NCX hierárquico](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42152297045)
+- [SBOM, OSV e revisão de licenças aprovados](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42151432158)
+- [Browser matrix e benchmark nativo 1/12/48 MiB aprovados](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42152110422)
+
+**Itens parciais que permanecem (10):** E-031, E-032, E-062, E-076,
+E-080, E-082, E-089, E-090, E-096 e E-098.
+
+**Produção:** `prod` intacta em `v2.2.0`. Nenhum merge, release ou tag.

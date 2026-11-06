@@ -151,3 +151,20 @@ Evidências: [CI 42144065865](https://github.com/vitoroliveirasilva/epub-repair.
 
 **Balanço:** 87 concluídos, 12 parciais, 0 não iniciados no inventário de 99;
 todos os 12 parciais preservam seus critérios de conclusão sem atalhos.
+
+## Execução 14: interpretação da qualidade e da auditoria periódica
+
+- E-068: reconstrução de NAV EPUB3 **a partir de NCX válido**, com hierarquia,
+  nomes, fragmentos e proteção de caminhos, possui teste diferencial EPUBCheck.
+  Se o NCX estiver inconsistente, o reparo não inventa hierarquia editorial.
+- E-099: scan OSV v2, SBOM SPDX/CycloneDX e verificação de licenças passam
+  em push da dev. A agenda semanal está no código, mas NÃO será executada
+  automaticamente enquanto o workflow não estiver na branch padrão `prod`.
+- E-031/E-096: histórico antigo de 59s para 12MiB contém custo de transporte
+  `Array.from` do Playwright, não pode ser apresentado como throughput da
+  aplicação. Medição correta usa File nativo e chegou a 48MiB em 4,920s.
+- Escopo concluído automatizado não implica suporte a leitores físicos,
+  ausência de malware, nem parecer jurídico de licenças MPL.
+
+**89 concluídos, 10 parciais, 0 pendentes** (E-031, E-032, E-062, E-076,
+E-080, E-082, E-089, E-090, E-096, E-098). `prod` preservada.

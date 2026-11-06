@@ -138,3 +138,17 @@ uma cópia nova. O reparo reconhece JPEG, PNG e WebP sem recomprimir pixels.
 
 A limpeza **não comprova anonimização completa**; metadados de outros
 tipos podem persistir. O EPUB é revalidado antes de disponibilizar a saída.
+
+## E-068: NAV reconstruído do NCX editorial sem achatamento
+
+No EPUB 3 em que só resta o NCX do autor, a criação de `nav.xhtml`
+passa a preservar partes, capítulos e seções como hierarquia `ol/li`
+aninhada, mantendo os rótulos e destinos URI com fragmentos.
+`tests/ncxToNavEditorial99.test.ts` prova três níveis, encoding XML,
+rejeição de destinos maliciosos e preservação do XHTML/NCX original.
+
+O teste diferencial `tests/epubCheckFixtureGenerator.test.ts` valida
+a saída pelo EPUBCheck oficial 5.4.0. Em NCX inválido/ambíguo, a geração
+retorna ao fallback conhecido em vez de inventar capítulos ou reordenar
+o livro. A ferramenta não assume autoridade para modificar hierarquias
+editoriais que exijam julgamento humano.

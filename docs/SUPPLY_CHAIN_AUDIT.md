@@ -30,3 +30,13 @@ Não criar merge automático nem alterar produção para ativar cron.
 
 Não incluir SBOMs (com informações detalhadas sobre versões) no
 próprio código-fonte; os artefatos controlados ficam nas Actions.
+
+## Primeira execução comprovada
+
+[Run 42151432158](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42151432158)
+concluiu **SBOM + SPDX license policy + OSV** com sucesso. O workflow tem
+schedule semanal configurado, mas **o GitHub executa esse schedule somente
+no branch padrão**, que continua sendo `prod`. Na `dev`, a CI de
+segurança roda por push/PR e pode ser disparada manualmente. O scanner
+não detectou falha conhecida na base deste commit; isso não é garantia
+de segurança irrestrita.
