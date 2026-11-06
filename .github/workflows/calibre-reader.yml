@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: calibre-reader-${{ github.ref }}
+  group: calibre-visual-v2-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
