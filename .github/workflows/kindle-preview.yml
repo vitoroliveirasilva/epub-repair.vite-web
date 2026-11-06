@@ -1,0 +1,57 @@
+name: Kindle Previewer real desktop compatibility
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - 'src/epub/**'
+      - 'tests/epubCheckFixtureGenerator.test.ts'
+      - '.github/workflows/kindle-preview.yml'
+      - 'scripts/kindle-preview-check.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kindle-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kindle-preview:
+    name: Amazon Kindle Previewer desktop CLI (EPUB 2/3)
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+      - name: Install app and synthesize deterministic repaired EPUBs
+        env:
+          EPUBCHECK_FIXTURE_OUTPUT: ${{ runner.temp }}/epub-fixtures
+        run: |
+          npm ci
+          npx vitest run tests/epubCheckFixtureGenerator.test.ts
+      - name: Install official Amazon Kindle Previewer 4 from Homebrew cask
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew install --cask kindle-previewer
+          find /Applications -maxdepth 5 -iname '*Kindle*Preview*' -print | head -25
+          command -v kindlepreviewer || true
+      - name: Convert repaired EPUB 2 and 3 using actual Kindle Previewer
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/kindle-preview-check.py \
+            "${RUNNER_TEMP}/epub-fixtures" "${RUNNER_TEMP}/kindle-results"
+      - name: Upload Kindle Previewer logs and KPF metadata
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kindle-preview-results
+          path: ${{ runner.temp }}/kindle-results
+          if-no-files-found: warn
+          retention-days: 14
