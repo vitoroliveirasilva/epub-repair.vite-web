@@ -61,7 +61,8 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
-          target: google_apis_playstore
+          # Imagem userdebug evita restrições da edição Google Play.
+          target: google_apis
           arch: x86_64
           profile: pixel_7
           ram-size: 4096M

@@ -25,10 +25,10 @@ describe('E-113: nunca perder reparo anterior ao trocar capa ou revalidar', () =
       await repairCurrentFile(state);
       expect(state.repairResult?.changed).toBe(true);
       expect(state.payload?.bytes).not.toBe(original);
-      const afterRepair = await JSZip.loadAsync(state.payload!.bytes);
+      const afterRepair = await JSZip.loadAsync(state.payload.bytes);
       const repairedOpf = await afterRepair.file('OEBPS/content.opf')!.async('string');
       expect(repairedOpf).toContain('version="2.0"');
-      const firstName = state.payload!.file.name;
+      const firstName = state.payload.file.name;
       expect(firstName).toBe(state.repairResult?.fileName);
       state.coverImage = {
         fileName:'nova.png',bytes:png,mediaType:'image/png',previewDataUrl:'',
@@ -37,12 +37,12 @@ describe('E-113: nunca perder reparo anterior ao trocar capa ou revalidar', () =
       expect(state.repairResult?.fileName).toBe(firstName);
       await applyCoverReplacementToCurrentFile(state);
       expect(state.repairResult?.operation).toBe('cover-replacement');
-      const afterCover = await JSZip.loadAsync(state.payload!.bytes);
+      const afterCover = await JSZip.loadAsync(state.payload.bytes);
       const opf = await afterCover.file('OEBPS/content.opf')!.async('string');
       expect(opf).toContain('version="2.0"');
       expect(opf).toContain('image/png');
       expect(state.originalSource.bytes).toBe(original);
-      const finalName = state.payload!.file.name;
+      const finalName = state.payload.file.name;
       await analyzeCurrentFile(state);
       expect(state.repairResult?.fileName).toBe(finalName);
       expect(state.repairResult?.blob).toBeDefined();
