@@ -17,7 +17,7 @@ describe('E-080: fila FIFO de ações para mesmo EPUB',()=>{
     expect(queue.enqueue({label:'análise',run:async()=>{
       order.push('start-analysis');await d.promise;order.push('finish-analysis');
     }})).toBe(true);
-    queue.enqueue({label:'reparo',run:async()=>{order.push('repair')}});
+    queue.enqueue({label:'reparo',run:()=>{order.push('repair');return Promise.resolve()}});
     expect(queue.pendingCount).toBe(1);
     expect(order).toEqual(['start-analysis']);
     d.resolve();
@@ -31,8 +31,8 @@ describe('E-080: fila FIFO de ações para mesmo EPUB',()=>{
     const processed:string[]=[];
     const queue=new SerialTaskQueue(()=>{});
     queue.enqueue({label:'a',run:async()=>{processed.push('a');await d.promise;}});
-    queue.enqueue({label:'b',run:async()=>{processed.push('b')}});
-    queue.enqueue({label:'c',run:async()=>{processed.push('c')}});
+    queue.enqueue({label:'b',run:()=>{processed.push('b');return Promise.resolve()}});
+    queue.enqueue({label:'c',run:()=>{processed.push('c');return Promise.resolve()}});
     expect(queue.clearPending()).toBe(2);
     d.resolve();await flush();
     expect(processed).toEqual(['a']);
@@ -40,8 +40,8 @@ describe('E-080: fila FIFO de ações para mesmo EPUB',()=>{
   it('falha individual não bloqueia próximas tarefas',async()=>{
     const processed:string[]=[];
     const queue=new SerialTaskQueue(()=>{});
-    queue.enqueue({label:'broken',run:async()=>{throw new Error('erro');}});
-    queue.enqueue({label:'ok',run:async()=>{processed.push('ok')}});
+    queue.enqueue({label:'broken',run:()=>Promise.reject(new Error('erro'))});
+    queue.enqueue({label:'ok',run:()=>{processed.push('ok');return Promise.resolve()}});
     await flush();
     expect(processed).toEqual(['ok']);
   });
@@ -50,8 +50,8 @@ describe('E-080: fila FIFO de ações para mesmo EPUB',()=>{
     const queue=new SerialTaskQueue(()=>{},8);
     expect(queue.enqueue({label:'active',run:tasks})).toBe(true);
     for(let i=0;i<8;i++)
-      expect(queue.enqueue({label:String(i),run:async()=>{}})).toBe(true);
-    expect(queue.enqueue({label:'extra',run:async()=>{}})).toBe(false);
+      expect(queue.enqueue({label:String(i),run:()=>Promise.resolve()})).toBe(true);
+    expect(queue.enqueue({label:'extra',run:()=>Promise.resolve()})).toBe(false);
     expect(queue.pendingCount).toBe(8);
     expect(queue.clearPending()).toBe(8);
     d.resolve();await flush();
