@@ -79,7 +79,7 @@ export function recreateNavFromNcx(
       if (visited > 2000 || depth > 24) throw new Error('NCX excessivamente profundo');
       const labelRoot = childElementsByLocalName(point, 'navLabel')[0];
       const label = childElementsByLocalName(labelRoot, 'text')[0]
-        ?.textContent?.replace(/\\s+/gu, ' ').trim() ?? '';
+        ?.textContent?.replace(/\s+/gu, ' ').trim() ?? '';
       if (!label || label.length > 1000) throw new Error('NCX sem rótulo editorial válido');
       const content = childElementsByLocalName(point, 'content')[0];
       const src = content?.getAttribute('src')?.trim() ?? '';
@@ -101,13 +101,13 @@ export function recreateNavFromNcx(
       }
       const nested = childElementsByLocalName(point, 'navPoint');
       const descendants = nested.length
-        ? '<ol>\\n' + nested.map((child) => item(child, depth + 1)).join('\\n') +
-          '\\n</ol>' : '';
+        ? '<ol>\n' + nested.map((child) => item(child, depth + 1)).join('\n') +
+          '\n</ol>' : '';
       return '      <li>' + link + descendants + '</li>';
     };
     const top = childElementsByLocalName(root, 'navPoint');
     if (!top.length) return undefined;
-    const output = top.map((point) => item(point, 0)).join('\\n');
+    const output = top.map((point) => item(point, 0)).join('\n');
     return output || undefined;
   } catch {
     // A validação do EPUB reportará o NCX ruim; a geração não pode transformar
