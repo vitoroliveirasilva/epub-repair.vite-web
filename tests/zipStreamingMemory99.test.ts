@@ -14,7 +14,7 @@ describe('E-031: fluxo ZIP sem cópia integral adicional dos chunks', () => {
     const loaded = await loadEpub('stream.epub', result);
     expect(loaded.validZip).toBe(true);
     expect(loaded.files.get('OPS/payload.bin')?.bytes).toEqual(payload);
-  });
+  }, 20_000); // Sob instrumentação V8, 1 MiB de CRC byte a byte leva >5 s.
 
   it('recompõe dezenas de entradas sem duplicar caminhos nem perder CRC32', async () => {
     const zip = new JSZip();
