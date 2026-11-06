@@ -12,7 +12,7 @@ import { pathToFileURL } from 'node:url';
  */
 const playwrightFile = process.env.PLAYWRIGHT_MODULE;
 assert.ok(playwrightFile, 'PLAYWRIGHT_MODULE ausente');
-const { _android: android } = await import(pathToFileURL(playwrightFile).href);
+const { chromium } = await import(pathToFileURL(playwrightFile).href);
 function adb(...args) {
   return execFileSync('adb', args, {
     encoding: 'utf8', timeout: 20_000,
@@ -45,24 +45,43 @@ function makeEpub() {
     '<p>O texto precisa ser preservado no aparelho.</p></body></html>');
   return zip.generateAsync({ type:'uint8array', compression:'DEFLATE' });
 }
-const [device] = await android.devices();
-assert.ok(device, 'Nenhum Android Device / AVD conectado por ADB');
-const version = adb('shell', 'getprop', 'ro.build.version.release');
-const model = adb('shell', 'getprop', 'ro.product.model');
-console.log('Android Device AVD:', model, 'OS:', version,
-  'serial:', device.serial());
-const errors = [];
-const workers = [];
-let context;
+const version=adb('shell','getprop','ro.build.version.release');
+const model=adb('shell','getprop','ro.product.model');
+console.log('Android AVD:',model,'OS:',version);
+const errors=[];
+const workers=[];
+let browser;
 try {
-  await device.shell('am force-stop com.android.chrome');
-  context = await device.launchBrowser();
-  const page = await context.newPage();
-  page.on('pageerror', (error) => errors.push(error.message));
-  page.on('worker', (worker) => workers.push(worker.url()));
-  page.setDefaultTimeout(75_000);
-  await page.goto('http://127.0.0.1:5173/', {waitUntil:'domcontentloaded'});
-  assert.match(await page.title(), /EPUB/u);
+  // Playwright._android.launchBrowser() requer flag manual
+  // "Enable command line on non-rooted devices" e bloqueava o runner.
+  // Conectamos ao Chrome Android verdadeiro pelo CDP oficial via ADB.
+  console.log('Starting Chrome via Android activity...');
+  adb('shell','am','force-stop','com.android.chrome');
+  adb('shell','am','start','-a','android.intent.action.VIEW','-d',
+    'http://127.0.0.1:5173/','com.android.chrome');
+  adb('forward','tcp:9222','localabstract:chrome_devtools_remote');
+  let versionInfo;
+  for (let tries=0;tries<40;tries++){
+    try {
+      const response=await fetch('http://127.0.0.1:9222/json/version',
+        {signal:AbortSignal.timeout(3000)});
+      if(response.ok){ versionInfo=await response.json();break; }
+    }catch{ /* Chrome ainda inicializando */ }
+    await new Promise(resolve=>setTimeout(resolve,1500));
+  }
+  assert.ok(versionInfo?.webSocketDebuggerUrl,
+    'Chrome Android não expôs endpoint CDP via adb forward');
+  console.log('Chrome Android CDP:',versionInfo.Browser);
+  browser=await chromium.connectOverCDP('http://127.0.0.1:9222',
+    {timeout:30000});
+  const context=browser.contexts()[0];
+  assert.ok(context,'CDP Android não disponibilizou contexto');
+  const page=context.pages()[0]??await context.newPage();
+  page.on('pageerror',(error)=>errors.push(error.message));
+  page.on('worker',(worker)=>workers.push(worker.url()));
+  page.setDefaultTimeout(45_000);
+  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
+  assert.match(await page.title(),/EPUB/u);
   const viewport=await page.evaluate(() => ({
     width:window.innerWidth,
     height:window.innerHeight,
@@ -73,10 +92,22 @@ try {
   assert.ok(viewport.touch > 0, 'Android não reporta touch nativo');
   assert.match(viewport.userAgent, /Android/u);
   const bytes=await makeEpub();
-  await page.locator('#epub-file-input').setInputFiles({
-    name:'android-test.epub', mimeType:'application/epub+zip',
-    buffer:Buffer.from(bytes),
-  });
+  // Arquivo construído dentro do Chrome Android, sem transferência de
+  // file chooser cujo suporte CDP no Android varia entre builds.
+  const upload=await page.evaluate((base64)=>{
+    const bytes=Uint8Array.from(atob(base64),ch=>ch.charCodeAt(0));
+    const file=new File([bytes],'android-test.epub',
+      {type:'application/epub+zip'});
+    const dt=new DataTransfer();
+    dt.items.add(file);
+    const input=document.querySelector('#epub-file-input');
+    if(!(input instanceof HTMLInputElement)) return {count:0};
+    input.files=dt.files;
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+    return {count:input.files.length,size:input.files[0]?.size};
+  },Buffer.from(bytes).toString('base64'));
+  assert.equal(upload.count,1);
+  assert.equal(upload.size,bytes.length);
   const repair=page.getByRole('button',{name:'Gerar EPUB corrigido'});
   await repair.waitFor({state:'visible',timeout:120_000});
   await repair.click();
@@ -117,6 +148,6 @@ try {
     await rm(dirname,{recursive:true,force:true});
   }
 } finally {
-  await context?.close();
-  await device.close();
+  await browser?.close();
+  try{adb('forward','--remove','tcp:9222')}catch{/* cleanup */}
 }
