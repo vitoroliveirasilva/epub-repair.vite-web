@@ -121,7 +121,78 @@ async function makeMimetypeVariant(mode: MimetypeVariant): Promise<Uint8Array> {
   return out.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
 }
 
+/**
+ * E-036: diferenças de recursos entre perfis, não versões do atributo package.
+ * W3C EPUB 3.2/3.3/3.4 exigem TODAS version="3.0" no OPF.
+ */
+type SpecProfile = 'epub3-core' | 'epub32-navigation' |
+  'epub33-mathml' | 'epub34-fixed-layout';
+
+async function createProfileSpecimen(profile: SpecProfile): Promise<Uint8Array> {
+  const zip = await JSZip.loadAsync(await createInvalidEpub());
+  zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
+  const oldOpf = await zip.file('OPS/book.opf')!.async('string');
+  const oldChapter = await zip.file('OPS/chapter.xhtml')!.async('string');
+  const oldNav = await zip.file('OPS/nav.xhtml')!.async('string');
+  let opf = oldOpf;
+  let chapter = oldChapter;
+  let nav = oldNav;
+
+  if (profile === 'epub32-navigation') {
+    nav = nav.replace('</nav></body>',
+      '</nav><nav epub:type="page-list"><h2>Páginas</h2><ol>' +
+      '<li><a href="chapter.xhtml#inicio">1</a></li></ol></nav></body>');
+  }
+  if (profile === 'epub33-mathml') {
+    opf = opf.replace('id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"',
+      'id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml" ' +
+      'properties="mathml"');
+    chapter = chapter.replace('</body>',
+      '<p><math xmlns="http://www.w3.org/1998/Math/MathML">' +
+      '<mi>x</mi><mo>=</mo><mn>1</mn></math></p></body>');
+  }
+  if (profile === 'epub34-fixed-layout') {
+    opf = opf.replace('</metadata>',
+      '<meta property="rendition:layout">pre-paginated</meta></metadata>');
+    chapter = chapter.replace('<head>', '<head>' +
+      '<meta name="viewport" content="width=800, height=600"/>');
+  }
+  zip.file('OPS/book.opf', opf);
+  zip.file('OPS/chapter.xhtml', chapter);
+  zip.file('OPS/nav.xhtml', nav);
+  return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+}
+
 describe('Fixture sintética de conformidade oficial', () => {
+  for (const profile of [
+    'epub3-core', 'epub32-navigation', 'epub33-mathml', 'epub34-fixed-layout',
+  ] as const) {
+    it('E-036: matriz oficial de perfil ' + profile + ' com version="3.0"', async () => {
+      const source = await createProfileSpecimen(profile);
+      const before = await inspectEpub(profile + '.epub', source);
+      expect(before.validZip).toBe(true);
+      expect(before.packageInfo?.version).toBe('3.0');
+      expect(before.stats.fatalCount).toBe(0);
+      const result = await repairEpub(profile + '.epub', source, {
+        ...DEFAULT_REPAIR_OPTIONS, conservativeMode: true,
+      });
+      const final = result.blob
+        ? new Uint8Array(await result.blob.arrayBuffer()) : source;
+      expect(result.after.stats.fatalCount).toBe(0);
+      expect(result.after.packageInfo?.version).toBe('3.0');
+      const finalZip = await JSZip.loadAsync(final);
+      const sourceZip = await JSZip.loadAsync(source);
+      expect(await finalZip.file('OPS/chapter.xhtml')!.async('string'))
+        .toBe(await sourceZip.file('OPS/chapter.xhtml')!.async('string'));
+      const outputDir = process.env.EPUBCHECK_FIXTURE_OUTPUT;
+      if (outputDir) {
+        await mkdir(outputDir, { recursive: true });
+        await writeFile(join(outputDir, 'profile-' + profile + '.epub'), Buffer.from(final));
+      }
+    });
+  }
+
+
 
   for (const variant of [
     'mimetype-compressed', 'mimetype-wrong-content', 'mimetype-out-of-order',

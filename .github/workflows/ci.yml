@@ -158,3 +158,12 @@ jobs:
           echo "EPUBCheck pode aceitar mimetype comprimido: avaliação adicional informativa."
           java -jar "$epubcheck_jar" "$compressed_original"
           java -jar "$epubcheck_jar" "$compressed_repaired"
+
+          # Matriz EPUB 3: o atributo package versão 3.0 é obrigatório tanto
+          # nas revisões 3.2/3.3/3.4. Validar recursos representativos em
+          # fixtures separadas, sem afirmar que EPUBCheck 5.4.0 certifica 3.4.
+          for profile in epub3-core epub32-navigation epub33-mathml epub34-fixed-layout; do
+            specimen="${RUNNER_TEMP}/epub-fixtures/profile-${profile}.epub"
+            test -s "$specimen"
+            java -jar "$epubcheck_jar" "$specimen"
+          done

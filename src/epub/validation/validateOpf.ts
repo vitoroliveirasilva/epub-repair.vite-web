@@ -69,6 +69,24 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
     );
   }
 
+  // EPUB 3.2, 3.3 e 3.4 continuam declarando package version="3.0"
+  // conforme W3C: o atributo NÃO identifica a revisão secundária do padrão.
+  // Não converter "3.4" automaticamente nem fingir suporte a perfil novo.
+  if (pkg.version.trim() !== '1.0' && pkg.version.trim() !== '2.0' &&
+      pkg.version.trim() !== '3.0') {
+    issues.push(createIssue({
+      code: 'OPF_PACKAGE_VERSION_UNSUPPORTED',
+      severity: 'warning',
+      title: 'Versão OPF não reconhecida pelas especificações EPUB 2/3',
+      detail: 'O package deve declarar version="2.0" (EPUB 2) ou version="3.0" ' +
+        '(EPUB 3.0/3.2/3.3/3.4). A revisão EPUB 3.x não é identificável ' +
+        'por esse campo. Revisar a conformidade sem alterar a obra.',
+      file: pkg.opfPath,
+      context: pkg.version,
+      repairable: false,
+    }));
+  }
+
   if (pkg.version.trim() === '1.0') {
     issues.push(
       createIssue({

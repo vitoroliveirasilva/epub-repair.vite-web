@@ -90,3 +90,32 @@ Os cenários com indicação de cobertura automática não significam certifica�
   Apple Books ou aparelhos reais.
 - Gate V8 da `dev`: cinco módulos críticos com limites mínimos medidos por
   arquivo. Não contabilizar os módulos ainda sem cobertura como testados.
+
+
+## Matriz EPUB 2/3 por perfil do padrão (execução 13)
+
+**Atenção à especificação:** o campo OPF `package version="3.0"` é obrigatório
+para EPUB **3.0, 3.2, 3.3 e 3.4**. Não escrever `version="3.4"` nem inferir
+a revisão do livro a partir do atributo; os requisitos variam por recursos e
+edição da especificação usada na validação. Versões declaradas como 3.2/3.3/3.4
+recebem alerta de OPF não compatível e ficam sem reescrita automática.
+
+| Perfil de conformance avaliado | Valor OPF correto | Caso de teste | Limitação |
+| --- | --- | --- | --- |
+| EPUB 2.0/2.0.1 | `2.0` | EPUB 2 com NCX e spine, antes/depois EPUBCheck | Não é certificação universal de EPUB 2 |
+| EPUB 3.0 | `3.0` | EPUB 3 core com XHTML e nav | Teste sintético de base |
+| EPUB 3.2 | `3.0` | `epub32-navigation`, page-list EPUB 3 | Recurso representativo, não suite 3.2 completa |
+| EPUB 3.3 | `3.0` | `epub33-mathml`, MathML com `properties="mathml"` | Recurso representativo, não suite 3.3 completa |
+| EPUB 3.4 (CR Draft 2026) | `3.0` | `epub34-fixed-layout`, layout pré-paginado e viewport | EPUBCheck 5.4.0 não certifica regras novas da 3.4 |
+
+`tests/epubCheckFixtureGenerator.test.ts` gera as quatro fixtures EPUB 3
+separadas e a CI verifica a revalidação e preservação do XHTML pelo reparo,
+seguida do EPUBCheck 5.4.0 externo por perfil.
+
+Fontes normativas:
+- https://www.w3.org/TR/epub-33/#sec-package-elem
+- https://www.w3.org/TR/epub-34/#sec-package-elem
+- https://w3c.github.io/epub-specs/archive/epub32/spec/epub-packages.html
+
+Não presumir atualização automática de minor version nem afirmar
+que as suites externas completas de EPUB 3.4 foram executadas.
