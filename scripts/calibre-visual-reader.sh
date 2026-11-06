@@ -18,7 +18,11 @@ for mode in reflowable fixed-layout; do
   echo "Abrindo ebook-viewer real: $source"
   ebook-viewer --new-instance "$source" >"$logfile" 2>&1 &
   viewer_pid=$!
-  sleep 12
+  sleep 8
+  # Calibre 7 abre tela de boas-vindas "Press any key to continue".
+  # Avançar para o capítulo antes de verificar os pixels da ilustração.
+  xdotool key --clearmodifiers Return
+  sleep 6
   if ! kill -0 "$viewer_pid" 2>/dev/null; then
     echo "Falha ao iniciar o visualizador Calibre: $mode"
     cat "$logfile"
