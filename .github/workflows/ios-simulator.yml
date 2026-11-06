@@ -77,15 +77,26 @@ jobs:
           echo "App ou Appium não iniciou"
           cat "${RUNNER_TEMP}/appium-stdout.log"
           exit 1
+      - name: Open Safari native in iPhone Simulator and capture independent evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcrun simctl openurl "$IOS_SIM_UDID" "http://127.0.0.1:5173/"
+          sleep 8
+          xcrun simctl io "$IOS_SIM_UDID" screenshot \
+            "${RUNNER_TEMP}/ios-safari-openurl.png"
+          test -s "${RUNNER_TEMP}/ios-safari-openurl.png"
+          echo 'PASS Safari iOS Simulator launched webpage via simctl; upload/download still require Appium.'
       - name: Test Safari iOS file upload, repair and actual downloads
         shell: bash
-        run: node tests/ios-safari-simulator.mjs
+        run: timeout 800s node tests/ios-safari-simulator.mjs
       - name: Archive simulator evidence and Appium diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ios-safari-simulator-download-evidence
           path: |
+            ${{ runner.temp }}/ios-safari-openurl.png
             ${{ runner.temp }}/ios-safari-simulator.png
             ${{ runner.temp }}/ios-safari-evidence.json
             ${{ runner.temp }}/appium-ios.log
