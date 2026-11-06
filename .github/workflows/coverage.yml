@@ -39,8 +39,9 @@ jobs:
           mkdir -p "${RUNNER_TEMP}/vitest-coverage"
           cd "${RUNNER_TEMP}/vitest-coverage"
           printf '{"name":"epub-coverage-harness","version":"1.0.0","private":true}\n' > package.json
-          npm install --ignore-scripts --no-audit --no-fund --save-exact @vitest/coverage-v8@4.1.10
+          npm install --legacy-peer-deps --ignore-scripts --no-audit --no-fund --save-exact @vitest/coverage-v8@4.1.10
           test -d "${RUNNER_TEMP}/vitest-coverage/node_modules/@vitest/coverage-v8"
+          cd "${GITHUB_WORKSPACE}"
           mkdir -p node_modules/@vitest
           ln -s "${RUNNER_TEMP}/vitest-coverage/node_modules/@vitest/coverage-v8" node_modules/@vitest/coverage-v8
       - name: Enforce critical module line, branch and function thresholds
