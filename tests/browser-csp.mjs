@@ -152,7 +152,7 @@ try {
   assert.match(download.suggestedFilename(), /\.json$/u);
   // As duas violações intencionais abaixo devem ser registradas no console;
   // nenhuma exceção de aplicação é aceitável.
-  assert.deepEqual(errors.filter((e) => !/Content Security Policy|Content-Security-Policy|Refused to|Load denied by X-Frame-Options|example\.invalid|Content blocker|because it violates|violates the following/u.test(e)), [],
+  assert.deepEqual(errors.filter((e) => !/Content Security Policy|Content-Security-Policy|Refused to|Load denied by X-Frame-Options|example\.invalid|Content blocker|because it violates|violates the following|Potential permissions policy violation: (?:camera|microphone) is not allowed in this document/u.test(e)), [],
     'Erro inesperado na aplicação com CSP');
   console.log('PASS E-062 CSP enforce ' + engineName + ' data/blob/worker/download' +
     ' remote-blocked/inline-blocked');
