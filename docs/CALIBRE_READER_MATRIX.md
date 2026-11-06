@@ -25,3 +25,19 @@ até as homologações que dependem desses leitores.
 
 A CI EPUBCheck continua independente e mantém a matriz EPUB 2/3
 de conformance; não substituir EPUBCheck por Calibre nem vice-versa.
+
+## Evidência real aprovada em 06/11/2026
+
+[GitHub Actions 42215134048](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42215134048)
+concluiu com sucesso usando `ebook-meta` e `ebook-convert` verdadeiros
+do pacote Calibre instalado no Ubuntu, em quatro EPUBs reparados:
+
+- `repaired-valid.epub`, EPUB 3;
+- `repaired-valid-epub2.epub`, EPUB 2;
+- `repaired-valid-ncx-hierarchy.epub`, EPUB 3 com hierarquia NCX→NAV;
+- `profile-epub3-core.epub`, perfil EPUB 3 core.
+
+Além da importação, o caso de NCX hierárquico comprovou a presença de
+**Seção principal** no texto extraído. Ainda falta avaliar renderização
+visual no `ebook-viewer`, Kindle Previewer/Apple Books e dispositivos
+físicos; portanto E-090 permanece parcial.

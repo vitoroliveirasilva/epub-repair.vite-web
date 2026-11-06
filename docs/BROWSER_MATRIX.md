@@ -101,3 +101,12 @@ o deploy-preview HTTPS. Sucesso em [run 42215134060](https://github.com/vitoroli
 
 A cobertura de Safari/iOS **físico** e de leitores Kindle/Apple Books
 continua ausente e não foi usada para concluir os demais itens.
+
+### Evidência complementar da matriz mobile headless (06/11/2026)
+
+A [CI 42215133974](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42215133974)
+concluiu **Chromium, Firefox e WebKit** com sucesso, incluindo
+`tests/browser-large-workflow.mjs`: EPUB 12 MiB, três Workers,
+download do EPUB e reabertura ZIP para verificar integridade e texto.
+Firefox usa viewport estreito sem fingir suporte à emulação nativa
+`isMobile`; WebKit em Linux não equivale a Safari iOS físico.

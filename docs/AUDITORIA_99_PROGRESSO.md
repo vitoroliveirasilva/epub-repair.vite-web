@@ -709,3 +709,17 @@ não declarar que a atualização esteja publicada em produção.
 **Cinco itens parciais restantes:** E-076, E-082, E-089, E-090 e E-098.
 Dependem principalmente de leitores/dispositivos reais e controle efetivo
 das regras de proteção do GitHub. Código e CI da `dev` mantidos.
+
+### Validação complementar final da execução 17
+
+Após as alterações finais, estas evidências também foram **aprovadas**:
+
+- [Calibre CLI real, EPUB 2, EPUB 3, NCX hierárquico, conteúdo preservado](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42215134048).
+  **E-090 permanece parcial** apenas porque Kindle Previewer, Apple Books e aparelhos reais não foram testados.
+- [Chromium, Firefox e WebKit, inclusive EPUB de 12 MiB e três Workers no viewport móvel](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42215133974).
+  **E-089 permanece parcial** por ausência de celulares/tablets físicos.
+- [CI de código e EPUBCheck no commit final da auditoria](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42215434413), aprovada.
+- [CI de vulnerabilidades OSV, SBOM e licenças](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42215134582), aprovada.
+
+O saldo continua **94 concluídos, 5 parciais e 0 não iniciados**.
+O escopo de homologação externa não foi reclassificado sem evidência física.
