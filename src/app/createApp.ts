@@ -20,6 +20,7 @@ import { renderRepairSummary } from '../ui/components/RepairSummary';
 import { renderUploader } from '../ui/components/Uploader';
 import { downloadBlob, el } from '../ui/dom';
 import { abortProcessingError } from './zipWorkerClient';
+import { SerialTaskQueue } from './taskQueue';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -28,16 +29,54 @@ const THEME_STORAGE_KEY = 'epub-repair-theme';
 export function createApp(root: HTMLElement): void {
   initializeTheme();
   const state = createInitialState();
-
+  const queue = new SerialTaskQueue((pending) => {
+    state.pendingTasks = pending;
+    rerender();
+  });
+  const enqueue = (
+    label: string,
+    task: (context: {
+      signal: AbortSignal;
+      onProgress: (progress: ProcessingProgress) => void;
+    }) => Promise<void>,
+  ): void => {
+    const accepted = queue.enqueue({
+      label,
+      run: () => runAsync(state, rerender, task),
+    });
+    if (!accepted) {
+      state.message = 'Fila cheia: aguarde ou cancele tarefas agendadas.';
+      rerender();
+    }
+  };
+  const cancelAll = (): void => {
+    const discarded = queue.clearPending();
+    state.processingProgress = { phase: 'Interrompendo operação...' };
+    state.processingController?.abort();
+    state.message = discarded
+      ? discarded + ' tarefa(s) pendente(s) cancelada(s) junto da operação ativa.'
+      : undefined;
+    rerender();
+  };
   const rerender = (): void => {
     const restoreFocus = captureFocusForRerender(root);
-    render(root, state, rerender);
+    render(root, state, rerender, enqueue, cancelAll);
     restoreFocus();
   };
-  render(root, state, rerender);
+  render(root, state, rerender, enqueue, cancelAll);
 }
 
-function render(root: HTMLElement, state: AppState, rerender: () => void): void {
+function render(
+  root: HTMLElement, state: AppState, rerender: () => void,
+  enqueue: (
+    label: string,
+    task: (context: {
+      signal: AbortSignal;
+      onProgress: (progress: ProcessingProgress) => void;
+    }) => Promise<void>,
+  ) => void,
+  cancelAll: () => void,
+): void {
   root.replaceChildren(
     renderAppHeader(),
     renderHero(),
@@ -49,14 +88,14 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
           className: 'workspace',
           children: [
             renderUploader(state, (file) => {
-              void runAsync(state, rerender, async (ctx) => {
+              enqueue('Carregar e analisar EPUB', async (ctx) => {
                 await loadFileIntoState(file, state, ctx.signal);
                 await analyzeCurrentFile(state, ctx);
               });
             }),
             renderControls(state, {
               analyze: () => {
-                void runAsync(state, rerender, (ctx) => analyzeCurrentFile(state, ctx));
+                enqueue('Verificar EPUB', (ctx) => analyzeCurrentFile(state, ctx));
               },
               repair: () => {
                 const question = buildRepairConsentMessage(state.options, state.report);
@@ -67,7 +106,7 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
                     return;
                   }
                 }
-                void runAsync(state, rerender, (ctx) => repairCurrentFile(state, ctx));
+                enqueue('Reparar EPUB', (ctx) => repairCurrentFile(state, ctx));
               },
               copy: () => {
                 void copyCurrentReport(state, rerender);
@@ -78,15 +117,12 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
               downloadJsonReport: () => {
                 void downloadCurrentReport(state, 'json');
               },
-              cancel: () => {
-                state.processingProgress = { phase: 'Interrompendo operação...' };
-                state.processingController?.abort();
-                rerender();
-              },
+              cancel: cancelAll,
+
             }),
             renderCoverChanger(state, {
               selectCoverImage: (file) => {
-                void runAsync(state, rerender, (ctx) =>
+                enqueue('Selecionar capa', (ctx) =>
                   loadCoverImageIntoState(file, state, ctx.signal));
               },
               clearCoverImage: () => {
@@ -106,7 +142,7 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
                   rerender();
                   return;
                 }
-                void runAsync(state, rerender, (ctx) =>
+                enqueue('Substituir capa', (ctx) =>
                   applyCoverReplacementToCurrentFile(state, ctx.signal));
               },
             }),

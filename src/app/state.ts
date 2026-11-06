@@ -26,6 +26,8 @@ export interface AppState {
   /** O usuário pode interromper o Worker que extrai entradas ZIP. */
   processingController?: AbortController | undefined;
   processingProgress?: ProcessingProgress | undefined;
+  /** Ações agendadas para este EPUB, executadas uma a uma. */
+  pendingTasks?: number | undefined;
   message?: string | undefined;
   error?: string | undefined;
   options: RepairOptions;

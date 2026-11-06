@@ -149,12 +149,17 @@ function buildPrimaryActionButtons(
     return [downloadButton, optimizeButton];
   }
 
-  const analyzeButton = button('Verificar EPUB', 'btn btn-secondary', actions.analyze);
-  analyzeButton.disabled = !flags.hasFile || state.busy;
+  const analyzeButton = button(
+    state.busy ? 'Enfileirar verificação' : 'Verificar EPUB',
+    'btn btn-secondary', actions.analyze,
+  );
+  analyzeButton.disabled = !flags.hasFile || (state.pendingTasks ?? 0) >= 8;
   analyzeButton.dataset.focusKey = 'epub-analyze';
 
   const repairButton = button(
-    flags.canRepair
+    state.busy && (flags.canRepair || flags.canOptimize)
+      ? 'Enfileirar reparo'
+      : flags.canRepair
       ? 'Gerar EPUB corrigido'
       : flags.canOptimize
         ? 'Aplicar otimização opcional'
@@ -165,7 +170,7 @@ function buildPrimaryActionButtons(
   repairButton.dataset.focusKey = 'epub-repair';
   repairButton.disabled =
     !flags.hasFile ||
-    state.busy ||
+    (state.busy && (state.pendingTasks ?? 0) >= 8) ||
     flags.hasFatalIssues ||
     (!flags.canRepair && !flags.canOptimize);
   repairButton.title = repairButtonTitle(state, flags.canRepair, flags.canOptimize);
@@ -312,7 +317,10 @@ function renderProcessingStatus(state: AppState, cancel?: () => void): HTMLEleme
   const haveCount = progress?.completed !== undefined && Boolean(progress.total);
   const current = progress?.completed ?? 0;
   const total = progress?.total ?? 0;
-  const cancelButton = cancel ? button('Cancelar operação', 'btn btn-ghost', cancel) : undefined;
+  const cancelButton = cancel ? button(
+    (state.pendingTasks ?? 0) > 0 ? 'Cancelar operação e fila' : 'Cancelar operação',
+    'btn btn-ghost', cancel,
+  ) : undefined;
   if (cancelButton) {
     cancelButton.dataset.focusKey = 'epub-cancel-processing';
     cancelButton.disabled = state.processingController?.signal.aborted ?? false;
@@ -334,6 +342,12 @@ function renderProcessingStatus(state: AppState, cancel?: () => void): HTMLEleme
             ' entradas do ZIP descompactadas' }) : undefined,
         ],
       }),
+      (state.pendingTasks ?? 0) > 0
+        ? el('small', {
+            className: 'muted',
+            text: state.pendingTasks + ' ação(ões) agendada(s) para este EPUB',
+            attrs: { 'aria-live': 'polite' },
+          }) : undefined,
       cancelButton,
     ],
   });
