@@ -106,7 +106,7 @@ async function loadImage(blob: Blob): Promise<HTMLImageElement | undefined> {
  * grosseiras de cores, geometria e quadros vazios após compressão JPEG.
  * Não é comparação bit a bit nem garantia de igualdade de cada pixel.
  */
-function sampledCanvasPixels(
+export function sampledCanvasPixels(
   image: CanvasImageSource, width: number, height: number,
 ): Uint8ClampedArray | undefined {
   const canvas = document.createElement('canvas');

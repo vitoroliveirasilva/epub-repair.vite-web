@@ -227,7 +227,26 @@ async function presentationAndImageSmoke(browser) {
     assert.equal(image.progressiveOutput, false);
     assert.equal(image.changed, true);
     assert.equal(image.normalized, true);
-    console.log('PASS EPUB presentation+JPEG browser=' + selected);
+
+    // Capa: confirmar que a mesma proteção pixel/dimensões se aplica à
+    // regravação de JPEG quando o browser oferece createImageBitmap.
+    const cover = await page.evaluate(async (raw) => {
+      const { readCoverImageFile } = await import('/src/epub/cover/coverImageInput.ts');
+      const source = Uint8Array.from(raw);
+      const result = await readCoverImageFile(new File([source], 'capa.jpg',
+        { type: 'image/jpeg' }));
+      const output = result.bytes;
+      return {
+        normalized: result.normalized === true,
+        changed: source.length !== output.length ||
+          output.some((byte, index) => byte !== source[index]),
+        validJpeg: output[0] === 0xff && output[1] === 0xd8,
+      };
+    }, Array.from(Buffer.from(progressiveJpeg, 'base64')));
+    assert.equal(cover.validJpeg, true);
+    assert.equal(cover.changed, cover.normalized);
+    console.log('PASS EPUB presentation+JPEG browser=' + selected +
+      ' coverNormalized=' + cover.normalized);
   } finally {
     await context.close();
   }

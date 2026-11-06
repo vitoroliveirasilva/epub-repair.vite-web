@@ -1,3 +1,5 @@
+import { isJpegSampleVisuallyComparable, sampledCanvasPixels } from '../repair/repairImages';
+
 export type SupportedCoverMediaType = 'image/jpeg' | 'image/png';
 
 export interface CoverImageInput {
@@ -143,7 +145,21 @@ async function normalizeJpegForEpub(bytes: Uint8Array): Promise<Uint8Array | und
     });
 
     if (!blob || blob.size <= 0) return undefined;
-    return new Uint8Array(await blob.arrayBuffer());
+    const result = new Uint8Array(await blob.arrayBuffer());
+    if (result[0] !== 0xff || result[1] !== 0xd8 || result[2] !== 0xff) return undefined;
+    // Antes de substituir uma capa, abrir o JPEG produzido e conferir tamanho
+    // e cores por amostragem. Uma falha mantém o arquivo original byte a byte.
+    let decoded: ImageBitmap | undefined;
+    try {
+      decoded = await createImageBitmap(blob);
+      if (decoded.width !== bitmap.width || decoded.height !== bitmap.height) return undefined;
+      const before = sampledCanvasPixels(bitmap, bitmap.width, bitmap.height);
+      const after = sampledCanvasPixels(decoded, decoded.width, decoded.height);
+      if (!before || !after || !isJpegSampleVisuallyComparable(before, after)) return undefined;
+    } finally {
+      decoded?.close();
+    }
+    return result;
   } catch {
     return undefined;
   } finally {
