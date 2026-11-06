@@ -1,5 +1,7 @@
 # Andamento da auditoria de 99 itens
 
+> Auditoria complementar E-100/E-101: a classificação original 97/99 é mantida separada de novos achados. Ver seção de correções pós-99 abaixo.
+
 **Última atualização:** 06/11/2026 (execução 20: 97/99, homologação mobile isolada por deploy-preview, automações nativas em implantação) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.

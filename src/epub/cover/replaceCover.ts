@@ -26,6 +26,7 @@ import {
   serializeXmlPreservingDeclaration,
 } from '../utils/xmlUtils';
 import type { CoverImageInput, SupportedCoverMediaType } from './coverImageInput';
+import { updateCoverGuideReference, updateCoverReferences } from './updateCoverReferences';
 
 const OPF_NS = 'http://www.idpf.org/2007/opf';
 const SUPPORTED_COVER_MEDIA_TYPES = new Set<string>(['image/jpeg', 'image/png']);
@@ -101,6 +102,14 @@ export async function replaceEpubCover(
   ensureCoverMeta(doc, metadata, coverId);
   ensureSingleCoverImageProperty(manifest, coverItem);
 
+  // Mudança de extensão cria um novo arquivo: sincronizar os locais que
+  // ainda exibiriam a capa antiga antes de serializar o OPF.
+  const referenceActions = target?.path && target.path !== coverPath
+    ? updateCoverReferences(files, parsed.packageInfo, target.path, coverPath)
+    : [];
+  const guideChanged = target?.path && target.path !== coverPath
+    ? updateCoverGuideReference(doc, parsed.packageInfo.opfPath, target.path, coverPath)
+    : false;
   files.set(coverPath, coverImage.bytes);
   files.set(parsed.packageInfo.opfPath, new TextEncoder().encode(serializeXmlPreservingDeclaration(doc, opfSource)));
 
@@ -119,6 +128,13 @@ export async function replaceEpubCover(
       detail: `O OPF agora aponta para o item "${coverId}" como capa principal.`,
       file: parsed.packageInfo.opfPath,
     },
+    ...referenceActions,
+    ...(guideChanged ? [{
+      type: 'updated' as const,
+      title: 'Referência guide de capa sincronizada',
+      detail: 'O guide EPUB 2 passou a apontar para a imagem substituta.',
+      file: parsed.packageInfo.opfPath,
+    }] : []),
   ];
   canceled();
   const blob = await rebuildEpubZipInWorker(files, {

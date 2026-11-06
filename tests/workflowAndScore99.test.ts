@@ -70,6 +70,25 @@ describe('E-077: estados explícitos do fluxo de reparo', () => {
     state.busy = true;
     expect(getWorkflowState(state)).toBe('processing');
   });
+  it('E-101: cópia com erro ainda reparável não é anunciada como pronta', () => {
+    const state = createInitialState();
+    const before = makeReport([
+      issue('MIME_MISSING', 'error', true),
+      issue('CONTENT_MISSING_RESOURCE', 'warning', true),
+    ]);
+    const after = makeReport([issue('CONTENT_MISSING_RESOURCE', 'warning', true)]);
+    state.report = after;
+    state.repairResult = {
+      fileName: 'parcial.epub', before, after, actions: [], warnings: [],
+      operation: 'repair', changed: true, blob: new Blob(['epub']),
+    };
+    expect(getWorkflowState(state)).toBe('partial-output');
+    const content = renderControls(state, actions).textContent ?? '';
+    expect(content).toContain('Cópia parcial gerada');
+    expect(content).toContain('Baixar cópia parcial (revisar)');
+    expect(content).not.toContain('EPUB corrigido pronto');
+  });
+
   it('classifica saída pela inspeção final e não pelo diagnóstico de origem', () => {
     const state = createInitialState();
     const before = makeReport([issue('CONTENT_SCRIPTED', 'warning', true)]);

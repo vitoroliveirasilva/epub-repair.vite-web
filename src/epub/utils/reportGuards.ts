@@ -13,6 +13,9 @@ export function hasManualReviewIssues(report: ValidationReport | undefined): boo
   // O app valida uma rendition por vez; a presença de outros rootfiles
   // nunca significa EPUB globalmente validado, mesmo se todos os scores forem altos.
   return hasResidualActiveContent(report) ||
+    // E-101: uma cópia pode ter sido parcialmente reparada, mas ainda conter
+    // erros/avisos reparáveis. Jamais rotulá-la como EPUB pronto.
+    Boolean(report?.issues.some(isRequiredRepairableIssue)) ||
     Boolean(report?.packageInfo && report.packageInfo.rootfileCount > 1) ||
     Boolean(report?.issues.some((issue) =>
     !issue.repairable &&
