@@ -33,6 +33,7 @@ describe('E-080: fila FIFO de ações para mesmo EPUB',()=>{
     queue.enqueue({label:'a',run:async()=>{processed.push('a');await d.promise;}});
     queue.enqueue({label:'b',run:()=>{processed.push('b');return Promise.resolve()}});
     queue.enqueue({label:'c',run:()=>{processed.push('c');return Promise.resolve()}});
+    expect(queue.hasPendingMutation).toBe(false);
     expect(queue.clearPending()).toBe(2);
     d.resolve();await flush();
     expect(processed).toEqual(['a']);

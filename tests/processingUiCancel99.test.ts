@@ -51,6 +51,7 @@ describe('E-080: progresso sem porcentagem inventada e cancelamento seguro', () 
     state.payload={file:new File(['zip'],'book.epub'),bytes:new Uint8Array()};
     state.busy=true;
     state.pendingTasks=3;
+    state.activeTask='Verificar EPUB';
     state.processingController=new AbortController();
     const page=renderControls(state,actions);
     const scheduled=Array.from(page.querySelectorAll('button'))
@@ -63,6 +64,22 @@ describe('E-080: progresso sem porcentagem inventada e cancelamento seguro', () 
     const blocked=Array.from(maxed.querySelectorAll('button'))
       .find(x=>x.textContent==='Enfileirar verificação');
     expect(blocked?.disabled).toBe(true);
+  });
+  it('não enfileira nova verificação se uma reparação pode gerar saída que seria perdida', () => {
+    const state=createInitialState();
+    state.payload={file:new File(['zip'],'book.epub'),bytes:new Uint8Array()};
+    state.busy=true;
+    state.activeTask='Reparar EPUB';
+    let view=renderControls(state,actions);
+    let btn=Array.from(view.querySelectorAll('button'))
+      .find(x=>x.textContent==='Enfileirar verificação');
+    expect(btn?.disabled).toBe(true);
+    state.activeTask='Verificar EPUB';
+    state.hasPendingMutation=true;
+    view=renderControls(state,actions);
+    btn=Array.from(view.querySelectorAll('button'))
+      .find(x=>x.textContent==='Enfileirar verificação');
+    expect(btn?.disabled).toBe(true);
   });
   it('sinal já abortado impede publicar análise nova', async () => {
     const input=await buildKindleIssueEpub();

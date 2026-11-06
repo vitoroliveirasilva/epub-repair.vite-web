@@ -24,6 +24,12 @@ export class SerialTaskQueue {
     return this.pending.length;
   }
 
+  /** Evita enfileirar novas verificações que sobrescreveriam um EPUB reparado. */
+  get hasPendingMutation(): boolean {
+    return this.pending.some((task) =>
+      task.label === 'Reparar EPUB' || task.label === 'Substituir capa');
+  }
+
   enqueue(task: ScheduledTask): boolean {
     if (this.pending.length >= this.maxPending) return false;
     this.pending.push(task);

@@ -29,6 +29,8 @@ export interface AppState {
   processingProgress?: ProcessingProgress | undefined;
   /** Ações agendadas para este EPUB, executadas uma a uma. */
   pendingTasks?: number | undefined;
+  activeTask?: string | undefined;
+  hasPendingMutation?: boolean | undefined;
   message?: string | undefined;
   error?: string | undefined;
   options: RepairOptions;

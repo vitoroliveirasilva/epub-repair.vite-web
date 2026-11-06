@@ -31,6 +31,7 @@ export function createApp(root: HTMLElement): void {
   const state = createInitialState();
   const queue = new SerialTaskQueue((pending) => {
     state.pendingTasks = pending;
+    state.hasPendingMutation = queue.hasPendingMutation;
     rerender();
   });
   const enqueue = (
@@ -42,7 +43,14 @@ export function createApp(root: HTMLElement): void {
   ): void => {
     const accepted = queue.enqueue({
       label,
-      run: () => runAsync(state, rerender, task),
+      run: async () => {
+        state.activeTask = label;
+        try {
+          await runAsync(state, rerender, task);
+        } finally {
+          state.activeTask = undefined;
+        }
+      },
     });
     if (!accepted) {
       state.message = 'Fila cheia: aguarde ou cancele tarefas agendadas.';

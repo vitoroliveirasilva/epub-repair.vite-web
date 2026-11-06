@@ -153,7 +153,12 @@ function buildPrimaryActionButtons(
     state.busy ? 'Enfileirar verificação' : 'Verificar EPUB',
     'btn btn-secondary', actions.analyze,
   );
-  analyzeButton.disabled = !flags.hasFile || (state.pendingTasks ?? 0) >= 8;
+  const mayEnqueueAnalysis = !state.busy ||
+    ((state.activeTask === 'Verificar EPUB' ||
+      state.activeTask === 'Carregar e analisar EPUB') &&
+      !state.hasPendingMutation);
+  analyzeButton.disabled = !flags.hasFile ||
+    !mayEnqueueAnalysis || (state.pendingTasks ?? 0) >= 8;
   analyzeButton.dataset.focusKey = 'epub-analyze';
 
   const repairButton = button(
@@ -170,7 +175,12 @@ function buildPrimaryActionButtons(
   repairButton.dataset.focusKey = 'epub-repair';
   repairButton.disabled =
     !flags.hasFile ||
-    (state.busy && (state.pendingTasks ?? 0) >= 8) ||
+    (state.busy && (
+      (state.pendingTasks ?? 0) >= 8 ||
+      state.hasPendingMutation ||
+      (state.activeTask !== 'Verificar EPUB' &&
+       state.activeTask !== 'Carregar e analisar EPUB')
+    )) ||
     flags.hasFatalIssues ||
     (!flags.canRepair && !flags.canOptimize);
   repairButton.title = repairButtonTitle(state, flags.canRepair, flags.canOptimize);
