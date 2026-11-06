@@ -68,9 +68,21 @@ async function convertProgressiveJpegToBaseline(
   const outputBlob = await new Promise<Blob | null>((resolve) => {
     canvas.toBlob(resolve, 'image/jpeg', 0.92);
   });
-  if (!outputBlob) return undefined;
+  if (!outputBlob || outputBlob.size === 0) return undefined;
+  const output = new Uint8Array(await outputBlob.arrayBuffer());
+  // A conversão só vale se o encoder emitiu JPEG baseline decodificável e
+  // se uma amostra dos pixels permaneceu visualmente equivalente.
+  if (output.length < 4 || output[0] !== 0xff || output[1] !== 0xd8 ||
+      isProgressiveJpeg(output)) return undefined;
+  const decodedOutput = await loadImage(outputBlob);
+  if (!decodedOutput || decodedOutput.width !== width || decodedOutput.height !== height) {
+    return undefined;
+  }
+  const before = sampledCanvasPixels(image, width, height);
+  const after = sampledCanvasPixels(decodedOutput, width, height);
+  if (!before || !after || !isJpegSampleVisuallyComparable(before, after)) return undefined;
 
-  return new Uint8Array(await outputBlob.arrayBuffer());
+  return output;
 }
 
 async function loadImage(blob: Blob): Promise<HTMLImageElement | undefined> {
@@ -87,4 +99,40 @@ async function loadImage(blob: Blob): Promise<HTMLImageElement | undefined> {
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
+}
+
+/**
+ * Inspeção visual limitada: amostragem em miniatura protege contra mudanças
+ * grosseiras de cores, geometria e quadros vazios após compressão JPEG.
+ * Não é comparação bit a bit nem garantia de igualdade de cada pixel.
+ */
+function sampledCanvasPixels(
+  image: CanvasImageSource, width: number, height: number,
+): Uint8ClampedArray | undefined {
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.min(96, width);
+  canvas.height = Math.min(96, height);
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) return undefined;
+  try {
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return context.getImageData(0, 0, canvas.width, canvas.height).data;
+  } catch {
+    return undefined;
+  }
+}
+
+export function isJpegSampleVisuallyComparable(
+  before: Uint8ClampedArray, after: Uint8ClampedArray,
+): boolean {
+  if (before.length === 0 || before.length !== after.length ||
+      before.length % 4 !== 0) return false;
+  let error = 0;
+  for (let index = 0; index < before.length; index += 4) {
+    for (let channel = 0; channel < 3; channel += 1) {
+      error += Math.abs((before[index + channel] ?? 0) - (after[index + channel] ?? 0));
+    }
+  }
+  // Diferença média de até 22 níveis RGB (8-bit) para compressão lossy.
+  return error / (before.length / 4 * 3) <= 22;
 }
