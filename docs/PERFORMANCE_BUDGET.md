@@ -110,3 +110,22 @@ amostrados RSS total, heap de Worker nem memória nativa. Um resultado
 parcial devido ao pico total de RAM, repetição de ciclos e dispositivos
 modestos. O teste do corpus de fronteira não representa todas as classes
 de EPUB nem integrações com leitores físicos.
+
+## Execução 16: memória real de processos e Worker
+
+O teste passou a medir **RSS agregado dos processos Chromium** com `ps`
+durante cada caso, complementando o CDP `JSHeapUsedSize` da aba.
+[Primeira CI RSS aprovada (42153674625)](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42153674625)
+registrou **+640 MiB** de RSS agregado no EPUB sintético com **250 MiB
+descompactados**, com cerca de **14,2 segundos** para o pipeline.
+O novo Worker de compactação passou em [CI 42213708002](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42213708002)
+com até **+713,7 MiB** de RSS agregado na fixture de 250 MiB em
+aproximadamente **20,3 segundos**. O maior tempo é medição, não regressão
+comprovada em todos os computadores.
+
+O RSS agregado pode **contar páginas de memória compartilhadas duas vezes**,
+mas inclui alocações de processos/Workers ausentes de métricas exclusivas
+do heap JS da aba. A coleta de 250ms pode perder picos subamostrados.
+Os orçamentos continuam sendo limites do laboratório Linux, não promessas
+de RAM em iOS/Android. E-031 fechado no critério de teste de picos reais
+com orçamento 1/12/48/250 MiB no Chromium.

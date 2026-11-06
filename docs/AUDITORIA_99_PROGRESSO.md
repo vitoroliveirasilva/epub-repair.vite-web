@@ -1,13 +1,13 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 05/11/2026 (execução 15: 90/99, CI EPUBCheck, OSV, SBOM, cobertura e stress Chromium 250MiB) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 06/11/2026 (execução 16: 93/99, Worker ZIP completo, fila cancelável e RSS até 250MiB) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
 | Situação | Itens |
 | --- | ---: |
-| Concluídos no escopo definido, com CI Node 20/22 aprovada | **90** |
-| Parcialmente tratados, com testes/validação adicionais necessários | **9** |
+| Concluídos no escopo definido, com CI Node 20/22 aprovada | **93** |
+| Parcialmente tratados, com testes/validação adicionais necessários | **6** |
 | Não iniciados ou ainda não evidenciados | **0** |
 | Total | **99** |
 
@@ -55,8 +55,8 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-028 | P1 | EPUB multipartes/ZIP64/criptografia rejeitados com diagnóstico preciso | Concluído · CI |
 | E-029 | P1 | Manifest e container com múltiplos rootfiles/renditions | Concluído · CI |
 | E-030 | P1 | mimetype duplicado, diretórios primeiro, extras e arquivos de tamanho zero | Concluído · CI |
-| E-031 | P1 | Picos de memória ao carregar/decompactar/revalidar várias vezes | Parcial |
-| E-032 | P2 | Progresso, cancelamento e execução em Worker para EPUBs grandes | Parcial |
+| E-031 | P1 | Picos de memória ao carregar/decompactar/revalidar várias vezes | Concluído · CI |
+| E-032 | P2 | Progresso, cancelamento e execução em Worker para EPUBs grandes | Concluído · CI |
 | E-033 | P2 | Preservação de encoding/declaracão XML ao reescrever XHTML/OPF | Concluído · CI |
 | E-034 | P2 | Tamanhos declarados ZIP diferentes dos fluxos descompactados | Concluído · CI |
 | E-035 | P0 | EPUBCheck oficial integrado à validação de arquivos reparados no CI | Concluído · CI |
@@ -104,7 +104,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-077 | P1 | Estados explícitos: seguro para reparar, revisão manual, parcial, otimização, inválido | Concluído · CI |
 | E-078 | P1 | Prévia e confirmação de operações destrutivas antes de executar | Concluído · CI |
 | E-079 | P1 | Indicador de ações não aplicadas e pendências remanescentes por item | Concluído · CI |
-| E-080 | P1 | Fila e interrupção de tarefas grandes, feedback de processamento real | Parcial |
+| E-080 | P1 | Fila e interrupção de tarefas grandes, feedback de processamento real | Concluído · CI |
 | E-081 | P1 | Trocar de arquivo/opções enquanto análise ainda está em execução | Concluído · CI |
 | E-082 | P1 | Download blob em Safari/iOS, liberação imediata de ObjectURL | Parcial |
 | E-083 | P2 | Teclado, leitor de tela e foco após rerender completo | Concluído · CI |
@@ -656,3 +656,26 @@ máquina Linux headless e fixtures sintéticas, não livros comerciais.
 
 **Nove parciais:** E-031, E-032, E-062, E-076, E-080, E-082, E-089,
 E-090 e E-098. `prod` preservada em v2.2.0.
+
+## Execução 16: três itens fechados com implementação e testes
+
+**Antes:** 90 concluídos, 9 parciais, 0 pendentes.  
+**Depois: 93 concluídos, 6 parciais, 0 pendentes.**
+
+| Item | Evidência da implementação |
+| --- | --- |
+| **E-031 concluído** | Medição de memória residente do navegador e Worker em processamento sucessivo de EPUBs sintéticos de 1, 12, 48 e **250 MiB descompactados**, com teto monitorado de RSS nativo e JS heap. [RSS medido no Chromium](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42153674625). Não extrapolar a aparelhos físicos ou outros motores. |
+| **E-032 concluído** | `ed61513`, `47571d8`, `59226cd`, `763023e`: a extração **e a recompactação** ZIP agora acontecem em Workers dedicados quando disponíveis; reparos, otimização e troca de capa propagam AbortSignal. Progresso de entradas e percentual de ZIP são reais, não uma porcentagem inventada. Worker é terminado no cancelamento e resultado tardio descartado; fallback mantém o comportamento conservador. Validação XML DOMParser e canvas permanecem no main thread. |
+| **E-080 concluído** | `d7472b4`, `d245336`, `0269c4d`: fila FIFO para ações **do mesmo EPUB**, limitada a 8 pendentes, um job por vez, cancelar operação e fila, impedir reentrância e impedir nova análise que apagaria um arquivo recém-reparado. A fila é **volátil na página**, não um sistema de trabalhos no servidor nem um modo de processamento em lote de vários EPUBs. |
+| **E-090 avançado, parcial** | `c59e088`: workflow Calibre CLI (Ubuntu) para importar quatro EPUBs sintéticos reparados de perfis EPUB2/3 e extrair texto; teste real Kindle Previewer, Apple Books e leitor físico não existe, por isso permanece **parcial**. A CI Calibre é independente e ainda precisa ficar verde antes de declarar essa validação aprovada. |
+| **E-089 avançado, parcial** | `628e86d`: novo teste de EPUB **12 MiB real** no fluxo de interface de browser com viewport mobile; verifica Worker de extração e compactação (3 Workers observados), download do EPUB e preservação do conteúdo após reparo. Confirmados [Chromium e Firefox](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42213708002); WebKit deste novo teste ainda em verificação no momento do registro. |
+
+**Evidências já aprovadas nesta execução:** [CI Node 20/22, lint/typecheck, Vitest e EPUBCheck](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42213708057);
+[matriz anterior de Chromium/Firefox/WebKit](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42212873485);
+[gate de cobertura instrumental](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42213419075).
+
+**6 parciais:** E-062 (CSP na hospedagem efetiva), E-076 (leitores físicos/
+apresentação), E-082 (Safari iOS real e ObjectURLs), E-089 (mobile físico),
+E-090 (Kindle Previewer/AppleBooks), E-098 (proteção GitHub `dev`/tags).
+
+A branch `prod` e a release **v2.2.0** não foram alteradas.

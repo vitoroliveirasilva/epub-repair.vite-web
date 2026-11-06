@@ -72,3 +72,18 @@ Resultados [42153236152](https://github.com/vitoroliveirasilva/epub-repair.vite-
 WebKit e Firefox permanecem no smoke funcional, não executam
 este benchmark de tamanho máximo. Sem medir pico RSS/Worker nem
 aparelhos físicos.
+
+## Execução 16: fluxo EPUB 12 MiB com Workers reais e viewport móvel
+
+`tests/browser-large-workflow.mjs` abre EPUB 12 MiB com recurso binário
+pseudorrandômico, executa análise/reparo com interface real, observa
+**três Workers** (descompactação inicial, descompactação no reparo,
+recompactação ZIP), baixa arquivo novo e reabre com JSZip verificando
+12 MiB recuperados byte-a-byte quanto ao comprimento e texto editorial.
+
+No [workflow 42213708002](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42213708002),
+as matrizes **Chromium e Firefox** aprovaram esse fluxo de viewport móvel.
+O job WebKit mais recente estava em instalação no momento do registro;
+seus smokes menores já haviam passado anteriormente. Não equiparar
+viewport mobile a Safari/iOS físico. O Calibre foi incorporado como
+workflow independente, mas Kindle/AppleBooks permanecem sem homologação.

@@ -180,3 +180,23 @@ E-031 continua aberto até incluir medição de RSS/Worker e repetição de
 múltiplas análises, incluindo dispositivos com RAM limitada.
 
 **Estado atualizado: 90 concluídos, 9 parciais, zero pendentes.**
+
+## Execução 16: filas e Workers no EPUB Repair
+
+- Os ZIPs grandes são **extraídos** em Worker e **recompactados** em
+  segundo Worker; bytes originais não são transferidos/detachados na
+  recompactação, preservando comparações e auditoria final.
+- Cancelamento termina o Worker ativo e descarta Blob tardio. O fallback
+  sem Worker não consegue preempção instantânea de JSZip em toda situação.
+- Fila FIFO tem oito pendentes por livro, é volátil e não é modo batch.
+  Proteger explicitamente downloads gerados contra verificação agendada
+  que substituiria o resultado antes da escolha do usuário.
+- Porcentagem de ZIP é emitida pelo JSZip real e rotulada como **compactação**;
+  progresso de entradas ZIP é independente. Não apresentar porcentagem do
+  pipeline inteiro quando ela não é mensurável.
+- Memória: RSS real do Chromium no Linux foi medido até 250MiB de conteúdo
+  e comparado com budgets de CI; não é teste de hardware iPhone.
+- Netlify `prod` ainda declara `worker-src 'none'`; `dev` já usa
+  `worker-src 'self'`. Não sincronizar sem revisão/autorização de release.
+
+**93 concluídos / 6 parciais / 0 pendentes** no inventário.
