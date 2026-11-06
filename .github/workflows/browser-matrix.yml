@@ -48,9 +48,18 @@ jobs:
           # node_modules de uma instalação reproduzível com npm ci.
           mkdir -p "${RUNNER_TEMP}/browser-harness"
           npm install --prefix "${RUNNER_TEMP}/browser-harness" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.55.1
-      - name: Install supported browser and OS libraries
+      - name: Install browser with cached runner system libraries
+        shell: bash
         run: |
-          "${RUNNER_TEMP}/browser-harness/node_modules/.bin/playwright" install --with-deps "${{ matrix.browser }}"
+          set -euo pipefail
+          playwright="${RUNNER_TEMP}/browser-harness/node_modules/.bin/playwright"
+          if [ "${{ matrix.browser }}" = chromium ]; then
+            # Chromium já dispõe de bibliotecas no Ubuntu hosted runner.
+            # Evita apt update/downloads repetitivos que podem travar o job.
+            "$playwright" install chromium
+          else
+            "$playwright" install --with-deps "${{ matrix.browser }}"
+          fi
       - name: Start static app locally and smoke browser
         shell: bash
         env:
