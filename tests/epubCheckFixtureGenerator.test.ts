@@ -163,7 +163,74 @@ async function createProfileSpecimen(profile: SpecProfile): Promise<Uint8Array> 
   return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
 }
 
+
+/** EPUB 3 com NCX editorial hierárquico, mas sem NAV e mimetype. */
+async function createMissingNavFromNcxSpecimen(): Promise<Uint8Array> {
+  const z = new JSZip();
+  z.file('META-INF/container.xml',
+    '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">' +
+    '<rootfiles><rootfile full-path="OPS/book.opf" media-type="application/oebps-package+xml"/>' +
+    '</rootfiles></container>');
+  z.file('OPS/book.opf',
+    '<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">' +
+    '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">' +
+    '<dc:identifier id="uid">urn:uuid:ncx-hierarchy-specimen</dc:identifier>' +
+    '<dc:title>Navegação hierárquica</dc:title><dc:language>pt-BR</dc:language>' +
+    '<meta property="dcterms:modified">2026-11-05T12:00:00Z</meta>' +
+    '</metadata><manifest>' +
+    '<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>' +
+    '<item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/>' +
+    '</manifest><spine toc="ncx"><itemref idref="chapter"/></spine></package>');
+  z.file('OPS/chapter.xhtml',
+    '<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR">' +
+    '<head><title>Capítulo</title></head><body>' +
+    '<h1 id="part">Parte Alfa</h1><h2 id="chapter">Capítulo um</h2>' +
+    '<h3 id="section">Seção principal</h3><p>Conteúdo preservado.</p>' +
+    '</body></html>');
+  z.file('OPS/toc.ncx',
+    '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">' +
+    '<head><meta name="dtb:uid" content="urn:uuid:ncx-hierarchy-specimen"/>' +
+    '<meta name="dtb:depth" content="3"/><meta name="dtb:totalPageCount" content="0"/>' +
+    '<meta name="dtb:maxPageNumber" content="0"/></head>' +
+    '<docTitle><text>Navegação hierárquica</text></docTitle><navMap>' +
+    '<navPoint id="part" playOrder="1"><navLabel><text>Parte Alfa</text></navLabel>' +
+    '<content src="chapter.xhtml#part"/>' +
+    '<navPoint id="ch" playOrder="2"><navLabel><text>Capítulo um</text></navLabel>' +
+    '<content src="chapter.xhtml#chapter"/>' +
+    '<navPoint id="section" playOrder="3">' +
+    '<navLabel><text>Seção principal</text></navLabel>' +
+    '<content src="chapter.xhtml#section"/></navPoint></navPoint></navPoint>' +
+    '</navMap></ncx>');
+  return z.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+}
+
 describe('Fixture sintética de conformidade oficial', () => {
+  it('E-068: gera NAV hierárquico a partir de NCX autoral para EPUBCheck', async () => {
+    const original = await createMissingNavFromNcxSpecimen();
+    const output = await repairEpub('ncx-hierarchy.epub', original, {
+      ...DEFAULT_REPAIR_OPTIONS, conservativeMode: true,
+    });
+    expect(output.changed).toBe(true);
+    expect(output.blob).toBeDefined();
+    expect(output.after.stats.fatalCount).toBe(0);
+    const bytes = new Uint8Array(await output.blob!.arrayBuffer());
+    const zip = await JSZip.loadAsync(bytes);
+    const nav = await zip.file('OPS/nav.xhtml')?.async('string');
+    expect(nav).toBeTruthy();
+    expect(nav?.match(/<ol>/gu)).toHaveLength(3);
+    expect(nav).toContain('href="chapter.xhtml#chapter"');
+    expect(nav).toContain('Seção principal');
+    const outputDir = process.env.EPUBCHECK_FIXTURE_OUTPUT;
+    if (outputDir) {
+      await mkdir(outputDir, { recursive: true });
+      await writeFile(join(outputDir, 'original-invalid-ncx-hierarchy.epub'),
+        Buffer.from(original));
+      await writeFile(join(outputDir, 'repaired-valid-ncx-hierarchy.epub'),
+        Buffer.from(bytes));
+    }
+  });
+
+
   for (const profile of [
     'epub3-core', 'epub32-navigation', 'epub33-mathml', 'epub34-fixed-layout',
   ] as const) {

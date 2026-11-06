@@ -159,6 +159,17 @@ jobs:
           java -jar "$epubcheck_jar" "$compressed_original"
           java -jar "$epubcheck_jar" "$compressed_repaired"
 
+          # Reconstrução NAV de NCX autoral hierárquico: original sem NAV
+          # é inválido em EPUB3, a versão gerada precisa ser oficial e legível.
+          original_ncx="${RUNNER_TEMP}/epub-fixtures/original-invalid-ncx-hierarchy.epub"
+          repaired_ncx="${RUNNER_TEMP}/epub-fixtures/repaired-valid-ncx-hierarchy.epub"
+          test -s "$original_ncx" && test -s "$repaired_ncx"
+          if java -jar "$epubcheck_jar" "$original_ncx"; then
+            echo 'ERRO: EPUB 3 sem NAV e mimetype foi aceito.'
+            exit 1
+          fi
+          java -jar "$epubcheck_jar" "$repaired_ncx"
+
           # Matriz EPUB 3: o atributo package versão 3.0 é obrigatório tanto
           # nas revisões 3.2/3.3/3.4. Validar recursos representativos em
           # fixtures separadas, sem afirmar que EPUBCheck 5.4.0 certifica 3.4.
