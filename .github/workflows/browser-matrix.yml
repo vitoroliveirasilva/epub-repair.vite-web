@@ -8,6 +8,7 @@ on:
       - 'tests/browser-smoke.mjs'
       - 'tests/browser-csp.mjs'
       - 'tests/browser-resource-budget.mjs'
+      - 'tests/browser-large-workflow.mjs'
       - 'netlify.toml'
       - 'src/epub/repair/repairImages.ts'
       - 'vite.config.ts'
@@ -76,6 +77,9 @@ jobs:
           done
           curl --fail http://127.0.0.1:5173/ > /dev/null
           node tests/browser-smoke.mjs
+          # 12 MiB reais: verificar Worker de leitura e Worker de ZIP final,
+          # download e preservação de recursos em cada motor com viewport mobile.
+          node tests/browser-large-workflow.mjs
           # CSP deve ser testada com bundle compilado, não Vite HMR (dev).
           npm run build
           npm run preview -- --host 127.0.0.1 --port 4173 > "${RUNNER_TEMP}/preview-server.log" 2>&1 &
