@@ -20,7 +20,7 @@ jobs:
   android-chrome:
     name: Android 15 Chrome AVD EPUB repair & download
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -66,10 +66,10 @@ jobs:
           profile: pixel_7
           ram-size: 4096M
           heap-size: 512M
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: |
             adb reverse tcp:5173 tcp:5173
-            PLAYWRIGHT_MODULE="$RUNNER_TEMP/android-harness/node_modules/playwright/index.mjs" node tests/android-emulator-flow.mjs
+            timeout 360s env PLAYWRIGHT_MODULE="$RUNNER_TEMP/android-harness/node_modules/playwright/index.mjs" node tests/android-emulator-flow.mjs
       - name: Archive mobile OS evidence
         if: always()
         uses: actions/upload-artifact@v4
