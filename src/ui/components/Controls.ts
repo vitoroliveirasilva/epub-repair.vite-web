@@ -336,10 +336,13 @@ function renderProcessingStatus(state: AppState, cancel?: () => void): HTMLEleme
           el('strong', { text: progress?.phase ?? 'Processando estrutura do EPUB...' }),
           haveCount ? el('progress', {
             attrs: { max: String(total), value: String(current),
-              'aria-label': 'Arquivos EPUB descompactados' },
+              'aria-label': progress?.unit === 'percent'
+                ? 'Porcentagem do ZIP recompactado'
+                : 'Arquivos EPUB descompactados' },
           }) : undefined,
-          haveCount ? el('small', { text: current + ' de ' + total +
-            ' entradas do ZIP descompactadas' }) : undefined,
+          haveCount ? el('small', { text: progress?.unit === 'percent'
+            ? Math.min(100, Math.max(0, current)) + '% recompactado'
+            : current + ' de ' + total + ' entradas do ZIP descompactadas' }) : undefined,
         ],
       }),
       (state.pendingTasks ?? 0) > 0

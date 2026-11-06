@@ -13,6 +13,7 @@ export interface ProcessingProgress {
   phase: string;
   completed?: number | undefined;
   total?: number | undefined;
+  unit?: 'entries' | 'percent' | undefined;
 }
 
 export interface AppState {

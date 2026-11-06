@@ -34,6 +34,36 @@ describe('E-080: progresso sem porcentagem inventada e cancelamento seguro', () 
       x.textContent==='Cancelar operação')!;
     expect(cancel.disabled).toBe(true);
   });
+  it('E-080: apresenta porcentagem real de recompactação, sem fingir entradas', () => {
+    const state=createInitialState();
+    state.busy=true;
+    state.processingController=new AbortController();
+    state.processingProgress={phase:'Recompactando EPUB...',
+      completed:38,total:100,unit:'percent'};
+    const view=renderControls(state,actions);
+    expect(view.textContent).toContain('38% recompactado');
+    expect(view.textContent).not.toContain('38 de 100 entradas');
+    expect(view.querySelector('progress')?.getAttribute('aria-label'))
+      .toBe('Porcentagem do ZIP recompactado');
+  });
+  it('E-080: permite agendar verificação na UI enquanto processa EPUB', () => {
+    const state=createInitialState();
+    state.payload={file:new File(['zip'],'book.epub'),bytes:new Uint8Array()};
+    state.busy=true;
+    state.pendingTasks=3;
+    state.processingController=new AbortController();
+    const page=renderControls(state,actions);
+    const scheduled=Array.from(page.querySelectorAll('button'))
+      .find(x=>x.textContent==='Enfileirar verificação');
+    expect(scheduled?.disabled).toBe(false);
+    expect(page.textContent).toContain('3 ação(ões) agendada(s)');
+    expect(page.textContent).toContain('Cancelar operação e fila');
+    state.pendingTasks=8;
+    const maxed=renderControls(state,actions);
+    const blocked=Array.from(maxed.querySelectorAll('button'))
+      .find(x=>x.textContent==='Enfileirar verificação');
+    expect(blocked?.disabled).toBe(true);
+  });
   it('sinal já abortado impede publicar análise nova', async () => {
     const input=await buildKindleIssueEpub();
     const state=createInitialState();

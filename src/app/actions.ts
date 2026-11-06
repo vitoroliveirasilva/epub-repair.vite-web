@@ -18,10 +18,11 @@ export interface ProcessingContext {
 }
 
 function publishProgress(context: ProcessingContext, phase: string,
-  completed?: number, total?: number): void {
+  completed?: number, total?: number, unit?: ProcessingProgress['unit']): void {
   context.onProgress?.({ phase,
     ...(completed !== undefined ? { completed } : {}),
     ...(total !== undefined ? { total } : {}),
+    ...(unit ? { unit } : {}),
   });
 }
 
@@ -132,7 +133,7 @@ export async function repairCurrentFile(
       canRunOptionalOptimization ? 'optimization' : 'repair',
       loaded,
       context.signal,
-      (percent) => publishProgress(context, 'Recompactando EPUB...', Math.round(percent), 100),
+      (percent) => publishProgress(context, 'Recompactando EPUB...', Math.round(percent), 100, 'percent'),
     );
     throwIfProcessingAborted(context.signal);
     if (!result.changed || !result.blob) {
@@ -177,7 +178,11 @@ export function clearCoverImageFromState(state: AppState): void {
   state.message = 'Seleção de capa removida.';
 }
 
-export async function applyCoverReplacementToCurrentFile(state: AppState, signal?: AbortSignal): Promise<void> {
+export async function applyCoverReplacementToCurrentFile(
+  state: AppState,
+  signal?: AbortSignal,
+  onProgress?: (progress: ProcessingProgress) => void,
+): Promise<void> {
   if (!state.payload) throw new Error('Envie um EPUB antes de trocar a capa.');
   if (!state.coverImage) throw new Error('Escolha uma imagem de capa antes de aplicar.');
 
@@ -189,6 +194,12 @@ export async function applyCoverReplacementToCurrentFile(state: AppState, signal
       state.payload.bytes,
       state.coverImage,
       signal,
+      (percent) => onProgress?.({
+        phase: 'Recompactando EPUB com nova capa...',
+        completed: Math.round(percent),
+        total: 100,
+        unit: 'percent',
+      }),
     );
     throwIfProcessingAborted(signal);
 

@@ -143,7 +143,7 @@ function render(
                   return;
                 }
                 enqueue('Substituir capa', (ctx) =>
-                  applyCoverReplacementToCurrentFile(state, ctx.signal));
+                  applyCoverReplacementToCurrentFile(state, ctx.signal, ctx.onProgress));
               },
             }),
             renderStatusMessage(state.message, state.error),
