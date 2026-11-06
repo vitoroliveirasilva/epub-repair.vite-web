@@ -2,13 +2,15 @@
 
 O workflow `.github/workflows/coverage.yml` roda em cada alteração de código/testes
 da `dev` e em PRs para `dev`/`prod`. Ele executa Vitest com provider V8
-**fixado na mesma versão do Vitest 4.1.10**, instalado no runner isoladamente
+**fixado na mesma versão do Vitest 4.1.12 instalada pelo lockfile**, instalado no runner isoladamente
 do lockfile principal.
 
 Cinco arquivos críticos têm limiares mínimos individuais, configurados em
-`vitest.config.ts`: **45% de linhas, 45% de statements, 25% de branches,
-45% de funções**. Valores iniciais deliberadamente conservadores; aumentar
-os thresholds com novos testes em vez de diminuir para acomodar falhas.
+`vitest.config.ts`: **88% de linhas, 85% de statements, 70% de branches,
+82% de funções**. Os valores foram elevados após medição da CI
+[42142342105](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42142342105):
+a menor cobertura entre módulos foi 90,41% de linhas, 74,73% de branches
+e 85,71% de funções. Aumentar os thresholds com novos testes.
 
 Arquivos monitorados: `pathUtils`, `rawZipInspector`, `validateNavigation`,
 `sanitizeActiveContent` e `preservationAudit`. O workflow falha se

@@ -39,7 +39,7 @@ jobs:
           mkdir -p "${RUNNER_TEMP}/vitest-coverage"
           cd "${RUNNER_TEMP}/vitest-coverage"
           printf '{"name":"epub-coverage-harness","version":"1.0.0","private":true}\n' > package.json
-          npm install --legacy-peer-deps --ignore-scripts --no-audit --no-fund --save-exact @vitest/coverage-v8@4.1.10
+          npm install --legacy-peer-deps --ignore-scripts --no-audit --no-fund --save-exact @vitest/coverage-v8@4.1.12
           test -d "${RUNNER_TEMP}/vitest-coverage/node_modules/@vitest/coverage-v8"
           # ESM resolve os peers pelo realpath do provider, fora do workspace.
           ln -s "${GITHUB_WORKSPACE}/node_modules/vitest" "${RUNNER_TEMP}/vitest-coverage/node_modules/vitest"
