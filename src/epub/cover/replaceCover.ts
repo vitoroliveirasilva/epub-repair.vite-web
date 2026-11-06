@@ -2,7 +2,7 @@ import type { LoadedEpub } from '../model/epubTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction, RepairResult } from '../model/repairTypes';
 import { loadEpub } from '../reader/loadEpub';
-import { rebuildEpubZip } from '../repair/rebuildEpubZip';
+import { rebuildEpubZipInWorker } from '../repair/zipBuildWorkerClient';
 import { assertNoNewCriticalIssues } from '../repair/repairSafety';
 import { createTextFileDiffs } from '../repair/textFileDiff';
 import { inspectEpub } from '../validation/validateEpub';
@@ -121,7 +121,10 @@ export async function replaceEpubCover(
     },
   ];
   canceled();
-  const blob = await rebuildEpubZip(files, ({ percent }) => onZipProgress?.(percent));
+  const blob = await rebuildEpubZipInWorker(files, {
+    signal,
+    onProgress: ({ percent }) => onZipProgress?.(percent),
+  });
   canceled();
   const afterBytes = new Uint8Array(await blob.arrayBuffer());
   const outputFileName = makeRepairedFileName(fileName, '-capa');
