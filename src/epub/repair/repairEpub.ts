@@ -15,7 +15,7 @@ import { ensureContainerFile } from './repairContainer';
 import { repairActiveContentOnly, repairContentDocuments } from './repairContentDocuments';
 import { repairImageCompatibility } from './repairImages';
 import { stripEpubImageMetadata } from './stripImageMetadata';
-import { repairKindleCompatibility } from './repairKindleCompatibility';
+import { repairKindleCompatibility, repairOptionalXhtmlLanguage } from './repairKindleCompatibility';
 import { repairOpfDocument } from './repairOpf';
 import { synchronizeManifestProperties } from './synchronizeManifestProperties';
 import { rebuildEpubZipInWorker } from './zipBuildWorkerClient';
@@ -41,7 +41,7 @@ export async function repairEpub(
   const before = inspectLoadedEpub(fileName, bytes.length, loaded);
   const warnings: string[] = [];
 
-  const canRunRequiredRepair = canRepairReport(before);
+  const canRunRequiredRepair = canRepairReport(before, options);
   const canRunOptionalOptimization = canOptimizeReport(before);
   const metadataCandidates = new Set(before.issues
     .filter((issue) => issue.code === 'IMAGE_EMBEDDED_METADATA' && Boolean(issue.file))
@@ -87,6 +87,9 @@ export async function repairEpub(
     const optimizedFiles = new Map<string, Uint8Array>();
     for (const [path, entry] of loaded.files) optimizedFiles.set(path, entry.bytes);
     const attempted = await repairImageCompatibility(optimizedFiles, parsed.packageInfo, options);
+    if (!options.conservativeMode && before.issues.some((issue) => issue.code === 'XHTML_LANG_MISSING')) {
+      attempted.push(...repairOptionalXhtmlLanguage(optimizedFiles, parsed.packageInfo));
+    }
     canceled();
     if (canStripMetadata) {
       attempted.push(...stripEpubImageMetadata(optimizedFiles, parsed.packageInfo,

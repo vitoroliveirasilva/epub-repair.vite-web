@@ -145,6 +145,33 @@ function repairXhtmlCompatibility(
   return actions;
 }
 
+/** Ajusta somente idioma XHTML na operação opcional; não altera NCX ou prosa. */
+export function repairOptionalXhtmlLanguage(
+  files: Map<string, Uint8Array>,
+  pkg: PackageDocumentInfo,
+): RepairAction[] {
+  const actions: RepairAction[] = [];
+  const raw = pkg.metadata.language;
+  if (!raw || isInvalidLanguageTag(raw)) return actions;
+  const language = normalizeLanguageTag(raw);
+  for (const item of pkg.manifest) {
+    if (!item.exists || item.mediaType !== 'application/xhtml+xml') continue;
+    const bytes = files.get(item.resolvedPath);
+    if (!bytes) continue;
+    const source = decodeUtf8ForRewrite(bytes, item.resolvedPath);
+    const normalized = ensureHtmlLanguage(source, language);
+    if (normalized === source) continue;
+    files.set(item.resolvedPath, TEXT_ENCODER.encode(normalized));
+    actions.push({
+      type: 'updated',
+      title: 'Idioma XHTML definido na otimização',
+      detail: 'lang/xml:lang recebeu idioma já existente no OPF.',
+      file: item.resolvedPath,
+    });
+  }
+  return actions;
+}
+
 function normalizeNcxTitle(doc: Document, title: string | undefined): boolean {
   const normalizedTitle = title?.trim();
   if (!normalizedTitle) return false;

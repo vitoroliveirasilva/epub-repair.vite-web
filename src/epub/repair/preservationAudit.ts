@@ -74,6 +74,11 @@ export function auditPreservation(
       changedText.push(item.resolvedPath);
       continue;
     }
+    // DTBook possui book/bodymatter em vez do body XHTML. Preservar bytes
+    // editoriais até haver um normalizador DTBook com auditoria própria.
+    if (item.mediaType === 'application/x-dtbook+xml' && !sameBytes(oldBytes, newBytes)) {
+      throw new Error('Reparo bloqueado para preservar integralmente texto e estrutura DTBook em ' + item.resolvedPath);
+    }
     const oldMarkup = textDecoder.decode(oldBytes);
     const newMarkup = textDecoder.decode(newBytes);
     if (!sameBytes(oldBytes, newBytes)) {

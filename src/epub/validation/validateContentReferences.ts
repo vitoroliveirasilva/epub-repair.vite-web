@@ -190,6 +190,10 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
       const resolved = resolveReference(item.resolvedPath, ref.value);
       if (!resolved.path) continue;
       if (!resolved.safe || !loaded.files.has(resolved.path)) {
+        const isMissingImage = ref.attr === 'src' && Boolean(contentDoc &&
+          Array.from(contentDoc.getElementsByTagName('*')).some((node) =>
+            node.localName.toLowerCase() === 'img' &&
+            node.getAttribute('src')?.trim() === ref.raw));
         issues.push(
           createIssue({
             code: 'CONTENT_MISSING_RESOURCE',
@@ -197,9 +201,9 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
             title: 'Recurso referenciado no conteúdo não existe',
             detail: `A referência "${ref.raw}" aponta para "${resolved.path}", mas esse arquivo não foi encontrado no EPUB.`,
             file: item.resolvedPath,
-            context: ref.attr,
-            // Links editoriais href exigem destino real e jamais são reconstruídos por inferência.
-            repairable: ref.attr !== 'href',
+            context: isMissingImage ? 'img:src' : ref.attr,
+            // Não alterar imagens quebradas sem consentimento explícito.
+            repairable: ref.attr !== 'href' && !isMissingImage,
           }),
         );
       }

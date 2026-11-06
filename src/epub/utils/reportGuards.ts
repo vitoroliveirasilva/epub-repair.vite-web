@@ -1,3 +1,4 @@
+import type { RepairOptions } from '../model/repairTypes';
 import type { ValidationReport } from '../model/epubTypes';
 import type { Issue } from '../model/issueTypes';
 
@@ -47,8 +48,15 @@ export function hasOptionalOptimizations(report: ValidationReport | undefined): 
   return getOptionalOptimizationCount(report) > 0;
 }
 
-export function canRepairReport(report: ValidationReport | undefined): boolean {
-  return Boolean(report?.validZip && report.stats.fatalCount === 0 && hasRepairableIssues(report));
+export function canRepairReport(
+  report: ValidationReport | undefined,
+  options?: Pick<RepairOptions, 'replaceMissingImagesWithText'>,
+): boolean {
+  const approvedImageReplacement = Boolean(options?.replaceMissingImagesWithText &&
+    report?.issues.some((issue) => issue.code === 'CONTENT_MISSING_RESOURCE' &&
+      issue.context === 'img:src'));
+  return Boolean(report?.validZip && report.stats.fatalCount === 0 &&
+    (hasRepairableIssues(report) || approvedImageReplacement));
 }
 
 export function canOptimizeReport(report: ValidationReport | undefined): boolean {

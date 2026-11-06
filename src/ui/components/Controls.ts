@@ -24,7 +24,7 @@ export function renderControls(
   const hasReport = Boolean(state.report);
   const hasRepair = Boolean(state.repairResult?.changed && state.repairResult.blob);
   const hasFatalIssues = Boolean(state.report?.stats.fatalCount);
-  const canRepair = canRepairReport(state.report);
+  const canRepair = canRepairReport(state.report, state.options);
   const canOptimize = canOptimizeReport(state.report) ||
     Boolean(!canRepair && state.options.stripImageMetadata &&
       state.report?.validZip && state.report.stats.fatalCount === 0 &&

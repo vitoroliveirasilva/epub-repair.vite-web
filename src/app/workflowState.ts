@@ -27,7 +27,7 @@ export function getWorkflowState(state: AppState): WorkflowState {
   const report = state.report;
   if (!report) return state.payload ? 'loaded' : 'empty';
   if (!report.validZip || report.stats.fatalCount > 0) return 'invalid';
-  if (canRepairReport(report)) return 'repairable';
+  if (canRepairReport(report, state.options)) return 'repairable';
   if (hasManualReviewIssues(report)) return 'manual-review';
   if (canOptimizeReport(report) ||
       (state.options.stripImageMetadata &&
