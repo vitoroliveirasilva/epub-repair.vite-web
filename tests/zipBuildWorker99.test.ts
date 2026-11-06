@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { rebuildEpubZipInWorker } from '../src/epub/repair/zipBuildWorkerClient';
 import type { BuildZipResponse } from '../src/epub/repair/zipBuildWorker';
 import JSZip from 'jszip';
@@ -24,6 +24,17 @@ class MockWorker {
   }
 }
 
+beforeAll(() => {
+  if (typeof Blob.prototype.arrayBuffer === 'function') return;
+  Blob.prototype.arrayBuffer = function (): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = () => reject(reader.error ?? new Error('Blob inválido'));
+      reader.readAsArrayBuffer(this);
+    });
+  };
+});
 afterEach(()=>{vi.unstubAllGlobals()});
 describe('E-032/E-080: recompactação em Worker com cancelamento',()=>{
   const files=new Map<string,Uint8Array>([
