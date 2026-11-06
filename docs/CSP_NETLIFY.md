@@ -40,3 +40,13 @@ A interface eliminou seu `@import` do Google Fonts porque `style-src
 **somente no header interceptado do harness**, porque converteria os recursos
 `http://127.0.0.1` para HTTPS em um servidor local sem TLS. Essa exceção
 não significa validação do comportamento do Netlify HTTPS de produção.
+
+### Resultado automático da CI da execução 13
+
+[Run 42149808645](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42149808645)
+comprovou o funcionamento de Chromium, Firefox e WebKit no `vite preview`
+sob header CSP injetado e política `upgrade-insecure-requests` omitida
+somente em localhost HTTP. O app efetivamente carregou Worker, bloqueou
+scripts inline e rede remota, mostrou imagens `data:` e `blob:` e
+gerou relatório JSON baixável. Esses testes não verificam o servidor
+Netlify implantado nem aparelho Safari/iOS real, por isso E-062 é parcial.

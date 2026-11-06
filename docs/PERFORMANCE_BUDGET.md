@@ -35,3 +35,20 @@ memória nativa de imagens/ZIP, RSS total nem outro navegador. Medições de
 1/12 MiB não cobrem o limite de entrada de **250 MiB** do produto.
 A matriz também testa Node.js com 2 MiB e RSS amostrado.
 O novo gate é executado somente no job Chromium da matriz.
+
+### Resultado observado em Chromium headless na CI
+
+[Run 42149808645](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42149808645),
+Ubuntu Linux headless, Playwright e Chrome DevTools Protocol:
+
+| Conteúdo descompactado | Tempo leitura/reparo/revalidação | Crescimento máximo amostrado do JS heap da aba | Heartbeats |
+| --- | ---: | ---: | ---: |
+| 1 MiB | 4,694 s | +16,2 MiB | 4 |
+| 12 MiB | 59,285 s | +261,8 MiB | 25 |
+
+**Resultados aprovados nos budgets de CI, mas de desempenho ruim para aparelhos
+modestos.** A geração da fixture não integra o cronômetro, a entrada é enviada
+à aba como Array JS e o JSZip faz compressão completa, o que pode elevar custo.
+NÃO extrapolar proporcionalmente para 250 MiB ou declarar consumo total,
+pois a métrica não cobre o processo Worker nem memória nativa do navegador.
+E-031 e E-096 continuam parciais até testes e otimizações mais abrangentes.

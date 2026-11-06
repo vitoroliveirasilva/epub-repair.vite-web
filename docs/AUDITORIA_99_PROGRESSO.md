@@ -1,6 +1,6 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 05/11/2026 (execução 13: CI Node 20/22, EPUBCheck e cobertura aprovados; validação CSP/benchmark de browsers em andamento) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 05/11/2026 (execução 13: Node 20/22, EPUBCheck, cobertura e Chromium/Firefox/WebKit aprovados) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
@@ -576,9 +576,12 @@ E-075 (remoção opt-in conservadora de EXIF/XMP/Photoshop).
 | E-089/E-082 **parciais** | Smoke de browsers com viewport mobile emulada, download JSON e WebKit em Linux, mas não Safari/iOS físico |
 | E-090/E-076 **parciais** | EPUBCheck e screenshots sintéticos não substituem renderização em Kindle Previewer, Calibre, Apple Books nem aparelhos reais |
 
-**Evidências de qualidade já concluídas:**
-[CI Node20/22 e EPUBCheck nos novos perfis](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42148977842),
-[gate de cobertura aprovado](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42148977844).
+**Evidências de qualidade aprovadas após a implementação final:**
+
+- [CI Node.js 20/22, 444 testes Vitest e EPUBCheck 5.4.0](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42149808581)
+- [Gate de cobertura instrumentada aprovado](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42149706853)
+- [Matriz de browsers: Chromium, Firefox e WebKit, CSP compilada, Worker real e download](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42149808645)
+- **Chromium benchmark:** EPUB sintético com 1 MiB de conteúdo: **4694 ms, +16,2 MiB** JS heap principal; com 12 MiB: **59285 ms, +261,8 MiB** JS heap principal. Budgets 45/115s e 320/440 MiB aprovados; a lentidão e memória alta justificam **manter E-031/E-096 parciais**. Não inclui heap Worker, RSS total ou dispositivos móveis.
 
 **Exigências ainda abertas (12 parciais):** E-031, E-032, E-062, E-068,
 E-076, E-080, E-082, E-089, E-090, E-096, E-098, E-099.

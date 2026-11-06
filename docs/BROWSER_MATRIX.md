@@ -47,3 +47,16 @@ O job Chromium também executa `tests/browser-resource-budget.mjs`
 com EPUBs sintéticos 1/12 MiB, medição CDP de heap JS principal e
 limites de duração. Isso **não equivale a teste de RAM total** nem
 certificação para 250 MiB ou Safari iOS real.
+
+## CI aprovada da execução 13
+
+[Run 42149808645](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42149808645):
+**Firefox, WebKit e Chromium concluídos com sucesso**.
+O app compilado sob CSP simulada carregou Worker real, apresentou resultado,
+bloqueou script inline e conexão externa e permitiu imagem e download local.
+No Chromium, o teste adicional de performance 1/12 MiB também passou.
+O screenshot sintético permanece sem perda de fidelidade antes/depois.
+
+A otimização do workflow evitou `apt` redundante para Chromium no runner,
+mantendo `playwright install --with-deps` em Firefox/WebKit. A política CSP
+real em produção HTTPS e o Safari iOS físico continuam sem homologação.
