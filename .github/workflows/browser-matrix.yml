@@ -6,6 +6,8 @@ on:
     paths:
       - 'src/**'
       - 'tests/browser-smoke.mjs'
+      - 'tests/browser-csp.mjs'
+      - 'netlify.toml'
       - 'src/epub/repair/repairImages.ts'
       - 'vite.config.ts'
       - 'package.json'
@@ -64,6 +66,7 @@ jobs:
           done
           curl --fail http://127.0.0.1:5173/ > /dev/null
           node tests/browser-smoke.mjs
+          node tests/browser-csp.mjs
       - name: Upload server diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
