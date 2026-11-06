@@ -130,3 +130,24 @@ Evidências: [CI 42144065865](https://github.com/vitoroliveirasilva/epub-repair.
 [cobertura 42143349561](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42143349561),
 [browsers 42143349623](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42143349623).
 `prod` permanece intacta.
+
+## Execução 13: metadados, especificação EPUB3 e teste real de CSP
+
+- O OPF `package version="3.0"` é o valor válido para EPUB 3.0, 3.2, 3.3 e 3.4;
+  não inferir a minor edition por esse atributo nem reescrever uma versão arbitrária.
+- A remoção EXIF/XMP/Photoshop é **opt-in**, com confirmação e cópia nova.
+  Preserva ICC e pixels sem reamostragem. EXIF com orientação diferente de 1
+  ou ambígua não é apagado, evitando modificar a apresentação.
+- Falha de CRC, imagem corrompida ou bytes atípicos exigem revisão humana;
+  nenhuma técnica de metadados garante anonimização completa.
+- O fallback ZIP sem Worker recebe sinal de cancelamento durante a extração,
+  em vez de somente após carregar tudo.
+- A interface não deve carregar fontes remotas bloqueadas pelo seu próprio
+  CSP: foi removido o import Google Fonts. Referências HTTPS legítimas
+  **dentro dos livros** continuam preservadas por padrão.
+- `upgrade-insecure-requests` permanece no Netlify HTTPS; o navegador
+  rodando num servidor local HTTP sem TLS não pode testar essa diretiva.
+  Portanto E-062 fica parcial até homologar o servidor final.
+
+**Balanço:** 87 concluídos, 12 parciais, 0 não iniciados no inventário de 99;
+todos os 12 parciais preservam seus critérios de conclusão sem atalhos.

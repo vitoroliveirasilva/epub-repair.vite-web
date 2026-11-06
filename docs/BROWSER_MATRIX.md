@@ -31,3 +31,19 @@ Chromium, Firefox e WebKit aprovados.
 Esses testes rodam em **Linux headless**, não no Kindle, Calibre, Apple Books,
 ou em iPhone/iPad reais. A alteração foi considerada avanço parcial E-076,
 não homologação da apresentação editorial de livros reais.
+
+## Execução 13: CSP aplicada ao bundle e teste de recursos
+
+O workflow agora compila a aplicação (`npm run build`) e inicia
+`vite preview` separado do Vite dev. `tests/browser-csp.mjs` injeta
+`Content-Security-Policy` no header da resposta desse preview e testa
+o fluxo de arquivo e Worker sob a política em cada um dos três engines.
+Os eventos de violação confirmam bloqueio de scripts inline e rede remota;
+imagens locais em `data:` e `blob:` e download JSON devem funcionar.
+A exceção de `upgrade-insecure-requests` é **apenas para localhost HTTP**,
+pois a produção real usa TLS.
+
+O job Chromium também executa `tests/browser-resource-budget.mjs`
+com EPUBs sintéticos 1/12 MiB, medição CDP de heap JS principal e
+limites de duração. Isso **não equivale a teste de RAM total** nem
+certificação para 250 MiB ou Safari iOS real.

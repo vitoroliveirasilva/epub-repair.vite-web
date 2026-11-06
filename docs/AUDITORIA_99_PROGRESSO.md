@@ -1,13 +1,13 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 05/11/2026 (execução 12, CI Node 20/22, EPUBCheck, cobertura e navegadores aprovados) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 05/11/2026 (execução 13: CI Node 20/22, EPUBCheck e cobertura aprovados; validação CSP/benchmark de browsers em andamento) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
 | Situação | Itens |
 | --- | ---: |
-| Concluídos no escopo definido, com CI Node 20/22 aprovada | **85** |
-| Parcialmente tratados, com testes/validação adicionais necessários | **14** |
+| Concluídos no escopo definido, com CI Node 20/22 aprovada | **87** |
+| Parcialmente tratados, com testes/validação adicionais necessários | **12** |
 | Não iniciados ou ainda não evidenciados | **0** |
 | Total | **99** |
 
@@ -60,7 +60,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-033 | P2 | Preservação de encoding/declaracão XML ao reescrever XHTML/OPF | Concluído · CI |
 | E-034 | P2 | Tamanhos declarados ZIP diferentes dos fluxos descompactados | Concluído · CI |
 | E-035 | P0 | EPUBCheck oficial integrado à validação de arquivos reparados no CI | Concluído · CI |
-| E-036 | P1 | Matriz separada EPUB 2, EPUB 3.0/3.2/3.3 e EPUB 3.4 | Parcial |
+| E-036 | P1 | Matriz separada EPUB 2, EPUB 3.0/3.2/3.3 e EPUB 3.4 | Concluído · CI |
 | E-037 | P1 | Links internos com fragmento inexistente (#id) | Concluído · CI |
 | E-038 | P1 | Links de nav.xhtml e seus fragmentos, hierarquia toc e estrutura de lista | Concluído · CI |
 | E-039 | P1 | NAV/NCX com URLs escapadas, fragmentos, âncoras internas e caracteres especiais | Concluído · CI |
@@ -99,7 +99,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-072 | P1 | Acessibilidade editorial: alt, lang, semântica, nav e leitura assistiva | Concluído · CI |
 | E-073 | P1 | Fluxo antes/depois com diffs de XHTML, CSS, OPF e NCX | Concluído · CI |
 | E-074 | P2 | Preservar tipografia, itálicos, travessões, espaçamento e estilos de diálogo | Concluído · CI |
-| E-075 | P2 | Tratamento opcional de EXIF/XMP/Photoshop/metadata de imagens | Parcial |
+| E-075 | P2 | Tratamento opcional de EXIF/XMP/Photoshop/metadata de imagens | Concluído · CI |
 | E-076 | P2 | Checagem de apresentação em leitores reflowable/fixed layout, imagens e fontes | Parcial |
 | E-077 | P1 | Estados explícitos: seguro para reparar, revisão manual, parcial, otimização, inválido | Concluído · CI |
 | E-078 | P1 | Prévia e confirmação de operações destrutivas antes de executar | Concluído · CI |
@@ -558,3 +558,31 @@ CI final anterior à atualização documental: [run 42102087907](https://github.
 **Limitações que permanecem abertas (14 parciais):** E-031, E-032, E-036, E-062, E-068, E-075, E-076, E-080, E-082, E-089, E-090, E-096, E-098 e E-099. Não há evidência de publicação, cobertura total, escaneamento antivírus real, teste em smartphones físicos nem de conformidade universal. Não declarar o trabalho "perfeito" ou seguro contra qualquer malware.
 
 **Produção:** `prod` preservada em v2.2.0, sem merge, tag ou release.
+
+## Execução 13: EPUB por perfil, limpeza opt-in de metadata, CSP e recursos
+
+**Antes:** 85 concluídos, 14 parciais, 0 pendentes.  
+**Agora: 87 concluídos, 12 parciais, 0 pendentes.**  
+**Conclusões comprovadas:** E-036 (matriz por perfil no escopo das fixtures) e
+E-075 (remoção opt-in conservadora de EXIF/XMP/Photoshop).
+
+| Item | Mudança real e evidência |
+| --- | --- |
+| E-036 **concluído no escopo automatizado** | `a4a3db7`: quatro perfis EPUB3 com `package version="3.0"` (EPUB 3.0, 3.2, 3.3, 3.4), EPUB2 com `version="2.0"`, fixtures separadas, reparo conservador, preservação de texto e EPUBCheck externo para perfis representativos. `3.4` em `package version` é inválido; a CI não certifica TODAS as regras da especificação EPUB 3.4 |
+| E-075 **concluído no escopo opt-in** | `6eebe8f`, `2dd1642`, `6c4e778`, `dd5b889`, `5d66a8c`, `31ca7c5`: inventário prévio, opção DESLIGADA por padrão, consentimento explícito na interface, removidos metadados EXIF/XMP/Photoshop reconhecidos de JPEG/PNG/WebP sem recomprimir, mantendo ICC e orientação ambígua. Reparo/otimização revalidam o EPUB e preservam original. A operação **não garante anonimização completa** |
+| E-032/E-080 **parciais** | `1ab47e1`: sinal AbortSignal propagado ao fallback sem Worker, encerrando stream ZIP durante progresso e descartando saída incompleta; testes de cancelamento antecipado e intermediário. DOM síncrono e compressão continuam não preemptivos; fila ausente |
+| E-062 **parcial** | `55600e2`, `04e9426`, `5b921d6`: harness que aplica CSP do Netlify sobre build estático em browsers; bloqueia JS inline, conexões externas, valida imagens data/blob, Worker e download. Removido import externo de fontes do próprio app. Diretiva `upgrade-insecure-requests` omitida somente no laboratório HTTP local sem TLS, mantida em produção. **Headers HTTP do Netlify implantado não foram verificados**, portanto não declarar concluído |
+| E-031/E-096 **parciais** | `4b375f9`: benchmark Chromium integrado à matriz para 1 e 12 MiB, temporização, heap JS **da aba principal**, heartbeat e resultado; usa budgets 45/115s e crescimento de 320/440 MiB. Worker heap, RSS total, mobile físico e EPUBs de até 250 MiB permanecem sem medição |
+| E-089/E-082 **parciais** | Smoke de browsers com viewport mobile emulada, download JSON e WebKit em Linux, mas não Safari/iOS físico |
+| E-090/E-076 **parciais** | EPUBCheck e screenshots sintéticos não substituem renderização em Kindle Previewer, Calibre, Apple Books nem aparelhos reais |
+
+**Evidências de qualidade já concluídas:**
+[CI Node20/22 e EPUBCheck nos novos perfis](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42148977842),
+[gate de cobertura aprovado](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42148977844).
+
+**Exigências ainda abertas (12 parciais):** E-031, E-032, E-062, E-068,
+E-076, E-080, E-082, E-089, E-090, E-096, E-098, E-099.
+Nenhum item foi encerrado apenas por documentação; o critério de automação
+não significa conformidade editorial, segurança universal nem teste físico.
+
+**Produção:** `prod` ainda em v2.2.0; não houve merge, tag ou release.
