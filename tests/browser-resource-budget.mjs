@@ -9,6 +9,7 @@ const MiB = 1024 * 1024;
 const scenarios = [
   { mib: 1, maxMs: 45_000, maxHeapGrowthMiB: 320 },
   { mib: 12, maxMs: 115_000, maxHeapGrowthMiB: 440 },
+  { mib: 48, maxMs: 180_000, maxHeapGrowthMiB: 760 },
 ];
 async function epubFixture(sizeMiB) {
   const zip = new JSZip();
@@ -57,8 +58,23 @@ const metrics = async () => {
 await session.send('Performance.enable');
 try {
   await page.goto('http://127.0.0.1:5173/', { waitUntil: 'load' });
+  // O harness anterior serializava 12 MiB como Array.from(source) para
+  // page.evaluate e incluía custo de transporte Playwright no cronômetro:
+  // não era uma medição pura da aplicação. File upload permite transferência
+  // nativa e inicia o cronômetro APÓS arquivo disponível no browser.
+  await page.evaluate(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.id = 'benchmark-file-input';
+    input.hidden = true;
+    document.body.append(input);
+  });
   for (const { mib, maxMs, maxHeapGrowthMiB } of scenarios) {
     const source = await epubFixture(mib);
+    await page.locator('#benchmark-file-input').setInputFiles({
+      name: 'benchmark-' + mib + '.epub', mimeType: 'application/epub+zip',
+      buffer: Buffer.from(source),
+    });
     const baseline = await metrics();
     let peak = baseline;
     const timer = setInterval(() => {
@@ -67,21 +83,25 @@ try {
     }, 250);
     const started = performance.now();
     try {
-      const result = await page.evaluate(async (raw) => {
+      const result = await page.evaluate(async () => {
         const [{ loadEpubInWorker }, { repairEpub }, { DEFAULT_REPAIR_OPTIONS }] =
           await Promise.all([
             import('/src/app/zipWorkerClient.ts'),
             import('/src/epub/repair/repairEpub.ts'),
             import('/src/epub/utils/constants.ts'),
           ]);
-        const bytes = Uint8Array.from(raw);
+        const input = document.querySelector('#benchmark-file-input');
+        if (!(input instanceof HTMLInputElement) || !input.files?.[0]) {
+          throw new Error('Fixture não foi carregada no browser');
+        }
+        const bytes = new Uint8Array(await input.files[0].arrayBuffer());
         let ticks = 0;
         const heartbeat = setInterval(() => { ticks += 1; }, 50);
         try {
           const zip = await loadEpubInWorker('large.epub', bytes);
           if (!zip.validZip) throw new Error('Worker não abriu ZIP sintético');
           const original = zip.files.get('OPS/blob.bin')?.bytes;
-          if (!original || ![1 * 1024 * 1024, 12 * 1024 * 1024]
+          if (!original || ![1, 12, 48].map((n) => n * 1024 * 1024)
               .includes(original.length)) {
             throw new Error('Recurso binário não foi extraído');
           }
@@ -97,7 +117,7 @@ try {
         } finally {
           clearInterval(heartbeat);
         }
-      }, Array.from(source));
+      });
       const elapsed = performance.now() - started;
       peak = Math.max(peak, await metrics());
       const growth = Math.max(0, peak - baseline) / MiB;
