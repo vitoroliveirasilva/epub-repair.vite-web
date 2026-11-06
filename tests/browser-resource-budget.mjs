@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import JSZip from 'jszip';
 import { pathToFileURL } from 'node:url';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const harness = process.env.PLAYWRIGHT_MODULE;
 assert.ok(harness, 'PLAYWRIGHT_MODULE ausente');
@@ -84,10 +87,16 @@ try {
   });
   for (const { mib, maxMs, maxHeapGrowthMiB } of scenarios) {
     const source = await epubFixture(mib);
-    await page.locator('#benchmark-file-input').setInputFiles({
-      name: 'benchmark-' + mib + '.epub', mimeType: 'application/epub+zip',
-      buffer: Buffer.from(source),
-    });
+    // Playwright impõe limite de 50MiB para setInputFiles({buffer}).
+    // Arquivos grandes são passados via path temporário, não JSON nem buffer.
+    const dir = await mkdtemp(join(tmpdir(), 'epub-benchmark-'));
+    try {
+      const file = join(dir, 'benchmark-' + mib + '.epub');
+      await writeFile(file, source);
+      await page.locator('#benchmark-file-input').setInputFiles(file);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
     const baseline = await metrics();
     let peak = baseline;
     const timer = setInterval(() => {
