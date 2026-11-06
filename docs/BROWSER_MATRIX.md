@@ -128,3 +128,21 @@ pixel-perfect, layout tipográfico, acessibilidade de cada capítulo,
 fontes externas ou aparência Kindle/iPhone. E-076 conclui somente
 o critério de verificação automatizada de apresentação reflowable/
 fixed-layout e ilustração em leitor externo.
+
+## Execução 20: sistemas móveis simulados e deploy-preview real
+
+Foram acrescentados dois testes independentes:
+
+- Android 15 Google Play AVD + Chrome, via Playwright Android (API
+  experimental) e ADB, checando envio/reparo/download de EPUB;
+- Safari do iPhone Simulator oficial do Xcode, via Appium XCUITest,
+  com envio, reparo, captura e investigação do arquivo baixado.
+
+A criação dos testes é evidência de ampliação da matriz, **não de
+execução aprovada**. Primeiros bugs do harness foram corrigidos,
+e os jobs seguintes estão sujeitos a inicialização longa de
+simuladores/WDA. O critério de conclusão dos itens E-082 e E-089
+continua sendo validação em iPhone/Android físicos, não no emulador.
+
+A [homologação HTTPS Netlify do PR #32](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42231322872)
+já passou novamente, e a produção foi preservada.

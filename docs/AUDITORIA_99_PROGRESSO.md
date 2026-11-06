@@ -1,6 +1,6 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 06/11/2026 (execução 19: 97/99, renderização de layouts em Calibre ebook-viewer real comprovada) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 06/11/2026 (execução 20: 97/99, homologação mobile isolada por deploy-preview, automações nativas em implantação) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
@@ -796,3 +796,43 @@ itens E-082 e E-089.
 **Permanecem parciais apenas:** **E-082** (download Blob em Safari/iOS
 físico) e **E-089** (compatibilidade de dispositivos móveis reais).
 `prod` continua v2.2.0, sem merge.
+
+## Execução 20: homologação Android/iOS nativos em desenvolvimento
+
+O saldo **permanece 97 concluídos, 2 parciais, 0 pendentes**. Não
+reclassificar apenas por criar testes automatizados: E-082 e E-089
+exigem prova do download e funcionamento em **dispositivos físicos**.
+
+**Trabalho de engenharia entregue na `dev`:**
+
+- `tests/android-emulator-flow.mjs`,
+  `.github/workflows/android-emulator.yml`: Android 15 API35 (AVD
+  Pixel 7 Play Store) + Chrome com Playwright Android/ADB, upload EPUB
+  sintético, reparo, download e validação do ZIP. A primeira tentativa
+  identificou um erro no script shell do runner (corrigido); a
+  execução seguinte foi delimitada em 360s e segue como teste
+  **experimental**, sem aprovação declarada no momento do registro.
+- `tests/ios-safari-simulator.mjs`,
+  `.github/workflows/ios-simulator.yml`: iPhone Simulator Xcode
+  macOS com Safari nativo + Appium/XCUITest, upload de arquivo de
+  teste, reparo, download, captura de tela e procura de saída no
+  sandbox do Simulator. Na primeira tentativa o WebDriverAgent não
+  ficou pronto dentro de 240s; timeout de inicialização foi ampliado
+  para 720s e o teste foi reprogramado, **sem alegar aprovação**.
+- [PR rascunho #32](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pull/32)
+  aberto **somente para homologação física**, sem merge nem release.
+  [Deploy-preview HTTPS real da `dev`](https://6aeddf74dc6a8c922d462128--epubrepair.netlify.app/)
+  foi publicado pelo Netlify e passou em
+  [CI 42231322872](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42231322872)
+  com CSP real, Workers, EPUB 12MiB e download.
+- Cinco EPUBs sintéticos utilizáveis em celular foram gerados pela
+  [CI 42231064719](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42231064719)
+  como artifact `epub-manual-device-fixtures`
+  (ID `13509890189`). Instruções e critérios em
+  [HOMOLOGACAO_MOBILE_REAL.md](./HOMOLOGACAO_MOBILE_REAL.md).
+
+**O que ainda falta para 99/99:** registrar evidência de Safari iOS
+em iPhone/iPad real com EPUB baixado não vazio/abrível e URL liberada
+(E-082); validar Chrome/Firefox em Android físico e Safari iOS físico,
+incluindo saída do reparo e acessibilidade/UX (E-089).
+Simuladores fornecem regressão útil, mas **não são hardware físico**.
