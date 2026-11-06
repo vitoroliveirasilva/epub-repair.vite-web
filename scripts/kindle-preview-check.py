@@ -34,7 +34,7 @@ for stem in ["repaired-valid", "repaired-valid-epub2",
     assert book.is_file() and book.stat().st_size > 0, stem
     folder = output / stem
     folder.mkdir(exist_ok=True)
-    cmd = [binary, str(book), "-convert", "-output", str(folder)]
+    cmd = [binary, str(book), "--convert", "--output", str(folder)]
     print("Kindle Previewer CLI", stem, flush=True)
     try:
         result = subprocess.run(cmd, text=True, timeout=180,
