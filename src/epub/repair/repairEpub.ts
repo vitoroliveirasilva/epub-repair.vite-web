@@ -18,7 +18,7 @@ import { stripEpubImageMetadata } from './stripImageMetadata';
 import { repairKindleCompatibility } from './repairKindleCompatibility';
 import { repairOpfDocument } from './repairOpf';
 import { synchronizeManifestProperties } from './synchronizeManifestProperties';
-import { rebuildEpubZip } from './rebuildEpubZip';
+import { rebuildEpubZipInWorker } from './zipBuildWorkerClient';
 
 type RepairRunMode = 'repair' | 'optimization';
 
@@ -101,7 +101,9 @@ export async function repairEpub(
         changed: false, operation,
       };
     }
-    const blob = await rebuildEpubZip(optimizedFiles, ({ percent }) => onZipProgress?.(percent));
+    const blob = await rebuildEpubZipInWorker(optimizedFiles, {
+      signal, onProgress: ({percent}) => onZipProgress?.(percent),
+    });
     canceled();
     const outName = makeRepairedFileName(fileName);
     const after = await inspectEpub(outName, new Uint8Array(await blob.arrayBuffer()));
@@ -227,7 +229,9 @@ export async function repairEpub(
   }
 
   canceled();
-  const blob = await rebuildEpubZip(files, ({ percent }) => onZipProgress?.(percent));
+  const blob = await rebuildEpubZipInWorker(files, {
+    signal, onProgress: ({percent}) => onZipProgress?.(percent),
+  });
   canceled();
   const afterBytes = new Uint8Array(await blob.arrayBuffer());
   const outputFileName = makeRepairedFileName(fileName);
