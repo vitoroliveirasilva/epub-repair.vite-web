@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import JSZip from 'jszip';
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
@@ -19,7 +20,14 @@ try {
   const context = await browser.newContext({ acceptDownloads: true });
   const page = await context.newPage();
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.route('http://127.0.0.1:5173/', async (route) => {
+  page.on('console', (m) => {
+    if (m.type() === 'error') errors.push('console: ' + m.text());
+  });
+  page.on('requestfailed', (req) => errors.push(
+    'request: ' + req.url() + ' ' + req.failure()?.errorText));
+  const observedWorkers = [];
+  page.on('worker', (worker) => observedWorkers.push(worker.url()));
+  await page.route('http://127.0.0.1:4173/', async (route) => {
     const response = await route.fetch();
     await route.fulfill({
       response,
@@ -27,9 +35,49 @@ try {
     });
   });
 
-  const response = await page.goto('http://127.0.0.1:5173/', { waitUntil: 'domcontentloaded' });
+  const response = await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
   assert.equal(response?.headers()['content-security-policy'], policy);
-  await page.getByRole('heading', { name: /Conserte arquivos EPUB/u }).waitFor();
+  try {
+    await page.getByRole('heading', { name: /Conserte arquivos EPUB/u })
+      .waitFor({ timeout: 15000 });
+  } catch (error) {
+    throw new Error('CSP impediu carregar app de produção em ' + engineName +
+      ': ' + errors.join(' | ') + ' HTML=' + (await page.content()).slice(0,900),
+      { cause: error });
+  }
+  // EPUB válido e local: o bundle de produção precisa iniciar Worker real.
+  const zip = new JSZip();
+  zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
+  zip.file('META-INF/container.xml',
+    '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">' +
+    '<rootfiles><rootfile full-path="OPS/book.opf" media-type="application/oebps-package+xml"/>' +
+    '</rootfiles></container>');
+  zip.file('OPS/book.opf',
+    '<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">' +
+    '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">' +
+    '<dc:identifier id="uid">urn:uuid:csp-test</dc:identifier>' +
+    '<dc:title>CSP local</dc:title><dc:language>pt-BR</dc:language>' +
+    '<meta property="dcterms:modified">2026-11-05T12:00:00Z</meta>' +
+    '</metadata><manifest>' +
+    '<item id="nav" href="nav.xhtml" properties="nav" media-type="application/xhtml+xml"/>' +
+    '<item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/>' +
+    '</manifest><spine><itemref idref="chapter"/></spine></package>');
+  zip.file('OPS/nav.xhtml',
+    '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">' +
+    '<head><title>Sumário</title></head><body><nav epub:type="toc">' +
+    '<ol><li><a href="chapter.xhtml">Capítulo</a></li></ol></nav></body></html>');
+  zip.file('OPS/chapter.xhtml',
+    '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Capítulo</title></head>' +
+    '<body><h1>Leitura segura</h1><p>Texto local.</p></body></html>');
+  await page.locator('#epub-file-input').setInputFiles({
+    name: 'csp.epub', mimeType: 'application/epub+zip',
+    buffer: Buffer.from(await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' })),
+  });
+  await page.waitForFunction(() => document.querySelector('.report-panel') &&
+    document.querySelector('.controls-panel')?.getAttribute('aria-busy') === 'false',
+  undefined, { timeout: 25000 });
+  assert.ok(observedWorkers.length > 0,
+    'O app de produção não iniciou Worker com worker-src self');
   const outcome = await page.evaluate(async () => {
     const violations = [];
     document.addEventListener('securitypolicyviolation', (e) => {
@@ -68,65 +116,32 @@ try {
       remoteBlocked = true;
     }
 
-    // Deve ser possível carregar script de Worker de mesma origem.
-    const workerAllowed = await new Promise((resolve) => {
-      let settled = false;
-      let worker;
-      const finish = (value) => {
-        if (settled) return;
-        settled = true;
-        worker?.terminate();
-        resolve(value);
-      };
-      const timer = setTimeout(() => finish(false), 10000);
-      try {
-        worker = new Worker(new URL('/src/app/zipLoadWorker.ts', location.href),
-          { type: 'module' });
-        worker.onmessage = (e) => {
-          if (e.data?.type === 'loaded') {
-            clearTimeout(timer);
-            finish(true);
-          }
-          if (e.data?.type === 'error') {
-            clearTimeout(timer);
-            finish(false);
-          }
-        };
-        worker.onerror = () => { clearTimeout(timer); finish(false); };
-        worker.postMessage({
-          type: 'load', fileName: 'invalid.epub',
-          bytes: new Uint8Array([0x50, 0x4b]),
-        });
-      } catch {
-        clearTimeout(timer);
-        finish(false);
-      }
-    });
     await new Promise((resolve) => setTimeout(resolve, 100));
     return {
       injected: Boolean(window.__CSP_MARKER__),
-      dataImage, blobImage, remoteBlocked, workerAllowed, violations,
+      dataImage, blobImage, remoteBlocked, violations,
     };
   });
   assert.equal(outcome.injected, false, 'script inline não foi bloqueado pelo CSP');
   assert.equal(outcome.dataImage, true, 'data:image/png bloqueado pelo CSP');
   assert.equal(outcome.blobImage, true, 'blob:image/png bloqueado pelo CSP');
   assert.equal(outcome.remoteBlocked, true, 'connect-src permitiu origem remota');
-  assert.equal(outcome.workerAllowed, true, 'worker-src bloqueou Worker self');
   assert.ok(outcome.violations.some((v) => /script-src/iu.test(v.directive)),
     'Não foi observada violação de CSP no script inline');
   assert.ok(outcome.violations.some((v) => /connect-src/iu.test(v.directive)),
     'Não foi observada violação de CSP ao tentar conexão externa');
 
+  const summary = page.locator('summary').filter({ hasText: 'Relatório técnico' });
+  await summary.click();
   const [download] = await Promise.all([
     page.waitForEvent('download', { timeout: 12000 }),
-    page.evaluate(async () => {
-      const { downloadBlob } = await import('/src/ui/dom.ts');
-      downloadBlob(new Blob(['CSP EPUB OK'], { type: 'text/plain' }), 'csp-check.txt');
-    }),
+    page.getByRole('button', { name: 'JSON', exact: true }).click(),
   ]);
-  assert.equal(download.suggestedFilename(), 'csp-check.txt');
-  assert.deepEqual(errors, [], 'Erro não tratado ao carregar sob CSP');
+  assert.match(download.suggestedFilename(), /\.json$/u);
+  // As duas violações intencionais abaixo devem ser registradas no console;
+  // nenhuma exceção de aplicação é aceitável.
+  assert.deepEqual(errors.filter((e) => !/Content Security Policy|Content-Security-Policy|Refused to|Load denied by X-Frame-Options|example\.invalid|Content blocker|because it violates|violates the following/u.test(e)), [],
+    'Erro inesperado na aplicação com CSP');
   console.log('PASS E-062 CSP enforce ' + engineName + ' data/blob/worker/download' +
     ' remote-blocked/inline-blocked');
   await context.close();
