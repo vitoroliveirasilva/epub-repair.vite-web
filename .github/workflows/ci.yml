@@ -186,3 +186,17 @@ jobs:
             test -s "$specimen"
             java -jar "$epubcheck_jar" "$specimen"
           done
+
+      - name: Publicar EPUBs sintéticos para homologação manual em iOS e Android
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: epub-manual-device-fixtures
+          path: |
+            ${{ runner.temp }}/epub-fixtures/repaired-valid.epub
+            ${{ runner.temp }}/epub-fixtures/repaired-valid-epub2.epub
+            ${{ runner.temp }}/epub-fixtures/repaired-valid-ncx-hierarchy.epub
+            ${{ runner.temp }}/epub-fixtures/visual-reflowable.epub
+            ${{ runner.temp }}/epub-fixtures/visual-fixed-layout.epub
+          if-no-files-found: error
+          retention-days: 14
