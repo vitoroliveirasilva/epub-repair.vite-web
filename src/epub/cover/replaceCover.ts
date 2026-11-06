@@ -4,6 +4,7 @@ import type { RepairAction, RepairResult } from '../model/repairTypes';
 import { loadEpub } from '../reader/loadEpub';
 import { rebuildEpubZipInWorker } from '../repair/zipBuildWorkerClient';
 import { assertNoNewCriticalIssues } from '../repair/repairSafety';
+import { auditPreservation } from '../repair/preservationAudit';
 import { createTextFileDiffs } from '../repair/textFileDiff';
 import { inspectEpub } from '../validation/validateEpub';
 import { parsePackageDocument } from '../validation/opfParser';
@@ -13,7 +14,6 @@ import { decodeUtf8ForRewrite } from '../utils/textEncoding';
 import {
   basename,
   encodePathForXml,
-  resolveReference,
   makeUniqueId,
   relativePath,
   resolveFromDir,
@@ -27,8 +27,9 @@ import {
   serializeXmlPreservingDeclaration,
 } from '../utils/xmlUtils';
 import type { CoverImageInput, SupportedCoverMediaType } from './coverImageInput';
-import { HTML_MEDIA_TYPES } from '../utils/constants';
 import { updateCoverGuideReference, updateCoverReferences } from './updateCoverReferences';
+import { coverReferenceScope } from './coverReferenceScope';
+import { forkSharedCoverStyles } from './forkSharedCoverStyles';
 
 const OPF_NS = 'http://www.idpf.org/2007/opf';
 const SUPPORTED_COVER_MEDIA_TYPES = new Set<string>(['image/jpeg', 'image/png']);
@@ -88,13 +89,13 @@ export async function replaceEpubCover(
   const target = findCoverTarget(doc, parsed.packageInfo, files);
   // Não sobrescrever ilustrações de capítulos que reutilizam os bytes da
   // imagem oficial de capa. A atualização é limitada às páginas de rosto.
-  const knownCoverPages = identifyCoverPages(doc, parsed.packageInfo, files);
+  const scope = coverReferenceScope(doc, parsed.packageInfo, files, target?.path);
   const independentPath = makeUniqueCoverPath(files, parsed.packageInfo, coverImage.mediaType);
   const wouldChange = target?.path
     ? updateCoverReferences(new Map(files), parsed.packageInfo, target.path, independentPath)
     : [];
   const reusedElsewhere = wouldChange.some((action) =>
-    !knownCoverPages.has(action.file ?? ''));
+    !scope.allowed.has(action.file ?? ''));
   const canReplaceInPlace = Boolean(
     target?.path && !reusedElsewhere &&
       coverPathMatchesMediaType(target.path, coverImage.mediaType),
@@ -114,12 +115,16 @@ export async function replaceEpubCover(
 
   ensureCoverMeta(doc, metadata, coverId);
   ensureSingleCoverImageProperty(manifest, coverItem);
+  const cssActions = target?.path && target.path !== coverPath && reusedElsewhere
+    ? forkSharedCoverStyles(files, parsed.packageInfo, doc, scope.pages,
+      scope.sharedStyles, scope.consumers, target.path, coverPath)
+    : [];
 
   // Mudança de extensão cria um novo arquivo: sincronizar os locais que
   // ainda exibiriam a capa antiga antes de serializar o OPF.
   const referenceActions = target?.path && target.path !== coverPath
     ? updateCoverReferences(files, parsed.packageInfo, target.path, coverPath,
-      reusedElsewhere ? knownCoverPages : undefined)
+      scope.allowed)
     : [];
   const guideChanged = target?.path && target.path !== coverPath
     ? updateCoverGuideReference(doc, parsed.packageInfo.opfPath, target.path, coverPath)
@@ -142,6 +147,7 @@ export async function replaceEpubCover(
       detail: `O OPF agora aponta para o item "${coverId}" como capa principal.`,
       file: parsed.packageInfo.opfPath,
     },
+    ...cssActions,
     ...referenceActions,
     ...(guideChanged ? [{
       type: 'updated' as const,
@@ -161,7 +167,10 @@ export async function replaceEpubCover(
   const after = await inspectEpub(outputFileName, afterBytes);
   canceled();
   assertNoNewCriticalIssues(before, after);
-  const warnings = buildCoverReplacementWarnings(before, after);
+  // E-122: executar no fluxo da capa o mesmo gate editorial usado pelo reparo.
+  const auditNotes = auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo,
+    new Set(), { path: coverPath, bytes: coverImage.bytes });
+  const warnings = [...buildCoverReplacementWarnings(before, after), ...auditNotes];
   if (reusedElsewhere) {
     warnings.push('A imagem antiga também é usada fora da página de capa. ' +
       'Essas ilustrações foram preservadas; confirme a aparência da capa.');
@@ -467,51 +476,3 @@ function ensureChild(doc: Document, parent: Element, localName: string): Element
   return created;
 }
 
-/** Localiza páginas de capa por guide, landmarks ou nomes explícitos.
- * Não infere que todo capítulo contendo a mesma imagem seja uma capa.
- */
-function identifyCoverPages(
-  opf: Document,
-  pkg: PackageDocumentInfo,
-  files: ReadonlyMap<string, Uint8Array>,
-): Set<string> {
-  const validPages = new Set(pkg.manifest.filter((item) =>
-    item.exists && HTML_MEDIA_TYPES.has(item.mediaType))
-    .map((item) => item.resolvedPath));
-  const pages = new Set<string>();
-  const consider = (path: string, safe: boolean): void => {
-    if (safe && validPages.has(path) && files.has(path)) pages.add(path);
-  };
-  for (const node of Array.from(opf.getElementsByTagName('*'))) {
-    if (node.localName !== 'reference' || node.parentElement?.localName !== 'guide' ||
-        !(node.getAttribute('type') ?? '').toLowerCase().split(/\s+/u).includes('cover')) continue;
-    const href = node.getAttribute('href');
-    if (!href) continue;
-    const candidate = resolveFromDir(pkg.opfDir, href);
-    consider(candidate.path, candidate.safe);
-  }
-  if (pkg.navItem?.exists) {
-    try {
-      const nav = files.get(pkg.navItem.resolvedPath);
-      if (nav) {
-        const parsed = parseXml(new TextDecoder('utf-8', { fatal: true }).decode(nav));
-        for (const anchor of Array.from(parsed.getElementsByTagName('*'))) {
-          if (anchor.localName !== 'a') continue;
-          const types = anchor.getAttributeNS('http://www.idpf.org/2007/ops', 'type') ??
-            anchor.getAttribute('epub:type') ?? '';
-          if (!types.toLowerCase().split(/\s+/u).includes('cover')) continue;
-          const href = anchor.getAttribute('href');
-          if (!href) continue;
-          const candidate = resolveReference(pkg.navItem.resolvedPath, href);
-          consider(candidate.path, candidate.safe);
-        }
-      }
-    } catch { /* Uma navegação inválida é diagnosticada separadamente. */ }
-  }
-  for (const path of validPages) {
-    if (/^(?:cover|capa|frontcover|titlepage)(?:[-_.][^/]*)?\.x?html?$/iu.test(basename(path))) {
-      pages.add(path);
-    }
-  }
-  return pages;
-}

@@ -82,7 +82,39 @@ async function assertValidCoverImage(
     }
   }
 
-  if (typeof createImageBitmap !== 'function') return;
+  if (typeof createImageBitmap !== 'function') {
+    // Safari antigo e navegadores sem createImageBitmap precisam confirmar
+    // decodificação real. A assinatura JPEG sozinha nunca é prova suficiente.
+    if (typeof Image === 'undefined' || typeof URL.createObjectURL !== 'function' ||
+        typeof URL.revokeObjectURL !== 'function') {
+      throw new Error('Este navegador não oferece decodificador confiável para validar a capa.');
+    }
+    const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: mediaType }));
+    try {
+      const image = new Image();
+      image.src = url;
+      if (typeof image.decode === 'function') {
+        await image.decode();
+      } else {
+        await new Promise<void>((resolve, reject) => {
+          image.onload = () => resolve();
+          image.onerror = () => reject(new Error('Não foi possível decodificar a capa.'));
+          if (image.complete) {
+            if (image.naturalWidth && image.naturalHeight) resolve();
+            // Imagem inválida pode emitir error assincronamente.
+          }
+        });
+      }
+      if (!validCoverDimensions(image.naturalWidth, image.naturalHeight)) {
+        throw new Error('Dimensões da capa inválidas ou excessivas.');
+      }
+    } catch {
+      throw new Error('A imagem de capa está corrompida ou não pôde ser decodificada.');
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+    return;
+  }
 
   let bitmap: ImageBitmap | undefined;
   try {

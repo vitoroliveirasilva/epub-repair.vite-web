@@ -153,13 +153,17 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
         issues.push(
           createIssue({
             code: 'CONTENT_KINDLE_EMBED_BROKEN',
-            severity: 'warning',
-            title: 'Referência kindle:embed encontrada',
-            detail:
-              'Referências proprietárias kindle:embed podem quebrar fora do ambiente original e serão neutralizadas no reparo seguro.',
+            severity: ref.kindleText ? 'info' : 'warning',
+            title: ref.kindleText
+              ? 'Texto literal kindle:embed encontrado'
+              : 'Referência kindle:embed encontrada',
+            detail: ref.kindleText
+              ? 'A sequência aparece como texto e será preservada. ' +
+                'Não é possível concluir que seja um recurso Kindle ativo.'
+              : 'Referência proprietária em atributo real pode quebrar fora do leitor original.',
             file: item.resolvedPath,
             context: ref.raw,
-            repairable: true,
+            repairable: !ref.kindleText,
           }),
         );
         continue;

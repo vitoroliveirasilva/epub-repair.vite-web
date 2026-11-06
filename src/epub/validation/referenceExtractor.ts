@@ -4,6 +4,8 @@ export interface ResourceReference {
   attr: string;
   value: string;
   raw: string;
+  /** Referência proprietária escrita como texto, não atributo executável. */
+  kindleText?: boolean;
 }
 
 export function extractHtmlResourceReferences(text: string): ResourceReference[] {
@@ -30,6 +32,12 @@ export function extractHtmlResourceReferences(text: string): ResourceReference[]
     }
   }
 
+
+  const kindleEmbedRegex = /kindle:embed:[^\s"'<>)]*/giu;
+  while ((match = kindleEmbedRegex.exec(text)) !== null) {
+    const raw = match[0]?.trim();
+    if (raw) refs.push({ attr: 'kindle:embed', value: raw, raw, kindleText: true });
+  }
 
   return refs;
 }
@@ -102,8 +110,26 @@ export function extractDocumentResourceReferences(doc: Document): ResourceRefere
     }
   }
 
-  // Referências Kindle em texto visível podem ser exemplos de livro técnico.
-  // Somente atributos DOM reais entram no inventário de recursos.
+  // Detectar texto Kindle separadamente, sem tratá-lo como atributo real.
+  // Exemplos em pre/code/kbd/samp são sempre literais editoriais.
+  const stack: Node[] = [doc.documentElement];
+  while (stack.length) {
+    const node = stack.pop()!;
+    if (node.nodeType === 8) continue;
+    if (node.nodeType === 3) {
+      const parent = node.parentElement;
+      const inExample = parent?.closest('code, pre, kbd, samp') !== null;
+      if (!inExample) {
+        for (const match of (node.nodeValue ?? '').matchAll(/kindle:embed:[^\s"'<>)]*/giu)) {
+          const raw = match[0];
+          if (raw) refs.push({
+            attr: 'kindle:embed', value: raw, raw, kindleText: true,
+          });
+        }
+      }
+    }
+    for (const child of Array.from(node.childNodes).reverse()) stack.push(child);
+  }
 
   return refs;
 }
