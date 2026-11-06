@@ -10,9 +10,18 @@ const scenarios = [
   { mib: 1, maxMs: 45_000, maxHeapGrowthMiB: 320 },
   { mib: 12, maxMs: 115_000, maxHeapGrowthMiB: 440 },
   { mib: 48, maxMs: 180_000, maxHeapGrowthMiB: 760 },
+  // Cenário de fronteira: 250 MiB DESCOMPACTADOS, não 250 MiB enviados.
+  // Cada entrada fica <128 MiB (limite por recurso do aplicativo).
+  { mib: 250, maxMs: 300_000, maxHeapGrowthMiB: 1600 },
 ];
 async function epubFixture(sizeMiB) {
   const zip = new JSZip();
+  const parts = sizeMiB <= 128 ? [sizeMiB] : [90, 90, sizeMiB - 180];
+  const paths = parts.map((_, index) => sizeMiB <= 128
+    ? 'OPS/blob.bin' : 'OPS/blob-' + index + '.bin');
+  const resources = paths.map((name, index) =>
+    '<item id="binary-' + index + '" href="' + name.slice(4) +
+    '" media-type="application/octet-stream"/>').join('');
   zip.file('META-INF/container.xml',
     '<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0">' +
     '<rootfiles><rootfile full-path="OPS/book.opf" media-type="application/oebps-package+xml"/>' +
@@ -26,7 +35,7 @@ async function epubFixture(sizeMiB) {
     '</metadata><manifest>' +
     '<item id="nav" href="nav.xhtml" properties="nav" media-type="application/xhtml+xml"/>' +
     '<item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/>' +
-    '<item id="binary" href="blob.bin" media-type="application/octet-stream"/>' +
+    resources +
     '</manifest><spine><itemref idref="chapter"/></spine></package>');
   zip.file('OPS/nav.xhtml',
     '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">' +
@@ -35,15 +44,19 @@ async function epubFixture(sizeMiB) {
   zip.file('OPS/chapter.xhtml',
     '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Capítulo</title></head>' +
     '<body><h1>Capítulo grande</h1><p>Preservar arquivo binário</p></body></html>');
-  const payload = new Uint8Array(sizeMiB * MiB);
   let seed = 0x71a8e123;
-  for (let i = 0; i < payload.length; i++) {
-    seed ^= seed << 13;
-    seed ^= seed >>> 17;
-    seed ^= seed << 5;
-    payload[i] = seed & 255;
+  for (let part = 0; part < parts.length; part++) {
+    const payload = new Uint8Array(parts[part] * MiB);
+    for (let i = 0; i < payload.length; i++) {
+      seed ^= seed << 13;
+      seed ^= seed >>> 17;
+      seed ^= seed << 5;
+      // EPUB de fronteira inclui alternância 64KiB random/zero para o
+      // arquivo ZIP caber no teto de entrada de 250MiB e não exceder ratio.
+      payload[i] = sizeMiB > 128 && ((i >>> 16) & 1) === 0 ? 0 : seed & 255;
+    }
+    zip.file(paths[part], payload, { compression: 'DEFLATE' });
   }
-  zip.file('OPS/blob.bin', payload, { compression: 'DEFLATE' });
   return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
 }
 const browser = await chromium.launch({ headless: true,
@@ -100,10 +113,14 @@ try {
         try {
           const zip = await loadEpubInWorker('large.epub', bytes);
           if (!zip.validZip) throw new Error('Worker não abriu ZIP sintético');
-          const original = zip.files.get('OPS/blob.bin')?.bytes;
-          if (!original || ![1, 12, 48].map((n) => n * 1024 * 1024)
-              .includes(original.length)) {
-            throw new Error('Recurso binário não foi extraído');
+          const originalBytes = [...zip.files]
+            .filter(([path]) => /^OPS\\/blob(?:-\\d+)?\\.bin$/u.test(path))
+            .reduce((sum, [, entry]) => sum + entry.bytes.length, 0);
+          const expected = Number(input.files[0].name.match(/benchmark-(\\d+)\\.epub/u)?.[1])
+            * 1024 * 1024;
+          if (!Number.isFinite(expected) || !originalBytes ||
+              originalBytes !== expected) {
+            throw new Error('Recurso binário não foi extraído integralmente');
           }
           const repaired = await repairEpub('large.epub', bytes, {
             ...DEFAULT_REPAIR_OPTIONS, conservativeMode: true,
@@ -113,7 +130,7 @@ try {
             throw new Error('Reparo não preservou arquivo maior');
           }
           return { outputBytes: repaired.blob.size, heartbeatTicks: ticks,
-            inputBytes: bytes.length, resourceBytes: original.length };
+            inputBytes: bytes.length, resourceBytes: originalBytes };
         } finally {
           clearInterval(heartbeat);
         }
