@@ -1,3 +1,6 @@
+import type { PackageDocumentInfo } from '../model/opfTypes';
+import type { RepairAction } from '../model/repairTypes';
+
 /**
  * Remoção estritamente opt-in e estrutural de metadados EXIF/XMP/Photoshop.
  * Nunca reencoda pixels, não reinterpreta ICC/gAMA ou outras tags editoriais.
@@ -116,7 +119,8 @@ function png(original: Uint8Array): MetadataStripResult {
       else skipped = 'EXIF PNG retido: orientação ambígua';
     } else if (name === 'iTXt' || name === 'tEXt' || name === 'zTXt') {
       if (ascii(original, data, 'XML:com.adobe.xmp\0')) type = 'XMP';
-      if (ascii(original, data, 'Raw profile type exif\0')) type = 'EXIF';
+      if (ascii(original, data, 'Raw profile type exif\0'))
+        skipped = 'EXIF textual PNG preservado por orientação não comprovada';
       if (ascii(original, data, 'Photoshop\0')) type = 'Photoshop';
     }
     if (type) removed.push(type);
@@ -148,8 +152,13 @@ function webp(original: Uint8Array): MetadataStripResult {
     const end = at + 8 + size + (size & 1);
     if (end > original.length || !Number.isSafeInteger(end)) break;
     if (name === 'VP8X') vp8xOffset = at;
-    if (name === 'EXIF') removed.push('EXIF');
-    else if (name === 'XMP ') removed.push('XMP');
+    if (name === 'EXIF') {
+      // WebP EXIF começa diretamente com TIFF, cuja orientação pode
+      // rotacionar a figura. Nunca apagar orientação não convencional.
+      if (safeTiffOrientation(original, at + 8, at + 8 + size)) {
+        removed.push('EXIF');
+      } else chunks.push(original.subarray(at, end));
+    } else if (name === 'XMP ') removed.push('XMP');
     else chunks.push(original.subarray(at, end));
     at = end;
   }
@@ -178,4 +187,41 @@ export function stripImageMetadata(
   if (mime === 'image/png') return png(bytes);
   if (mime === 'image/webp') return webp(bytes);
   return { bytes, removed: [], skipped: 'Formato sem limpeza metadata implementada' };
+}
+
+/** Aplica somente a candidatos identificados no relatório original. */
+export function stripEpubImageMetadata(
+  files: Map<string, Uint8Array>,
+  pkg: PackageDocumentInfo,
+  candidates: ReadonlySet<string>,
+): RepairAction[] {
+  const actions: RepairAction[] = [];
+  const seen = new Set<string>();
+  for (const item of pkg.manifest) {
+    const path = item.resolvedPath;
+    if (!item.exists || !candidates.has(path) || seen.has(path)) continue;
+    seen.add(path);
+    const bytes = files.get(path);
+    if (!bytes) continue;
+    const changed = stripImageMetadata(bytes, item.mediaType);
+    if (changed.removed.length && changed.bytes !== bytes) {
+      files.set(path, changed.bytes);
+      actions.push({
+        type: 'normalized',
+        title: 'Metadados de imagem removidos com consentimento',
+        detail: 'Removidos ' + [...new Set(changed.removed)].join(', ') +
+          ' sem recomprimir pixels. Perfil ICC preservado e original intacto.',
+        file: path,
+      });
+    }
+    if (changed.skipped) {
+      actions.push({
+        type: 'skipped',
+        title: 'Metadados preservados por segurança',
+        detail: changed.skipped,
+        file: path,
+      });
+    }
+  }
+  return actions;
 }

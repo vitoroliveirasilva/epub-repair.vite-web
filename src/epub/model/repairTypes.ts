@@ -16,6 +16,8 @@ export interface RepairOptions {
   repairCssReferences: boolean;
   /** Opt-in: transforma imagens ausentes em marcadores textuais visíveis. */
   replaceMissingImagesWithText: boolean;
+  /** Consentimento explícito para eliminar EXIF/XMP/Photoshop reconhecidos. */
+  stripImageMetadata?: boolean | undefined;
 }
 
 export interface RepairAction {

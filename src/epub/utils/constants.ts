@@ -95,4 +95,5 @@ export const DEFAULT_REPAIR_OPTIONS: RepairOptions = {
   removeRemoteResourceLinks: false,
   repairCssReferences: true,
   replaceMissingImagesWithText: false,
+  stripImageMetadata: false,
 };

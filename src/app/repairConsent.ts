@@ -8,6 +8,10 @@ export function potentialEditorialChanges(
   const changes: string[] = [];
   const codes = new Set(report?.issues.map((issue) => issue.code) ?? []);
 
+  if (options.stripImageMetadata && codes.has('IMAGE_EMBEDDED_METADATA')) {
+    changes.push('EXIF, XMP e dados Photoshop de imagens podem ser removidos. ' +
+      'Dados autorais podem desaparecer; orientação insegura será preservada.');
+  }
   if (options.replaceMissingImagesWithText &&
     codes.has('CONTENT_MISSING_RESOURCE')) {
     changes.push('Imagens ausentes podem ser substituídas por texto visível.');
@@ -38,6 +42,7 @@ export function buildRepairConsentMessage(
   const relevantCodes = new Set([
     'CONTENT_MISSING_RESOURCE', 'CONTENT_SCRIPTED', 'CONTENT_UNSAFE_STYLE',
     'CONTENT_UNSAFE_URL', 'CONTENT_UNSAFE_EMBED', 'CONTENT_KINDLE_EMBED_BROKEN',
+    'IMAGE_EMBEDDED_METADATA',
   ]);
   const files = Array.from(new Set((report?.issues ?? [])
     .filter((issue) => relevantCodes.has(issue.code) && Boolean(issue.file))
