@@ -16,6 +16,7 @@ export function auditPreservation(
   before: PackageDocumentInfo,
   after: PackageDocumentInfo | undefined,
   approvedMetadataCleanup: ReadonlySet<string> = new Set(),
+  approvedCoverReplacement?: { path: string; bytes: Uint8Array },
 ): string[] {
   const warnings: string[] = [];
   if (!after) return ['Não foi possível confirmar a estrutura editorial após o reparo.'];
@@ -126,6 +127,9 @@ export function auditPreservation(
       if (item.mediaType === 'image/svg+xml') {
         compareSvgPreservation(textDecoder.decode(oldBytes), textDecoder.decode(newBytes),
           item.resolvedPath);
+      } else if (approvedCoverReplacement?.path === item.resolvedPath &&
+          sameBytes(approvedCoverReplacement.bytes, newBytes)) {
+        // A imagem da capa foi escolhida explicitamente pelo usuário.
       } else if (approvedMetadataCleanup.has(item.resolvedPath) &&
           sameBytes(stripImageMetadata(oldBytes, item.mediaType).bytes, newBytes)) {
         // Somente a transformação exata de metadados previamente autorizada.

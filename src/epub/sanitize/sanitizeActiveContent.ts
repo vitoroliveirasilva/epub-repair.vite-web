@@ -1,3 +1,4 @@
+import { cssCodePosition } from '../utils/cssContexts';
 import {
   decodeCssEscapes,
   isInlineFontDataUrl,
@@ -162,9 +163,13 @@ export function containsDangerousCss(text: string): boolean {
   // CSS permite escapes e comentários entre partes de tokens. Canonicalizar
   // para DETECÇÃO apenas; nunca reescrever todo o CSS com esta transformação.
   const canonical = decodeCssEscapes(text.replace(/\/\*[\s\S]*?\*\//gu, ''));
-  if (/expression\s*\(|behavior\s*:|-moz-binding\s*:/iu.test(canonical)) return true;
+  const isCode = cssCodePosition(canonical);
+  for (const marker of canonical.matchAll(/expression\s*\(|behavior\s*:|-moz-binding\s*:/giu)) {
+    if (isCode(marker.index)) return true;
+  }
 
   for (const match of canonical.matchAll(/url\(\s*(["']?)(.*?)\1\s*\)/giu)) {
+    if (!isCode(match.index)) continue;
     const value = decodeCssEscapes(match[2] ?? '');
     if (isRemoteUrl(value) && !isSafeRemoteResourceUrl(value) && !isInlineFontDataUrl(value) &&
         !isSafeInlineImageDataUrl(value)) {
@@ -173,6 +178,7 @@ export function containsDangerousCss(text: string): boolean {
   }
 
   for (const match of canonical.matchAll(/@import\s+(?:url\(\s*)?(?:(["'])(.*?)\1|([^"'\s);]+))/giu)) {
+    if (!isCode(match.index)) continue;
     const value = decodeCssEscapes(match[2] || match[3] || '');
     if (isRemoteUrl(value) && !isSafeRemoteResourceUrl(value)) return true;
   }
@@ -198,7 +204,10 @@ function sanitizeDangerousEmbeddedCss(css: string): string {
     /(^|[;{])\s*[-\w]+\s*:[^;{}]*?expression\s*\([^;{}]*(?=[;}]|$)/giu,
     '$1',
   );
-  result = result.replace(/url\(\s*(["']?)(.*?)\1\s*\)/giu, (full, _quote: string, value: string) => {
+  const isCode = cssCodePosition(result);
+  result = result.replace(/url\(\s*(["']?)(.*?)\1\s*\)/giu,
+    (full, _quote: string, value: string, offset: number) => {
+    if (!isCode(offset)) return full;
     const decoded = decodeCssEscapes(value);
     if (isRemoteUrl(decoded) && !isSafeRemoteResourceUrl(decoded) && !isInlineFontDataUrl(decoded) &&
         !isSafeInlineImageDataUrl(decoded)) {

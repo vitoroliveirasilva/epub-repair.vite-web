@@ -30,11 +30,6 @@ export function extractHtmlResourceReferences(text: string): ResourceReference[]
     }
   }
 
-  const kindleEmbedRegex = /kindle:embed:[^\s"'<>)]*/giu;
-  while ((match = kindleEmbedRegex.exec(text)) !== null) {
-    const value = match[0]?.trim();
-    if (value) refs.push({ attr: 'kindle:embed', value, raw: value });
-  }
 
   return refs;
 }
@@ -107,20 +102,8 @@ export function extractDocumentResourceReferences(doc: Document): ResourceRefere
     }
   }
 
-  // Kindle embeds que existem como texto visível também são detectados;
-  // ignorar comentários, CDATA isolada e pseudo-atributos dentro deles.
-  const nodes: Node[] = [doc.documentElement];
-  while (nodes.length > 0) {
-    const node = nodes.pop()!;
-    if (node.nodeType === 8) continue; // Comentário XML/HTML
-    if (node.nodeType === 3) {
-      for (const match of (node.nodeValue ?? '').matchAll(/kindle:embed:[^\s"'<>)]*/giu)) {
-        const raw = match[0];
-        if (raw) refs.push({ attr: 'kindle:embed', value: raw, raw });
-      }
-    }
-    // Pilha explícita evita stack overflow em documentos XHTML aninhados.
-    for (const child of Array.from(node.childNodes).reverse()) nodes.push(child);
-  }
+  // Referências Kindle em texto visível podem ser exemplos de livro técnico.
+  // Somente atributos DOM reais entram no inventário de recursos.
+
   return refs;
 }

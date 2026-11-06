@@ -29,6 +29,19 @@ export function validateCoverConsistency(loaded: LoadedEpub, pkg: PackageDocumen
   const byId = new Map(pkg.manifest.map((item) => [item.id, item]));
   const metaItem = legacy ? byId.get(legacy) : undefined;
   const declaredImages = pkg.manifest.filter((item) => item.properties.includes('cover-image'));
+  const isCoverImage = (mediaType: string): boolean => /^image\/(?:jpe?g|png)$/iu.test(mediaType);
+  if (metaItem && !isCoverImage(metaItem.mediaType)) {
+    notify('COVER_DECLARATIONS_CONFLICT', pkg.opfPath,
+      'meta name="cover" aponta para item que não é imagem JPEG/PNG de capa. ' +
+      'A página XHTML de rosto não substitui a declaração da imagem oficial.');
+  }
+  for (const item of declaredImages) {
+    if (!isCoverImage(item.mediaType)) {
+      notify('COVER_DECLARATIONS_CONFLICT', pkg.opfPath,
+        'properties="cover-image" está associado a um recurso que não é imagem JPEG/PNG: ' +
+        item.resolvedPath);
+    }
+  }
 
   if (metaItem && declaredImages.length === 1 &&
       metaItem.resolvedPath !== declaredImages[0]?.resolvedPath) {

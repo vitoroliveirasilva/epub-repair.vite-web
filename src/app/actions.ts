@@ -86,7 +86,10 @@ export async function analyzeCurrentFile(
     const report = inspectLoadedEpub(state.payload.file.name, state.payload.bytes.length, loaded);
     throwIfProcessingAborted(context.signal);
     state.report = report;
-    state.repairResult = undefined;
+    // Revalidar a cópia atual não descarta um download já produzido.
+    if (state.repairResult?.fileName !== state.payload.file.name) {
+      state.repairResult = undefined;
+    }
     state.message = canRepairReport(report)
       ? 'Análise concluída no navegador.'
       : readyWithoutRequiredRepairMessage(report);
@@ -147,6 +150,14 @@ export async function repairCurrentFile(
       return;
     }
 
+    // Cada operação futura deve partir da última cópia efetivamente entregue.
+    // O original permanece separado para auditoria e comparação.
+    const repairedBytes = new Uint8Array(await result.blob.arrayBuffer());
+    throwIfProcessingAborted(context.signal);
+    state.payload = {
+      file: new File([result.blob], result.fileName, { type: 'application/epub+zip' }),
+      bytes: repairedBytes,
+    };
     state.repairResult = result;
     state.lastRepairOptions = appliedOptions;
     state.report = result.after;
@@ -168,7 +179,7 @@ export async function loadCoverImageIntoState(file: File, state: AppState, signa
   const image = await readCoverImageFile(file);
   throwIfProcessingAborted(signal);
   state.coverImage = image;
-  state.repairResult = undefined;
+  // Selecionar capa não descarta a cópia reparada ainda disponível para download.
   state.error = undefined;
   state.message = 'Nova capa carregada, confira a prévia e aplique quando quiser.';
 }

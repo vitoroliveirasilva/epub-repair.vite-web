@@ -247,8 +247,10 @@ export function buildCoverReportInfo(
   entries?: ReadonlyMap<string, Pick<EpubEntry, 'bytes'>>,
 ): CoverReportInfo {
   const candidate = findCoverImageCandidate(pkg, entries);
-  const selected = pkg.coverItem ?? candidate;
-  const declared = Boolean(pkg.coverMetaDeclared && pkg.coverItem?.exists);
+  const declaredCover = pkg.coverItem?.exists &&
+    isCoverCompatibleImage(pkg.coverItem.mediaType) ? pkg.coverItem : undefined;
+  const selected = declaredCover ?? candidate;
+  const declared = Boolean(pkg.coverMetaDeclared && declaredCover);
 
   if (!selected) {
     return {

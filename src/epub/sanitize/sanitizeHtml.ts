@@ -152,10 +152,8 @@ function replaceBrokenKindleEmbeds(
       return '<p>[Conteúdo Kindle indisponível]</p>';
     },
   );
-  output = output.replace(/kindle:embed:[^\s"'<>)]*/giu, (value) => {
-    changed = true;
-    return `[Conteúdo Kindle indisponível: ${escapeHtml(value)}]`;
-  });
+  // Referências Kindle são neutralizadas somente quando aparecem em atributos
+  // ou elementos reais. Texto literal de livros técnicos deve permanecer intacto.
 
   if (changed) {
     actions.push({
