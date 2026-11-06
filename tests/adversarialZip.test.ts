@@ -63,17 +63,21 @@ describe('arquivos EPUB maliciosos e ZIPs corrompidos', () => {
     expect(loaded.issues.some((issue) => /CRC32/u.test(issue.detail))).toBe(true);
   });
 
-  it('E-021: rejeita nomes ZIP CP437 não decodificáveis sem corromper nomes', async () => {
+  it('E-021: decodifica nome CP437 mas não inventa um mimetype ausente', async () => {
     const original = await buildKindleIssueEpub();
     const input = corrupt(original, ({ view, central, local }) => {
-      // Substitui o primeiro byte do nome nos dois cabeçalhos por byte CP437 não UTF-8.
+      // CP437 0x82 equivale a é, não U+FFFD. Altera o mimetype de propósito.
       view.setUint8(local + 30, 0x82);
       view.setUint8(central + 46, 0x82);
     });
     const issues = parseZipCentralDirectory(input).issues;
     expect(issues.some((issue) => issue.code === 'ZIP_UNSUPPORTED_FILENAME_ENCODING'))
-      .toBe(true);
-    expect((await loadEpub('cp437.epub', input)).validZip).toBe(false);
+      .toBe(false);
+    expect(issues.some((issue) => issue.code === 'MIME_MISSING')).toBe(true);
+    const loaded = await loadEpub('cp437.epub', input);
+    expect(loaded.validZip).toBe(true);
+    expect(loaded.files.has('éimetype')).toBe(true);
+    expect(loaded.files.has('mimetype')).toBe(false);
   });
 
   it('E-024: acusa UTF-8 inválido mesmo com bit de codificação ativado', async () => {
