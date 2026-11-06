@@ -249,11 +249,8 @@ export function guessOpfPath(fileNames: string[]): string | undefined {
     'package.opf',
   ];
 
-  return (
-    preferred.map((candidate) => opfs.find((opf) =>
-      opf.toLowerCase() === candidate.toLowerCase())).find(Boolean),
-    ) ?? opfs[0]
-  );
+  return preferred.map((candidate) => opfs.find((opf) =>
+    opf.toLowerCase() === candidate.toLowerCase())).find((path) => Boolean(path)) ?? opfs[0];
 }
 
 function bytesToText(bytes: Uint8Array): string {
