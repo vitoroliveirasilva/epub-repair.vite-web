@@ -54,7 +54,7 @@ jobs:
       - name: Enable KVM on Linux runner for Android AVD
         shell: bash
         run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static=node"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - name: Boot Android 15 emulator and run native Chrome EPUB test
@@ -69,8 +69,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: |
             adb reverse tcp:5173 tcp:5173
-            PLAYWRIGHT_MODULE="${RUNNER_TEMP}/android-harness/node_modules/playwright/index.mjs" \
-              node tests/android-emulator-flow.mjs
+            PLAYWRIGHT_MODULE="$RUNNER_TEMP/android-harness/node_modules/playwright/index.mjs" node tests/android-emulator-flow.mjs
       - name: Archive mobile OS evidence
         if: always()
         uses: actions/upload-artifact@v4
