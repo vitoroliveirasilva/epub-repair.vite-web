@@ -79,7 +79,7 @@ nunca tratados como sucesso enquanto não concluírem upload e download reais.
 | E-114 | Scanner CSS agora distingue strings e comentários de recursos ativos | `tests/epub-third-wave-core.test.ts` protege texto literal `content:"url(...)"` |
 | E-115 | Meta de capa apontando XHTML, ou `cover-image` aplicado a item não imagem, gera revisão; não é anunciado como capa válida | `validateCoverConsistency`, `buildCoverReportInfo`; não adivinhar nova capa |
 | E-116 | Workflow iOS sem utilitário GNU `timeout` ausente no macOS | `.github/workflows/ios-simulator.yml`; execução Appium no simulador é gate separado |
-| E-117 | Workflow Android usa imagem Google APIs userdebug, em lugar de imagem Google Play restrita | `.github/workflows/android-emulator.yml`; endpoint CDP e download ainda precisam de execução confirmada |
+| E-117 | Workflow Android usa imagem Google APIs userdebug e tenta Playwright AndroidDevice.launchBrowser quando CDP não é exposto | `.github/workflows/android-emulator.yml` e `tests/android-emulator-flow.mjs`; download nativo ainda precisa de execução confirmada |
 | E-118 | CSS exclusivo para capa recebe atualização; CSS compartilhado é duplicado e só página de capa aponta à cópia | `coverReferenceScope.ts`, `forkSharedCoverStyles.ts`, testes com estilo compartilhado |
 | E-119 | Primeira página `0001.xhtml` essencialmente visual é reconhecida pela imagem existente ou fundo CSS, sem inferir capa em capítulos com prosa | `tests/epub-third-wave-cover.test.ts` |
 | E-120 | Exemplos Kindle são preservados em texto e anotados como informativos; somente atributos reais são reparáveis | `sanitizeHtml.ts`, `referenceExtractor.ts`, `validateContentReferences.ts` |

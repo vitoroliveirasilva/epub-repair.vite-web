@@ -12,7 +12,7 @@ import { pathToFileURL } from 'node:url';
  */
 const playwrightFile = process.env.PLAYWRIGHT_MODULE;
 assert.ok(playwrightFile, 'PLAYWRIGHT_MODULE ausente');
-const { chromium } = await import(pathToFileURL(playwrightFile).href);
+const { chromium, _android } = await import(pathToFileURL(playwrightFile).href);
 function adb(...args) {
   return execFileSync('adb', args, {
     encoding: 'utf8', timeout: 20_000,
@@ -51,6 +51,8 @@ console.log('Android AVD:',model,'OS:',version);
 const errors=[];
 const workers=[];
 let browser;
+let androidDevice;
+let androidContext;
 try {
   // Playwright._android.launchBrowser() requer flag manual
   // "Enable command line on non-rooted devices" e bloqueava o runner.
@@ -103,15 +105,24 @@ try {
         'android-mobile-web.png'),snap);
     }catch{ /* screenshot diagnostic only */ }
   }
-  assert.ok(versionInfo?.webSocketDebuggerUrl,
-    'Chrome Android não expôs endpoint CDP (nenhum socket funcional). '+ 
-    'Verificar Chrome first-run, developer debugging ou imagem Android AVD');
-  console.log('Android CDP socket escolhido:',connectedSocket);
-  console.log('Chrome Android CDP:',versionInfo.Browser);
-  browser=await chromium.connectOverCDP('http://127.0.0.1:9222',
-    {timeout:30000});
-  const context=browser.contexts()[0];
-  assert.ok(context,'CDP Android não disponibilizou contexto');
+  let context;
+  if (versionInfo?.webSocketDebuggerUrl) {
+    console.log('Android CDP socket escolhido:', connectedSocket);
+    console.log('Chrome Android CDP:', versionInfo.Browser);
+    browser = await chromium.connectOverCDP('http://127.0.0.1:9222',
+      { timeout: 30000 });
+    context = browser.contexts()[0];
+  } else {
+    // Fallback oficial de automação Android Playwright. Nunca usar Chromium desktop
+    // como substituto de um Chrome nativo e nunca declarar sucesso sem download real.
+    console.log('CDP não exposto; tentando AndroidDevice.launchBrowser.');
+    const devices = await _android.devices();
+    assert.ok(devices.length, 'Nenhum dispositivo AVD reconhecido pelo Playwright.');
+    androidDevice = devices[0];
+    androidContext = await androidDevice.launchBrowser();
+    context = androidContext;
+  }
+  assert.ok(context, 'Chrome Android nativo não disponibilizou contexto de navegação.');
   const page=context.pages()[0]??await context.newPage();
   page.on('pageerror',(error)=>errors.push(error.message));
   page.on('worker',(worker)=>workers.push(worker.url()));
@@ -183,7 +194,9 @@ try {
   } finally {
     await rm(dirname,{recursive:true,force:true});
   }
-} finally {
+ } finally {
+  await androidContext?.close();
   await browser?.close();
+  await androidDevice?.close();
   try{adb('forward','--remove','tcp:9222')}catch{/* cleanup */}
 }
