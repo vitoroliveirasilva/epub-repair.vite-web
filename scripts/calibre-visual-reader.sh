@@ -32,7 +32,7 @@ for mode in reflowable fixed-layout; do
   xdotool mousemove 240 180 click 1 || true
   focused="$(xdotool search --onlyvisible --pid "$viewer_pid" | tail -n 1 || true)"
   if [ -n "$focused" ]; then
-    xdotool windowactivate --sync "$focused" || true
+    timeout 5s xdotool windowactivate "$focused" || true
     xdotool key --window "$focused" Return || true
   fi
   xdotool key --clearmodifiers Return || true
