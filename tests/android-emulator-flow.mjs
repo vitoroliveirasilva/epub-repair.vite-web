@@ -59,18 +59,54 @@ try {
   adb('shell','am','force-stop','com.android.chrome');
   adb('shell','am','start','-a','android.intent.action.VIEW','-d',
     'http://127.0.0.1:5173/','com.android.chrome');
-  adb('forward','tcp:9222','localabstract:chrome_devtools_remote');
+  // Play Store builds differ in socket naming. Probe the *actual* Android
+  // Unix sockets; never pretend a desktop Chromium instance is Android.
+  const availableSockets = new Set(['chrome_devtools_remote']);
+  try {
+    for (const name of adb('shell','cat','/proc/net/unix')
+      .matchAll(/@((?:chrome|webview)_devtools_remote[^\s]*)/gu)) {
+      availableSockets.add(name[1]);
+    }
+  } catch { /* /proc may be restricted on newer Google Play images */ }
+  console.log('Android devtools socket candidates:', [...availableSockets]);
   let versionInfo;
-  for (let tries=0;tries<40;tries++){
+  let connectedSocket;
+  for (const socket of availableSockets) {
     try {
-      const response=await fetch('http://127.0.0.1:9222/json/version',
-        {signal:AbortSignal.timeout(3000)});
-      if(response.ok){ versionInfo=await response.json();break; }
-    }catch{ /* Chrome ainda inicializando */ }
-    await new Promise(resolve=>setTimeout(resolve,1500));
+      adb('forward','--remove','tcp:9222');
+    } catch { /* no previous forward */ }
+    try { adb('forward','tcp:9222','localabstract:'+socket); }
+    catch { continue; }
+    for (let tries=0;tries<8;tries++){
+      try {
+        const response=await fetch('http://127.0.0.1:9222/json/version',
+          {signal:AbortSignal.timeout(1500)});
+        if(response.ok) {
+          const candidate=await response.json();
+          if(candidate?.webSocketDebuggerUrl &&
+              /Chrome|Chromium/iu.test(candidate.Browser??'')){
+            versionInfo=candidate;connectedSocket=socket;break;
+          }
+        }
+      }catch{ /* socket not ready */ }
+      await new Promise(resolve=>setTimeout(resolve,1000));
+    }
+    if(versionInfo) break;
+  }
+  if(!versionInfo){
+    console.error('Chrome Android CDP indisponível. Diagnóstico: '+
+      adb('shell','dumpsys','activity','activities').slice(-2500));
+    try {
+      const snap=execFileSync('adb',['exec-out','screencap','-p'],
+        {timeout:10000});
+      await writeFile(join(process.env.RUNNER_TEMP??'.',
+        'android-mobile-web.png'),snap);
+    }catch{ /* screenshot diagnostic only */ }
   }
   assert.ok(versionInfo?.webSocketDebuggerUrl,
-    'Chrome Android não expôs endpoint CDP via adb forward');
+    'Chrome Android não expôs endpoint CDP (nenhum socket funcional). '+ 
+    'Verificar Chrome first-run, developer debugging ou imagem Android AVD');
+  console.log('Android CDP socket escolhido:',connectedSocket);
   console.log('Chrome Android CDP:',versionInfo.Browser);
   browser=await chromium.connectOverCDP('http://127.0.0.1:9222',
     {timeout:30000});
