@@ -193,7 +193,7 @@ function rewriteCss(
     if (!prefix) { out += ch; cursor += 1; continue; }
     const contentStart = cursor + prefix.length;
     const quote = source[contentStart] === '"' || source[contentStart] === "'"
-      ? source[contentStart]! : '';
+      ? source[contentStart] : '';
     const valueStart = contentStart + (quote ? 1 : 0);
     let valueEnd = valueStart;
     while (valueEnd < source.length) {
