@@ -1,13 +1,13 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 06/11/2026 (execução 18: 96/99, Kindle Previewer 4 e política de branches auditados) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 06/11/2026 (execução 19: 97/99, renderização de layouts em Calibre ebook-viewer real comprovada) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
 | Situação | Itens |
 | --- | ---: |
-| Concluídos no escopo definido, com CI Node 20/22 aprovada | **96** |
-| Parcialmente tratados, com testes/validação adicionais necessários | **3** |
+| Concluídos no escopo definido, com CI Node 20/22 aprovada | **97** |
+| Parcialmente tratados, com testes/validação adicionais necessários | **2** |
 | Não iniciados ou ainda não evidenciados | **0** |
 | Total | **99** |
 
@@ -100,7 +100,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-073 | P1 | Fluxo antes/depois com diffs de XHTML, CSS, OPF e NCX | Concluído · CI |
 | E-074 | P2 | Preservar tipografia, itálicos, travessões, espaçamento e estilos de diálogo | Concluído · CI |
 | E-075 | P2 | Tratamento opcional de EXIF/XMP/Photoshop/metadata de imagens | Concluído · CI |
-| E-076 | P2 | Checagem de apresentação em leitores reflowable/fixed layout, imagens e fontes | Parcial |
+| E-076 | P2 | Checagem de apresentação em leitores reflowable/fixed layout, imagens e fontes | Concluído · CI |
 | E-077 | P1 | Estados explícitos: seguro para reparar, revisão manual, parcial, otimização, inválido | Concluído · CI |
 | E-078 | P1 | Prévia e confirmação de operações destrutivas antes de executar | Concluído · CI |
 | E-079 | P1 | Indicador de ações não aplicadas e pendências remanescentes por item | Concluído · CI |
@@ -760,3 +760,39 @@ por colaboradores com permissão não é bloqueada por esta CI.
 **Três parciais:** E-076 (homologação GUI/layout do leitor),
 E-082 (Safari iOS e download real) e E-089 (dispositivos móveis reais).
 `prod` e release v2.2.0 intactas.
+
+## Execução 19: E-076 concluído com renderização visual do Calibre
+
+**Anterior:** 96 concluídos, 3 parciais, 0 pendentes.  
+**Atual: 97 concluídos, 2 parciais, 0 pendentes.**
+
+O teste **E-076** agora utiliza a GUI real do **Calibre ebook-viewer
+7.6.0**, renderizando dois EPUBs **reparados pelo motor** no ambiente
+gráfico Xvfb/Openbox Ubuntu, em janela de 1440×900.
+Os exemplos cobrem **texto reflowable** e **pre-paginated fixed layout**,
+CSS embutido, imagem SVG e manutenção de bytes exatos de XHTML/SVG.
+O script tira screenshot e confirma pelo menos 2.000 pixels da cor
+editorial esperada. São imagens efetivamente desenhadas pelo aplicativo,
+não uma comparação exclusivamente sintética de HTML ou do preview do Vite.
+
+**Evidências independentes, duas CIs aprovadas:**
+
+- [Calibre reader GUI run 42220639254](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42220639254):
+  **reflowable 81.170 pixels** da cor principal; **fixed-layout
+  42.657 pixels**; screenshots 1440×900.
+- [Calibre reader GUI run 42220831312](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42220831312):
+  mesmos testes de GUI e todos os quatro EPUBs adicionais importados.
+- [EPUBCheck/Node 20/22 run 42220989297](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42220989297) aprovado
+  com as fixtures visuais.
+
+**Limites:** detecção dos pixels prova que a ilustração foi renderizada
+e que o viewer abriu o arquivo em ambas as modalidades, mas não certifica
+alinhamento pixel-perfect de cada elemento, fontes customizadas de
+terceiros, performance em e-readers ou aparência em Apple Books.
+Os testes Kindle Previewer 4 comprovam conversão KPF, não aparência
+em tela Kindle. Dispositivos iOS/Android físicos permanecem nos
+itens E-082 e E-089.
+
+**Permanecem parciais apenas:** **E-082** (download Blob em Safari/iOS
+físico) e **E-089** (compatibilidade de dispositivos móveis reais).
+`prod` continua v2.2.0, sem merge.

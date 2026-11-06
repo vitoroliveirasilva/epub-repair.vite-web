@@ -110,3 +110,21 @@ concluiu **Chromium, Firefox e WebKit** com sucesso, incluindo
 download do EPUB e reabertura ZIP para verificar integridade e texto.
 Firefox usa viewport estreito sem fingir suporte à emulação nativa
 `isMobile`; WebKit em Linux não equivale a Safari iOS físico.
+
+## E-076: validação de renderização no Calibre ebook-viewer (06/11/2026)
+
+O `ebook-viewer` real, instalado no runner Ubuntu com display Xvfb e
+Openbox, abriu EPUBs **reparados** `visual-reflowable.epub` e
+`visual-fixed-layout.epub`. XHTML original, CSS e SVG ficam
+**byte-a-byte idênticos** nos ZIPs antes/depois do reparo.
+Capturas 1440×900 incluem 81.170 pixels da cor da imagem reflowable
+e 42.657 pixels da cor do exemplo fixed layout, ambas bem acima de
+2.000 exigidos pela CI. Resultados reproduzidos:
+[42220639254](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42220639254) e
+[42220831312](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42220831312).
+
+Verificação de cor e abertura NÃO é avaliação completa de
+pixel-perfect, layout tipográfico, acessibilidade de cada capítulo,
+fontes externas ou aparência Kindle/iPhone. E-076 conclui somente
+o critério de verificação automatizada de apresentação reflowable/
+fixed-layout e ilustração em leitor externo.

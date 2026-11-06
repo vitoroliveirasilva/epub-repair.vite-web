@@ -230,3 +230,16 @@ deploy-preview hospedado. Não significa que produção recebeu
   real e dispositivos móveis para os itens restantes.
 
 **96 concluídos, 3 parciais, 0 pendentes.**
+
+## Execução 19: critério visual e limitações
+
+E-076 passou no aplicativo gráfico Calibre 7.6 real, com EPUB
+reflowable e EPUB fixed-layout, imagem SVG, CSS, captura X11
+e checagem do número de pixels corretamente renderizados.
+Duas CIs independentes aprovaram; EPUBCheck também passa.
+A cobertura **não certifica** aparência no Apple Books/Kindle
+nem fontes externas de livros arbitrários.
+
+Saldo **97 concluídos / 2 parciais / 0 pendentes**.
+As pendências E-082 e E-089 exigem dispositivo físico e navegador
+móvel nativo; emulação não equivale a homologação física.

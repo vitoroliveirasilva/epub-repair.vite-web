@@ -60,3 +60,16 @@ Esses três arquivos também foram aceitos pelo Calibre CLI real
 no Ubuntu e pelo EPUBCheck 5.4.0. **O resultado KPF não garante a
 aparência visual de cada página nem o comportamento de um dispositivo
 Kindle físico.** A checagem específica visual permanece no E-076.
+
+## Calibre ebook-viewer GUI aprovada em duas execuções
+
+Além de `ebook-meta`/`ebook-convert`, o pipeline instala Calibre
+7.6.0 e abre o **ebook-viewer** no Xvfb/Openbox. Testa livro
+reflowable e livro fixed-layout com SVG, CSS e texto XHTML preservados;
+cada screenshot 1440×900 deve conter mais de 2.000 pixels da cor
+esperada. Foram observados **81.170** e **42.657**, respectivamente.
+
+Execuções: [42220639254](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42220639254) e
+[42220831312](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42220831312), ambas verdes.
+A validação é gráfica real do Calibre e adicional ao Kindle Previewer
+4 CLI, sem implicar homologação física em Kindle/iPhone.

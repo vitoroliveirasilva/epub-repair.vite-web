@@ -152,3 +152,15 @@ a saída pelo EPUBCheck oficial 5.4.0. Em NCX inválido/ambíguo, a geração
 retorna ao fallback conhecido em vez de inventar capítulos ou reordenar
 o livro. A ferramenta não assume autoridade para modificar hierarquias
 editoriais que exijam julgamento humano.
+
+### Checagem em leitor real para apresentação EPUB 3
+
+Em 06/11/2026, a CI abriu os EPUBs sintéticos reflowable e
+pre-paginated **reparados** no Calibre ebook-viewer 7.6.0, em X11.
+A prova de screenshot confirmou a ilustração SVG e a preservação
+exata de XHTML/CSS por testes ZIP. Ver execuções
+[42220639254](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42220639254) e
+[42220831312](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42220831312).
+
+Essa evidência fecha a apresentação automatizada E-076, mas não cobre
+Apple Books, hardware Kindle ou 100% das fontes e páginas possíveis.
