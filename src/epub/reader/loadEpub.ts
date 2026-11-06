@@ -61,7 +61,11 @@ export async function loadEpub(
   try {
     zip = await JSZip.loadAsync(bytes, {
       checkCRC32: false,
-      decodeFileName: (raw) => decodeZipFileName(raw),
+      decodeFileName: (raw) => decodeZipFileName(
+        raw instanceof Uint8Array ? raw : Uint8Array.from(
+          raw.map((character) => character.charCodeAt(0)),
+        ),
+      ),
     });
   } catch (error) {
     return {
