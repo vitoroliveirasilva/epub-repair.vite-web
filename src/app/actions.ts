@@ -114,7 +114,9 @@ export async function repairCurrentFile(
     state.report = currentReport;
 
     const canRunRequiredRepair = canRepairReport(currentReport);
-    const canRunOptionalOptimization = canOptimizeReport(currentReport);
+    const canRunOptionalOptimization = canOptimizeReport(currentReport) ||
+      Boolean(appliedOptions.stripImageMetadata &&
+        currentReport.issues.some((issue) => issue.code === 'IMAGE_EMBEDDED_METADATA'));
 
     if (!canRunRequiredRepair && !canRunOptionalOptimization) {
       state.repairResult = undefined;

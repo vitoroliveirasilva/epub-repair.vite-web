@@ -25,7 +25,10 @@ export function renderControls(
   const hasRepair = Boolean(state.repairResult?.changed && state.repairResult.blob);
   const hasFatalIssues = Boolean(state.report?.stats.fatalCount);
   const canRepair = canRepairReport(state.report);
-  const canOptimize = canOptimizeReport(state.report);
+  const canOptimize = canOptimizeReport(state.report) ||
+    Boolean(!canRepair && state.options.stripImageMetadata &&
+      state.report?.validZip && state.report.stats.fatalCount === 0 &&
+      state.report.issues.some((issue) => issue.code === 'IMAGE_EMBEDDED_METADATA'));
 
   const primaryActionButtons = buildPrimaryActionButtons(state, actions, {
     hasFile,
@@ -235,7 +238,7 @@ function controlsDescription(state: AppState): string {
 function repairButtonTitle(state: AppState, canRepair: boolean, canOptimize: boolean): string {
   if (canRepair) return 'Gerar uma cópia corrigida do EPUB';
   if (canOptimize) {
-    return 'Tentar aplicar melhorias opcionais, como converter JPEG progressivo para baseline quando o navegador permitir.';
+    return 'Aplicar otimizações opcionais, incluindo remoção de EXIF/XMP/Photoshop se selecionada, ou converter JPEG progressivo quando possível.';
   }
   if (hasOptionalOptimizations(state.report)) {
     return 'O EPUB tem somente notas opcionais, mas nenhuma delas pode ser aplicada automaticamente neste estado.';

@@ -29,6 +29,10 @@ export function getWorkflowState(state: AppState): WorkflowState {
   if (!report.validZip || report.stats.fatalCount > 0) return 'invalid';
   if (canRepairReport(report)) return 'repairable';
   if (hasManualReviewIssues(report)) return 'manual-review';
-  if (canOptimizeReport(report)) return 'optimization';
+  if (canOptimizeReport(report) ||
+      (state.options.stripImageMetadata &&
+       report.issues.some((issue) => issue.code === 'IMAGE_EMBEDDED_METADATA'))) {
+    return 'optimization';
+  }
   return 'ready';
 }

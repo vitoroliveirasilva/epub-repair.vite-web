@@ -14,6 +14,7 @@ import { assertNoNewCriticalIssues } from './repairSafety';
 import { ensureContainerFile } from './repairContainer';
 import { repairActiveContentOnly, repairContentDocuments } from './repairContentDocuments';
 import { repairImageCompatibility } from './repairImages';
+import { stripEpubImageMetadata } from './stripImageMetadata';
 import { repairKindleCompatibility } from './repairKindleCompatibility';
 import { repairOpfDocument } from './repairOpf';
 import { synchronizeManifestProperties } from './synchronizeManifestProperties';
@@ -42,7 +43,13 @@ export async function repairEpub(
 
   const canRunRequiredRepair = canRepairReport(before);
   const canRunOptionalOptimization = canOptimizeReport(before);
-  const shouldRun = mode === 'optimization' ? canRunOptionalOptimization : canRunRequiredRepair;
+  const metadataCandidates = new Set(before.issues
+    .filter((issue) => issue.code === 'IMAGE_EMBEDDED_METADATA' && Boolean(issue.file))
+    .map((issue) => issue.file!));
+  const canStripMetadata = Boolean(options.stripImageMetadata && metadataCandidates.size);
+  const shouldRun = mode === 'optimization'
+    ? canRunOptionalOptimization || canStripMetadata
+    : canRunRequiredRepair || canStripMetadata;
   const operation = mode === 'optimization' ? 'optimization' : 'repair';
 
   if (!shouldRun) {
@@ -77,6 +84,11 @@ export async function repairEpub(
     const optimizedFiles = new Map<string, Uint8Array>();
     for (const [path, entry] of loaded.files) optimizedFiles.set(path, entry.bytes);
     const attempted = await repairImageCompatibility(optimizedFiles, parsed.packageInfo, options);
+    canceled();
+    if (canStripMetadata) {
+      attempted.push(...stripEpubImageMetadata(optimizedFiles, parsed.packageInfo,
+        metadataCandidates));
+    }
     canceled();
     const applied = attempted.filter((action) => action.type !== 'skipped');
     warnings.push(...attempted.filter((action) => action.type === 'skipped')
@@ -186,6 +198,10 @@ export async function repairEpub(
     actions.push(...synchronizeManifestProperties(files, parsed.packageInfo));
   }
   // E-009: JPEG progressivo só muda na otimização explicitamente solicitada.
+  // E-075: metadados somente com opt-in, sem alterar pixels, e com revalidação.
+  if (canStripMetadata) {
+    actions.push(...stripEpubImageMetadata(files, currentPkg, metadataCandidates));
+  }
 
   const appliedActions = actions.filter((action) => action.type !== 'skipped');
   const skippedActions = actions.filter((action) => action.type === 'skipped');

@@ -119,3 +119,22 @@ Fontes normativas:
 
 Não presumir atualização automática de minor version nem afirmar
 que as suites externas completas de EPUB 3.4 foram executadas.
+
+## Limpeza opcional de metadados EXIF/XMP/Photoshop (E-075)
+
+A opção **Remover metadados pessoais das imagens** fica desligada por padrão.
+O usuário precisa marcar a opção e aprovar a confirmação antes de gerar
+uma cópia nova. O reparo reconhece JPEG, PNG e WebP sem recomprimir pixels.
+
+- JPEG: remover APP1 EXIF/XMP e APP13 Photoshop reconhecidos; conservar
+  APP2 ICC e bitstream de imagem. EXIF com orientação diferente de 1 ou
+  sem leitura confiável fica intacto.
+- PNG: retirar chunks eXIf/XMP/Photoshop reconhecidos, conservar IDAT,
+  perfil de cor, outros chunks e CRCs.
+- WebP: remover chunks EXIF/XMP em RIFF/VP8X coerentes; reajustar flags e
+  tamanho RIFF, preservar ICC, animação e demais imagens.
+- Exceções conservadoras: arquivos inconsistentes, tags EXIF com orientação
+  ambígua ou não-padrão não sofrem remoção perigosa.
+
+A limpeza **não comprova anonimização completa**; metadados de outros
+tipos podem persistir. O EPUB é revalidado antes de disponibilizar a saída.
