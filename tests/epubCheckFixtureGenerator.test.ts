@@ -204,7 +204,80 @@ async function createMissingNavFromNcxSpecimen(): Promise<Uint8Array> {
   return z.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
 }
 
+
+/**
+ * E-076: dois livros de apresentação visual com conteúdo editorial, CSS,
+ * imagem SVG e layout distinto. Ambos precisam de reparo real do OCF.
+ */
+function createVisualReaderSpecimen(fixed: boolean): Promise<Uint8Array> {
+  const zip=new JSZip();
+  zip.file('META-INF/container.xml',
+    '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">' +
+    '<rootfiles><rootfile full-path="OPS/book.opf" ' +
+    'media-type="application/oebps-package+xml"/></rootfiles></container>');
+  zip.file('OPS/book.opf',
+    '<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">' +
+    '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">' +
+    '<dc:identifier id="uid">urn:uuid:reader-visual-' +
+    (fixed?'fixed':'reflow') + '</dc:identifier><dc:title>Reader Visual</dc:title>' +
+    '<dc:language>pt-BR</dc:language>' +
+    '<meta property="dcterms:modified">2026-11-06T12:00:00Z</meta>' +
+    (fixed?'<meta property="rendition:layout">pre-paginated</meta>':'') +
+    '</metadata><manifest>' +
+    '<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>' +
+    '<item id="ch" href="chapter.xhtml" media-type="application/xhtml+xml"/>' +
+    '<item id="fig" href="image.svg" media-type="image/svg+xml"/>' +
+    '</manifest><spine><itemref idref="ch"/></spine></package>');
+  zip.file('OPS/nav.xhtml',
+    '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">' +
+    '<head><title>Sumário</title></head><body><nav epub:type="toc"><ol>' +
+    '<li><a href="chapter.xhtml">Visual</a></li></ol></nav></body></html>');
+  zip.file('OPS/chapter.xhtml',
+    '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Conteúdo visual</title>' +
+    (fixed?'<meta name="viewport" content="width=800, height=600"/>':'') +
+    '<style type="text/css">body{margin:16px;font-family:serif;color:#172333}' +
+    'h1{font-size:28px;font-weight:bold}.art{display:block;width:500px;height:230px}' +
+    (fixed?'.art{position:absolute;left:120px;top:160px}':'') +
+    '</style></head><body>' +
+    '<h1>' + (fixed?'Prancha fixa':'Capítulo reflowable') + '</h1>' +
+    '<p>Texto autoral precisa manter tipografia, imagem e ordem.</p>' +
+    '<img class="art" src="image.svg" alt="Ilustração editorial colorida"/>' +
+    '</body></html>');
+  zip.file('OPS/image.svg',
+    '<svg xmlns="http://www.w3.org/2000/svg" width="500" height="230" ' +
+    'viewBox="0 0 500 230"><rect width="500" height="230" fill="' +
+    (fixed?'#ad39ba':'#10b4c9') + '"/>' +
+    '<circle cx="250" cy="115" r="56" fill="#ffdd39"/></svg>');
+  return zip.generateAsync({type:'uint8array',compression:'DEFLATE'});
+}
+
 describe('Fixture sintética de conformidade oficial', () => {
+  for(const profile of ['reflowable','fixed-layout'] as const) {
+    it('E-076: exporta EPUB reparado para Calibre ebook-viewer ' + profile,
+      async()=>{
+        const source=await createVisualReaderSpecimen(profile==='fixed-layout');
+        const result=await repairEpub('visual-'+profile+'.epub',source,{
+          ...DEFAULT_REPAIR_OPTIONS,conservativeMode:true,
+        });
+        expect(result.changed).toBe(true);
+        expect(result.after.stats.fatalCount).toBe(0);
+        expect(result.blob).toBeDefined();
+        const original=await JSZip.loadAsync(source);
+        const repaired=await JSZip.loadAsync(await result.blob!.arrayBuffer());
+        for(const path of ['OPS/chapter.xhtml','OPS/image.svg']){
+          expect(await repaired.file(path)!.async('string'))
+            .toBe(await original.file(path)!.async('string'));
+        }
+        const out=process.env.EPUBCHECK_FIXTURE_OUTPUT;
+        if(out){
+          await mkdir(out,{recursive:true});
+          await writeFile(join(out,'visual-'+profile+'.epub'),
+            Buffer.from(await result.blob!.arrayBuffer()));
+        }
+      },30000);
+  }
+
+
   it('E-068: gera NAV hierárquico a partir de NCX autoral para EPUBCheck', async () => {
     const original = await createMissingNavFromNcxSpecimen();
     const output = await repairEpub('ncx-hierarchy.epub', original, {
