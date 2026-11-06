@@ -4,7 +4,7 @@ import type { Issue } from '../model/issueTypes';
 import { HTML_MEDIA_TYPES } from '../utils/constants';
 import { createIssue } from '../utils/issueFactory';
 import { isRemoteUrl, resolveReference } from '../utils/pathUtils';
-import { parseXml } from '../utils/xmlUtils';
+import { parseHtml, parseXml } from '../utils/xmlUtils';
 
 /** Verifica fragmentos locais sem exigir que todo capítulo esteja no índice. */
 export function validateInternalAnchors(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
@@ -20,7 +20,10 @@ export function validateInternalAnchors(loaded: LoadedEpub, pkg: PackageDocument
     }
     try {
       const text = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
-      const document = parseXml(text.replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml');
+      const mediaType = pkg.manifest.find((item) => item.resolvedPath === path)?.mediaType;
+      const document = mediaType === 'text/html'
+        ? parseHtml(text)
+        : parseXml(text.replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml');
       parsed.set(path, document);
       return document;
     } catch {

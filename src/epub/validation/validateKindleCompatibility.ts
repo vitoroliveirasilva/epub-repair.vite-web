@@ -43,7 +43,8 @@ function validateNcxKindleRules(loaded: LoadedEpub, pkg: PackageDocumentInfo): I
 
   for (const [index, navPoint] of navPoints.entries()) {
     const rawPlayOrder = getAttr(navPoint, 'playOrder');
-    const playOrder = rawPlayOrder ? Number.parseInt(rawPlayOrder, 10) : Number.NaN;
+    const playOrder = rawPlayOrder && /^[1-9]\d*$/u.test(rawPlayOrder)
+      ? Number(rawPlayOrder) : Number.NaN;
 
     if (!Number.isInteger(playOrder) || playOrder < 1 || playOrder < previousPlayOrder) {
       hasOutOfOrder = true;

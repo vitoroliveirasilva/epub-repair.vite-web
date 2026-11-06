@@ -250,8 +250,8 @@ export function guessOpfPath(fileNames: string[]): string | undefined {
   ];
 
   return (
-    preferred.find((candidate) =>
-      opfs.some((opf) => opf.toLowerCase() === candidate.toLowerCase()),
+    preferred.map((candidate) => opfs.find((opf) =>
+      opf.toLowerCase() === candidate.toLowerCase())).find(Boolean),
     ) ?? opfs[0]
   );
 }

@@ -141,7 +141,7 @@ export function validateManifestContentProperties(
           '". Esta é uma inconsistência de metadados, não evidência de malware.',
         file: item.resolvedPath,
         context: property,
-        repairable: false,
+        repairable: true,
       }));
     }
   }

@@ -53,7 +53,8 @@ function sniffPngMetadata(bytes: Uint8Array, found: Set<string>): void {
     if (end > bytes.length || end < dataStart) break;
     if (startsWith(bytes, cursor + 4, 'eXIf')) found.add('EXIF');
     if (startsWith(bytes, cursor + 4, 'iTXt') ||
-        startsWith(bytes, cursor + 4, 'tEXt')) {
+        startsWith(bytes, cursor + 4, 'tEXt') ||
+        startsWith(bytes, cursor + 4, 'zTXt')) {
       if (startsWith(bytes, dataStart, 'XML:com.adobe.xmp\0')) found.add('XMP');
       if (startsWith(bytes, dataStart, 'Raw profile type exif\0')) found.add('EXIF');
       if (startsWith(bytes, dataStart, 'Photoshop\0')) found.add('Photoshop');
@@ -87,11 +88,11 @@ export function validateImageMetadata(
 ): Issue[] {
   const issues: Issue[] = [];
   for (const item of pkg.manifest) {
-    if (!item.exists || !['image/jpeg', 'image/png', 'image/webp'].includes(item.mediaType)) continue;
+    if (!item.exists || !['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(item.mediaType)) continue;
     const bytes = loaded.files.get(item.resolvedPath)?.bytes;
     if (!bytes) continue;
     const found = new Set<string>();
-    if (item.mediaType === 'image/jpeg') sniffJpegMetadata(bytes, found);
+    if (item.mediaType === 'image/jpeg' || item.mediaType === 'image/jpg') sniffJpegMetadata(bytes, found);
     if (item.mediaType === 'image/png') sniffPngMetadata(bytes, found);
     if (item.mediaType === 'image/webp') sniffWebpMetadata(bytes, found);
     if (found.size === 0) continue;

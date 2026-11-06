@@ -51,6 +51,10 @@ function inspectChain(
     if (CONTENT_DOCUMENTS.has(mediaType)) document = true;
     item = next;
   }
+  // Apenas o formato no término da cadeia é suporte efetivo: ter passado por
+  // uma imagem intermediária não torna válido um terminal proprietário.
+  core = CORE_MEDIA.has(normalizedType(item));
+  document = CONTENT_DOCUMENTS.has(normalizedType(item));
   return { kind: core ? 'ok' : 'no-terminal', core, document };
 }
 

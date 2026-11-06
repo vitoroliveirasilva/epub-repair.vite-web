@@ -2,6 +2,7 @@ import type { LoadedEpub } from '../model/epubTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { Issue } from '../model/issueTypes';
 import { createIssue } from '../utils/issueFactory';
+import { readJpegDimensions } from '../utils/kindleCompatibility';
 
 type ImageKind = 'jpeg' | 'png' | 'gif' | 'webp';
 
@@ -78,6 +79,7 @@ function basicImageDimensions(
   kind: ImageKind,
   bytes: Uint8Array,
 ): { width: number; height: number } | undefined {
+  if (kind === 'jpeg') return readJpegDimensions(bytes);
   if (kind === 'gif' && bytes.length >= 10) {
     return {
       width: (bytes[6] ?? 0) | ((bytes[7] ?? 0) << 8),
