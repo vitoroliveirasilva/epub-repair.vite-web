@@ -419,7 +419,10 @@ function ensureNavigationFiles(
     shouldCreateNav(pkg) &&
     !currentManifestNavExists(manifest, loaded, pkg, filesToAdd)
   ) {
-    const navPath = pkg.navItem?.resolvedPath || `${pkg.opfDir ? `${pkg.opfDir}/` : ''}nav.xhtml`;
+    const navPath = uniqueGeneratedPath(
+      pkg.navItem?.resolvedPath || `${pkg.opfDir ? `${pkg.opfDir}/` : ''}nav.xhtml`,
+      loaded, filesToAdd,
+    );
     filesToAdd.set(navPath, buildNavDocument(pkg, navPath, loaded.files));
     const item = doc.createElementNS(OPF_NS, 'item');
     item.setAttribute('id', makeUniqueId('nav', usedIds));
@@ -447,7 +450,10 @@ function ensureNavigationFiles(
   }
 
   if (options.generateNcx && shouldCreateNcx(pkg) && !currentNcxId) {
-    const ncxPath = pkg.ncxItem?.resolvedPath || `${pkg.opfDir ? `${pkg.opfDir}/` : ''}toc.ncx`;
+    const ncxPath = uniqueGeneratedPath(
+      pkg.ncxItem?.resolvedPath || `${pkg.opfDir ? `${pkg.opfDir}/` : ''}toc.ncx`,
+      loaded, filesToAdd,
+    );
     const ncxId = makeUniqueId(pkg.ncxItem?.id || 'ncx', usedIds);
     filesToAdd.set(ncxPath, buildNcxDocument(pkg, ncxPath, loaded.files));
     // A entrada NCX ausente pode ter sido removida ao reparar o manifest.
@@ -526,4 +532,21 @@ function ensureChild(doc: Document, parent: Element, localName: string): Element
   const created = doc.createElementNS(OPF_NS, localName);
   parent.append(created);
   return created;
+}
+
+/** Nunca sobrescrever um nav/NCX órfão preexistente ao gerar outro. */
+function uniqueGeneratedPath(
+  preferred: string,
+  loaded: LoadedEpub,
+  pending: ReadonlyMap<string, string>,
+): string {
+  if (!loaded.files.has(preferred) && !pending.has(preferred)) return preferred;
+  const dot = preferred.lastIndexOf('.');
+  const stem = dot < 0 ? preferred : preferred.slice(0, dot);
+  const extension = dot < 0 ? '' : preferred.slice(dot);
+  for (let number = 2; number <= 10000; number += 1) {
+    const candidate = stem + '-' + number + extension;
+    if (!loaded.files.has(candidate) && !pending.has(candidate)) return candidate;
+  }
+  throw new Error('Não há um caminho livre para gerar navegação sem sobrescrever arquivos existentes.');
 }

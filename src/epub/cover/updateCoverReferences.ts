@@ -2,7 +2,7 @@ import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction } from '../model/repairTypes';
 import { HTML_MEDIA_TYPES, CSS_MEDIA_TYPES } from '../utils/constants';
 import {
-  decodeCssEscapes, dirname, encodePathForXml, isRemoteUrl,
+  basename, decodeCssEscapes, dirname, encodePathForXml, isRemoteUrl,
   relativePath, resolveReference, splitSrcsetCandidates,
 } from '../utils/pathUtils';
 import { decodeUtf8ForRewrite } from '../utils/textEncoding';
@@ -24,13 +24,15 @@ export function updateCoverReferences(
   pkg: PackageDocumentInfo,
   oldCoverPath: string,
   newCoverPath: string,
+  allowedPaths?: ReadonlySet<string>,
 ): RepairAction[] {
   if (oldCoverPath === newCoverPath) return [];
   const actions: RepairAction[] = [];
   const processed = new Set<string>();
   for (const item of pkg.manifest) {
     const path = item.resolvedPath;
-    if (!item.exists || processed.has(path)) continue;
+    if (!item.exists || processed.has(path) ||
+        (allowedPaths && !allowedPaths.has(path))) continue;
     processed.add(path);
     const bytes = files.get(path);
     if (!bytes) continue;
@@ -38,6 +40,13 @@ export function updateCoverReferences(
         !CSS_MEDIA_TYPES.has(item.mediaType) &&
         item.mediaType !== 'image/svg+xml') continue;
 
+    // Não tentar converter documentos antigos não relacionados à imagem da capa.
+    // O decodificador estrito só é necessário quando há caminho plausível.
+    const candidate = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+    const filename = basename(oldCoverPath);
+    const encoded = encodeURIComponent(filename);
+    const cssDecoded = candidate.includes('\\') ? decodeCssEscapes(candidate) : candidate;
+    if (!cssDecoded.includes(filename) && !cssDecoded.includes(encoded)) continue;
     const original = decodeUtf8ForRewrite(bytes, path);
     let updated = original;
     if (CSS_MEDIA_TYPES.has(item.mediaType)) {
@@ -147,15 +156,68 @@ function rewriteSrcset(
   return changed ? candidates.join(', ') : source;
 }
 
+/**
+ * E-108: reconhecer url("capa(2026).png") sem interpretar URLs dentro de
+ * comentários ou de strings CSS editoriais. Escapes permanecem intactos quando
+ * a referência não aponta para a capa.
+ */
 function rewriteCss(
   source: string, path: string, oldPath: string, newPath: string,
 ): string {
-  return source.replace(/url\(\s*(["']?)([^"'()]*?)\1\s*\)/giu,
-    (whole, quote: string, raw: string) => {
-      const value = raw.trim();
-      const next = replaceLocalReference(decodeCssEscapes(value), path, oldPath, newPath);
-      return next === decodeCssEscapes(value)
-        ? whole
-        : 'url(' + quote + next + quote + ')';
-    });
+  let out = '';
+  let cursor = 0;
+  while (cursor < source.length) {
+    const ch = source[cursor] ?? '';
+    if (ch === '/' && source[cursor + 1] === '*') {
+      const end = source.indexOf('*/', cursor + 2);
+      const until = end < 0 ? source.length : end + 2;
+      out += source.slice(cursor, until);
+      cursor = until;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      let end = cursor + 1;
+      while (end < source.length) {
+        if (source[end] === '\\') { end += 2; continue; }
+        if (source[end] === ch) { end += 1; break; }
+        end += 1;
+      }
+      out += source.slice(cursor, end);
+      cursor = end;
+      continue;
+    }
+    // Uma função url() inicia apenas em limite de identificador CSS.
+    const prefix = (cursor === 0 || !/[\\w-]/u.test(source[cursor - 1] ?? ''))
+      ? /^url\s*\(\s*/iu.exec(source.slice(cursor))?.[0]
+      : undefined;
+    if (!prefix) { out += ch; cursor += 1; continue; }
+    const contentStart = cursor + prefix.length;
+    const quote = source[contentStart] === '"' || source[contentStart] === "'"
+      ? source[contentStart]! : '';
+    const valueStart = contentStart + (quote ? 1 : 0);
+    let valueEnd = valueStart;
+    while (valueEnd < source.length) {
+      const current = source[valueEnd] ?? '';
+      if (current === '\\') { valueEnd += 2; continue; }
+      if (quote ? current === quote : current === ')') break;
+      valueEnd += 1;
+    }
+    const suffix = quote ? /^\s*\)/u.exec(source.slice(valueEnd + 1))?.[0] : '';
+    const finish = quote ? valueEnd + 1 + (suffix?.length ?? 0) : valueEnd + 1;
+    if (valueEnd >= source.length || (quote && suffix === undefined)) {
+      out += ch;
+      cursor += 1;
+      continue;
+    }
+    const raw = source.slice(valueStart, valueEnd);
+    const decoded = decodeCssEscapes(raw.trim());
+    const next = replaceLocalReference(decoded, path, oldPath, newPath);
+    if (next === decoded) {
+      out += source.slice(cursor, finish);
+    } else {
+      out += prefix + quote + next + quote + (quote ? suffix : ')');
+    }
+    cursor = finish;
+  }
+  return out;
 }
