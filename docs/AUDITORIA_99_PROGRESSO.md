@@ -1,14 +1,14 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 05/11/2026 (execução 11, CI Node 20/22, EPUBCheck 5.4.0 e browsers aprovados) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 05/11/2026 (execução 12, CI Node 20/22, EPUBCheck, cobertura e navegadores aprovados) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
 | Situação | Itens |
 | --- | ---: |
-| Concluídos no escopo definido, com CI Node 20/22 aprovada | **81** |
-| Parcialmente tratados, com testes/validação adicionais necessários | **16** |
-| Não iniciados ou ainda não evidenciados | **2** |
+| Concluídos no escopo definido, com CI Node 20/22 aprovada | **85** |
+| Parcialmente tratados, com testes/validação adicionais necessários | **14** |
+| Não iniciados ou ainda não evidenciados | **0** |
 | Total | **99** |
 
 ## Regras de classificação
@@ -45,7 +45,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-018 | P1 | O score de segurança pode ficar 100 mesmo quando há falha fatal ZIP_RESOURCE_LIMIT | Concluído · CI |
 | E-019 | P1 | Troca de capa é disponibilizada sem gate equivalente sobre a validação final | Concluído · CI |
 | E-020 | P2 | README exibe badge versão 2.0.0 embora package e release sejam 2.2.0 | Concluído · CI |
-| E-021 | P1 | Nomes de entrada ZIP não UTF-8 e sinalização de encoding em flags | Parcial |
+| E-021 | P1 | Nomes de entrada ZIP não UTF-8 e sinalização de encoding em flags | Concluído · CI |
 | E-022 | P1 | Caminhos com %23, %25, %2F, #, ?, Unicode NFC/NFD | Concluído · CI |
 | E-023 | P1 | Colisões depois de decodificação, normalização ou diferença de caixa | Concluído · CI |
 | E-024 | P1 | Consistência entre nomes do diretório central e nomes vistos pelo JSZip | Concluído · CI |
@@ -87,11 +87,11 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-060 | P1 | Modelo de ameaças EPUB e checklist de privacidade de recursos externos | Concluído · CI |
 | E-061 | P1 | Separar score de segurança de inspeção de conformidade e de integridade | Concluído · CI |
 | E-062 | P2 | Headers CSP/Netlify e comportamento de previews/blob/data em navegadores | Parcial |
-| E-063 | P2 | Fuzzing determinístico de ZIP/XML/SVG/CSS/OPF e limites contra ReDoS | Parcial |
+| E-063 | P2 | Fuzzing determinístico de ZIP/XML/SVG/CSS/OPF e limites contra ReDoS | Concluído · CI |
 | E-064 | P0 | Comparar texto integral pré/pós e avisar alterações não previstas | Concluído · CI |
 | E-065 | P0 | Comparar ordem de leitura, capítulos, IDs e links antes/depois | Concluído · CI |
 | E-066 | P1 | Verificar integridade binária das imagens/fontes que não deveriam ser alteradas | Concluído · CI |
-| E-067 | P1 | Validar imagens por dimensões, assinatura, decodificação e pixels quando alteradas | Parcial |
+| E-067 | P1 | Validar imagens por dimensões, assinatura, decodificação e pixels quando alteradas | Concluído · CI |
 | E-068 | P1 | Consertos de headings, capítulos, títulos de navegação e sumários editoriais | Parcial |
 | E-069 | P1 | Detectar OCR malformado, quebras artificiais, hifens, cabeçalhos e rodapés | Concluído · CI |
 | E-070 | P1 | Diagnóstico de CSS redundante/contraditório ou referências de estilos quebradas | Concluído · CI |
@@ -100,7 +100,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-073 | P1 | Fluxo antes/depois com diffs de XHTML, CSS, OPF e NCX | Concluído · CI |
 | E-074 | P2 | Preservar tipografia, itálicos, travessões, espaçamento e estilos de diálogo | Concluído · CI |
 | E-075 | P2 | Tratamento opcional de EXIF/XMP/Photoshop/metadata de imagens | Parcial |
-| E-076 | P2 | Checagem de apresentação em leitores reflowable/fixed layout, imagens e fontes | Pendente |
+| E-076 | P2 | Checagem de apresentação em leitores reflowable/fixed layout, imagens e fontes | Parcial |
 | E-077 | P1 | Estados explícitos: seguro para reparar, revisão manual, parcial, otimização, inválido | Concluído · CI |
 | E-078 | P1 | Prévia e confirmação de operações destrutivas antes de executar | Concluído · CI |
 | E-079 | P1 | Indicador de ações não aplicadas e pendências remanescentes por item | Concluído · CI |
@@ -119,7 +119,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-092 | P1 | Validação pós-reparo de conteúdo real e links, não só ZIP/OPF | Concluído · CI |
 | E-093 | P1 | Testes de propriedades: idempotência e preservação de bytes em no-op | Concluído · CI |
 | E-094 | P1 | Testes adversariais com SVG/CSS/XML e ZIP fuzzing recorrente | Concluído · CI |
-| E-095 | P2 | Cobertura de testes e thresholds por módulo crítico | Pendente |
+| E-095 | P2 | Cobertura de testes e thresholds por módulo crítico | Concluído · CI |
 | E-096 | P2 | Testes de performance/memória com limites documentados | Parcial |
 | E-097 | P2 | Versionamento das decisões, changelog e matriz de suporte | Concluído · CI |
 | E-098 | P2 | Revisar regras de proteção da dev e política de branch/tag | Parcial |
@@ -524,3 +524,37 @@ CI final anterior à atualização documental: [run 42102087907](https://github.
 **CI validada:** [Node 20/22 + EPUBCheck 5.4.0 (run 42110160755)](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42110160755) e [Chromium, Firefox e WebKit (run 42109904354)](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42109904354). A última alteração após a matriz de browsers foi somente uma fixture de teste CSS.
 
 **Limitações:** critérios encerrados apenas no escopo de testes automatizados. Não foram executados antivírus real, comparação visual física de leitores Kindle/Apple Books/Calibre, celulares iOS/Android reais nem inspeção universal de malware. **E-076 e E-095 seguem pendentes**; resultados de ClamAV, quando usados, dependem de assinaturas atualizadas. `prod` preservada na `v2.2.0`, sem merge, tag ou release.
+
+## Execução 12: nomes ZIP CP437, visual real em browser, conversão JPEG e cobertura crítica
+
+**Antes:** 81 concluídos, 16 parciais, 2 pendentes.  
+**Agora: 85 concluídos, 14 parciais, 0 pendentes.**  
+**Concluídos com prova CI:** E-021, E-063, E-067, E-095.  
+**Avanço de pendente para parcial:** E-076, pela renderização comparativa em browsers reais, mas **não** em leitores Kindle, Apple Books, Calibre nem dispositivos físicos.
+
+**Itens concluídos nesta execução (no escopo automatizado):**
+
+| Item | Evidência e limite preciso |
+| --- | --- |
+| E-021 | `358dbf8`, `5e578b1`, `fb9b458`: nome CP437 legado decodificado por inspetor e JSZip, com comparação dos arquivos físicos, CRC, colisões e teste contra flag UTF-8 mentirosa. Entrada de nome ambíguo ainda deve ser revista, sem conversão editorial especulativa |
+| E-063 | `bc1afee`: mutações adversariais de CSS/XML/SVG/OPF/ZIP e casos patológicos com orçamento de até 8 s por caso no Vitest, complementando as 96 mutações por formato preexistentes. Não é prova matemática de ausência de ReDoS nem fuzzing ilimitado |
+| E-067 | `477e339`, `2fa9bc1`: JPEG progressivo só é convertido se saída for baseline e decodificável, mantiver dimensões e amostra de pixels aceitável; capas JPEG seguem a mesma proteção e conservam bytes originais em falha. Conversor real exercitado nos três motores de browser |
+| E-095 | `feed4f3`, `b00e0a6`, `5616cc0`, `6efaf46`: instrumentação V8 em CI com gate por arquivo, versão igual à instalada no lockfile e thresholds de 88% linhas, 85% statements, 70% branches, 82% funções sobre **cinco módulos críticos**. Não é cobertura geral de todo o app |
+
+**Itens ainda parciais com novas evidências:**
+
+| Item | Evidência e limite |
+| --- | --- |
+| E-076 | `fcbf67e`, `63dacd1`, `2fa9bc1`: EPUB sintético reparado é renderizado antes/depois em Chromium, Firefox e WebKit; captura screenshot SHA-256, mede tipografia, conteúdo, imagem PNG e geometria fixed-layout 800×600. Não há homologação em leitores reais nem em obras comerciais |
+| E-031/E-096 | Regressões de CRC streaming e orçamento de memória/performance mantidas com CI e cobertura; falta medição de picos de RAM/CPU em dispositivos de baixo recurso |
+| E-082/E-089 | Testes end-to-end em Chromium/Firefox/WebKit com viewport móvel emulada e download de relatório; nenhum Safari iOS físico testado |
+
+**Evidência de qualidade da implementação:**
+
+- [CI Node.js 20 e 22, 431 testes Vitest e EPUBCheck 5.4.0 aprovados](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42144065865)
+- [Gate de cobertura instrumentada aprovado](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42143349561), cinco módulos críticos (menor cobertura de linhas: 90,41%; menor branches: 74,73%)
+- [Chromium, Firefox e WebKit aprovados, incluindo comparação visual e JPEG progressivo](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42143349623)
+
+**Limitações que permanecem abertas (14 parciais):** E-031, E-032, E-036, E-062, E-068, E-075, E-076, E-080, E-082, E-089, E-090, E-096, E-098 e E-099. Não há evidência de publicação, cobertura total, escaneamento antivírus real, teste em smartphones físicos nem de conformidade universal. Não declarar o trabalho "perfeito" ou seguro contra qualquer malware.
+
+**Produção:** `prod` preservada em v2.2.0, sem merge, tag ou release.

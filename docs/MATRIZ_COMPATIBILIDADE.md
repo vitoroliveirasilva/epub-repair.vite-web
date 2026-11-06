@@ -28,7 +28,9 @@ livros nem todos os recursos possíveis das especificações.
 
 - EPUBCheck precisa validar mais fixtures complexas sintetizadas, com EPUB2, foreign resources,
   navegação complexa e mídia sincronizada.
-- Validação em Chromium, Firefox, WebKit, Kindle Previewer e Calibre ainda precisa ocorrer.
+- Chromium, Firefox e WebKit já executam smoke automatizado com screenshots
+  antes/depois e conversão real de JPEG progressivo em fixtures sintéticas.
+  **Kindle Previewer, Calibre e dispositivos físicos** ainda precisam ser homologados.
 - O site estático **não** executa EPUBCheck Java no navegador.
 - Conformidade oficial não substitui revisão editorial, teste visual nem antivírus.
 
@@ -43,7 +45,7 @@ Referências:
 | --- | --- |
 | JPEG/PNG/GIF/WebP | Assinatura e dimensões básicas, sem prova de integridade de pixels |
 | Imagens sem alt | Avisos em XHTML, sem alterar a obra |
-| ZIP sem UTF-8 confiável | Rejeição segura antes de perda de nomes, conversão CP437 não disponível |
+| ZIP sem UTF-8 confiável | Suporte a CP437 com decodificação unificada no ZIP; recusa UTF-8 explícito inválido |
 | Ofuscação IDPF | Informada como fonte ofuscada e não confundida com DRM |
 | Imagens raster data: | Permitidas nos contextos de imagem; SVG/HTML ativos bloqueados |
 | Relatórios técnicos | SHA-256 do EPUB original, versão, opções atuais e snapshot das opções efetivamente aplicadas |
@@ -74,3 +76,17 @@ Referências:
 | Capa | Validação cruzada do OPF e páginas de capa no guide/landmarks | Casos de capas animadas, múltiplas renditions e leitores |
 
 Os cenários com indicação de cobertura automática não significam certificação de compatibilidade em leitores reais. O EPUBCheck valida as fixtures sintéticas configuradas no CI.
+
+## Complementos da execução 12
+
+- ZIP legado: suporte a nomes CP437 com testes de caminho/CRC/UTF-8 e prevenção
+  de corrupção silenciosa. Essa escolha não converte encodings legados arbitrários.
+- Testes de segurança: corpus determinístico e casos adversariais de parser,
+  orçamento limitado para inputs degenerados, sem promessa anti-ReDoS universal.
+- JPEG: somente aceitar regravação com assinatura coerente, decodificação,
+  mesmas dimensões e comparação aproximada de pixels; original preservado em falha.
+- Testes visuais: XHTML reflowable e geometria fixed-layout sintética comparados
+  nos motores Chromium, Firefox e WebKit. Não é homologação em Kindle, Calibre,
+  Apple Books ou aparelhos reais.
+- Gate V8 da `dev`: cinco módulos críticos com limites mínimos medidos por
+  arquivo. Não contabilizar os módulos ainda sem cobertura como testados.

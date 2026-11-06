@@ -116,3 +116,17 @@ Veja [auditoria de 99 itens, execução 9](AUDITORIA_99_PROGRESSO.md).
 - Matriz desktop e viewport móvel automatizada não significa homologação em dispositivos reais. `prod` permanece intacta.
 
 **Balanço:** 81 concluídos, 16 parciais, 2 pendentes (escopo automatizado); evidências [CI](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42110160755) e [browsers](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42109904354).
+
+## Execução 12: fechamento medido e limitações não negociáveis
+
+- ZIP CP437 pode ser lido sem introduzir U+FFFD: decodificação é compartilhada entre inspeção e extrator, UTF-8 explícito inválido continua rejeitado, nomes em colisão não são fundidos. Caso de encoding intrinsecamente ambíguo ainda exige cautela.
+- A conversão de JPEG progressivo e a normalização de capa devem revalidar assinatura, decodificação, dimensões e amostra de cores antes de substituir bytes, sem remover metadados por padrão.
+- Captura de screenshot e medição de DOM em Chromium/Firefox/WebKit antes/depois de reparo de EPUB sintético comprovam apenas **renderização nos engines de navegador**. Não equiparar isso a homologação de leitores de livros nem a Safari iOS físico.
+- CI de cobertura V8 foi implantada com **thresholds por arquivo** em cinco módulos críticos. O gate aprovado não afirma cobertura integral do repositório.
+- Testes de fuzz com casos degenerados foram expandidos para verificar orçamento de execução com duração limitada, sem alegar proteção absoluta contra toda entrada patológica.
+- O inventário passa a **85 concluídos, 14 parciais, 0 pendentes** na classificação original; os parciais restantes devem ser encerrados apenas após evidência real e testes abrangentes, não por mudança arbitrária de status.
+
+Evidências: [CI 42144065865](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42144065865),
+[cobertura 42143349561](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42143349561),
+[browsers 42143349623](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42143349623).
+`prod` permanece intacta.

@@ -21,3 +21,10 @@ no resumo do job e no artifact `epub-critical-coverage` por 14 dias.
 de vulnerabilidades, desempenho ou funcionamento em e-readers. Os demais
 módulos da aplicação não fazem parte deste gate inicial. A publicação em
 produção continua condicionada a testes independentes e revisão de diff.
+
+## Evidência posterior ao endurecimento do gate
+
+O workflow aprovado [42143349561](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42143349561)
+confirma os thresholds elevados de cobertura com a versão V8 alinhada ao lockfile.
+Após testes adversariais adicionais, o gate permaneceu aprovado em
+[42144065795](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42144065795).
