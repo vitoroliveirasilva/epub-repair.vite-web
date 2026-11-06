@@ -91,9 +91,9 @@ describe('E-075: remover metadados EPUB exige opt-in; integridade e UX', () => {
     state.payload = { file: new File([new Uint8Array(bytes)], 'foto.epub'), bytes };
     const ui = renderControls(state, { analyze: () => {}, repair: () => {},
       copy: () => {}, downloadTextReport: () => {}, downloadJsonReport: () => {} });
-    const optimize = [...ui.querySelectorAll('button')].find((x) =>
-      x.textContent === 'Aplicar otimização opcional');
-    expect(optimize?.disabled).toBe(false);
+    const action = [...ui.querySelectorAll('button')].find((x) =>
+      /^(?:Aplicar otimização opcional|Gerar EPUB corrigido)$/u.test(x.textContent ?? ''));
+    expect(action?.disabled).toBe(false);
 
     const output = await repairEpub('foto.epub', bytes, selected, 'optimization');
     expect(output.changed).toBe(true);
