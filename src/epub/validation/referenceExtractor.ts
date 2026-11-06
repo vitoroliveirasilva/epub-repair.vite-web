@@ -1,3 +1,4 @@
+import { cssCodePosition } from '../utils/cssContexts';
 import { splitSrcsetCandidates, stripFragmentAndQuery } from '../utils/pathUtils';
 
 export interface ResourceReference {
@@ -45,15 +46,18 @@ export function extractHtmlResourceReferences(text: string): ResourceReference[]
 export function extractCssResourceReferences(text: string): ResourceReference[] {
   const refs: ResourceReference[] = [];
   const source = maskCssComments(text);
+  const isCode = cssCodePosition(source);
   const urlRegex = /url\(\s*(["']?)(.*?)\1\s*\)/giu;
   let match: RegExpExecArray | null;
   while ((match = urlRegex.exec(source)) !== null) {
+    if (!isCode(match.index)) continue;
     const value = match[2]?.trim();
     if (value) refs.push({ attr: 'css:url', value: stripFragmentAndQuery(value), raw: value });
   }
 
   const importRegex = /@import\s+(?:url\(\s*)?["']([^"']+)["']/giu;
   while ((match = importRegex.exec(source)) !== null) {
+    if (!isCode(match.index)) continue;
     const value = match[1]?.trim();
     if (value) refs.push({ attr: 'css:import', value: stripFragmentAndQuery(value), raw: value });
   }
