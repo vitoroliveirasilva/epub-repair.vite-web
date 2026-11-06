@@ -80,3 +80,33 @@ O valor de +0,0 MiB é efeito possível de amostragem/GC e não indica
 uso zero de RAM. O CDP `JSHeapUsedSize` não inclui o heap do Worker ou
 memória nativa; por isso E-031 e E-096 permanecem **parciais** até
 amostragem total e stress até o limite de 250 MiB.
+
+## Fechamento do orçamento automatizado no limite de 250 MiB (E-096)
+
+`tests/browser-resource-budget.mjs` agora percorre 1, 12, 48 e **250 MiB
+de conteúdo descompactado** e mede extração via Worker, reparo,
+reempacotamento e revalidação em Chromium headless. O arquivo de fronteira
+foi dividido em **três entradas de 90/90/70 MiB**, respeitando limites
+internos por recurso. O Playwright recebe EPUBs via caminho temporário em
+disco para evitar o limite de 50MiB do `setInputFiles({buffer})`. O arquivo
+permanece no disco até o navegador concluir a leitura e é limpo ao final.
+
+Resultados de [run 42153236152](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42153236152):
+
+| Corpus descompactado | Tempo | Crescimento JS heap thread principal | Ciclos do heartbeat |
+| --- | ---: | ---: | ---: |
+| 1 MiB | 220 ms | +1,7 MiB | 4 |
+| 12 MiB | 1.280 ms | +1,9 MiB | 25 |
+| 48 MiB | 4.857 ms | +0,5 MiB | 96 |
+| 250 MiB | 19.807 ms | +2,9 MiB | 388 |
+
+**Budget máximo por caso:** 45/115/180/300 segundos e +320/+440/+760/
++1600 MiB no JSHeapUsedSize da aba (nesta ordem). São gates de regressão,
+não garantias de performance em dispositivos de usuário. Não foram
+amostrados RSS total, heap de Worker nem memória nativa. Um resultado
+`+0 MiB` não corresponde a RAM zero, apenas a amostragem da métrica.
+
+**E-096 no escopo de cobertura automatizada:** concluído. **E-031:** continua
+parcial devido ao pico total de RAM, repetição de ciclos e dispositivos
+modestos. O teste do corpus de fronteira não representa todas as classes
+de EPUB nem integrações com leitores físicos.

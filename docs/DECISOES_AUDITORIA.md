@@ -168,3 +168,15 @@ todos os 12 parciais preservam seus critérios de conclusão sem atalhos.
 
 **89 concluídos, 10 parciais, 0 pendentes** (E-031, E-032, E-062, E-076,
 E-080, E-082, E-089, E-090, E-096, E-098). `prod` preservada.
+
+## Execução 15: orçamento de fronteira com limites explícitos
+
+A fixture 250 MiB descompactados usa três entradas abaixo de 128 MiB e
+ficou abaixo dos budgets no Chromium Linux. O teste mede o pipeline real,
+sem custos do JSON Playwright, e verifica que o event loop recebe ticks.
+E-096 foi concluído **somente no escopo de benchmark automatizado**,
+não como promessa para todos os livros, browsers, smartphones ou leitores.
+E-031 continua aberto até incluir medição de RSS/Worker e repetição de
+múltiplas análises, incluindo dispositivos com RAM limitada.
+
+**Estado atualizado: 90 concluídos, 9 parciais, zero pendentes.**

@@ -60,3 +60,15 @@ O screenshot sintético permanece sem perda de fidelidade antes/depois.
 A otimização do workflow evitou `apt` redundante para Chromium no runner,
 mantendo `playwright install --with-deps` em Firefox/WebKit. A política CSP
 real em produção HTTPS e o Safari iOS físico continuam sem homologação.
+
+## Stress de fronteira 250 MiB
+
+A matriz da `dev` inclui agora cenário Chromium headless de 250 MiB
+**descompactados** em três recursos, com verificação de integridade,
+roundtrip, heartbeat e orçamento de tempo/heap da thread principal.
+Resultados [42153236152](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42153236152):
+**19.807 ms** para extração/reparo/revalidação, JS heap amostrado
+**+2,9 MiB** na aba, heartbeat 388.
+WebKit e Firefox permanecem no smoke funcional, não executam
+este benchmark de tamanho máximo. Sem medir pico RSS/Worker nem
+aparelhos físicos.

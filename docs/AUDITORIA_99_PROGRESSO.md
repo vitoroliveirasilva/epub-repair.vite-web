@@ -1,13 +1,13 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 05/11/2026 (execução 14: 89/99, CI EPUBCheck, OSV, SBOM, cobertura e browsers) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 05/11/2026 (execução 15: 90/99, CI EPUBCheck, OSV, SBOM, cobertura e stress Chromium 250MiB) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
 | Situação | Itens |
 | --- | ---: |
-| Concluídos no escopo definido, com CI Node 20/22 aprovada | **89** |
-| Parcialmente tratados, com testes/validação adicionais necessários | **10** |
+| Concluídos no escopo definido, com CI Node 20/22 aprovada | **90** |
+| Parcialmente tratados, com testes/validação adicionais necessários | **9** |
 | Não iniciados ou ainda não evidenciados | **0** |
 | Total | **99** |
 
@@ -120,7 +120,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-093 | P1 | Testes de propriedades: idempotência e preservação de bytes em no-op | Concluído · CI |
 | E-094 | P1 | Testes adversariais com SVG/CSS/XML e ZIP fuzzing recorrente | Concluído · CI |
 | E-095 | P2 | Cobertura de testes e thresholds por módulo crítico | Concluído · CI |
-| E-096 | P2 | Testes de performance/memória com limites documentados | Parcial |
+| E-096 | P2 | Testes de performance/memória com limites documentados | Concluído · CI |
 | E-097 | P2 | Versionamento das decisões, changelog e matriz de suporte | Concluído · CI |
 | E-098 | P2 | Revisar regras de proteção da dev e política de branch/tag | Parcial |
 | E-099 | P2 | Análise periódica de dependências e licenças além do npm audit | Concluído · CI |
@@ -622,3 +622,37 @@ não significa conformidade editorial, segurança universal nem teste físico.
 E-080, E-082, E-089, E-090, E-096 e E-098.
 
 **Produção:** `prod` intacta em `v2.2.0`. Nenhum merge, release ou tag.
+
+## Execução 15: stress real no limite de 250 MiB (E-096)
+
+**Antes:** 89 concluídos, 10 parciais, 0 pendentes.  
+**Agora: 90 concluídos, 9 parciais, 0 pendentes.**
+
+**E-096 concluído no escopo definido:** `0c70333`, `30444ca`,
+`0e6b923`, `c0ecdc7`. Benchmark real via `File` no navegador,
+sem serialização JSON de 250 MiB, com etapas completas **extração ZIP
+em Worker, reparo conservador, reempacotamento e revalidação**.
+Para respeitar o limite de **128 MiB por entrada ZIP** o caso de fronteira
+usa três recursos binários de 90, 90 e 70 MiB. Os 250 MiB são **dados
+descompactados**, não o tamanho do arquivo EPUB em disco.
+
+| Conteúdo original extraído | Tempo no Chromium Linux | Crescimento amostrado JS heap da aba | Heartbeat |
+| --- | ---: | ---: | ---: |
+| 1 MiB | 220 ms | +1,7 MiB | 4 |
+| 12 MiB | 1.280 ms | +1,9 MiB | 25 |
+| 48 MiB | 4.857 ms | +0,5 MiB | 96 |
+| 250 MiB | **19.807 ms** | **+2,9 MiB** | 388 |
+
+Os budgets automatizados de tempo **45/115/180/300 segundos** e de
+crescimento do JS heap principal **320/440/760/1600 MiB** foram
+respeitados. Resultado de referência: [Browser matrix run 42153236152](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42153236152).
+[CI Node 20/22 + EPUBCheck](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42153236159).
+
+**Limitação rigorosa:** o benchmark não mede o pico real de RAM do Worker,
+a soma RSS dos processos nem o consumo em iPhone/Kindle. Portanto
+**E-031 continua PARCIAL**. O valor medido é **JSHeapUsedSize da aba
+principal, com amostragem a cada 250ms**, e não memória total. A CI usa
+máquina Linux headless e fixtures sintéticas, não livros comerciais.
+
+**Nove parciais:** E-031, E-032, E-062, E-076, E-080, E-082, E-089,
+E-090 e E-098. `prod` preservada em v2.2.0.
