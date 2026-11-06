@@ -166,6 +166,7 @@ function rewriteCss(
 ): string {
   let out = '';
   let cursor = 0;
+  const urlToken = /url\s*\(\s*/iy;
   while (cursor < source.length) {
     const ch = source[cursor] ?? '';
     if (ch === '/' && source[cursor + 1] === '*') {
@@ -186,10 +187,13 @@ function rewriteCss(
       cursor = end;
       continue;
     }
-    // Uma função url() inicia apenas em limite de identificador CSS.
-    const prefix = (cursor === 0 || !/[\\w-]/u.test(source[cursor - 1] ?? ''))
-      ? /^url\s*\(\s*/iu.exec(source.slice(cursor))?.[0]
-      : undefined;
+    // A âncora sticky evita criar substrings enormes a cada caractere.
+    let prefix: string | undefined;
+    if ((ch === 'u' || ch === 'U') &&
+        (cursor === 0 || !/[\w-]/u.test(source[cursor - 1] ?? ''))) {
+      urlToken.lastIndex = cursor;
+      prefix = urlToken.exec(source)?.[0];
+    }
     if (!prefix) { out += ch; cursor += 1; continue; }
     const contentStart = cursor + prefix.length;
     const quote = source[contentStart] === '"' || source[contentStart] === "'"
