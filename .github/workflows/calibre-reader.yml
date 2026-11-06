@@ -7,6 +7,7 @@ on:
       - 'src/epub/**'
       - 'tests/epubCheckFixtureGenerator.test.ts'
       - '.github/workflows/calibre-reader.yml'
+      - 'scripts/calibre-visual-reader.sh'
   pull_request:
     branches: [dev, prod]
   workflow_dispatch:
