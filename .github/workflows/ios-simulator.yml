@@ -1,0 +1,107 @@
+name: iOS Safari Simulator real OS download smoke
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - 'src/**'
+      - 'tests/ios-safari-simulator.mjs'
+      - '.github/workflows/ios-simulator.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-sim-safari-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  safari:
+    name: Safari native iOS Simulator EPUB repair/download
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+      - name: Build the app and install pinned Appium/XCUITest
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
+          npm install --prefix "${RUNNER_TEMP}/appium-harness" --no-save \
+            --package-lock=false --no-audit --no-fund appium@3.8.0
+          export APPIUM_HOME="${RUNNER_TEMP}/appium-home"
+          "${RUNNER_TEMP}/appium-harness/node_modules/.bin/appium" \
+            driver install --source=npm appium-xcuitest-driver@12.22.0
+          "${RUNNER_TEMP}/appium-harness/node_modules/.bin/appium" driver list --installed
+      - name: Boot a real Xcode iPhone Simulator runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcrun simctl list devices available
+          udid="$(xcrun simctl list -j devices available | node -e '
+            const fs=require("fs");const info=JSON.parse(fs.readFileSync(0,"utf8"));
+            const devices=Object.values(info.devices).flat();
+            const iphone=devices.find(d=>d.isAvailable &&
+              /^iPhone (16|17)($| )/.test(d.name)) ||
+              devices.find(d=>d.isAvailable && /^iPhone /.test(d.name));
+            if(!iphone)process.exit(1);
+            process.stdout.write(iphone.udid);')"
+          echo "IOS_SIM_UDID=$udid" >> "${GITHUB_ENV}"
+          xcrun simctl boot "$udid" || true
+          xcrun simctl bootstatus "$udid" -b
+          xcrun simctl status_bar "$udid" override --time 09:41 || true
+      - name: Start local compiled app and Appium HTTP on loopback
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run preview -- --host 127.0.0.1 --port 5173 \
+            > "${RUNNER_TEMP}/vite-ios.log" 2>&1 &
+          export APPIUM_HOME="${RUNNER_TEMP}/appium-home"
+          "${RUNNER_TEMP}/appium-harness/node_modules/.bin/appium" \
+            server --address 127.0.0.1 --port 4723 \
+            --log "${RUNNER_TEMP}/appium-ios.log" > "${RUNNER_TEMP}/appium-stdout.log" 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:5173/ -o /dev/null &&
+               curl -fsS http://127.0.0.1:4723/status -o /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "App ou Appium não iniciou"
+          cat "${RUNNER_TEMP}/appium-stdout.log"
+          exit 1
+      - name: Open Safari native in iPhone Simulator and capture independent evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcrun simctl openurl "$IOS_SIM_UDID" "http://127.0.0.1:5173/"
+          sleep 8
+          xcrun simctl io "$IOS_SIM_UDID" screenshot \
+            "${RUNNER_TEMP}/ios-safari-openurl.png"
+          test -s "${RUNNER_TEMP}/ios-safari-openurl.png"
+          echo 'PASS Safari iOS Simulator launched webpage via simctl; upload/download still require Appium.'
+      - name: Test Safari iOS file upload, repair and actual downloads
+        shell: bash
+        # macOS não disponibiliza o utilitário GNU timeout; limite do job e
+        # prazos do cliente WebDriver já controlam uma execução travada.
+        run: node tests/ios-safari-simulator.mjs
+      - name: Archive simulator evidence and Appium diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-safari-simulator-download-evidence
+          path: |
+            ${{ runner.temp }}/ios-safari-openurl.png
+            ${{ runner.temp }}/ios-safari-simulator.png
+            ${{ runner.temp }}/ios-safari-evidence.json
+            ${{ runner.temp }}/appium-ios.log
+            ${{ runner.temp }}/vite-ios.log
+          if-no-files-found: warn
+          retention-days: 14

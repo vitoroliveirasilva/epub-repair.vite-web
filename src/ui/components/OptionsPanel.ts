@@ -13,7 +13,7 @@ const options: readonly RepairOptionDescriptor[] = [
   [
     'conservativeMode',
     'Modo conservador',
-    'Preserva XHTML, CSS e imagens; corrige principalmente pacote, OPF, capa, container e NCX.',
+    'Preserva textos e recursos passivos. Scripts e URLs são removidos apenas quando suas opções de limpeza estiverem ativas.',
   ],
   [
     'stripSystemFiles',
@@ -53,6 +53,16 @@ const options: readonly RepairOptionDescriptor[] = [
     'Desmarcado por padrão: preserva links, imagens e fontes externas. Marque somente se quiser eliminá-los.',
   ],
   ['repairCssReferences', 'Corrigir CSS', 'Corrige referências ausentes ou perigosas sem remover fontes e estilos externos legítimos.'],
+  [
+    'stripImageMetadata',
+    'Remover metadados pessoais das imagens (opcional)',
+    'Desmarcado por padrão: elimina EXIF/XMP/Photoshop quando seguro, sem recomprimir. Orientação e perfis de cor são preservados; exige confirmação.',
+  ],
+  [
+    'replaceMissingImagesWithText',
+    'Substituir imagens ausentes por texto (opcional)',
+    'Desmarcado por padrão: altera visualmente o livro, substituindo cada imagem ausente por marcador textual.',
+  ],
 ];
 
 export function renderOptionsPanel(state: AppState, onChange: () => void): HTMLElement {
@@ -61,7 +71,9 @@ export function renderOptionsPanel(state: AppState, onChange: () => void): HTMLE
   for (const [key, label, description] of options) {
     const checkbox = el('input', { attrs: { type: 'checkbox', id: key } });
     checkbox.checked = Boolean(state.options[key]);
+    checkbox.disabled = state.busy;
     checkbox.addEventListener('change', () => {
+      if (state.busy) return;
       state.options[key] = checkbox.checked;
       onChange();
     });

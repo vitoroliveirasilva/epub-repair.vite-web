@@ -1,0 +1,84 @@
+name: Calibre CLI reader roundtrip (EPUB 2 and 3)
+
+on:
+  push:
+    branches: [dev, prod]
+    paths:
+      - 'src/epub/**'
+      - 'tests/epubCheckFixtureGenerator.test.ts'
+      - '.github/workflows/calibre-reader.yml'
+      - 'scripts/calibre-visual-reader.sh'
+  pull_request:
+    branches: [dev, prod]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: calibre-visual-v2-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  calibre-reader:
+    name: Calibre parses and extracts revalidated EPUBs
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+      - name: Install app dependencies
+        run: npm ci
+      - name: Generate deterministic EPUB 2 and 3 repaired fixtures
+        env:
+          EPUBCHECK_FIXTURE_OUTPUT: ${{ runner.temp }}/epub-fixtures
+        run: npx vitest run tests/epubCheckFixtureGenerator.test.ts
+      - name: Install Calibre from Ubuntu repositories
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends calibre xvfb imagemagick python3-pil xdotool openbox
+          ebook-convert --version
+          ebook-meta --version || true
+      - name: Import EPUBs and convert to extracted UTF-8 text
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/calibre-output"
+          for stem in repaired-valid repaired-valid-epub2 repaired-valid-ncx-hierarchy profile-epub3-core; do
+            source="${RUNNER_TEMP}/epub-fixtures/${stem}.epub"
+            target="${RUNNER_TEMP}/calibre-output/${stem}.txt"
+            test -s "$source"
+            ebook-meta "$source" > "${RUNNER_TEMP}/calibre-output/${stem}.metadata"
+            ebook-convert "$source" "$target" --txt-output-encoding utf-8 > "${RUNNER_TEMP}/calibre-output/${stem}.log" 2>&1 || {
+              cat "${RUNNER_TEMP}/calibre-output/${stem}.log"
+              exit 1
+            }
+            test -s "$target"
+            if ! grep -Eiq 'Capítulo|Capitulo|Conteúdo|Texto|Navegação' "$target"; then
+              echo "ERRO: Calibre importou EPUB mas perdeu texto editorial: $stem"
+              exit 1
+            fi
+            echo "PASS Calibre $stem"
+          done
+          grep -q 'Seção principal' "${RUNNER_TEMP}/calibre-output/repaired-valid-ncx-hierarchy.txt"
+          echo 'PASS E-090 extração editorial de navegação NCX hierárquica'
+      - name: Open repaired EPUBs in actual Calibre visual reader under Xvfb
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 120s xvfb-run -a -s "-screen 0 1440x900x24" \
+            bash scripts/calibre-visual-reader.sh \
+              "${RUNNER_TEMP}/epub-fixtures" "${RUNNER_TEMP}/calibre-output"
+      - name: Save converter logs for regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: calibre-epub-reader-logs
+          path: ${{ runner.temp }}/calibre-output/
+          if-no-files-found: warn
+          retention-days: 14

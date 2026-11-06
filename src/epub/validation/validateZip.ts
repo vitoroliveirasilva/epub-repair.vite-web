@@ -2,6 +2,8 @@ import type { LoadedEpub } from '../model/epubTypes';
 import type { Issue } from '../model/issueTypes';
 import { EPUB_MIME, SYSTEM_FILE_PATTERNS } from '../utils/constants';
 import { createIssue } from '../utils/issueFactory';
+import { resolveReference } from '../utils/pathUtils';
+import { findByLocalName, parseXml } from '../utils/xmlUtils';
 
 export function validateZipAndOcf(loaded: LoadedEpub): Issue[] {
   const issues: Issue[] = [];
@@ -45,23 +47,56 @@ export function validateZipAndOcf(loaded: LoadedEpub): Issue[] {
     'META-INF/signatures.xml',
   ]) {
     if (!loaded.files.has(sensitiveFile)) continue;
-    issues.push(
-      createIssue({
-        code: sensitiveFile.endsWith('encryption.xml')
-          ? 'DRM_OR_ENCRYPTION'
-          : 'KINDLE_COMPATIBILITY',
-        severity: sensitiveFile.endsWith('encryption.xml') ? 'warning' : 'info',
-        title: sensitiveFile.endsWith('encryption.xml')
-          ? 'Arquivo de criptografia encontrado'
+    const isEncryption = sensitiveFile.endsWith('encryption.xml');
+    const onlyFontObfuscation = isEncryption && containsOnlyIdpfFontObfuscation(loaded);
+    issues.push(createIssue({
+      code: onlyFontObfuscation
+        ? 'FONT_OBFUSCATION'
+        : isEncryption ? 'DRM_OR_ENCRYPTION' : 'KINDLE_COMPATIBILITY',
+      severity: isEncryption && !onlyFontObfuscation ? 'warning' : 'info',
+      title: onlyFontObfuscation
+        ? 'Fontes legalmente ofuscadas conforme padrão EPUB'
+        : isEncryption ? 'Criptografia ou proteção de recursos detectada'
           : 'Metadado avançado encontrado',
-        detail: sensitiveFile.endsWith('encryption.xml')
-          ? 'Pode indicar fontes ofuscadas, recursos criptografados ou DRM. O app não remove DRM nem descriptografa conteúdo.'
-          : 'Assinaturas/direitos podem ser legítimos, mas às vezes geram incompatibilidade em ingestões mais rígidas.',
-        file: sensitiveFile,
-        repairable: false,
-      }),
-    );
+      detail: onlyFontObfuscation
+        ? 'Os recursos listados utilizam apenas a ofuscação de fontes IDPF. ' +
+          'Isso não é, por si só, DRM. Nenhum recurso foi alterado.'
+        : isEncryption
+          ? 'A lista contém algoritmo desconhecido, recurso não-font, metadados inválidos ' +
+            'ou criptografia real. O app não remove DRM nem descriptografa conteúdo.'
+          : 'Assinaturas/direitos podem ser legítimos e não são removidos automaticamente.',
+      file: sensitiveFile,
+      repairable: false,
+    }));
   }
 
   return issues;
+}
+
+/** OCF 3.2: ofuscação IDPF é distinta de criptografia/DRM.
+ * Se houver algoritmo ou referência ambíguos, manter alerta conservador.
+ */
+function containsOnlyIdpfFontObfuscation(loaded: LoadedEpub): boolean {
+  const entry = loaded.files.get('META-INF/encryption.xml');
+  if (!entry) return false;
+  try {
+    const markup = new TextDecoder('utf-8', { fatal: true }).decode(entry.bytes);
+    const doc = parseXml(markup);
+    const resources = findByLocalName(doc, 'EncryptedData');
+    if (resources.length === 0) return false;
+    return resources.every((resource) => {
+      const methods = findByLocalName(resource, 'EncryptionMethod');
+      const targets = findByLocalName(resource, 'CipherReference');
+      if (methods.length !== 1 || targets.length !== 1) return false;
+      if (methods[0]?.getAttribute('Algorithm') !== 'http://www.idpf.org/2008/embedding') {
+        return false;
+      }
+      const uri = targets[0]?.getAttribute('URI') ?? '';
+      const target = resolveReference('', uri);
+      return target.safe && /\.(?:otf|ttf|woff2?)$/iu.test(target.path) &&
+        loaded.files.has(target.path);
+    });
+  } catch {
+    return false;
+  }
 }

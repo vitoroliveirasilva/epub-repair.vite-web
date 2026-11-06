@@ -44,13 +44,35 @@ export function formatBytes(bytes: number): string {
   return `${value.toFixed(value >= 10 || index === 0 ? 0 : 1)} ${units[index]}`;
 }
 
+const pendingDownloadUrls = new Set<string>();
+let downloadCleanupRegistered = false;
+
+function releasePendingDownloads(): void {
+  for (const url of pendingDownloadUrls) URL.revokeObjectURL(url);
+  pendingDownloadUrls.clear();
+}
+
 export function downloadBlob(blob: Blob, fileName: string): void {
   const url = URL.createObjectURL(blob);
+  pendingDownloadUrls.add(url);
+  if (!downloadCleanupRegistered) {
+    // Fecha os URLs imediatamente quando a página é abandonada, sem interferir
+    // na janela necessária para o Safari/WebKit iniciar o download.
+    window.addEventListener('pagehide', releasePendingDownloads);
+    downloadCleanupRegistered = true;
+  }
   const anchor = document.createElement('a');
   anchor.href = url;
   anchor.download = fileName;
   document.body.append(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
+  try {
+    anchor.click();
+  } finally {
+    anchor.remove();
+  }
+  // Revogar imediatamente após click() pode resultar em arquivo vazio no iOS.
+  // Limite de 60s como fallback; pagehide libera antes, sem revogação dupla.
+  window.setTimeout(() => {
+    if (pendingDownloadUrls.delete(url)) URL.revokeObjectURL(url);
+  }, 60_000);
 }

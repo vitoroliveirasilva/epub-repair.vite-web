@@ -2,7 +2,7 @@
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/0a6d6315-875c-4375-a73f-87859903eb27/deploy-status)](https://app.netlify.com/projects/epubrepair/deploys)
 [![CI](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/workflows/ci.yml/badge.svg?branch=prod)](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-2.0.0-blue)
+![Version](https://img.shields.io/badge/version-2.2.0-blue)
 ![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?logo=vite&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.x-3178C6?logo=typescript&logoColor=white)
 ![Vitest](https://img.shields.io/badge/tests-Vitest-6E9F18?logo=vitest&logoColor=white)
@@ -15,6 +15,8 @@
 Ferramenta **front-end estática** para validar, reparar, trocar capa e reempacotar arquivos `.epub` diretamente no navegador, com o objetivo de aumentar a compatibilidade com fluxos de envio/upload para Kindle e outros e-readers.
 
 O projeto não possui backend, banco de dados nem integração com APIs externas.  Sendo assim, o EPUB é carregado, analisado, alterado e baixado localmente no navegador do usuário.
+
+Consulte as [limitações de processamento e cancelamento](docs/WORKER_PROCESSING.md) e a [política de branches](docs/BRANCH_POLICY.md).
 
 ## Privacidade e segurança
 
@@ -34,6 +36,8 @@ O projeto não possui backend, banco de dados nem integração com APIs externas
 ## Principais funcionalidades
 
 * Validação local de EPUB
+* Extração ZIP via Web Worker de mesma origem quando disponível, com progresso por arquivo e cancelamento
+* Progresso real de recompactação, sem inventar porcentagens para a validação XML
 * Reparo técnico seguro para problemas estruturais e de compatibilidade
 * Separação entre **reparos obrigatórios** e **otimizações opcionais**
 * Troca ou adição de capa com imagem enviada pelo usuário
@@ -83,14 +87,14 @@ Quando o EPUB não possui reparos obrigatórios, o app informa que ele está pro
 * Reconstrói `META-INF/container.xml` quando necessário
 * Preserva o OPF e corrige apenas o necessário
 * Completa metadados básicos faltantes sem apagar os existentes
-* Normaliza idioma inválido/genérico e datas OPF frágeis
+* Aponta idioma ausente ou inválido para revisão manual, sem inventar pt-BR, e normaliza datas OPF frágeis
 * Atualiza `package version="1.0"` para uma base EPUB 2 mais segura quando aplicável
 * Declara a imagem de capa quando há uma candidata segura no manifest
 * Corrige ids duplicados/ausentes no manifest
 * Corrige media types quando a extensão indica o tipo correto
 * Remove do manifest itens claramente inexistentes, inválidos ou duplicados
 * Adiciona ao manifest recursos relevantes existentes que estavam órfãos
-* Remove `itemref` inválido do spine e reconstrói a ordem de leitura quando ela está vazia
+* Remove `itemref` inválido do spine, mas não inventa ordem editorial quando não há referência confiável
 * Preserva `nav.xhtml` e `toc.ncx` válidos
 * Cria `nav.xhtml` apenas quando EPUB 3 precisa e ele está ausente
 * Cria `toc.ncx` para EPUB 2 ou quando ele está declarado e ausente
@@ -161,6 +165,15 @@ Esse comportamento evita que o usuário baixe um arquivo aparentemente "corrigid
 * EPUBs extremamente corrompidos ou sem OPF válido podem exigir correção manual
 * A conversão de JPEG progressivo para baseline depende do suporte do navegador
 * A troca de capa não altera direitos autorais nem valida a procedência da imagem escolhida pelo usuário
+
+## Verificação antivírus local opcional
+
+Se houver ClamAV (`clamscan`) instalado e atualizado na sua máquina,
+é possível executar `npm run scan:av -- "meu-livro.epub"` **fora do navegador**.
+Nenhum arquivo é transmitido para servidor. Consulte
+[segurança e limites](docs/SEGURANCA_E_LIMITES.md#inspeção-antivírus-opcional)
+para interpretar os códigos de retorno e limitações. A ferramenta web
+não possui scanner integrado e esse comando não certifica ausência de malware.
 
 ## Como rodar localmente
 
@@ -234,3 +247,16 @@ Os testes adversariais cobrem ZIPs adulterados (incluindo CRC32, offsets, arquiv
 Referências passivas `http://` e `https://` (incluindo fontes externas via `@font-face` e `@import`) são preservadas e não reduzem o score de segurança. Fontes `data:font/*;base64` também são mantidas. Isso não garante que um leitor offline consiga carregar recursos externos: preserve as fontes no pacote quando precisar de funcionamento offline.
 
 O índice (`toc.ncx` no EPUB 2 ou `nav.xhtml` no EPUB 3) descreve a navegação editorial, não uma enumeração obrigatória de todos os arquivos do `spine`. O validador ainda identifica destinos quebrados, NCX inválido e `playOrder` inconsistente, mas não insere automaticamente apêndices e páginas auxiliares no índice.
+
+## Auditoria de conformidade e segurança
+
+A CI da branch `dev` também utiliza o **EPUBCheck 5.4.0 oficial**, verificando uma fixture
+reparada pelo motor real em navegador simulado. O pacote é baixado da release W3C e
+validado por SHA-256. Essa prova automatizada **não** transforma o site em EPUBCheck
+nem garante conformidade de qualquer livro arbitrário.
+
+- [Modelo de ameaças, privacidade e limites](docs/SEGURANCA_E_LIMITES.md)
+- [Matriz de formatos EPUB e validações](docs/MATRIZ_COMPATIBILIDADE.md)
+- [Decisões técnicas da auditoria](docs/DECISOES_AUDITORIA.md)
+- [Andamento dos 99 itens](docs/AUDITORIA_99_PROGRESSO.md)
+- [Changelog de desenvolvimento e correções](CHANGELOG.md)

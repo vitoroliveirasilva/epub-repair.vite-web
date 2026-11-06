@@ -1,0 +1,101 @@
+name: Browser compatibility smoke (Chromium, Firefox, WebKit)
+
+on:
+  push:
+    branches: [dev, prod]
+    paths:
+      - 'src/**'
+      - 'tests/browser-smoke.mjs'
+      - 'tests/browser-csp.mjs'
+      - 'tests/browser-resource-budget.mjs'
+      - 'tests/browser-large-workflow.mjs'
+      - 'netlify.toml'
+      - 'src/epub/repair/repairImages.ts'
+      - 'vite.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/browser-matrix.yml'
+  pull_request:
+    branches: [dev, prod]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browser-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    name: Browser smoke / ${{ matrix.browser }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+      - name: Install application from lockfile
+        run: npm ci
+      - name: Install isolated Playwright test harness
+        run: |
+          # Isolar o harness evita o erro npm Arborist "edgesOut" ao modificar
+          # node_modules de uma instalação reproduzível com npm ci.
+          mkdir -p "${RUNNER_TEMP}/browser-harness"
+          npm install --prefix "${RUNNER_TEMP}/browser-harness" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.55.1
+      - name: Install browser with cached runner system libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+          playwright="${RUNNER_TEMP}/browser-harness/node_modules/.bin/playwright"
+          if [ "${{ matrix.browser }}" = chromium ]; then
+            # Chromium já dispõe de bibliotecas no Ubuntu hosted runner.
+            # Evita apt update/downloads repetitivos que podem travar o job.
+            "$playwright" install chromium
+          else
+            "$playwright" install --with-deps "${{ matrix.browser }}"
+          fi
+      - name: Start static app locally and smoke browser
+        shell: bash
+        env:
+          BROWSER: ${{ matrix.browser }}
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/browser-harness/node_modules/playwright/index.mjs
+        run: |
+          set -euo pipefail
+          npm run dev -- --host 127.0.0.1 > "${RUNNER_TEMP}/vite-server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for i in $(seq 1 60); do
+            if curl --silent --fail http://127.0.0.1:5173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail http://127.0.0.1:5173/ > /dev/null
+          node tests/browser-smoke.mjs
+          # 12 MiB reais: verificar Worker de leitura e Worker de ZIP final,
+          # download e preservação de recursos em cada motor com viewport mobile.
+          node tests/browser-large-workflow.mjs
+          # CSP deve ser testada com bundle compilado, não Vite HMR (dev).
+          npm run build
+          npm run preview -- --host 127.0.0.1 --port 4173 > "${RUNNER_TEMP}/preview-server.log" 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" "$server_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 60); do
+            if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail http://127.0.0.1:4173/ > /dev/null
+          node tests/browser-csp.mjs
+          if [ "$BROWSER" = chromium ]; then node tests/browser-resource-budget.mjs; fi
+      - name: Upload server diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vite-logs-${{ matrix.browser }}
+          path: ${{ runner.temp }}/vite-server.log
+          retention-days: 3

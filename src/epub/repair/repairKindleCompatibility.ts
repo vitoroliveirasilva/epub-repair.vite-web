@@ -1,16 +1,16 @@
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction, RepairOptions } from '../model/repairTypes';
 import { HTML_MEDIA_TYPES } from '../utils/constants';
-import { normalizeLanguageTag } from '../utils/kindleCompatibility';
+import { decodeUtf8ForRewrite } from '../utils/textEncoding';
+import { isInvalidLanguageTag, normalizeLanguageTag } from '../utils/kindleCompatibility';
 import {
   childElementsByLocalName,
   findByLocalName,
   getAttr,
   parseXml,
-  serializeXml,
+  serializeXmlPreservingDeclaration,
 } from '../utils/xmlUtils';
 
-const TEXT_DECODER = new TextDecoder('utf-8', { fatal: false });
 const TEXT_ENCODER = new TextEncoder();
 
 export function repairKindleCompatibility(
@@ -34,8 +34,10 @@ function repairNcxCompatibility(
   if (!bytes) return actions;
 
   let doc: Document;
+  let ncxSource: string;
   try {
-    doc = parseXml(TEXT_DECODER.decode(bytes));
+    ncxSource = decodeUtf8ForRewrite(bytes, pkg.ncxItem.resolvedPath);
+    doc = parseXml(ncxSource);
   } catch {
     return actions;
   }
@@ -56,7 +58,7 @@ function repairNcxCompatibility(
 
   const titleChanged = normalizeNcxTitle(doc, pkg.metadata.title);
   if (playOrderChanged || titleChanged) {
-    files.set(pkg.ncxItem.resolvedPath, TEXT_ENCODER.encode(serializeXml(doc)));
+    files.set(pkg.ncxItem.resolvedPath, TEXT_ENCODER.encode(serializeXmlPreservingDeclaration(doc, ncxSource)));
   }
 
   if (playOrderChanged) {
@@ -86,7 +88,10 @@ function repairXhtmlCompatibility(
   pkg: PackageDocumentInfo,
 ): RepairAction[] {
   const actions: RepairAction[] = [];
-  const language = normalizeLanguageTag(pkg.metadata.language, 'pt-BR');
+  const rawLanguage = pkg.metadata.language;
+  const language = rawLanguage && !isInvalidLanguageTag(rawLanguage)
+    ? normalizeLanguageTag(rawLanguage)
+    : undefined;
 
   for (const item of pkg.manifest) {
     if (!item.exists || !HTML_MEDIA_TYPES.has(item.mediaType)) continue;
@@ -94,7 +99,7 @@ function repairXhtmlCompatibility(
     const bytes = files.get(item.resolvedPath);
     if (!bytes) continue;
 
-    const original = TEXT_DECODER.decode(bytes);
+    const original = decodeUtf8ForRewrite(bytes, item.resolvedPath);
     let output = original;
     const fileActions: RepairAction[] = [];
 
@@ -109,7 +114,7 @@ function repairXhtmlCompatibility(
       });
     }
 
-    const withLanguage = ensureHtmlLanguage(output, language);
+    const withLanguage = language ? ensureHtmlLanguage(output, language) : output;
     if (withLanguage !== output) {
       output = withLanguage;
       fileActions.push({
@@ -137,6 +142,33 @@ function repairXhtmlCompatibility(
     }
   }
 
+  return actions;
+}
+
+/** Ajusta somente idioma XHTML na operação opcional; não altera NCX ou prosa. */
+export function repairOptionalXhtmlLanguage(
+  files: Map<string, Uint8Array>,
+  pkg: PackageDocumentInfo,
+): RepairAction[] {
+  const actions: RepairAction[] = [];
+  const raw = pkg.metadata.language;
+  if (!raw || isInvalidLanguageTag(raw)) return actions;
+  const language = normalizeLanguageTag(raw);
+  for (const item of pkg.manifest) {
+    if (!item.exists || item.mediaType !== 'application/xhtml+xml') continue;
+    const bytes = files.get(item.resolvedPath);
+    if (!bytes) continue;
+    const source = decodeUtf8ForRewrite(bytes, item.resolvedPath);
+    const normalized = ensureHtmlLanguage(source, language);
+    if (normalized === source) continue;
+    files.set(item.resolvedPath, TEXT_ENCODER.encode(normalized));
+    actions.push({
+      type: 'updated',
+      title: 'Idioma XHTML definido na otimização',
+      detail: 'lang/xml:lang recebeu idioma já existente no OPF.',
+      file: item.resolvedPath,
+    });
+  }
   return actions;
 }
 

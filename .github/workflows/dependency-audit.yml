@@ -1,0 +1,41 @@
+name: Weekly dependency and license review
+
+on:
+  schedule:
+    - cron: '30 11 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-dependency-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+      - name: Verify registry origin and integrity
+        run: node scripts/check-lockfile-provenance.mjs
+      - name: Install locked packages without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+      - name: Audit all dependencies
+        run: npm audit --audit-level=moderate
+      - name: Review licenses
+        run: node scripts/audit-licenses.mjs
+      - name: Report outdated dependencies (informational)
+        shell: bash
+        run: |
+          echo '### Updates available (review before adopting)' >> "$GITHUB_STEP_SUMMARY"
+          npm outdated >> "$GITHUB_STEP_SUMMARY" || true

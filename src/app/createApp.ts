@@ -3,11 +3,13 @@ import {
   applyCoverReplacementToCurrentFile,
   clearCoverImageFromState,
   loadCoverImageIntoState,
-  loadFileIntoState,
+  loadAndAnalyzeCandidate,
   repairCurrentFile,
 } from './actions';
-import { createInitialState, type AppState } from './state';
-import { buildJsonReport, buildTextReport, makeReportFileName } from '../ui/copyReport';
+import { createInitialState, type AppState, type ProcessingProgress } from './state';
+import { captureFocusForRerender } from './focusRestoration';
+import { buildRepairConsentMessage } from './repairConsent';
+import { buildJsonReport, buildTextReport, createReportEvidence, makeReportFileName } from '../ui/copyReport';
 import { renderControls } from '../ui/components/Controls';
 import { renderCoverChanger } from '../ui/components/CoverChanger';
 import { renderStatusMessage } from '../ui/components/ErrorPanel';
@@ -17,6 +19,8 @@ import { renderOptionsPanel } from '../ui/components/OptionsPanel';
 import { renderRepairSummary } from '../ui/components/RepairSummary';
 import { renderUploader } from '../ui/components/Uploader';
 import { downloadBlob, el } from '../ui/dom';
+import { abortProcessingError } from './zipWorkerClient';
+import { SerialTaskQueue } from './taskQueue';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -25,58 +29,142 @@ const THEME_STORAGE_KEY = 'epub-repair-theme';
 export function createApp(root: HTMLElement): void {
   initializeTheme();
   const state = createInitialState();
-
-  const rerender = (): void => render(root, state, rerender);
-  render(root, state, rerender);
+  const queue = new SerialTaskQueue((pending) => {
+    state.pendingTasks = pending;
+    state.hasPendingMutation = queue.hasPendingMutation;
+    rerender();
+  });
+  const enqueue = (
+    label: string,
+    task: (context: {
+      signal: AbortSignal;
+      onProgress: (progress: ProcessingProgress) => void;
+    }) => Promise<void>,
+  ): void => {
+    const accepted = queue.enqueue({
+      label,
+      run: async () => {
+        state.activeTask = label;
+        try {
+          await runAsync(state, rerender, task);
+        } finally {
+          state.activeTask = undefined;
+        }
+      },
+    });
+    if (!accepted) {
+      state.message = 'Fila cheia: aguarde ou cancele tarefas agendadas.';
+      rerender();
+    }
+  };
+  const cancelAll = (): void => {
+    const discarded = queue.clearPending();
+    state.processingProgress = { phase: 'Interrompendo operação...' };
+    state.processingController?.abort();
+    state.message = discarded
+      ? discarded + ' tarefa(s) pendente(s) cancelada(s) junto da operação ativa.'
+      : undefined;
+    rerender();
+  };
+  const rerender = (): void => {
+    const restoreFocus = captureFocusForRerender(root);
+    render(root, state, rerender, enqueue, cancelAll);
+    restoreFocus();
+  };
+  render(root, state, rerender, enqueue, cancelAll);
 }
 
-function render(root: HTMLElement, state: AppState, rerender: () => void): void {
+function render(
+  root: HTMLElement, state: AppState, rerender: () => void,
+  enqueue: (
+    label: string,
+    task: (context: {
+      signal: AbortSignal;
+      onProgress: (progress: ProcessingProgress) => void;
+    }) => Promise<void>,
+  ) => void,
+  cancelAll: () => void,
+): void {
   root.replaceChildren(
     renderAppHeader(),
     renderHero(),
     el('main', {
       className: 'layout',
-      attrs: { id: 'app-workspace' },
+      attrs: { id: 'app-workspace', tabindex: '-1' },
       children: [
         el('div', {
           className: 'workspace',
           children: [
             renderUploader(state, (file) => {
-              void runAsync(state, rerender, async () => {
-                await loadFileIntoState(file, state);
-                await analyzeCurrentFile(state);
-              });
+              enqueue('Carregar e analisar EPUB', (ctx) =>
+                loadAndAnalyzeCandidate(file, state, ctx));
             }),
             renderControls(state, {
               analyze: () => {
-                void runAsync(state, rerender, () => analyzeCurrentFile(state));
+                enqueue('Verificar EPUB', (ctx) => analyzeCurrentFile(state, ctx));
               },
               repair: () => {
-                void runAsync(state, rerender, () => repairCurrentFile(state));
+                const question = buildRepairConsentMessage(state.options, state.report);
+                if (question) {
+                  if (!window.confirm(question)) {
+                    state.message = 'Operação cancelada. O EPUB original permanece inalterado.';
+                    rerender();
+                    return;
+                  }
+                }
+                enqueue('Reparar EPUB', (ctx) => repairCurrentFile(state, ctx));
               },
               copy: () => {
                 void copyCurrentReport(state, rerender);
               },
               downloadTextReport: () => {
-                downloadCurrentReport(state, 'txt');
+                void downloadCurrentReport(state, 'txt');
               },
               downloadJsonReport: () => {
-                downloadCurrentReport(state, 'json');
+                void downloadCurrentReport(state, 'json');
               },
+              cancel: cancelAll,
+
             }),
             renderCoverChanger(state, {
               selectCoverImage: (file) => {
-                void runAsync(state, rerender, () => loadCoverImageIntoState(file, state));
+                enqueue('Selecionar capa', (ctx) =>
+                  loadCoverImageIntoState(file, state, ctx.signal));
               },
               clearCoverImage: () => {
                 clearCoverImageFromState(state);
                 rerender();
               },
               applyCoverReplacement: () => {
-                void runAsync(state, rerender, () => applyCoverReplacementToCurrentFile(state));
+                if (!state.coverImage) return;
+                const current = state.report?.cover?.exists;
+                const question = current
+                  ? 'A capa atual será substituída por ' + state.coverImage.fileName +
+                    '. A obra original não será alterada. Deseja criar uma nova cópia?'
+                  : 'Uma nova capa será inserida: ' + state.coverImage.fileName +
+                    '. Deseja criar uma nova cópia do EPUB?';
+                if (!window.confirm(question)) {
+                  state.message = 'Troca de capa cancelada; a obra original continua intacta.';
+                  rerender();
+                  return;
+                }
+                enqueue('Substituir capa', (ctx) =>
+                  applyCoverReplacementToCurrentFile(state, ctx.signal, ctx.onProgress));
               },
             }),
             renderStatusMessage(state.message, state.error),
+            state.invalidUploadReport
+              ? el('section', {
+                  className: 'panel',
+                  attrs: { 'aria-label': 'Diagnóstico do novo EPUB recusado' },
+                  children: [
+                    el('h2', { text: 'Diagnóstico do novo EPUB recusado' }),
+                    renderFileSummary(state.invalidUploadReport),
+                    renderIssueList(state.invalidUploadReport, state.reportViewMode,
+                      (mode) => { state.reportViewMode = mode; rerender(); }),
+                  ],
+                })
+              : undefined,
             state.report ? renderFileSummary(state.report) : renderEmptyState(),
             state.repairResult ? renderRepairSummary(state.repairResult) : undefined,
             state.report
@@ -98,17 +186,46 @@ function render(root: HTMLElement, state: AppState, rerender: () => void): void 
 async function runAsync(
   state: AppState,
   rerender: () => void,
-  task: () => Promise<void>,
+  task: (context: {
+    signal: AbortSignal;
+    onProgress: (progress: ProcessingProgress) => void;
+  }) => Promise<void>,
 ): Promise<void> {
+  // Um único job ativo evita misturar resultados de livros diferentes.
+  if (state.busy) return;
+  const controller = new AbortController();
+  let lastProgressKey = '';
   try {
     state.error = undefined;
     state.busy = true;
+    state.processingController = controller;
+    state.processingProgress = { phase: 'Preparando operação local...' };
     rerender();
-    await task();
+    await task({
+      signal: controller.signal,
+      onProgress: (progress) => {
+        if (controller.signal.aborted) return;
+        const fraction = progress.total && progress.completed !== undefined
+          ? Math.floor((progress.completed / progress.total) * 20) : undefined;
+        const key = progress.phase + '|' + (fraction ?? '');
+        if (key === lastProgressKey) return;
+        lastProgressKey = key;
+        state.processingProgress = progress;
+        rerender();
+      },
+    });
+    if (controller.signal.aborted) throw abortProcessingError();
   } catch (error) {
-    state.error = error instanceof Error ? error.message : 'Não foi possível concluir a ação.';
+    if (error instanceof Error && error.name === 'AbortError') {
+      state.message = 'Operação cancelada. Nenhum resultado parcial foi publicado.';
+      state.error = undefined;
+    } else {
+      state.error = error instanceof Error ? error.message : 'Não foi possível concluir a ação.';
+    }
   } finally {
     state.busy = false;
+    state.processingController = undefined;
+    state.processingProgress = undefined;
     rerender();
   }
 }
@@ -116,7 +233,8 @@ async function runAsync(
 async function copyCurrentReport(state: AppState, rerender: () => void): Promise<void> {
   if (!state.report) return;
   try {
-    await navigator.clipboard.writeText(buildTextReport(state.report, state.repairResult));
+    const evidence = await createEvidenceForReport(state);
+    await navigator.clipboard.writeText(buildTextReport(state.report, state.repairResult, evidence));
     state.message = 'Relatório copiado para a área de transferência.';
     state.error = undefined;
   } catch {
@@ -125,19 +243,28 @@ async function copyCurrentReport(state: AppState, rerender: () => void): Promise
   rerender();
 }
 
-function downloadCurrentReport(state: AppState, format: 'txt' | 'json'): void {
+async function downloadCurrentReport(state: AppState, format: 'txt' | 'json'): Promise<void> {
   if (!state.report) return;
-
+  const evidence = await createEvidenceForReport(state);
   const content =
     format === 'json'
-      ? buildJsonReport(state.report, state.repairResult)
-      : buildTextReport(state.report, state.repairResult);
+      ? buildJsonReport(state.report, state.repairResult, evidence)
+      : buildTextReport(state.report, state.repairResult, evidence);
   const mimeType =
     format === 'json' ? 'application/json;charset=utf-8' : 'text/plain;charset=utf-8';
   downloadBlob(
     new Blob([content], { type: mimeType }),
     makeReportFileName(state.report.fileName, format),
   );
+}
+
+async function createEvidenceForReport(state: AppState) {
+  const original = state.originalSource ?? (state.payload
+    ? { fileName: state.payload.file.name, bytes: state.payload.bytes }
+    : undefined);
+  return original
+    ? createReportEvidence(original.fileName, original.bytes, state.options, state.lastRepairOptions)
+    : undefined;
 }
 
 function renderAppHeader(): HTMLElement {

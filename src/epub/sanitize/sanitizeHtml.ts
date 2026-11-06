@@ -4,6 +4,8 @@ import {
   basename,
   isRemoteUrl,
   isSafeRemoteResourceUrl,
+  isSafeInlineImageDataUrl,
+  splitSrcsetCandidates,
   resolveReference,
 } from '../utils/pathUtils';
 
@@ -19,6 +21,7 @@ export interface SanitizeHtmlOptions {
   sanitizeScripts: boolean;
   removeRemoteResourceLinks: boolean;
   kindleSafeMode: boolean;
+  replaceMissingImagesWithText?: boolean;
 }
 
 export function sanitizeHtmlDocument(
@@ -30,10 +33,11 @@ export function sanitizeHtmlDocument(
 
   if (options.sanitizeScripts) {
     const before = output;
-    output = output.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/giu, '');
-    output = output.replace(/<script\b[^>]*\/?>/giu, '');
-    output = output.replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/giu, '');
-    output = output.replace(/\s+(?:href|src)\s*=\s*(["'])\s*javascript:[\s\S]*?\1/giu, '');
+    output = outsideHtmlComments(output, (part) => part
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/giu, '')
+      .replace(/<script\b[^>]*\/?>/giu, '')
+      .replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/giu, '')
+      .replace(/\s+(?:href|src)\s*=\s*(["'])\s*javascript:[\s\S]*?\1/giu, ''));
     if (output !== before) {
       actions.push({
         type: 'updated',
@@ -46,14 +50,11 @@ export function sanitizeHtmlDocument(
 
   if (options.kindleSafeMode) {
     const before = output;
-    output = output.replace(
-      /<(iframe|embed|object)\b[^>]*>[\s\S]*?<\/\1\s*>/giu,
-      '<p>[Recurso interativo removido]</p>',
-    );
-    output = output.replace(
-      /<(iframe|embed|object)\b[^>]*\/?>/giu,
-      '<p>[Recurso interativo removido]</p>',
-    );
+    output = outsideHtmlComments(output, (part) => part
+      .replace(/<(iframe|embed|object)\b[^>]*>[\s\S]*?<\/\1\s*>/giu,
+        '<p>[Recurso interativo removido]</p>')
+      .replace(/<(iframe|embed|object)\b[^>]*\/?>/giu,
+        '<p>[Recurso interativo removido]</p>'));
     if (output !== before) {
       actions.push({
         type: 'updated',
@@ -64,16 +65,18 @@ export function sanitizeHtmlDocument(
     }
   }
 
-  output = replaceMissingImages(output, options, actions);
-  output = replaceBrokenKindleEmbeds(output, options.filePath, actions);
+  if (options.replaceMissingImagesWithText) {
+    output = outsideHtmlComments(output, (part) => replaceMissingImages(part, options, actions));
+  }
+  output = outsideHtmlComments(output, (part) => replaceBrokenKindleEmbeds(part, options.filePath, actions));
 
   if (options.removeRemoteResourceLinks) {
-    output = replaceRemoteAnchors(output, options.filePath, actions);
-    output = removeRemoteResourceAttributes(output, options.filePath, actions);
+    output = outsideHtmlComments(output, (part) => replaceRemoteAnchors(part, options.filePath, actions));
+    output = outsideHtmlComments(output, (part) => removeRemoteResourceAttributes(part, options.filePath, actions));
   }
 
-  output = filterUnsafeSrcset(output, options, actions);
-  output = removeBrokenResourceAttributes(output, options, actions);
+  output = outsideHtmlComments(output, (part) => filterUnsafeSrcset(part, options, actions));
+  output = outsideHtmlComments(output, (part) => removeBrokenResourceAttributes(part, options, actions));
 
   // O parser interpreta entidades e namespaces antes de validar atributos,
   // cobrindo variações que expressões regulares não conseguem reconhecer.
@@ -149,10 +152,8 @@ function replaceBrokenKindleEmbeds(
       return '<p>[Conteúdo Kindle indisponível]</p>';
     },
   );
-  output = output.replace(/kindle:embed:[^\s"'<>)]*/giu, (value) => {
-    changed = true;
-    return `[Conteúdo Kindle indisponível: ${escapeHtml(value)}]`;
-  });
+  // Referências Kindle são neutralizadas somente quando aparecem em atributos
+  // ou elementos reais. Texto literal de livros técnicos deve permanecer intacto.
 
   if (changed) {
     actions.push({
@@ -175,13 +176,13 @@ function filterUnsafeSrcset(
   const output = text.replace(
     /\ssrcset\s*=\s*(["'])(.*?)\1/giu,
     (full, quote: string, value: string) => {
-      const safeCandidates = value
-        .split(',')
-        .map((candidate) => candidate.trim())
+      const candidates = splitSrcsetCandidates(value);
+      const safeCandidates = candidates
         .filter(Boolean)
         .filter((candidate) => {
           const [rawUrl] = candidate.split(/\s+/u);
           if (!rawUrl || rawUrl.startsWith('#') || rawUrl.startsWith('kindle:embed:')) return false;
+          if (isSafeInlineImageDataUrl(rawUrl)) return true;
           if (isRemoteUrl(rawUrl)) {
             return isSafeRemoteResourceUrl(rawUrl) && !options.removeRemoteResourceLinks;
           }
@@ -189,7 +190,7 @@ function filterUnsafeSrcset(
           return resolved.safe && options.existingFiles.has(resolved.path);
         });
 
-      if (safeCandidates.length === value.split(',').filter((part) => part.trim()).length) {
+      if (safeCandidates.length === candidates.length) {
         return full;
       }
 
@@ -217,10 +218,10 @@ function replaceRemoteAnchors(text: string, filePath: string, actions: RepairAct
     (full, before: string, _quote: string, href: string, after: string, label: string) => {
       if (!isRemoteUrl(href)) return full;
       changed = true;
-      const readable = stripTags(label).trim() || href;
+      // Preservar tags editoriais e entidades ao remover apenas o link.
       const titleMatch = `${before} ${after}`.match(/\btitle\s*=\s*(["'])(.*?)\1/iu);
       const title = titleMatch?.[2]?.trim();
-      return escapeHtml(title || readable);
+      return label.trim() ? label : escapeHtml(title || href);
     },
   );
 
@@ -269,17 +270,22 @@ function removeBrokenResourceAttributes(
   actions: RepairAction[],
 ): string {
   let changed = false;
-  const output = text.replace(
-    /\s(?:src|poster|data|xlink:href)\s*=\s*(["'])(.*?)\1/giu,
-    (full, _quote: string, value: string) => {
-      const raw = value.trim();
-      if (!raw || raw.startsWith('#') || isRemoteUrl(raw) || raw.startsWith('kindle:embed:'))
-        return full;
-      const resolved = resolveReference(options.filePath, raw);
-      if (resolved.safe && options.existingFiles.has(resolved.path)) return full;
-      changed = true;
-      return '';
-    },
+  const output = text.replace(/<[^>]+>/giu, (tag) =>
+    tag.replace(
+      /\s(?:src|poster|data|xlink:href)\s*=\s*(["'])(.*?)\1/giu,
+      (full, _quote: string, value: string) => {
+        // O marcador altera o conteúdo editorial e exige opt-in. Sem ele, manter o img.
+        if (!options.replaceMissingImagesWithText &&
+            /^<img\b/iu.test(tag) && /^\s+src\s*=/iu.test(full)) return full;
+        const raw = value.trim();
+        if (!raw || raw.startsWith('#') || isRemoteUrl(raw) || raw.startsWith('kindle:embed:'))
+          return full;
+        const resolved = resolveReference(options.filePath, raw);
+        if (resolved.safe && options.existingFiles.has(resolved.path)) return full;
+        changed = true;
+        return '';
+      },
+    ),
   );
 
   if (changed) {
@@ -306,4 +312,12 @@ function escapeHtml(value: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+/** Preserva comentários editoriais que exibem exemplos literais de tags. */
+function outsideHtmlComments(source: string, transform: (part: string) => string): string {
+  return source.split(/(<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>)/gu).map((part) =>
+    (part.startsWith('<!--') && part.endsWith('-->')) ||
+    (part.startsWith('<![CDATA[') && part.endsWith(']]>'))
+      ? part : transform(part)).join('');
 }

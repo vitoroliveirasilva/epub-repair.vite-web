@@ -1,17 +1,24 @@
 import type { RepairAction, RepairOptions, RepairResult } from '../model/repairTypes';
+import type { LoadedEpub } from '../model/epubTypes';
 import { loadEpub } from '../reader/loadEpub';
-import { inspectEpub } from '../validation/validateEpub';
+import { inspectEpub, inspectLoadedEpub } from '../validation/validateEpub';
 import { DEFAULT_REPAIR_OPTIONS, EPUB_MIME, SYSTEM_FILE_PATTERNS } from '../utils/constants';
 import { makeRepairedFileName } from '../utils/fileName';
 import { normalizeInternalPath } from '../utils/pathUtils';
-import { canOptimizeReport, canRepairReport } from '../utils/reportGuards';
-import { parsePackageDocument } from '../validation/opfParser';
+import { canOptimizeReport, canRepairReport, hasResidualActiveContent } from '../utils/reportGuards';
+import { parsePackageDocument, parseOpfDocument } from '../validation/opfParser';
+import { parseXml } from '../utils/xmlUtils';
+import { auditPreservation } from './preservationAudit';
+import { createTextFileDiffs } from './textFileDiff';
+import { assertNoNewCriticalIssues } from './repairSafety';
 import { ensureContainerFile } from './repairContainer';
-import { repairContentDocuments } from './repairContentDocuments';
+import { repairActiveContentOnly, repairContentDocuments } from './repairContentDocuments';
 import { repairImageCompatibility } from './repairImages';
-import { repairKindleCompatibility } from './repairKindleCompatibility';
+import { stripEpubImageMetadata } from './stripImageMetadata';
+import { repairKindleCompatibility, repairOptionalXhtmlLanguage } from './repairKindleCompatibility';
 import { repairOpfDocument } from './repairOpf';
-import { rebuildEpubZip } from './rebuildEpubZip';
+import { synchronizeManifestProperties } from './synchronizeManifestProperties';
+import { rebuildEpubZipInWorker } from './zipBuildWorkerClient';
 
 type RepairRunMode = 'repair' | 'optimization';
 
@@ -20,13 +27,29 @@ export async function repairEpub(
   bytes: Uint8Array,
   options: RepairOptions = DEFAULT_REPAIR_OPTIONS,
   mode: RepairRunMode = 'repair',
+  preloaded?: LoadedEpub,
+  signal?: AbortSignal,
+  onZipProgress?: (percent: number) => void,
 ): Promise<RepairResult> {
-  const before = await inspectEpub(fileName, bytes);
+  const canceled = (): void => {
+    if (signal?.aborted) throw new DOMException(
+      'Operação cancelada pelo usuário.', 'AbortError');
+  };
+  canceled();
+  const loaded = preloaded ?? await loadEpub(fileName, bytes, undefined, signal);
+  canceled();
+  const before = inspectLoadedEpub(fileName, bytes.length, loaded);
   const warnings: string[] = [];
 
-  const canRunRequiredRepair = canRepairReport(before);
+  const canRunRequiredRepair = canRepairReport(before, options);
   const canRunOptionalOptimization = canOptimizeReport(before);
-  const shouldRun = mode === 'optimization' ? canRunOptionalOptimization : canRunRequiredRepair;
+  const metadataCandidates = new Set(before.issues
+    .filter((issue) => issue.code === 'IMAGE_EMBEDDED_METADATA' && Boolean(issue.file))
+    .map((issue) => issue.file!));
+  const canStripMetadata = Boolean(options.stripImageMetadata && metadataCandidates.size);
+  const shouldRun = mode === 'optimization'
+    ? canRunOptionalOptimization || canStripMetadata
+    : canRunRequiredRepair || canStripMetadata;
   const operation = mode === 'optimization' ? 'optimization' : 'repair';
 
   if (!shouldRun) {
@@ -45,8 +68,9 @@ export async function repairEpub(
     };
   }
 
-  const loaded = await loadEpub(fileName, bytes);
-
+  if (loaded.files.has('META-INF/signatures.xml')) {
+    throw new Error('Arquivo assinado digitalmente. O reparo invalidaria a assinatura; operação bloqueada.');
+  }
   if (!loaded.validZip) {
     throw new Error('Não é seguro reparar: o arquivo não pôde ser aberto como ZIP/EPUB válido.');
   }
@@ -56,6 +80,47 @@ export async function repairEpub(
     throw new Error(
       'Não é seguro reparar automaticamente: o OPF do EPUB não foi encontrado ou está inválido.',
     );
+  }
+
+  // Uma otimização isolada não reexecuta reparos do OPF ou do conteúdo.
+  if (mode === 'optimization') {
+    const optimizedFiles = new Map<string, Uint8Array>();
+    for (const [path, entry] of loaded.files) optimizedFiles.set(path, entry.bytes);
+    const attempted = await repairImageCompatibility(optimizedFiles, parsed.packageInfo, options);
+    if (!options.conservativeMode && before.issues.some((issue) => issue.code === 'XHTML_LANG_MISSING')) {
+      attempted.push(...repairOptionalXhtmlLanguage(optimizedFiles, parsed.packageInfo));
+    }
+    canceled();
+    if (canStripMetadata) {
+      attempted.push(...stripEpubImageMetadata(optimizedFiles, parsed.packageInfo,
+        metadataCandidates));
+    }
+    canceled();
+    const applied = attempted.filter((action) => action.type !== 'skipped');
+    warnings.push(...attempted.filter((action) => action.type === 'skipped')
+      .map((action) => `Não aplicado: ${action.title}. ${action.detail}`));
+
+    if (applied.length === 0) {
+      return {
+        fileName, before, after: before, actions: attempted,
+        warnings: [...warnings, 'O navegador não conseguiu aplicar uma otimização opcional.'],
+        changed: false, operation,
+      };
+    }
+    const blob = await rebuildEpubZipInWorker(optimizedFiles, {
+      signal, onProgress: ({percent}) => onZipProgress?.(percent),
+    });
+    canceled();
+    const outName = makeRepairedFileName(fileName);
+    const after = await inspectEpub(outName, new Uint8Array(await blob.arrayBuffer()));
+    canceled();
+    assertNoNewCriticalIssues(before, after);
+    if (hasResidualActiveContent(after)) {
+      warnings.push('Otimização concluída, mas ainda existem recursos suspeitos ou conteúdo ativo a revisar.');
+    }
+    return { blob, fileName: outName, before, after, actions: attempted, warnings,
+      fileDiffs: createTextFileDiffs(new Map(Array.from(loaded.files, ([name, entry]) =>
+        [name, entry.bytes])), optimizedFiles), changed: true, operation };
   }
 
   const actions: RepairAction[] = [];
@@ -109,46 +174,92 @@ export async function repairEpub(
     actions.push(ensureContainerFile(files, parsed.packageInfo.opfPath));
   }
 
+  // Inspecionar o manifest efetivo também em modo conservador. O OPF reparado
+  // pode declarar XHTML/SVG/CSS que antes eram órfãos no pacote.
+  const currentOpf = files.get(parsed.packageInfo.opfPath);
+  const currentPkg = currentOpf
+    ? parseOpfDocument(
+        parseXml(new TextDecoder('utf-8').decode(currentOpf)),
+        parsed.packageInfo.opfPath,
+        files,
+      )
+    : parsed.packageInfo;
   if (!options.conservativeMode) {
-    actions.push(...repairContentDocuments(files, loaded, parsed.packageInfo, options));
+    actions.push(...repairContentDocuments(files, loaded, currentPkg, options));
   } else {
+    // O modo conservador não reescreve conteúdo por compatibilidade, mas
+    // respeita o opt-in explícito de remover scripts ou recursos remotos.
+    actions.push(...repairActiveContentOnly(files, currentPkg, options));
     warnings.push(
-      'O modo conservador está ativo, então XHTML, CSS e imagens foram preservados sempre que possível.',
+      options.sanitizeScripts
+        ? 'Modo conservador: somente elementos ativos e URLs selecionadas foram neutralizados; ' +
+          'a tipografia e os recursos não perigosos foram preservados sempre que possível.'
+        : 'Modo conservador: scripts foram preservados por escolha do usuário; ' +
+          'conteúdo ativo residual exige revisão manual.',
     );
   }
 
-  actions.push(...repairKindleCompatibility(files, parsed.packageInfo, options));
-  actions.push(...(await repairImageCompatibility(files, parsed.packageInfo, options)));
+  actions.push(...repairKindleCompatibility(files, currentPkg, options));
+  // Manifest precisa refletir os recursos efetivos, após a limpeza. Isso
+  // evita avisos novos quando o reparo declara arquivos antes órfãos.
+  if (options.repairManifest) {
+    actions.push(...synchronizeManifestProperties(files, currentPkg));
+  }
+  // E-009: JPEG progressivo só muda na otimização explicitamente solicitada.
+  // E-075: metadados somente com opt-in, sem alterar pixels, e com revalidação.
+  if (canStripMetadata) {
+    actions.push(...stripEpubImageMetadata(files, currentPkg, metadataCandidates));
+  }
 
   const appliedActions = actions.filter((action) => action.type !== 'skipped');
+  const skippedActions = actions.filter((action) => action.type === 'skipped');
+  warnings.push(...skippedActions.map((action) =>
+    `Não aplicado: ${action.title}. ${action.detail}`));
   if (appliedActions.length === 0) {
     return {
       fileName,
       before,
       after: before,
-      actions: [],
+      actions: skippedActions,
       warnings: [
-        operation === 'optimization'
-          ? 'A otimização opcional foi avaliada, mas nenhuma alteração automática foi aplicada.'
-          : 'Nenhuma alteração automática foi aplicada.',
+        ...warnings,
+        hasResidualActiveContent(before)
+          ? 'Nenhuma alteração foi aplicada e o EPUB ainda contém sinais de conteúdo ativo ou recursos suspeitos.'
+          : operation === 'optimization'
+            ? 'A otimização opcional foi avaliada, mas nenhuma alteração automática foi aplicada.'
+            : 'Nenhuma alteração automática foi aplicada.',
       ],
       changed: false,
       operation,
     };
   }
 
-  const blob = await rebuildEpubZip(files);
+  canceled();
+  const blob = await rebuildEpubZipInWorker(files, {
+    signal, onProgress: ({percent}) => onZipProgress?.(percent),
+  });
+  canceled();
   const afterBytes = new Uint8Array(await blob.arrayBuffer());
   const outputFileName = makeRepairedFileName(fileName);
   const after = await inspectEpub(outputFileName, afterBytes);
+  canceled();
+  assertNoNewCriticalIssues(before, after);
+  warnings.push(...auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo,
+    canStripMetadata ? metadataCandidates : undefined));
+  const fileDiffs = createTextFileDiffs(new Map(Array.from(loaded.files, ([name, entry]) =>
+    [name, entry.bytes])), files);
+  if (hasResidualActiveContent(after)) {
+    warnings.push('O reparo ainda apresenta conteúdo ativo ou recursos suspeitos: exige revisão manual.');
+  }
 
   return {
     blob,
     fileName: outputFileName,
     before,
     after,
-    actions: appliedActions,
+    actions,
     warnings,
+    fileDiffs,
     changed: true,
     operation,
   };
@@ -167,5 +278,10 @@ function shouldNormalizeMimetype(
 }
 
 function shouldRebuildContainer(issues: { code: string }[]): boolean {
-  return issues.some((issue) => issue.code.startsWith('CONTAINER_'));
+  // Múltiplos rootfiles podem representar renditions legítimas. Este aviso
+  // informativo NUNCA autoriza substituir o container e perder outras edições.
+  const missingOrBroken = new Set([
+    'CONTAINER_MISSING', 'CONTAINER_INVALID_XML', 'CONTAINER_NO_ROOTFILE',
+  ]);
+  return issues.some((issue) => missingOrBroken.has(issue.code));
 }

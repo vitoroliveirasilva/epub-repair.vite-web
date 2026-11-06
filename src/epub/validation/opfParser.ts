@@ -8,7 +8,7 @@ import type {
 } from '../model/opfTypes';
 import { createIssue } from '../utils/issueFactory';
 import { guessMediaType } from '../utils/mediaTypes';
-import { dirname, normalizePath, resolveFromDir } from '../utils/pathUtils';
+import { dirname, isRemoteUrl, isSafeRemoteResourceUrl, normalizeInternalPath, normalizePath, resolveFromDir } from '../utils/pathUtils';
 import {
   childElementsByLocalName,
   findByLocalName,
@@ -53,22 +53,33 @@ export function parsePackageDocument(loaded: LoadedEpub): ParsedPackageResult {
             code: 'CONTAINER_MULTIPLE_ROOTFILES',
             severity: 'info',
             title: 'container.xml tem múltiplos rootfiles',
-            detail: 'O app usará o primeiro rootfile com caminho OPF válido de forma previsível.',
+            detail: 'O app prioriza o primeiro rootfile com MIME OPF correto e caminho seguro. Outros renditions permanecem preservados.',
             file: 'META-INF/container.xml',
             repairable: false,
           }),
         );
       }
 
-      const selected =
-        rootfiles.find((rootfile) => {
-          const fullPath = getAttr(rootfile, 'full-path');
-          return Boolean(
-            fullPath &&
-            loaded.files.has(normalizePath(fullPath)) &&
-            fullPath.toLowerCase().endsWith('.opf'),
-          );
-        }) ?? rootfiles[0];
+      const available = (rootfile: Element): boolean => {
+        const path = getAttr(rootfile, 'full-path') ?? '';
+        const normalized = normalizeInternalPath(path);
+        return normalized.safe && path.toLowerCase().endsWith('.opf') &&
+          loaded.files.has(normalized.path);
+      };
+      const selected = rootfiles.find((rootfile) =>
+        getAttr(rootfile, 'media-type') === 'application/oebps-package+xml' &&
+        available(rootfile),
+      ) ?? rootfiles.find(available) ?? rootfiles[0];
+      if (selected && getAttr(selected, 'media-type') !== 'application/oebps-package+xml') {
+        issues.push(createIssue({
+          code: 'CONTAINER_ROOTFILE_MEDIA_TYPE_INVALID',
+          severity: 'warning',
+          title: 'rootfile não declara MIME OPF esperado',
+          detail: 'O rootfile selecionado precisa de media-type="application/oebps-package+xml".',
+          file: 'META-INF/container.xml',
+          repairable: false,
+        }));
+      }
       opfPath = getAttr(selected, 'full-path');
 
       if (!opfPath) {
@@ -162,20 +173,27 @@ export function parseOpfDocument(
   const manifestRoot = findFirstByLocalName(doc, 'manifest');
   const manifest = childElementsByLocalName(manifestRoot, 'item').map((element): ManifestItem => {
     const href = getAttr(element, 'href') ?? '';
-    const resolved = resolveFromDir(opfDir, href);
+    const remote = isSafeRemoteResourceUrl(href);
+    const unsafeScheme = isRemoteUrl(href) && !remote;
+    const resolved = remote || unsafeScheme ? undefined : resolveFromDir(opfDir, href);
+    const resourcePath = remote || unsafeScheme ? href : resolved?.path ?? '';
     return {
       id: getAttr(element, 'id') ?? '',
       href,
       mediaType:
         getAttr(element, 'media-type') ??
-        guessMediaType(resolved.path) ??
+        guessMediaType(remote || unsafeScheme ? href.split(/[?#]/u)[0] ?? '' : resourcePath) ??
         'application/octet-stream',
       properties: (getAttr(element, 'properties') ?? '').split(/\s+/u).filter(Boolean),
       fallback: getAttr(element, 'fallback'),
-      resolvedPath: resolved.path,
-      pathSafe: resolved.safe,
-      pathReason: resolved.reason,
-      exists: files.has(resolved.path),
+      mediaOverlay: getAttr(element, 'media-overlay'),
+      resolvedPath: resourcePath,
+      pathSafe: remote || (!unsafeScheme && Boolean(resolved?.safe)),
+      pathReason: unsafeScheme
+        ? 'Esquema de URL não permitido no manifest'
+        : resolved?.reason,
+      exists: !remote && !unsafeScheme && files.has(resourcePath),
+      remote,
     };
   });
 
@@ -231,11 +249,8 @@ export function guessOpfPath(fileNames: string[]): string | undefined {
     'package.opf',
   ];
 
-  return (
-    preferred.find((candidate) =>
-      opfs.some((opf) => opf.toLowerCase() === candidate.toLowerCase()),
-    ) ?? opfs[0]
-  );
+  return preferred.map((candidate) => opfs.find((opf) =>
+    opf.toLowerCase() === candidate.toLowerCase())).find((path) => Boolean(path)) ?? opfs[0];
 }
 
 function bytesToText(bytes: Uint8Array): string {

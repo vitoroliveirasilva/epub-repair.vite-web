@@ -1,3 +1,6 @@
+import { isJpegSampleVisuallyComparable, sampledCanvasPixels } from '../repair/repairImages';
+import { readJpegDimensions } from '../utils/kindleCompatibility';
+
 export type SupportedCoverMediaType = 'image/jpeg' | 'image/png';
 
 export interface CoverImageInput {
@@ -80,7 +83,47 @@ async function assertValidCoverImage(
     }
   }
 
-  if (typeof createImageBitmap !== 'function') return;
+  if (mediaType === 'image/jpeg') {
+    const dimensions = readJpegDimensions(bytes);
+    if (!dimensions || !validCoverDimensions(dimensions.width, dimensions.height)) {
+      throw new Error('A imagem de capa está corrompida ou declara dimensões JPEG inválidas ou excessivas.');
+    }
+  }
+
+  if (typeof createImageBitmap !== 'function') {
+    // Safari antigo e navegadores sem createImageBitmap precisam confirmar
+    // decodificação real. A assinatura JPEG sozinha nunca é prova suficiente.
+    if (typeof Image === 'undefined' || typeof URL.createObjectURL !== 'function' ||
+        typeof URL.revokeObjectURL !== 'function') {
+      throw new Error('Este navegador não oferece decodificador confiável para validar a capa.');
+    }
+    const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: mediaType }));
+    try {
+      const image = new Image();
+      if (typeof image.decode === 'function') {
+        image.src = url;
+        await image.decode();
+      } else {
+        await new Promise<void>((resolve, reject) => {
+          image.onload = () => resolve();
+          image.onerror = () => reject(new Error('Não foi possível decodificar a capa.'));
+          image.src = url;
+          if (image.complete) {
+            if (image.naturalWidth && image.naturalHeight) resolve();
+            else reject(new Error('A imagem não contém pixels decodificáveis.'));
+          }
+        });
+      }
+      if (!validCoverDimensions(image.naturalWidth, image.naturalHeight)) {
+        throw new Error('Dimensões da capa inválidas ou excessivas.');
+      }
+    } catch {
+      throw new Error('A imagem de capa está corrompida ou não pôde ser decodificada.');
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+    return;
+  }
 
   let bitmap: ImageBitmap | undefined;
   try {
@@ -128,7 +171,7 @@ async function normalizeJpegForEpub(bytes: Uint8Array): Promise<Uint8Array | und
   let bitmap: ImageBitmap | undefined;
   try {
     bitmap = await createImageBitmap(new Blob([new Uint8Array(bytes)], { type: 'image/jpeg' }));
-    if (bitmap.width <= 0 || bitmap.height <= 0) return undefined;
+    if (!validCoverDimensions(bitmap.width, bitmap.height)) return undefined;
 
     const canvas = document.createElement('canvas');
     canvas.width = bitmap.width;
@@ -143,7 +186,21 @@ async function normalizeJpegForEpub(bytes: Uint8Array): Promise<Uint8Array | und
     });
 
     if (!blob || blob.size <= 0) return undefined;
-    return new Uint8Array(await blob.arrayBuffer());
+    const result = new Uint8Array(await blob.arrayBuffer());
+    if (result[0] !== 0xff || result[1] !== 0xd8 || result[2] !== 0xff) return undefined;
+    // Antes de substituir uma capa, abrir o JPEG produzido e conferir tamanho
+    // e cores por amostragem. Uma falha mantém o arquivo original byte a byte.
+    let decoded: ImageBitmap | undefined;
+    try {
+      decoded = await createImageBitmap(blob);
+      if (decoded.width !== bitmap.width || decoded.height !== bitmap.height) return undefined;
+      const before = sampledCanvasPixels(bitmap, bitmap.width, bitmap.height);
+      const after = sampledCanvasPixels(decoded, decoded.width, decoded.height);
+      if (!before || !after || !isJpegSampleVisuallyComparable(before, after)) return undefined;
+    } finally {
+      decoded?.close();
+    }
+    return result;
   } catch {
     return undefined;
   } finally {

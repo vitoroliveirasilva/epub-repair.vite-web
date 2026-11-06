@@ -1,0 +1,89 @@
+name: Live Netlify preview CSP and local EPUB privacy
+
+on:
+  pull_request:
+    branches: [prod]
+    paths:
+      - 'src/**'
+      - 'netlify.toml'
+      - 'tests/browser-csp.mjs'
+      - 'tests/browser-large-workflow.mjs'
+      - '.github/workflows/netlify-live-preview.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-netlify-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  live-preview:
+    name: Live HTTPS CSP, Worker and offline EPUB download
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+      - name: Install code and isolated Playwright
+        run: |
+          npm ci
+          mkdir -p "${RUNNER_TEMP}/browser-harness"
+          npm install --prefix "${RUNNER_TEMP}/browser-harness" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.55.1
+          "${RUNNER_TEMP}/browser-harness/node_modules/.bin/playwright" install chromium
+      - name: Wait for this PR's public Netlify deploy preview
+        shell: bash
+        env:
+          PREVIEW_URL: https://deploy-preview-${{ github.event.number }}--epubrepair.netlify.app/
+        run: |
+          set -euo pipefail
+          echo "Verificando deploy preview do PR, sem publicar produção."
+          ready=false
+          for i in $(seq 1 120); do
+            if curl --silent --show-error --location --fail --max-time 15               "$PREVIEW_URL" -o "${RUNNER_TEMP}/live-preview.html" &&
+              grep -q 'EPUB Repair' "${RUNNER_TEMP}/live-preview.html"; then
+              ready=true
+              break
+            fi
+            sleep 5
+          done
+          if [ "$ready" != true ]; then
+            echo "Deploy preview Netlify não ficou pronto em até 10min."
+            exit 1
+          fi
+      - name: Verify actual deployed HTTPS and security response headers
+        shell: bash
+        env:
+          PREVIEW_URL: https://deploy-preview-${{ github.event.number }}--epubrepair.netlify.app/
+        run: |
+          set -euo pipefail
+          curl --silent --show-error --location --fail --max-time 30             --dump-header "${RUNNER_TEMP}/netlify-live-headers.txt"             -o /dev/null "$PREVIEW_URL"
+          cat "${RUNNER_TEMP}/netlify-live-headers.txt"
+          grep -iq '^content-security-policy:' "${RUNNER_TEMP}/netlify-live-headers.txt"
+          grep -iq 'worker-src.*self' "${RUNNER_TEMP}/netlify-live-headers.txt"
+          grep -iq '^x-content-type-options:.*nosniff' "${RUNNER_TEMP}/netlify-live-headers.txt"
+          grep -iq '^strict-transport-security:' "${RUNNER_TEMP}/netlify-live-headers.txt"
+          grep -iq '^x-frame-options:.*DENY' "${RUNNER_TEMP}/netlify-live-headers.txt"
+      - name: Exercise actual CSP on HTTPS with 12MiB EPUB and Workers
+        shell: bash
+        env:
+          BROWSER: chromium
+          EPUB_APP_URL: https://deploy-preview-${{ github.event.number }}--epubrepair.netlify.app/
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/browser-harness/node_modules/playwright/index.mjs
+        run: |
+          set -euo pipefail
+          node tests/browser-csp.mjs
+          node tests/browser-large-workflow.mjs
+          echo 'PASS deployed HTTPS CSP, offline EPUB and Worker packaging'
+      - name: Save deployed header evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: netlify-live-preview-headers
+          path: ${{ runner.temp }}/netlify-live-headers.txt
+          if-no-files-found: warn
+          retention-days: 14

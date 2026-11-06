@@ -107,9 +107,9 @@ function renderScoreBreakdown(report: ValidationReport): HTMLElement {
       'Metadados, capa, NCX, XHTML e imagens sensíveis ao Kindle',
     ],
     [
-      'Segurança',
+      'Sinais de risco detectados',
       report.stats.securityScore,
-      'Scripts, links remotos, caminhos inseguros, DRM ou criptografia',
+      'Pontuação heurística: não verifica malware, não é antivírus nem certificação de segurança',
     ],
   ] as const;
 

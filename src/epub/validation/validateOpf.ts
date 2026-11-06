@@ -7,12 +7,14 @@ import {
   isInvalidLanguageTag,
   isInvalidOpfDate,
 } from '../utils/kindleCompatibility';
-import { guessMediaType } from '../utils/mediaTypes';
+import { areEquivalentMediaTypes, guessMediaType } from '../utils/mediaTypes';
+import { validateManifestFallbacks } from './validateManifestFallbacks';
+import { validateRemoteManifestResources } from './validateRemoteManifestResources';
 
 export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issue[] {
   const issues: Issue[] = [];
 
-  if (!pkg.metadata.title || !pkg.metadata.language || !pkg.metadata.identifier) {
+  if (!pkg.metadata.title || !pkg.metadata.identifier) {
     issues.push(
       createIssue({
         code: 'OPF_METADATA_MISSING',
@@ -26,6 +28,17 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
     );
   }
 
+  if (!pkg.metadata.language) {
+    issues.push(createIssue({
+      code: 'OPF_LANGUAGE_MISSING',
+      severity: 'warning',
+      title: 'Idioma do OPF não declarado',
+      detail: 'Não é seguro supor o idioma da obra. Informe manualmente o idioma correto.',
+      file: pkg.opfPath,
+      repairable: false,
+    }));
+  }
+
   if (pkg.metadata.language && isInvalidLanguageTag(pkg.metadata.language)) {
     issues.push(
       createIssue({
@@ -33,10 +46,10 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
         severity: 'warning',
         title: 'Idioma do OPF inválido ou genérico',
         detail:
-          'O idioma declarado não é específico o suficiente para fluxos Kindle. Valores como UND, unknown ou tags fora do padrão podem quebrar a conversão.',
+          'O idioma declarado é genérico ou inválido. Revise o idioma da obra sem atribuir pt-BR automaticamente.',
         file: pkg.opfPath,
         context: pkg.metadata.language,
-        repairable: true,
+        repairable: false,
       }),
     );
   }
@@ -54,6 +67,24 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
         repairable: true,
       }),
     );
+  }
+
+  // EPUB 3.2, 3.3 e 3.4 continuam declarando package version="3.0"
+  // conforme W3C: o atributo NÃO identifica a revisão secundária do padrão.
+  // Não converter "3.4" automaticamente nem fingir suporte a perfil novo.
+  if (pkg.version.trim() !== '1.0' && pkg.version.trim() !== '2.0' &&
+      pkg.version.trim() !== '3.0') {
+    issues.push(createIssue({
+      code: 'OPF_PACKAGE_VERSION_UNSUPPORTED',
+      severity: 'warning',
+      title: 'Versão OPF não reconhecida pelas especificações EPUB 2/3',
+      detail: 'O package deve declarar version="2.0" (EPUB 2) ou version="3.0" ' +
+        '(EPUB 3.0/3.2/3.3/3.4). A revisão EPUB 3.x não é identificável ' +
+        'por esse campo. Revisar a conformidade sem alterar a obra.',
+      file: pkg.opfPath,
+      context: pkg.version,
+      repairable: false,
+    }));
   }
 
   if (pkg.version.trim() === '1.0') {
@@ -100,7 +131,8 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
   const hrefs = new Set<string>();
 
   for (const item of pkg.manifest) {
-    if (!item.id || ids.has(item.id)) {
+    const duplicatedId = Boolean(item.id && ids.has(item.id));
+    if (!item.id || duplicatedId) {
       issues.push(
         createIssue({
           code: 'OPF_DUPLICATE_ID',
@@ -108,7 +140,8 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
           title: 'ID ausente ou duplicado no manifest',
           detail: `O item de href "${item.href}" precisa de um id único.`,
           file: pkg.opfPath,
-          repairable: true,
+          // Um ID duplicado pode ser alvo de spine, fallback ou refines: ambiguidade manual.
+          repairable: !duplicatedId,
         }),
       );
     }
@@ -144,8 +177,8 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
       );
     }
 
-    const guessed = guessMediaType(item.resolvedPath);
-    if (guessed && item.mediaType && item.mediaType !== guessed && item.mediaType !== 'image/jpg') {
+    const guessed = item.remote ? undefined : guessMediaType(item.resolvedPath);
+    if (guessed && item.mediaType && !areEquivalentMediaTypes(item.mediaType, guessed)) {
       issues.push(
         createIssue({
           code: 'OPF_BAD_MEDIA_TYPE',
@@ -158,7 +191,7 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
       );
     }
 
-    if (!item.exists) {
+    if (!item.exists && !item.remote) {
       issues.push(
         createIssue({
           code: 'OPF_MISSING_RESOURCE',
@@ -169,6 +202,49 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
           repairable: true,
         }),
       );
+    }
+  }
+
+  const manifestById = new Map(pkg.manifest.map((item) => [item.id, item]));
+  for (const item of pkg.manifest) {
+    if (item.fallback && !manifestById.has(item.fallback)) {
+      issues.push(createIssue({
+        code: 'OPF_FALLBACK_MISSING',
+        severity: 'warning',
+        title: 'Fallback do manifest aponta para ID ausente',
+        detail: `O item "${item.id}" usa fallback="${item.fallback}" inexistente.`,
+        file: pkg.opfPath,
+        repairable: false,
+      }));
+    }
+    if (item.mediaOverlay && !manifestById.has(item.mediaOverlay)) {
+      issues.push(createIssue({
+        code: 'OPF_MEDIA_OVERLAY_MISSING',
+        severity: 'warning',
+        title: 'Media Overlay aponta para ID ausente',
+        detail: `O item "${item.id}" aponta para media-overlay="${item.mediaOverlay}" inexistente.`,
+        file: pkg.opfPath,
+        repairable: false,
+      }));
+    }
+    const seenFallbackIds = new Set<string>();
+    let current = item;
+    while (current.fallback) {
+      if (seenFallbackIds.has(current.id)) {
+        issues.push(createIssue({
+          code: 'OPF_FALLBACK_CYCLE',
+          severity: 'error',
+          title: 'Ciclo de fallbacks no manifest',
+          detail: `A cadeia de fallback iniciada em "${item.id}" contém uma referência circular.`,
+          file: pkg.opfPath,
+          repairable: false,
+        }));
+        break;
+      }
+      seenFallbackIds.add(current.id);
+      const next = manifestById.get(current.fallback);
+      if (!next) break;
+      current = next;
     }
   }
 
@@ -232,5 +308,7 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
     );
   }
 
+  issues.push(...validateManifestFallbacks(pkg, loaded));
+  issues.push(...validateRemoteManifestResources(pkg));
   return issues;
 }

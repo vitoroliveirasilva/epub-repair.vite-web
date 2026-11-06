@@ -2,13 +2,30 @@ export function parseXml(
   text: string,
   mimeType: DOMParserSupportedType = 'application/xml',
 ): Document {
-  if (/<!ENTITY\b/iu.test(text)) {
+  // Comentários e CDATA podem citar uma declaração maliciosa literalmente.
+  // Escanear apenas tokens XML efetivos evita alarmes falsos sem relaxar o parser.
+  const structural = text.replace(/<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>/gu, '');
+  if (/<!ENTITY\b/iu.test(structural)) {
     throw new Error('Entidades XML personalizadas não são permitidas por segurança.');
+  }
+  if (/<!DOCTYPE\b/iu.test(structural)) {
+    // NCX EPUB 2 tradicional e XHTML legado usam DTDs públicas. Não resolvemos
+    // nenhuma entidade externa; subconjuntos internos e DTDs desconhecidas são recusados.
+    const doctype = structural.match(/<!DOCTYPE\s+[^>]*>/iu)?.[0] ?? '';
+    const legacyNcx = /^<!DOCTYPE\s+ncx\s+PUBLIC\s+["']-\/\/NISO\/\/DTD ncx 2005-1\/\/EN["']\s+["']https?:\/\/www\.daisy\.org\/z3986\/2005\/ncx-2005-1\.dtd["']\s*>$/iu;
+    const legacyXhtml = /^<!DOCTYPE\s+html\s+PUBLIC\s+["']-\/\/W3C\/\/DTD XHTML 1\.1\/\/EN["']\s+["']https?:\/\/www\.w3\.org\/TR\/xhtml11\/DTD\/xhtml11\.dtd["']\s*>$/iu;
+    if (!doctype || /<!DOCTYPE\s+[^>]*\[/iu.test(structural) ||
+        (!legacyNcx.test(doctype) && !legacyXhtml.test(doctype))) {
+      throw new Error('DOCTYPE com subconjunto interno ou DTD externa não permitida.');
+    }
   }
   const doc = new DOMParser().parseFromString(text, mimeType);
   const parserError = doc.querySelector('parsererror');
   if (parserError) {
     throw new Error(parserError.textContent?.trim() || 'XML inválido.');
+  }
+  if (doc.getElementsByTagNameNS('http://www.w3.org/2001/XInclude', 'include').length > 0) {
+    throw new Error('XInclude não é permitido em arquivos XML do EPUB.');
   }
   return doc;
 }
@@ -19,6 +36,16 @@ export function parseHtml(text: string): Document {
 
 export function serializeXml(doc: Document): string {
   return new XMLSerializer().serializeToString(doc);
+}
+
+/** Não perder a declaração de encoding/standalone ao serializar OPF/NCX.
+ * A rotina de regravação já recusa charsets não-UTF-8 antes desta função.
+ */
+export function serializeXmlPreservingDeclaration(doc: Document, original: string): string {
+  const serialized = serializeXml(doc);
+  if (/^\s*<\?xml\b/iu.test(serialized)) return serialized;
+  const declaration = /^\s*(<\?xml\s+[^?]*\?>)/iu.exec(original)?.[1];
+  return declaration ? declaration + '\n' + serialized : serialized;
 }
 
 export function escapeXml(value: string): string {
