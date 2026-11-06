@@ -4,18 +4,39 @@ import { pathToFileURL } from 'node:url';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 const harness = process.env.PLAYWRIGHT_MODULE;
 assert.ok(harness, 'PLAYWRIGHT_MODULE ausente');
 const { chromium } = await import(pathToFileURL(harness).href);
 const MiB = 1024 * 1024;
+/**
+ * RSS residente agregado dos processos do Chromium no runner.
+ * É uma estimativa de limite superior: páginas compartilhadas podem ser
+ * contadas em mais de um processo, mas inclui heap de Worker e memória nativa
+ * ausentes da métrica CDP JSHeapUsedSize da aba.
+ */
+function chromiumResidentMemoryMiB() {
+  const data = execFileSync('ps', ['-e', '-o', 'comm=,rss='],
+    { encoding: 'utf8', maxBuffer: 1024 * 1024 });
+  let totalKiB = 0;
+  let processes = 0;
+  for (const line of data.split('\n')) {
+    const fields = line.trim().match(/^([^\s]+)\s+(\d+)$/u);
+    if (!fields || !/(?:chrome|chromium|headless)/iu.test(fields[1])) continue;
+    totalKiB += Number(fields[2]);
+    processes++;
+  }
+  return { mib: totalKiB / 1024, processes };
+}
+
 const scenarios = [
-  { mib: 1, maxMs: 45_000, maxHeapGrowthMiB: 320 },
-  { mib: 12, maxMs: 115_000, maxHeapGrowthMiB: 440 },
-  { mib: 48, maxMs: 180_000, maxHeapGrowthMiB: 760 },
+  { mib: 1, maxMs: 45_000, maxHeapGrowthMiB: 320, maxRssGrowthMiB: 550 },
+  { mib: 12, maxMs: 115_000, maxHeapGrowthMiB: 440, maxRssGrowthMiB: 950 },
+  { mib: 48, maxMs: 180_000, maxHeapGrowthMiB: 760, maxRssGrowthMiB: 1800 },
   // Cenário de fronteira: 250 MiB DESCOMPACTADOS, não 250 MiB enviados.
   // Cada entrada fica <128 MiB (limite por recurso do aplicativo).
-  { mib: 250, maxMs: 300_000, maxHeapGrowthMiB: 1600 },
+  { mib: 250, maxMs: 300_000, maxHeapGrowthMiB: 1600, maxRssGrowthMiB: 3200 },
 ];
 async function epubFixture(sizeMiB) {
   const zip = new JSZip();
@@ -85,7 +106,7 @@ try {
     input.hidden = true;
     document.body.append(input);
   });
-  for (const { mib, maxMs, maxHeapGrowthMiB } of scenarios) {
+  for (const { mib, maxMs, maxHeapGrowthMiB, maxRssGrowthMiB } of scenarios) {
     const source = await epubFixture(mib);
     // Playwright impõe limite de 50MiB para setInputFiles({buffer}).
     // Arquivos grandes são passados via path temporário, não JSON nem buffer.
@@ -96,8 +117,13 @@ try {
     // NÃO no setInputFiles(): manter o arquivo em disco até terminar avaliação.
     await page.locator('#benchmark-file-input').setInputFiles(file);
     const baseline = await metrics();
+    const baselineRss = chromiumResidentMemoryMiB();
+    assert.ok(baselineRss.processes >= 2,
+      'Processos Chromium não localizados na medição RSS');
     let peak = baseline;
+    let peakRss = baselineRss.mib;
     const timer = setInterval(() => {
+      peakRss = Math.max(peakRss, chromiumResidentMemoryMiB().mib);
       void metrics().then((heap) => { peak = Math.max(peak, heap); })
         .catch(() => {});
     }, 250);
@@ -145,6 +171,11 @@ try {
       const elapsed = performance.now() - started;
       peak = Math.max(peak, await metrics());
       const growth = Math.max(0, peak - baseline) / MiB;
+      peakRss = Math.max(peakRss, chromiumResidentMemoryMiB().mib);
+      const rssGrowth = Math.max(0, peakRss - baselineRss.mib);
+      assert.ok(rssGrowth < maxRssGrowthMiB,
+        'EPUB ' + mib + ' MiB passou do orçamento RSS Chromium: +' +
+        rssGrowth.toFixed(1) + ' MiB (máximo ' + maxRssGrowthMiB + ')');
       assert.ok(elapsed < maxMs,
         'EPUB ' + mib + ' MiB excedeu ' + maxMs + 'ms: ' + elapsed.toFixed(0));
       assert.ok(growth < maxHeapGrowthMiB,
@@ -155,7 +186,8 @@ try {
       assert.equal(result.resourceBytes, mib * MiB);
       console.log('PASS E-031/E-096 Chromium EPUB ' + mib +
         ' MiB, ' + elapsed.toFixed(0) + 'ms, +' +
-        growth.toFixed(1) + 'MiB JS heap main, heartbeat=' +
+        growth.toFixed(1) + 'MiB JS heap main, +' +
+        rssGrowth.toFixed(1) + 'MiB RSS Chromium processes, heartbeat=' +
         result.heartbeatTicks + ', output=' + result.outputBytes);
     } finally {
       clearInterval(timer);
