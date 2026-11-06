@@ -40,7 +40,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -qq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends calibre xvfb imagemagick python3-pil xdotool
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends calibre xvfb imagemagick python3-pil xdotool openbox
           ebook-convert --version
           ebook-meta --version || true
       - name: Import EPUBs and convert to extracted UTF-8 text

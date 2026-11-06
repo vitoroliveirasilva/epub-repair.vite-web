@@ -10,6 +10,13 @@ export QT_QUICK_BACKEND=software
 export QT_X11_NO_MITSHM=1
 export LIBGL_ALWAYS_SOFTWARE=1
 
+# Um WM X11 fornece foco de teclado ao QtWebEngine (no Xvfb sem WM,
+# xdotool key era enviado à root e a tela de boas-vindas não avançava).
+openbox >"$out/openbox.log" 2>&1 &
+wm_pid=$!
+trap 'kill "$wm_pid" 2>/dev/null || true' EXIT
+sleep 2
+
 for mode in reflowable fixed-layout; do
   source="$fixtures/visual-$mode.epub"
   logfile="$out/visual-$mode.viewer.log"
@@ -21,8 +28,16 @@ for mode in reflowable fixed-layout; do
   sleep 8
   # Calibre 7 abre tela de boas-vindas "Press any key to continue".
   # Avançar para o capítulo antes de verificar os pixels da ilustração.
-  xdotool key --clearmodifiers Return
-  sleep 6
+  echo "X11 active window: $(xdotool getactivewindow 2>&1 || true)" >>"$logfile"
+  xdotool mousemove 240 180 click 1 || true
+  focused="$(xdotool search --onlyvisible --pid "$viewer_pid" | tail -n 1 || true)"
+  if [ -n "$focused" ]; then
+    xdotool windowactivate --sync "$focused" || true
+    xdotool key --window "$focused" Return || true
+  fi
+  xdotool key --clearmodifiers Return || true
+  xdotool key --clearmodifiers Right || true
+  sleep 8
   if ! kill -0 "$viewer_pid" 2>/dev/null; then
     echo "Falha ao iniciar o visualizador Calibre: $mode"
     cat "$logfile"
