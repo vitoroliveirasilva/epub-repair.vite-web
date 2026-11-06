@@ -11,6 +11,9 @@ assert.ok(policy, 'Política CSP não encontrada no netlify.toml');
 // Em HTTP 127.0.0.1 o upgrade-insecure-requests promove os assets para HTTPS
 // sem servidor TLS. Remover SOMENTE a diretiva de upgrade do harness localhost;
 // ela continua ativa e intacta na configuração Netlify de produção (HTTPS).
+const liveUrl = process.env.EPUB_APP_URL;
+const isHostedPreview = Boolean(liveUrl);
+const targetUrl = liveUrl ?? 'http://127.0.0.1:4173/';
 const localhostPolicy = policy.split(';').map((value) => value.trim())
   .filter((value) => value !== 'upgrade-insecure-requests').join('; ');
 assert.ok(policy.includes('upgrade-insecure-requests'));
@@ -34,7 +37,7 @@ try {
     'request: ' + req.url() + ' ' + req.failure()?.errorText));
   const observedWorkers = [];
   page.on('worker', (worker) => observedWorkers.push(worker.url()));
-  await page.route('http://127.0.0.1:4173/', async (route) => {
+  if (!isHostedPreview) await page.route(targetUrl, async (route) => {
     const response = await route.fetch();
     await route.fulfill({
       response,
@@ -42,8 +45,10 @@ try {
     });
   });
 
-  const response = await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
-  assert.equal(response?.headers()['content-security-policy'], localhostPolicy);
+  const response = await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
+  assert.equal(response?.headers()['content-security-policy'],
+    isHostedPreview ? policy : localhostPolicy,
+    'CSP HTTP real ou simulada diverge do netlify.toml');
   try {
     await page.getByRole('heading', { name: /Conserte arquivos EPUB/u })
       .waitFor({ timeout: 15000 });

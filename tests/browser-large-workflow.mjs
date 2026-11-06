@@ -63,7 +63,8 @@ try{
   page.on('dialog',dialog=>{void dialog.accept()});
   try {
     const bytes=await largeEpub();
-    await page.goto('http://127.0.0.1:5173/',{waitUntil:'load'});
+    await page.goto(process.env.EPUB_APP_URL ?? 'http://127.0.0.1:5173/',
+      {waitUntil:'load'});
     await page.locator('#epub-file-input').setInputFiles({
       name:'large-browser.epub',mimeType:'application/epub+zip',buffer:bytes,
     });
