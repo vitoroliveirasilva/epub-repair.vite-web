@@ -78,13 +78,34 @@ export function coverReferenceScope(
       .test(basename(path))) pages.add(path);
   }
   const consumers = new Map<string, Set<string>>();
+  // Um CSS importado é consumido indiretamente por cada página que usa a
+  // folha importadora. Percorrer a árvore com proteção contra ciclos.
+  const markUsage = (css: string, page: string, visited: Set<string>): void => {
+    if (visited.has(css)) return;
+    visited.add(css);
+    const users = consumers.get(css) ?? new Set<string>();
+    users.add(page);
+    consumers.set(css, users);
+    const bytes = files.get(css);
+    if (!bytes) return;
+    try {
+      const source = decodeUtf8ForRewrite(bytes, css);
+      for (const ref of extractCssResourceReferences(source)) {
+        if (ref.attr !== 'css:import') continue;
+        const imported = resolveReference(css, ref.raw);
+        if (imported.safe && cssPaths.has(imported.path)) {
+          markUsage(imported.path, page, visited);
+        }
+      }
+    } catch {
+      // Preservar um CSS legado ambíguo sem inferir seus imports.
+    }
+  };
   for (const path of htmlPaths) {
     const doc = documentOf(path, files);
     if (!doc) continue;
     for (const css of linkedStyles(doc, path, cssPaths)) {
-      const users = consumers.get(css) ?? new Set<string>();
-      users.add(path);
-      consumers.set(css, users);
+      markUsage(css, path, new Set<string>());
     }
   }
   // EPUBs antigos frequentemente usam 0001.xhtml como página de capa.

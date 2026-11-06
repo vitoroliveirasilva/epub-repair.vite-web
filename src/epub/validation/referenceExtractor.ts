@@ -47,18 +47,21 @@ export function extractCssResourceReferences(text: string): ResourceReference[] 
   const refs: ResourceReference[] = [];
   const source = maskCssComments(text);
   const isCode = cssCodePosition(source);
+  const importRegex = /@import\s+(?:url\(\s*)?["']([^"']+)["']/giu;
+  const imports = [...source.matchAll(importRegex)]
+    .filter((match) => isCode(match.index));
   const urlRegex = /url\(\s*(["']?)(.*?)\1\s*\)/giu;
   let match: RegExpExecArray | null;
   while ((match = urlRegex.exec(source)) !== null) {
-    if (!isCode(match.index)) continue;
+    if (!isCode(match.index) ||
+        imports.some((rule) => match!.index >= rule.index &&
+          match!.index < rule.index + rule[0].length)) continue;
     const value = match[2]?.trim();
     if (value) refs.push({ attr: 'css:url', value: stripFragmentAndQuery(value), raw: value });
   }
 
-  const importRegex = /@import\s+(?:url\(\s*)?["']([^"']+)["']/giu;
-  while ((match = importRegex.exec(source)) !== null) {
-    if (!isCode(match.index)) continue;
-    const value = match[1]?.trim();
+  for (const rule of imports) {
+    const value = rule[1]?.trim();
     if (value) refs.push({ attr: 'css:import', value: stripFragmentAndQuery(value), raw: value });
   }
 

@@ -135,6 +135,17 @@ function buildPrimaryActionButtons(
     downloadButton.disabled = state.busy;
     downloadButton.dataset.focusKey = 'epub-download';
 
+    if (flags.canRepair && !flags.hasFatalIssues) {
+      const retryButton = button(
+        'Aplicar reparos restantes',
+        'btn btn-secondary',
+        actions.repair,
+      );
+      retryButton.disabled = state.busy;
+      retryButton.dataset.focusKey = 'epub-repair-remaining';
+      retryButton.title = 'Reparar problemas ainda identificados na cópia atual, preservando o download anterior.';
+      return [downloadButton, retryButton];
+    }
     if (!flags.canOptimize) return [downloadButton];
 
     const optimizeButton = button(

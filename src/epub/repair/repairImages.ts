@@ -1,6 +1,6 @@
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction, RepairOptions } from '../model/repairTypes';
-import { isJpegMediaType, isProgressiveJpeg } from '../utils/kindleCompatibility';
+import { isJpegMediaType, isProgressiveJpeg, readJpegDimensions } from '../utils/kindleCompatibility';
 
 const MAX_CANVAS_PIXELS = 50_000_000;
 
@@ -45,6 +45,11 @@ async function convertProgressiveJpegToBaseline(
   bytes: Uint8Array,
 ): Promise<Uint8Array | undefined> {
   if (typeof document === 'undefined') return undefined;
+
+  // Consultar o cabeçalho SOF antes de pedir ao navegador que aloque pixels.
+  const dimensions = readJpegDimensions(bytes);
+  if (!dimensions || dimensions.width < 1 || dimensions.height < 1 ||
+      dimensions.width * dimensions.height > MAX_CANVAS_PIXELS) return undefined;
 
   const imageBuffer = new ArrayBuffer(bytes.byteLength);
   new Uint8Array(imageBuffer).set(bytes);

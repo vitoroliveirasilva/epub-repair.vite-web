@@ -1,4 +1,5 @@
 import { isJpegSampleVisuallyComparable, sampledCanvasPixels } from '../repair/repairImages';
+import { readJpegDimensions } from '../utils/kindleCompatibility';
 
 export type SupportedCoverMediaType = 'image/jpeg' | 'image/png';
 
@@ -79,6 +80,13 @@ async function assertValidCoverImage(
     const height = view.getUint32(20);
     if (!validCoverDimensions(width, height)) {
       throw new Error('Dimensões da capa PNG inválidas ou acima do limite permitido.');
+    }
+  }
+
+  if (mediaType === 'image/jpeg') {
+    const dimensions = readJpegDimensions(bytes);
+    if (!dimensions || !validCoverDimensions(dimensions.width, dimensions.height)) {
+      throw new Error('A imagem de capa está corrompida ou declara dimensões JPEG inválidas ou excessivas.');
     }
   }
 
@@ -163,7 +171,7 @@ async function normalizeJpegForEpub(bytes: Uint8Array): Promise<Uint8Array | und
   let bitmap: ImageBitmap | undefined;
   try {
     bitmap = await createImageBitmap(new Blob([new Uint8Array(bytes)], { type: 'image/jpeg' }));
-    if (bitmap.width <= 0 || bitmap.height <= 0) return undefined;
+    if (!validCoverDimensions(bitmap.width, bitmap.height)) return undefined;
 
     const canvas = document.createElement('canvas');
     canvas.width = bitmap.width;

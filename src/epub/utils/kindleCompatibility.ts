@@ -169,7 +169,7 @@ function readPngDimensions(bytes: Uint8Array): { width: number; height: number }
   };
 }
 
-function readJpegDimensions(bytes: Uint8Array): { width: number; height: number } | undefined {
+export function readJpegDimensions(bytes: Uint8Array): { width: number; height: number } | undefined {
   const frame = findJpegStartOfFrame(bytes);
   return frame ? { width: frame.width, height: frame.height } : undefined;
 }

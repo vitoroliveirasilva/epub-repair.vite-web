@@ -7,7 +7,7 @@ import { EPUB_MIME } from '../src/epub/utils/constants';
 
 const originalImage = Uint8Array.from(Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jYk0AAAAASUVORK5CYII=', 'base64'));
-function buildEpub(cssCover: boolean): Promise<Uint8Array> {
+function buildEpub(cssCover: boolean, imported = false): Promise<Uint8Array> {
   const zip = new JSZip();
   zip.file('mimetype', EPUB_MIME, {compression:'STORE'});
   zip.file('META-INF/container.xml', '<container version="1.0" ' +
@@ -25,6 +25,7 @@ function buildEpub(cssCover: boolean): Promise<Uint8Array> {
     '<item id="c" href="Text/0001.xhtml" media-type="application/xhtml+xml"/>' +
     '<item id="t" href="Text/chapter.xhtml" media-type="application/xhtml+xml"/>' +
     (cssCover ? '<item id="css" href="Styles/shared.css" media-type="text/css"/>' : '') +
+    (imported ? '<item id="nested" href="Styles/nested.css" media-type="text/css"/>' : '') +
     '</manifest><spine><itemref idref="c"/><itemref idref="t"/></spine></package>');
   zip.file('OPS/nav.xhtml','<html xmlns="http://www.w3.org/1999/xhtml" ' +
     'xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head>' +
@@ -40,13 +41,16 @@ function buildEpub(cssCover: boolean): Promise<Uint8Array> {
     '<p>O texto original permanece.</p>' +
     (!cssCover?'<img src="../Images/old.png" alt="Ilustração"/>':'') +
     '</body></html>');
-  if(cssCover)zip.file('OPS/Styles/shared.css',
-    '.cover{background-image:url("../Images/old.png")}' +
-    '.caption:after{content:"url(old.png)"}');
+  if(cssCover)zip.file('OPS/Styles/shared.css', imported
+    ? '@import "nested.css"; .caption:after{content:"url(old.png)"}'
+    : '.cover{background-image:url("../Images/old.png")}' +
+      '.caption:after{content:"url(old.png)"}');
+  if(imported)zip.file('OPS/Styles/nested.css',
+    '.cover{background-image:url("../Images/old.png")}');
   return zip.generateAsync({type:'uint8array'});
 }
-async function replace(cssCover: boolean) {
-  const input=await buildEpub(cssCover);
+async function replace(cssCover: boolean, imported = false) {
+  const input=await buildEpub(cssCover, imported);
   const cover={
     fileName:'nova.jpg',bytes:Uint8Array.of(255,216,255,217),
     mediaType:'image/jpeg' as const,previewDataUrl:'',
@@ -65,6 +69,24 @@ describe('E-118 / E-119 / E-122: preservar capa visual e capítulos', () => {
     expect(chapter).toContain('../Images/old.png');
     expect(chapter).toContain('O texto original permanece.');
     expect(await zip.file('OPS/Images/old.png')!.async('uint8array')).toEqual(originalImage);
+  });
+  it('E-127: acompanha @import com CSS compartilhado e preserva capítulos', async () => {
+    const result = await replace(true, true);
+    const zip = await JSZip.loadAsync(await result.blob!.arrayBuffer());
+    const cover = await zip.file('OPS/Text/0001.xhtml')!.async('string');
+    const chapter = await zip.file('OPS/Text/chapter.xhtml')!.async('string');
+    const shared = await zip.file('OPS/Styles/shared.css')!.async('string');
+    const nested = await zip.file('OPS/Styles/nested.css')!.async('string');
+    const clonedShared = await zip.file('OPS/Styles/shared.epub-cover.css')!.async('string');
+    const clonedNested = await zip.file('OPS/Styles/nested.epub-cover.css')!.async('string');
+    expect(cover).toContain('../Styles/shared.epub-cover.css');
+    expect(chapter).toContain('../Styles/shared.css');
+    expect(chapter).toContain('O texto original permanece.');
+    expect(shared).toContain('@import "nested.css"');
+    expect(nested).toContain('../Images/old.png');
+    expect(clonedShared).toContain('@import "nested.epub-cover.css"');
+    expect(clonedNested).toContain('../Images/cover.jpg');
+    expect(clonedShared).toContain('content:"url(old.png)"');
   });
   it('duplica folha CSS compartilhada somente para a página de rosto',async()=>{
     const result=await replace(true);

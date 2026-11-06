@@ -196,11 +196,11 @@ export async function repairEpub(
     );
   }
 
-  actions.push(...repairKindleCompatibility(files, parsed.packageInfo, options));
+  actions.push(...repairKindleCompatibility(files, currentPkg, options));
   // Manifest precisa refletir os recursos efetivos, após a limpeza. Isso
   // evita avisos novos quando o reparo declara arquivos antes órfãos.
   if (options.repairManifest) {
-    actions.push(...synchronizeManifestProperties(files, parsed.packageInfo));
+    actions.push(...synchronizeManifestProperties(files, currentPkg));
   }
   // E-009: JPEG progressivo só muda na otimização explicitamente solicitada.
   // E-075: metadados somente com opt-in, sem alterar pixels, e com revalidação.

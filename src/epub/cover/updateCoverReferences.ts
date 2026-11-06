@@ -46,7 +46,9 @@ export function updateCoverReferences(
     const filename = basename(oldCoverPath);
     const encoded = encodeURIComponent(filename);
     const cssDecoded = candidate.includes('\\') ? decodeCssEscapes(candidate) : candidate;
-    if (!cssDecoded.includes(filename) && !cssDecoded.includes(encoded)) continue;
+    // Percent-encoding é case-insensitive (%c3%a9 e %C3%A9 designam o mesmo caminho).
+    const comparable = cssDecoded.replace(/%[0-9a-f]{2}/giu, (hex) => hex.toUpperCase());
+    if (!comparable.includes(filename) && !comparable.includes(encoded)) continue;
     const original = decodeUtf8ForRewrite(bytes, path);
     let updated = original;
     if (CSS_MEDIA_TYPES.has(item.mediaType)) {

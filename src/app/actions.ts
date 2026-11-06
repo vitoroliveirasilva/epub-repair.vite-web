@@ -44,15 +44,7 @@ async function loadZipForTask(
 
 
 export async function loadFileIntoState(file: File, state: AppState, signal?: AbortSignal): Promise<void> {
-  state.error = undefined;
-  state.message = undefined;
-  state.repairResult = undefined;
-  state.report = undefined;
-  state.coverImage = undefined;
-  state.originalSource = undefined;
-  state.lastRepairOptions = undefined;
-  state.payload = undefined;
-
+  // Validar o novo arquivo antes de substituir uma cópia corrigida ainda não baixada.
   if (!file.name.toLowerCase().endsWith('.epub')) {
     throw new Error('Selecione um arquivo .epub.');
   }
@@ -65,6 +57,14 @@ export async function loadFileIntoState(file: File, state: AppState, signal?: Ab
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   throwIfProcessingAborted(signal);
+  if (bytes.length > MAX_FILE_SIZE_BYTES) {
+    throw new Error('O arquivo excede o limite permitido de tamanho.');
+  }
+  state.error = undefined;
+  state.report = undefined;
+  state.repairResult = undefined;
+  state.coverImage = undefined;
+  state.lastRepairOptions = undefined;
   state.payload = { file, bytes };
   state.originalSource = { fileName: file.name, bytes };
   state.message = 'Arquivo carregado localmente.';
@@ -123,7 +123,7 @@ export async function repairCurrentFile(
         currentReport.issues.some((issue) => issue.code === 'IMAGE_EMBEDDED_METADATA'));
 
     if (!canRunRequiredRepair && !canRunOptionalOptimization) {
-      state.repairResult = undefined;
+      // A análise sem mudanças não elimina o último download válido.
       state.message = readyWithoutRequiredRepairMessage(currentReport);
       return;
     }
@@ -133,14 +133,14 @@ export async function repairCurrentFile(
       state.payload.file.name,
       state.payload.bytes,
       appliedOptions,
-      canRunOptionalOptimization ? 'optimization' : 'repair',
+      canRunRequiredRepair ? 'repair' : 'optimization',
       loaded,
       context.signal,
       (percent) => publishProgress(context, 'Recompactando EPUB...', Math.round(percent), 100, 'percent'),
     );
     throwIfProcessingAborted(context.signal);
     if (!result.changed || !result.blob) {
-      state.repairResult = result.actions.length > 0 ? result : undefined;
+      // Não apagar uma cópia já gerada quando uma operação posterior é no-op.
       state.report = result.after;
       state.message = hasManualReviewIssues(result.after)
         ? 'Nada foi alterado e ainda existem pendências para revisão manual.'

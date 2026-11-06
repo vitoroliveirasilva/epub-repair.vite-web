@@ -1,14 +1,19 @@
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction } from '../model/repairTypes';
 import { basename, encodePathForXml, makeUniqueId, relativePath, resolveReference } from '../utils/pathUtils';
+import { cssCodePosition } from '../utils/cssContexts';
 import { decodeUtf8ForRewrite } from '../utils/textEncoding';
 import { parseXml, serializeXmlPreservingDeclaration } from '../utils/xmlUtils';
+import { extractCssResourceReferences } from '../validation/referenceExtractor';
 import { replaceLocalReference, updateCoverReferences } from './updateCoverReferences';
 
 const OPF_NS = 'http://www.idpf.org/2007/opf';
+const encoder = new TextEncoder();
 
-/** Um CSS compartilhado não pode receber uma nova imagem sem alterar capítulos.
- * Criamos CSS exclusivo para a capa e redirecionamos apenas seu <link>.
+/**
+ * Preserva estilos e ilustrações de capítulos: uma referência de capa contida
+ * em CSS compartilhado é modificada apenas em cópias dos CSS no caminho de
+ * @import até a folha principal utilizada pela página de rosto.
  */
 export function forkSharedCoverStyles(
   files: Map<string, Uint8Array>,
@@ -24,78 +29,153 @@ export function forkSharedCoverStyles(
   const manifest = Array.from(opf.getElementsByTagName('*'))
     .find((node) => node.localName === 'manifest');
   if (!manifest) return actions;
-  const usedIds = new Set(Array.from(manifest.children)
-    .map((item) => item.getAttribute('id') ?? '').filter(Boolean));
-  for (const css of sharedStyles) {
-    const original = pkg.manifest.find((item) => item.resolvedPath === css && item.exists);
-    if (!original || !files.has(css) ||
-        ![...(consumers.get(css) ?? [])].some((path) => coverPages.has(path))) continue;
-    const proposed = css.replace(/\.css$/iu, '.epub-cover.css');
-    let clone = proposed;
-    for (let n = 2; files.has(clone); n += 1) {
-      clone = proposed.replace(/\.css$/iu, '-' + n + '.css');
+  const declared = pkg.manifest.filter((item) =>
+    item.exists && item.mediaType === 'text/css' && files.has(item.resolvedPath));
+  const imports = new Map<string, string[]>();
+  const sources = new Map<string, string>();
+  const declaredPaths = new Set(declared.map((item) => item.resolvedPath));
+  for (const item of declared) {
+    const path = item.resolvedPath;
+    try {
+      const source = decodeUtf8ForRewrite(files.get(path)!, path);
+      sources.set(path, source);
+      imports.set(path, extractCssResourceReferences(source)
+        .filter((ref) => ref.attr === 'css:import')
+        .map((ref) => resolveReference(path, ref.raw))
+        .filter((ref) => ref.safe && declaredPaths.has(ref.path))
+        .map((ref) => ref.path));
+    } catch {
+      // Arquivo ilegível não deve ser reescrito, adivinhado ou descartado.
     }
-    files.set(clone, files.get(css)!);
-    const fakePkg: PackageDocumentInfo = {
-      ...pkg,
-      manifest: [{ ...original, resolvedPath: clone, exists: true }],
-    };
-    const rewrites = updateCoverReferences(files, fakePkg, oldCoverPath, newCoverPath,
-      new Set([clone]));
-    if (rewrites.length === 0) {
-      files.delete(clone);
-      continue;
+  }
+
+  const consumedByCover = (css: string): boolean =>
+    [...(consumers.get(css) ?? [])].some((page) => coverPages.has(page));
+  const affected = new Set<string>();
+  for (const path of sharedStyles) {
+    const source = sources.get(path);
+    if (!source || !consumedByCover(path)) continue;
+    const references = extractCssResourceReferences(source);
+    if (references.some((ref) =>
+      ref.attr === 'css:url' &&
+      resolveReference(path, ref.raw).path === oldCoverPath)) {
+      affected.add(path);
     }
-    const pageChanges: Array<[string, string]> = [];
-    for (const page of coverPages) {
-      if (!consumers.get(css)?.has(page)) continue;
-      const bytes = files.get(page);
-      if (!bytes) continue;
-      const originalPage = decodeUtf8ForRewrite(bytes, page);
-      const isHtml = /\.html$/iu.test(page) && !/\.xhtml$/iu.test(page);
-      const parsed = isHtml
-        ? new DOMParser().parseFromString(originalPage, 'text/html')
-        : parseXml(originalPage, 'application/xhtml+xml');
-      let changed = false;
-      for (const element of Array.from(parsed.getElementsByTagName('*'))) {
-        if (element.localName !== 'link' ||
-          !(element.getAttribute('rel') ?? '').toLowerCase().split(/\s+/u).includes('stylesheet')) {
-          continue;
-        }
-        const old = element.getAttribute('href') ?? '';
-        if (resolveReference(page, old).path !== css) continue;
-        element.setAttribute('href', replaceLocalReference(old, page, css, clone));
+  }
+  // Propagar até CSS diretamente vinculados nas páginas. Não reescrever CSS
+  // original usado por qualquer capítulo, mesmo em múltiplos níveis de import.
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const [path, dependencies] of imports) {
+      if (!affected.has(path) && consumedByCover(path) &&
+          dependencies.some((target) => affected.has(target))) {
+        affected.add(path);
         changed = true;
       }
-      if (!changed) continue;
-      const next = isHtml
-        ? (originalPage.match(/^\s*<!doctype[^>]*>/iu)?.[0] ?? '') +
-          '\n' + parsed.documentElement.outerHTML
-        : serializeXmlPreservingDeclaration(parsed, originalPage);
-      pageChanges.push([page, next]);
     }
-    if (pageChanges.length === 0) {
-      files.delete(clone);
-      continue;
+  }
+  if (affected.size === 0) return actions;
+
+  const aliases = new Map<string, string>();
+  for (const path of affected) {
+    const prefix = path.replace(/\.css$/iu, '.epub-cover');
+    let candidate = prefix + '.css';
+    for (let index = 2; files.has(candidate); index += 1) {
+      candidate = prefix + '-' + index + '.css';
     }
-    for (const [page, text] of pageChanges) {
-      files.set(page, new TextEncoder().encode(text));
-      actions.push({
-        type: 'updated', title: 'Estilo exclusivo da capa vinculado',
-        detail: 'CSS compartilhado preservado nos capítulos; a capa usa cópia independente.',
-        file: page,
-      });
+    aliases.set(path, candidate);
+    files.set(candidate, files.get(path)!);
+  }
+
+  for (const [path, clone] of aliases) {
+    const item = declared.find((entry) => entry.resolvedPath === path)!;
+    const fakePkg: PackageDocumentInfo = {
+      ...pkg,
+      manifest: [{ ...item, resolvedPath: clone, exists: true }],
+    };
+    actions.push(...updateCoverReferences(files, fakePkg, oldCoverPath, newCoverPath,
+      new Set([clone])));
+    const clonedBytes = files.get(clone)!;
+    const text = decodeUtf8ForRewrite(clonedBytes, clone);
+    const rewritten = updateCssImports(text, path, aliases);
+    if (rewritten !== text) files.set(clone, encoder.encode(rewritten));
+  }
+
+  const pageChanges: Array<[string, string]> = [];
+  for (const page of coverPages) {
+    const bytes = files.get(page);
+    if (!bytes) continue;
+    const originalPage = decodeUtf8ForRewrite(bytes, page);
+    const isHtml = /\.html?$/iu.test(page) && !/\.xhtml$/iu.test(page);
+    const document = isHtml
+      ? new DOMParser().parseFromString(originalPage, 'text/html')
+      : parseXml(originalPage, 'application/xhtml+xml');
+    let pageChanged = false;
+    for (const link of Array.from(document.getElementsByTagName('*'))) {
+      if (link.localName !== 'link' ||
+          !(link.getAttribute('rel') ?? '').toLowerCase().split(/\s+/u).includes('stylesheet')) continue;
+      const href = link.getAttribute('href') ?? '';
+      const css = resolveReference(page, href);
+      const clone = aliases.get(css.path);
+      if (!css.safe || !clone) continue;
+      link.setAttribute('href', replaceLocalReference(href, page, css.path, clone));
+      pageChanged = true;
     }
-    const item = opf.createElementNS(OPF_NS, 'item');
-    item.setAttribute('id', makeUniqueId('cover-style-' + basename(css), usedIds));
-    item.setAttribute('href', encodePathForXml(relativePath(pkg.opfDir, clone)));
-    item.setAttribute('media-type', 'text/css');
-    manifest.append(item);
+    if (!pageChanged) continue;
+    const rewritten = isHtml
+      ? (originalPage.match(/^\s*<!doctype[^>]*>/iu)?.[0] ?? '') +
+        '\n' + document.documentElement.outerHTML
+      : serializeXmlPreservingDeclaration(document, originalPage);
+    pageChanges.push([page, rewritten]);
+  }
+
+  // Não publicar folhas clonadas que não puderam ser vinculadas à capa.
+  if (pageChanges.length === 0) {
+    for (const clone of aliases.values()) files.delete(clone);
+    return [];
+  }
+  for (const [page, text] of pageChanges) {
+    files.set(page, encoder.encode(text));
     actions.push({
-      type: 'created', title: 'CSS independente da capa criado',
-      detail: 'Uma folha de estilos compartilhada foi duplicada sem tocar no original.',
+      type: 'updated',
+      title: 'Estilo exclusivo da capa vinculado',
+      detail: 'Folhas CSS compartilhadas e importadas permanecem intactas nos capítulos.',
+      file: page,
+    });
+  }
+  const usedIds = new Set(Array.from(manifest.children)
+    .map((element) => element.getAttribute('id') ?? '').filter(Boolean));
+  for (const [path, clone] of aliases) {
+    const item = declared.find((entry) => entry.resolvedPath === path)!;
+    const entry = opf.createElementNS(OPF_NS, 'item');
+    entry.setAttribute('id', makeUniqueId('cover-style-' + basename(path), usedIds));
+    entry.setAttribute('href', encodePathForXml(relativePath(pkg.opfDir, clone)));
+    entry.setAttribute('media-type', 'text/css');
+    if (item.properties.length > 0) entry.setAttribute('properties', item.properties.join(' '));
+    manifest.append(entry);
+    actions.push({
+      type: 'created',
+      title: 'CSS independente da capa criado',
+      detail: 'Folha clonada para a capa sem modificar arquivos CSS dos capítulos.',
       file: clone,
     });
   }
   return actions;
+}
+
+function updateCssImports(source: string, basePath: string,
+  aliases: ReadonlyMap<string, string>): string {
+  const isCode = cssCodePosition(source);
+  return source.replace(
+    /@import\s+(?:url\(\s*)?(?:(["'])(.*?)\1|([^"'\s);]+))\s*\)?/giu,
+    (full, _quote: string, quoted: string, unquoted: string, offset: number) => {
+      if (!isCode(offset)) return full;
+      const raw = quoted || unquoted || '';
+      const resolved = resolveReference(basePath, raw);
+      const alias = resolved.safe ? aliases.get(resolved.path) : undefined;
+      if (!alias) return full;
+      return full.replace(raw, replaceLocalReference(raw, basePath, resolved.path, alias));
+    },
+  );
 }
