@@ -1,0 +1,74 @@
+name: Supply-chain SBOM / licenses / OSV
+
+on:
+  push:
+    branches: [dev, prod]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/audit-licenses.mjs'
+      - 'scripts/licensePolicy.mjs'
+      - 'tests/licensePolicyNode99.test.mjs'
+      - '.github/workflows/supply-chain.yml'
+  pull_request:
+    branches: [dev, prod]
+  # Nota: GitHub executa cron apenas se o workflow existir em DEFAULT branch
+  # (prod). Por enquanto funciona em push/PR na dev; ao promover, ativa cron.
+  schedule:
+    - cron: '15 11 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supply-chain-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inventory:
+    name: SBOM CycloneDX/SPDX and license policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+      - name: Install reproducible dependencies
+        run: npm ci
+      - name: Validate SPDX parser adversarially
+        run: node --test tests/licensePolicyNode99.test.mjs
+      - name: Enforce licenses policy while flagging human-review obligations
+        run: node scripts/audit-licenses.mjs --enforce --json ./licenses-inventory.json
+      - name: Build standardized CycloneDX and SPDX SBOM
+        run: |
+          npm sbom --sbom-format cyclonedx --sbom-type application > sbom.cyclonedx.json
+          npm sbom --sbom-format spdx --sbom-type application > sbom.spdx.json
+          node -e "for(const name of ['sbom.cyclonedx.json','sbom.spdx.json']) { const p=require('./'+name); if(!p || Object.keys(p).length<3) throw new Error('SBOM inválido: '+name); }"
+      - name: Audit all dependencies including dev for current advisories
+        run: npm audit --audit-level=moderate
+      - name: Archive SBOM and explicit license inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: supply-chain-sbom-license-inventory
+          path: |
+            licenses-inventory.json
+            sbom.cyclonedx.json
+            sbom.spdx.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  osv:
+    name: OSV vulnerability intelligence
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.7.0
+    with:
+      scan-args: |-
+        --lockfile=./package-lock.json
+      upload-sarif: false
+      fail-on-vuln: true
+    permissions:
+      actions: read
+      contents: read
