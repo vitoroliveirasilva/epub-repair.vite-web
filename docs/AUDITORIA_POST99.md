@@ -123,3 +123,42 @@ aos workflows de CI do commit que introduziu estes ajustes.
 - Testes sintéticos de EPUB e navegador não garantem fidelidade visual absoluta
   para todos os EPUBs ou dispositivos físicos.
 - A branch `prod` não foi modificada nesta rodada.
+
+
+## Quinta e sexta auditorias: E-132 a E-149 (06/11/2026)
+
+Esta rodada de desenvolvimento foi registrada exclusivamente na branch `dev`.
+Evidências automatizadas: `tests/epub-audit-132-149.test.ts`,
+`tests/epub-audit-upload-137.test.ts`, testes de regressão existentes,
+TypeScript, ESLint, EPUBCheck, Calibre e browser matrix. Uma verificação
+automatizada não é sinônimo de perfeição editorial de todos os livros.
+
+| Itens | Alteração aplicada |
+| --- | --- |
+| E-132 | Reconhecer `@import url(nested.css)` e a forma com aspas sem contar a mesma URL duas vezes |
+| E-133 | Identificar capa em primeira página anônima cuja imagem esteja em `<style>` ou `style` |
+| E-134 | Preservar CDATA literalmente durante as transformações de XHTML |
+| E-135 | Comparar URLs CSS após decodificar escapes, preservando strings e estilos compartilhados |
+| E-136 | Remover somente o vínculo remoto quando solicitado, sem apagar marcação editorial interna ou duplicar entidades |
+| E-137 | Diagnosticar em estado separado um novo EPUB inválido, mantendo o download e o relatório do EPUB anterior |
+| E-138 | Comparar ocorrências de alertas após reparo, incluindo detalhe e multiplicidade, antes de liberar a cópia |
+| E-139 | No iOS Appium, usar HTTP nativo do Node para esperar o boot do WebDriverAgent sem o limite implícito de cabeçalhos do fetch; a homologação iOS só é concluída mediante evidência real do simulador |
+| E-140 | Recuperar o caminho OPF exato preservando a capitalização física no ZIP |
+| E-141 | Inspecionar âncoras em `text/html` com parser HTML, incluindo arquivos `.html` |
+| E-142 | Bloquear alterações em bytes DTBook sem auditoria especializada, evitando perda silenciosa de versos, páginas ou texto editorial |
+| E-143 | Validar o formato do último recurso de cada cadeia de fallback e não apenas um recurso intermediário |
+| E-144 | Permitir correção opcional de idioma XHTML quando o OPF declara um idioma válido, sem normalizar texto ou executar reparos amplos na otimização |
+| E-145 | Apontar como reparáveis as `properties` obrigatórias de manifest que já possuem rotina de sincronização |
+| E-146 | Mostrar imagem ausente como pendência dependente de consentimento; só habilitar sua substituição por texto com opt-in expresso |
+| E-147 | Detectar metadados JPEG sob alias `image/jpg` e PNG `zTXt` |
+| E-148 | Exigir `playOrder` NCX integralmente numérico, positivo e sem sufixos |
+| E-149 | Validar dimensões JPEG pelo cabeçalho SOF na inspeção de recursos |
+
+### Escopo preservado
+
+- Fontes externas HTTPS legítimas e texto editorial não são removidos por presunção de insegurança.
+- `prod` permanece sem alterações.
+- Android e iOS têm workflows próprios; falhas de instalação do SDK,
+  inicialização do Appium e download nativo são informadas separadamente.
+- A proteção DTBook é deliberadamente conservadora: diante da impossibilidade
+  de garantir equivalência editorial, a alteração é recusada, não improvisada.
