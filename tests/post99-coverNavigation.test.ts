@@ -27,7 +27,8 @@ describe('E-106: documentos de navegação existentes jamais são sobrescritos',
   it('gera caminho único se nav.xhtml não declarado já existe fisicamente', async () => {
     const zip = await JSZip.loadAsync(await buildKindleIssueEpub());
     const oldOpf = await zip.file('OEBPS/content.opf')!.async('string');
-    zip.file('OEBPS/content.opf', oldOpf.replace('version="1.0"','version="3.0"'));
+    zip.file('OEBPS/content.opf', oldOpf.replace('package xmlns="http://www.idpf.org/2007/opf" version="1.0"',
+      'package xmlns="http://www.idpf.org/2007/opf" version="3.0"'));
     zip.file('OEBPS/nav.xhtml', '<html>Conteúdo de navegação órfão original</html>');
     const loaded = await loadEpub('teste.epub', new Uint8Array(
       await zip.generateAsync({type:'uint8array'})));
