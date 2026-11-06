@@ -35,7 +35,7 @@ export async function repairEpub(
       'Operação cancelada pelo usuário.', 'AbortError');
   };
   canceled();
-  const loaded = preloaded ?? await loadEpub(fileName, bytes);
+  const loaded = preloaded ?? await loadEpub(fileName, bytes, undefined, signal);
   canceled();
   const before = inspectLoadedEpub(fileName, bytes.length, loaded);
   const warnings: string[] = [];

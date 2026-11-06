@@ -81,6 +81,28 @@ describe('E-032/E-080: extração ZIP via Worker cancelável', () => {
     expect(actual.validZip).toBe(expected.validZip);
     expect([...actual.files.keys()]).toEqual([...expected.files.keys()]);
   });
+  it('fallback sem Worker aborta durante o fluxo ZIP, sem publicar arquivo parcial', async () => {
+    vi.stubGlobal('Worker', undefined);
+    const controller = new AbortController();
+    const bytes = await buildKindleIssueEpub();
+    const updates: number[] = [];
+    await expect(loadEpubInWorker('book.epub', bytes, {
+      signal: controller.signal,
+      onProgress: ({ completed }) => {
+        updates.push(completed);
+        controller.abort();
+      },
+    })).rejects.toMatchObject({ name: 'AbortError' });
+    expect(updates).toHaveLength(1);
+  });
+
+  it('leitor ZIP direto detecta cancelamento prévio sem tentar abrir o arquivo', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    await expect(loadEpub('pre-cancel.epub', new Uint8Array(), undefined,
+      controller.signal)).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
   it('sinal cancelado antes de criar Worker bloqueia processamento', async () => {
     const controller=new AbortController();controller.abort();
     const creator=vi.fn(()=>new MockWorker() as unknown as Worker);

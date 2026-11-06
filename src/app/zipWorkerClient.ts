@@ -98,7 +98,7 @@ async function loadWithoutWorker(
   bytes: Uint8Array,
   options: ZipWorkerOptions,
 ): Promise<LoadedEpub> {
-  const loaded = await loadEpub(fileName, bytes, options.onProgress);
+  const loaded = await loadEpub(fileName, bytes, options.onProgress, options.signal);
   throwIfProcessingAborted(options.signal);
   return loaded;
 }

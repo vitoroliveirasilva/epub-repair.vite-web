@@ -23,6 +23,9 @@ ou opções diferentes. O usuário pode usar **Cancelar operação** enquanto ho
 trabalho. O `AbortController` termina o Worker da extração imediatamente,
 descarta resultados recebidos após cancelamento e impede publicar o resultado
 em checkpoints após operações assíncronas de reparo e capa.
+No fallback sem Worker, o leitor ZIP agora recebe o mesmo sinal e interrompe
+a stream entre blocos ou entradas (inclusive se o cancelamento ocorrer no
+callback de progresso), sem interpretar cancelamento como EPUB inválido.
 
 **Limitações concretas:** não há uma fila persistente de trabalhos; a validação
 DOM síncrona não pode ser interrompida durante a execução; o JSZip não é
@@ -42,7 +45,8 @@ com pouca memória, E-032 e E-080 permanecem **parciais**.
 ## Regressões automatizadas
 
 - `tests/zipWorkerCancellation99.test.ts`: progresso, terminação, falha,
-  resultado tardio e fallback sem Worker.
+  resultado tardio e fallback sem Worker, incluindo interrupção durante
+  descompactação com `AbortError` real e testes de cancelamento prévio.
 - `tests/processingUiCancel99.test.ts`: botão, status e preservação de estado.
 - `tests/zipRebuildProgress99.test.ts`: progresso de JSZip, ZIP íntegro e
   cancelamento sem publicação.

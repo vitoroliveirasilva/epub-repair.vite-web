@@ -18,6 +18,12 @@ class ZipIntegrityError extends Error {
   }
 }
 
+function assertZipNotAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw new DOMException('Extração ZIP cancelada pelo usuário.', 'AbortError');
+  }
+}
+
 export interface ZipLoadProgress {
   completed: number;
   total: number;
@@ -28,7 +34,9 @@ export async function loadEpub(
   fileName: string,
   bytes: Uint8Array,
   onProgress?: (progress: ZipLoadProgress) => void,
+  signal?: AbortSignal,
 ): Promise<LoadedEpub> {
+  assertZipNotAborted(signal);
   const raw = bytes.length <= MAX_FILE_SIZE_BYTES
     ? parseZipCentralDirectory(bytes)
     : {
@@ -43,6 +51,7 @@ export async function loadEpub(
           }),
         ],
       };
+  assertZipNotAborted(signal);
   if (raw.issues.some((issue) => issue.severity === 'fatal')) {
     return {
       fileName,
@@ -68,6 +77,7 @@ export async function loadEpub(
       ),
     });
   } catch (error) {
+    assertZipNotAborted(signal);
     return {
       fileName,
       fileSize: bytes.length,
@@ -89,6 +99,7 @@ export async function loadEpub(
     };
   }
 
+  assertZipNotAborted(signal);
   const files = new Map<string, EpubEntry>();
   const fileNames: string[] = [];
   const issues = [...raw.issues];
@@ -99,6 +110,7 @@ export async function loadEpub(
   const progressTotal = entries.filter(([, item]) => !item.dir).length;
   let progressCompleted = 0;
   for (const [originalName, zipEntry] of entries) {
+    assertZipNotAborted(signal);
     const archivedName = (zipEntry as JSZip.JSZipObject & {
       unsafeOriginalName?: string;
     }).unsafeOriginalName ?? originalName;
@@ -144,8 +156,9 @@ export async function loadEpub(
       }
       const remaining = MAX_ZIP_UNCOMPRESSED_BYTES - totalUncompressedBytes;
       const unpacked = await readZipEntryLimited(
-        zipEntry, Math.min(MAX_ZIP_ENTRY_BYTES, remaining), metadata.uncompressedSize,
+        zipEntry, Math.min(MAX_ZIP_ENTRY_BYTES, remaining), metadata.uncompressedSize, signal,
       );
+      assertZipNotAborted(signal);
       if (unpacked.bytes.length !== metadata.uncompressedSize) {
         throw new ZipIntegrityError('ZIP_SIZE_MISMATCH',
           'O tamanho real descompactado difere do declarado no diretório central ZIP.');
@@ -168,7 +181,12 @@ export async function loadEpub(
         total: progressTotal,
         path: normalized.path,
       });
+      assertZipNotAborted(signal);
     } catch (error) {
+      if (signal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
+        assertZipNotAborted(signal);
+        throw error;
+      }
       return {
         fileName,
         fileSize: bytes.length,
@@ -198,6 +216,7 @@ export async function loadEpub(
 
   // O JSZip pode normalizar nomes e ignorar registros ambíguos. Garantir que
   // toda entrada física segura e não diretório exista exatamente no mapa final.
+  assertZipNotAborted(signal);
   const missingFromJsZip = raw.entries.find((entry) =>
     !entry.isDirectory && normalizeInternalPath(entry.fileName).safe &&
     !files.has(entry.fileName));
@@ -245,7 +264,9 @@ function readZipEntryLimited(
   entry: JSZip.JSZipObject,
   maxBytes: number,
   expectedBytes: number,
+  signal?: AbortSignal,
 ): Promise<{ bytes: Uint8Array; crc32: number }> {
+  assertZipNotAborted(signal);
   if (!Number.isSafeInteger(expectedBytes) || expectedBytes < 0 ||
       expectedBytes > maxBytes) {
     return Promise.reject(new ZipIntegrityError('ZIP_RESOURCE_LIMIT',
@@ -263,17 +284,29 @@ function readZipEntryLimited(
     let length = 0;
     let crc = 0xffffffff;
     let settled = false;
-
+    const forgetAbort = (): void => {
+      signal?.removeEventListener('abort', cancelStream);
+    };
+    const cancelStream = (): void => {
+      fail(new DOMException('Extração ZIP cancelada pelo usuário.', 'AbortError'));
+    };
     const fail = (error: Error): void => {
       if (settled) return;
       settled = true;
+      forgetAbort();
       stream.pause();
       reject(error);
     };
+    signal?.addEventListener('abort', cancelStream, { once: true });
+    if (signal?.aborted) {
+      cancelStream();
+      return;
+    }
 
     stream
       .on('data', (chunk) => {
         if (settled) return;
+        if (signal?.aborted) { cancelStream(); return; }
         if (chunk.length > maxBytes - length || chunk.length > output.length - length) {
           fail(new ZipIntegrityError('ZIP_SIZE_MISMATCH',
             'O fluxo descompactado ultrapassa o tamanho declarado no diretório central.'));
@@ -288,7 +321,9 @@ function readZipEntryLimited(
       .on('error', fail)
       .on('end', () => {
         if (settled) return;
+        if (signal?.aborted) { cancelStream(); return; }
         settled = true;
+        forgetAbort();
         if (length !== expectedBytes) {
           reject(new ZipIntegrityError('ZIP_SIZE_MISMATCH',
             'O fluxo descompactado terminou antes de atingir o tamanho declarado.'));
