@@ -1,7 +1,7 @@
 import type { ManifestItem, PackageDocumentInfo } from '../model/opfTypes';
 import { isInvalidLanguageTag, normalizeLanguageTag } from '../utils/kindleCompatibility';
-import { basename, encodePathForXml, relativePath } from '../utils/pathUtils';
-import { escapeXml } from '../utils/xmlUtils';
+import { basename, encodePathForXml, isRemoteUrl, relativePath, resolveReference } from '../utils/pathUtils';
+import { childElementsByLocalName, escapeXml, parseXml } from '../utils/xmlUtils';
 
 export function shouldCreateNav(pkg: PackageDocumentInfo): boolean {
   return pkg.version.startsWith('3') && (!pkg.navItem || !pkg.navItem.exists);
@@ -29,7 +29,11 @@ export function buildNavDocument(
   if (entries.length === 0) {
     throw new Error('Não é possível criar nav.xhtml sem um documento de leitura válido.');
   }
-  const list = entries
+  // EPUB 3 pode ter NCX editorial com partes/capítulos aninhados, mesmo
+  // quando o nav.xhtml foi apagado. Recuperar essa estrutura antes de recorrer
+  // ao inventário linear do spine (que perderia os títulos e fragmentos).
+  const preserved = recreateNavFromNcx(pkg, navDir, resources);
+  const list = preserved ?? entries
     .map((item, index) => {
       const href = encodePathForXml(relativePath(navDir, item.resolvedPath));
       const label = editorialLabel(item, index, resources);
@@ -45,6 +49,71 @@ export function buildNavDocument(
     : '';
 
   return `<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"${languageAttrs}>\n  <head>\n    <title>Navegação</title>\n  </head>\n  <body>\n    <nav epub:type="toc" id="toc">\n      <h1>Sumário</h1>\n      <ol>\n${list || '      <li><span>Início</span></li>'}\n      </ol>\n    </nav>\n  </body>\n</html>\n`;
+}
+
+
+/**
+ * Recupera o sumário NCX editorial para criar nav.xhtml sem achatamento.
+ * É deliberadamente fail-closed: um destino ausente, URL externa, falta de
+ * rótulo ou NCX inválido leva ao fallback linear. Não faz guesses de títulos.
+ */
+export function recreateNavFromNcx(
+  pkg: PackageDocumentInfo,
+  navDir: string,
+  resources?: ReadonlyMap<string, { bytes: Uint8Array }>,
+): string | undefined {
+  const ncx = pkg.ncxItem;
+  const source = ncx?.exists ? resources?.get(ncx.resolvedPath)?.bytes : undefined;
+  if (!ncx || !source || typeof DOMParser === 'undefined') return undefined;
+  try {
+    const doc = parseXml(new TextDecoder('utf-8', { fatal: true }).decode(source));
+    if (doc.documentElement.localName !== 'ncx') return undefined;
+    const root = Array.from(doc.documentElement.children)
+      .find((node) => node.localName === 'navMap');
+    if (!root) return undefined;
+    const validPaths = new Set(pkg.manifest.filter((x) => x.exists)
+      .map((x) => x.resolvedPath));
+    let visited = 0;
+    const item = (point: Element, depth: number): string => {
+      visited++;
+      if (visited > 2000 || depth > 24) throw new Error('NCX excessivamente profundo');
+      const labelRoot = childElementsByLocalName(point, 'navLabel')[0];
+      const label = childElementsByLocalName(labelRoot, 'text')[0]
+        ?.textContent?.replace(/\\s+/gu, ' ').trim() ?? '';
+      if (!label || label.length > 1000) throw new Error('NCX sem rótulo editorial válido');
+      const content = childElementsByLocalName(point, 'content')[0];
+      const src = content?.getAttribute('src')?.trim() ?? '';
+      let link: string;
+      if (!src) {
+        link = '<span>' + escapeXml(label) + '</span>';
+      } else {
+        if (isRemoteUrl(src) || src.startsWith('#')) {
+          throw new Error('NCX com URL externa ou âncora não resolvida');
+        }
+        const physical = resolveReference(ncx.resolvedPath, src);
+        if (!physical.safe || !validPaths.has(physical.path) ||
+            !resources?.has(physical.path)) {
+          throw new Error('NCX com destino não declarado ou não localizado');
+        }
+        const fragment = src.includes('#') ? '#' + src.split('#').slice(1).join('#') : '';
+        const href = encodePathForXml(relativePath(navDir, physical.path)) + fragment;
+        link = '<a href="' + escapeXml(href) + '">' + escapeXml(label) + '</a>';
+      }
+      const nested = childElementsByLocalName(point, 'navPoint');
+      const descendants = nested.length
+        ? '<ol>\\n' + nested.map((child) => item(child, depth + 1)).join('\\n') +
+          '\\n</ol>' : '';
+      return '      <li>' + link + descendants + '</li>';
+    };
+    const top = childElementsByLocalName(root, 'navPoint');
+    if (!top.length) return undefined;
+    const output = top.map((point) => item(point, 0)).join('\\n');
+    return output || undefined;
+  } catch {
+    // A validação do EPUB reportará o NCX ruim; a geração não pode transformar
+    // um arquivo suspeito em links ativos ou inventar hierarquia editorial.
+    return undefined;
+  }
 }
 
 export function buildNcxDocument(
