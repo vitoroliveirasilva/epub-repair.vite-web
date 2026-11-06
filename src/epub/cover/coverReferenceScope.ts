@@ -1,6 +1,6 @@
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import { HTML_MEDIA_TYPES, CSS_MEDIA_TYPES } from '../utils/constants';
-import { basename, resolveFromDir, resolveReference } from '../utils/pathUtils';
+import { basename, decodeCssEscapes, resolveFromDir, resolveReference } from '../utils/pathUtils';
 import { decodeUtf8ForRewrite } from '../utils/textEncoding';
 import { parseXml } from '../utils/xmlUtils';
 import { extractCssResourceReferences } from '../validation/referenceExtractor';
@@ -92,7 +92,7 @@ export function coverReferenceScope(
       const source = decodeUtf8ForRewrite(bytes, css);
       for (const ref of extractCssResourceReferences(source)) {
         if (ref.attr !== 'css:import') continue;
-        const imported = resolveReference(css, ref.raw);
+        const imported = resolveReference(css, decodeCssEscapes(ref.raw));
         if (imported.safe && cssPaths.has(imported.path)) {
           markUsage(imported.path, page, visited);
         }
@@ -124,13 +124,23 @@ export function coverReferenceScope(
           node.getAttribute('xlink:href') ?? '';
         return value && resolveReference(first, value).path === oldCoverPath;
       });
-      const hasCssImage = [...(consumers.keys())].some((css) => {
+      const hasInlineCssImage = Array.from(doc!.getElementsByTagName('*')).some((node) => {
+        const styles = [
+          ...(node.localName === 'style' ? [node.textContent ?? ''] : []),
+          ...(node.hasAttribute('style') ? [node.getAttribute('style') ?? ''] : []),
+        ];
+        return styles.some((style) => extractCssResourceReferences(style).some((ref) =>
+          ref.attr === 'css:url' &&
+          resolveReference(first, decodeCssEscapes(ref.raw)).path === oldCoverPath));
+      });
+      const hasCssImage = hasInlineCssImage || [...(consumers.keys())].some((css) => {
         if (!consumers.get(css)?.has(first)) return false;
         const bytes = files.get(css);
         if (!bytes) return false;
         try {
           return extractCssResourceReferences(decodeUtf8ForRewrite(bytes, css))
-            .some((ref) => resolveReference(css, ref.raw).path === oldCoverPath);
+            .some((ref) => ref.attr === 'css:url' &&
+              resolveReference(css, decodeCssEscapes(ref.raw)).path === oldCoverPath);
         } catch { return false; }
       });
       if ((hasDirectImage && images.length === 1) || (hasCssImage && images.length === 0)) {

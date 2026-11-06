@@ -218,10 +218,10 @@ function replaceRemoteAnchors(text: string, filePath: string, actions: RepairAct
     (full, before: string, _quote: string, href: string, after: string, label: string) => {
       if (!isRemoteUrl(href)) return full;
       changed = true;
-      const readable = stripTags(label).trim() || href;
+      // Preservar tags editoriais e entidades ao remover apenas o link.
       const titleMatch = `${before} ${after}`.match(/\btitle\s*=\s*(["'])(.*?)\1/iu);
       const title = titleMatch?.[2]?.trim();
-      return escapeHtml(title || readable);
+      return label.trim() ? label : escapeHtml(title || href);
     },
   );
 
@@ -316,6 +316,8 @@ function escapeHtml(value: string): string {
 
 /** Preserva comentários editoriais que exibem exemplos literais de tags. */
 function outsideHtmlComments(source: string, transform: (part: string) => string): string {
-  return source.split(/(<!--[\s\S]*?-->)/gu).map((part) =>
-    part.startsWith('<!--') && part.endsWith('-->') ? part : transform(part)).join('');
+  return source.split(/(<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>)/gu).map((part) =>
+    (part.startsWith('<!--') && part.endsWith('-->')) ||
+    (part.startsWith('<![CDATA[') && part.endsWith(']]>'))
+      ? part : transform(part)).join('');
 }

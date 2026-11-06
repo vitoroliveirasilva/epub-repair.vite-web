@@ -1,6 +1,6 @@
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction } from '../model/repairTypes';
-import { basename, encodePathForXml, makeUniqueId, relativePath, resolveReference } from '../utils/pathUtils';
+import { basename, decodeCssEscapes, encodePathForXml, makeUniqueId, relativePath, resolveReference } from '../utils/pathUtils';
 import { cssCodePosition } from '../utils/cssContexts';
 import { decodeUtf8ForRewrite } from '../utils/textEncoding';
 import { parseXml, serializeXmlPreservingDeclaration } from '../utils/xmlUtils';
@@ -41,7 +41,7 @@ export function forkSharedCoverStyles(
       sources.set(path, source);
       imports.set(path, extractCssResourceReferences(source)
         .filter((ref) => ref.attr === 'css:import')
-        .map((ref) => resolveReference(path, ref.raw))
+        .map((ref) => resolveReference(path, decodeCssEscapes(ref.raw)))
         .filter((ref) => ref.safe && declaredPaths.has(ref.path))
         .map((ref) => ref.path));
     } catch {
@@ -58,7 +58,7 @@ export function forkSharedCoverStyles(
     const references = extractCssResourceReferences(source);
     if (references.some((ref) =>
       ref.attr === 'css:url' &&
-      resolveReference(path, ref.raw).path === oldCoverPath)) {
+      resolveReference(path, decodeCssEscapes(ref.raw)).path === oldCoverPath)) {
       affected.add(path);
     }
   }
@@ -168,14 +168,16 @@ function updateCssImports(source: string, basePath: string,
   aliases: ReadonlyMap<string, string>): string {
   const isCode = cssCodePosition(source);
   return source.replace(
-    /@import\s+(?:url\(\s*)?(?:(["'])(.*?)\1|([^"'\s);]+))\s*\)?/giu,
-    (full, _quote: string, quoted: string, unquoted: string, offset: number) => {
+    /@import\s+(?:url\(\s*(?:(['"])(.*?)\1|([^'"\s)]+))\s*\)|(['"])(.*?)\4)/giu,
+    (full, _quote: string, quoted: string, unquoted: string,
+      _directQuote: string, direct: string, offset: number) => {
       if (!isCode(offset)) return full;
-      const raw = quoted || unquoted || '';
-      const resolved = resolveReference(basePath, raw);
+      const raw = quoted || unquoted || direct || '';
+      const resolved = resolveReference(basePath, decodeCssEscapes(raw));
       const alias = resolved.safe ? aliases.get(resolved.path) : undefined;
       if (!alias) return full;
-      return full.replace(raw, replaceLocalReference(raw, basePath, resolved.path, alias));
+      return full.replace(raw, replaceLocalReference(
+        decodeCssEscapes(raw), basePath, resolved.path, alias));
     },
   );
 }
