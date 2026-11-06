@@ -65,3 +65,32 @@ A conclusão formal dos itens depende do gate final de CI na revisão publicada.
   reais e leitores físicos. E-082 e E-089 continuam como testes físicos não
   comprovados; não são defeitos demonstrados da aplicação.
 - Nenhuma alteração foi aplicada diretamente à branch `prod`.
+
+
+## Auditoria independente 3: E-113 a E-122 (06/11/2026)
+
+Critério: alterações de código e testes automatizados independem de
+homologação física; os dois workflows nativos mobile são evidências separadas,
+nunca tratados como sucesso enquanto não concluírem upload e download reais.
+
+| ID | Tratamento na dev | Evidência e ressalva |
+| --- | --- | --- |
+| E-113 | Reparos bem-sucedidos tornam-se entrada das operações posteriores; a seleção da capa não apaga o download anterior | `tests/epub-third-wave-sequence.test.ts` valida reparo → capa → reanálise; arquivo original permanece em `originalSource` |
+| E-114 | Scanner CSS agora distingue strings e comentários de recursos ativos | `tests/epub-third-wave-core.test.ts` protege texto literal `content:"url(...)"` |
+| E-115 | Meta de capa apontando XHTML, ou `cover-image` aplicado a item não imagem, gera revisão; não é anunciado como capa válida | `validateCoverConsistency`, `buildCoverReportInfo`; não adivinhar nova capa |
+| E-116 | Workflow iOS sem utilitário GNU `timeout` ausente no macOS | `.github/workflows/ios-simulator.yml`; execução Appium no simulador é gate separado |
+| E-117 | Workflow Android usa imagem Google APIs userdebug, em lugar de imagem Google Play restrita | `.github/workflows/android-emulator.yml`; endpoint CDP e download ainda precisam de execução confirmada |
+| E-118 | CSS exclusivo para capa recebe atualização; CSS compartilhado é duplicado e só página de capa aponta à cópia | `coverReferenceScope.ts`, `forkSharedCoverStyles.ts`, testes com estilo compartilhado |
+| E-119 | Primeira página `0001.xhtml` essencialmente visual é reconhecida pela imagem existente ou fundo CSS, sem inferir capa em capítulos com prosa | `tests/epub-third-wave-cover.test.ts` |
+| E-120 | Exemplos Kindle são preservados em texto e anotados como informativos; somente atributos reais são reparáveis | `sanitizeHtml.ts`, `referenceExtractor.ts`, `validateContentReferences.ts` |
+| E-121 | Sem `createImageBitmap`, a imagem precisa ser decodificada por `Image`; caso não exista decodificador confiável, recusa em vez de aceitar JPEG pelo cabeçalho | `tests/epub-third-wave-fallback.test.ts` |
+| E-122 | Troca de capa passa pelo gate `auditPreservation` do reparo, com exceção restrita à imagem explicitamente selecionada | `replaceCover.ts`, `preservationAudit.ts`, regressões de texto, estrutura e imagens |
+
+### Limitações conscientes
+
+- Estilos incluídos por encadeamentos CSS `@import` complexos ou páginas de capa não identificáveis
+  não devem ser reescritos por heurística agressiva. Se a associação for ambígua, preserve
+  capítulos e exiba advertência, em vez de alterar conteúdos irreversivelmente.
+- A aprovação de testes desktop e EPUBCheck não substitui validação real de
+  downloads em iOS/Android. Não confundir falha de boot/CDP/Appium com defeito demonstrado do app.
+- `prod` só pode receber as alterações após autorização específica; esta rodada altera apenas `dev`.

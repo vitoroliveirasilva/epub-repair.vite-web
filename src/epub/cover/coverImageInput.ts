@@ -92,16 +92,17 @@ async function assertValidCoverImage(
     const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: mediaType }));
     try {
       const image = new Image();
-      image.src = url;
       if (typeof image.decode === 'function') {
+        image.src = url;
         await image.decode();
       } else {
         await new Promise<void>((resolve, reject) => {
           image.onload = () => resolve();
           image.onerror = () => reject(new Error('Não foi possível decodificar a capa.'));
+          image.src = url;
           if (image.complete) {
             if (image.naturalWidth && image.naturalHeight) resolve();
-            // Imagem inválida pode emitir error assincronamente.
+            else reject(new Error('A imagem não contém pixels decodificáveis.'));
           }
         });
       }
