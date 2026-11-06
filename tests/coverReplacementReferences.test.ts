@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { Blob as NodeBlob } from 'node:buffer';
 import JSZip from 'jszip';
 import { replaceEpubCover } from '../src/epub/cover/replaceCover';
 import { updateCoverGuideReference, updateCoverReferences } from '../src/epub/cover/updateCoverReferences';
@@ -103,7 +104,14 @@ describe('E-100: sincronização da capa sem alterar conteúdo editorial', () =>
       fileName:'novo.jpg',bytes:Uint8Array.of(0xff,0xd8,0xff,0xd9),
       mediaType:'image/jpeg' as const,previewDataUrl:'',
     };
-    const output = await replaceEpubCover('livro.epub',input,replacement);
+    // jsdom Blob não possui arrayBuffer; o browser real e o NodeBlob possuem.
+    vi.stubGlobal('Blob', NodeBlob);
+    let output;
+    try {
+      output = await replaceEpubCover('livro.epub',input,replacement);
+    } finally {
+      vi.unstubAllGlobals();
+    }
     expect(output.blob).toBeDefined();
     const out = await JSZip.loadAsync(await output.blob!.arrayBuffer());
     const page = await out.file('OPS/Text/cover.xhtml')!.async('string');
