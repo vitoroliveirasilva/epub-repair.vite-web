@@ -21,6 +21,8 @@ export interface AppState {
   originalSource?: { fileName: string; bytes: Uint8Array } | undefined;
   lastRepairOptions?: RepairOptions | undefined;
   report?: ValidationReport | undefined;
+  /** Diagnóstico separado de uma tentativa inválida sem perder o EPUB anterior. */
+  invalidUploadReport?: ValidationReport | undefined;
   repairResult?: RepairResult | undefined;
   coverImage?: CoverImageInput | undefined;
   busy: boolean;

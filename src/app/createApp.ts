@@ -3,7 +3,7 @@ import {
   applyCoverReplacementToCurrentFile,
   clearCoverImageFromState,
   loadCoverImageIntoState,
-  loadFileIntoState,
+  loadAndAnalyzeCandidate,
   repairCurrentFile,
 } from './actions';
 import { createInitialState, type AppState, type ProcessingProgress } from './state';
@@ -96,10 +96,8 @@ function render(
           className: 'workspace',
           children: [
             renderUploader(state, (file) => {
-              enqueue('Carregar e analisar EPUB', async (ctx) => {
-                await loadFileIntoState(file, state, ctx.signal);
-                await analyzeCurrentFile(state, ctx);
-              });
+              enqueue('Carregar e analisar EPUB', (ctx) =>
+                loadAndAnalyzeCandidate(file, state, ctx));
             }),
             renderControls(state, {
               analyze: () => {
@@ -155,6 +153,18 @@ function render(
               },
             }),
             renderStatusMessage(state.message, state.error),
+            state.invalidUploadReport
+              ? el('section', {
+                  className: 'panel',
+                  attrs: { 'aria-label': 'Diagnóstico do novo EPUB recusado' },
+                  children: [
+                    el('h2', { text: 'Diagnóstico do novo EPUB recusado' }),
+                    renderFileSummary(state.invalidUploadReport),
+                    renderIssueList(state.invalidUploadReport, state.reportViewMode,
+                      (mode) => { state.reportViewMode = mode; rerender(); }),
+                  ],
+                })
+              : undefined,
             state.report ? renderFileSummary(state.report) : renderEmptyState(),
             state.repairResult ? renderRepairSummary(state.repairResult) : undefined,
             state.report

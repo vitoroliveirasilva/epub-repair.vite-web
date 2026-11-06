@@ -124,7 +124,7 @@ export function coverReferenceScope(
           node.getAttribute('xlink:href') ?? '';
         return value && resolveReference(first, value).path === oldCoverPath;
       });
-      const hasInlineCssImage = Array.from(doc!.getElementsByTagName('*')).some((node) => {
+      const hasInlineCssImage = Array.from(doc.getElementsByTagName('*')).some((node) => {
         const styles = [
           ...(node.localName === 'style' ? [node.textContent ?? ''] : []),
           ...(node.hasAttribute('style') ? [node.getAttribute('style') ?? ''] : []),

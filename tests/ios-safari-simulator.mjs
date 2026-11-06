@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { request as httpRequest } from 'node:http';
 import JSZip from 'jszip';
 import { execFileSync } from 'node:child_process';
 import { writeFile, readdir, stat } from 'node:fs/promises';
@@ -8,19 +9,41 @@ const host = 'http://127.0.0.1:4723';
 const udid = process.env.IOS_SIM_UDID;
 assert.ok(udid, 'IOS_SIM_UDID não informado');
 
+/**
+ * Node fetch/Undici interrompe a espera por headers após ~300s mesmo quando
+ * AbortSignal.timeout permite 12 minutos. WDA pode compilar no primeiro boot.
+ * Usar HTTP nativo com prazo controlado e sem fingir sucesso do simulador.
+ */
 async function webdriver(method, route, payload) {
-  const response = await fetch(host + route, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    ...(payload===undefined?{}:{body:JSON.stringify(payload)}),
-    signal: AbortSignal.timeout(route === '/session' ? 720_000 : 180_000),
+  const body = payload === undefined ? undefined : JSON.stringify(payload);
+  const result = await new Promise((resolve, reject) => {
+    const req = httpRequest(host + route, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(body ? { 'Content-Length': Buffer.byteLength(body) } : {}),
+      },
+    }, (response) => {
+      let text = '';
+      response.setEncoding('utf8');
+      response.on('data', (chunk) => { text += chunk; });
+      response.on('error', reject);
+      response.on('end', () => resolve({ status: response.statusCode, body: text }));
+    });
+    const timeout = route === '/session' ? 960_000 : 180_000;
+    req.setTimeout(timeout, () => req.destroy(new Error(
+      'WebDriver HTTP excedeu o prazo para ' + method + ' ' + route,
+    )));
+    req.on('error', reject);
+    if (body) req.write(body);
+    req.end();
   });
-  const result = await response.json();
-  if(!response.ok || result.value?.error){
-    throw new Error('WebDriver '+method+' '+route+': '+
-      JSON.stringify(result.value).slice(0,1600));
+  const parsed = JSON.parse(result.body);
+  if (result.status < 200 || result.status >= 300 || parsed.value?.error) {
+    throw new Error('WebDriver ' + method + ' ' + route + ': ' +
+      JSON.stringify(parsed.value).slice(0, 1600));
   }
-  return result.value;
+  return parsed.value;
 }
 async function pause(ms){await new Promise(resolve=>setTimeout(resolve,ms))}
 function specimen(){
@@ -55,7 +78,7 @@ const sessionData={capabilities:{alwaysMatch:{
   'appium:safariInitialUrl':'http://127.0.0.1:5173/',
   'appium:noReset':false,
   'appium:newCommandTimeout':180,
-  'appium:wdaLaunchTimeout':600000,
+  'appium:wdaLaunchTimeout':780000,
   'appium:wdaConnectionTimeout':180000,
   'appium:showXcodeLog':true,
   'appium:wdaStartupRetries':1,

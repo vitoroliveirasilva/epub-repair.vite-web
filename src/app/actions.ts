@@ -70,6 +70,44 @@ export async function loadFileIntoState(file: File, state: AppState, signal?: Ab
   state.message = 'Arquivo carregado localmente.';
 }
 
+/**
+ * Avalia um novo EPUB em estado temporário antes de substituir a sessão.
+ * Se a nova entrada é inválida, mantém o livro anterior e seu download,
+ * expondo o relatório diagnóstico do upload rejeitado separadamente.
+ */
+export async function loadAndAnalyzeCandidate(
+  file: File, state: AppState, context: ProcessingContext = {},
+): Promise<void> {
+  const candidate: AppState = {
+    ...state,
+    payload: undefined,
+    originalSource: undefined,
+    repairResult: undefined,
+    report: undefined,
+    coverImage: undefined,
+    lastRepairOptions: undefined,
+    invalidUploadReport: undefined,
+  };
+  await loadFileIntoState(file, candidate, context.signal);
+  await analyzeCurrentFile(candidate, context);
+  throwIfProcessingAborted(context.signal);
+  if (state.payload && candidate.report &&
+      (!candidate.report.validZip || candidate.report.stats.fatalCount > 0)) {
+    state.invalidUploadReport = candidate.report;
+    state.message = 'O novo EPUB tem problemas fatais. A cópia anterior foi preservada para download; ' +
+      'confira abaixo o diagnóstico do arquivo recusado.';
+    return;
+  }
+  state.payload = candidate.payload;
+  state.originalSource = candidate.originalSource;
+  state.repairResult = candidate.repairResult;
+  state.report = candidate.report;
+  state.coverImage = candidate.coverImage;
+  state.lastRepairOptions = candidate.lastRepairOptions;
+  state.invalidUploadReport = undefined;
+  state.message = candidate.message;
+}
+
 export async function analyzeCurrentFile(
   state: AppState,
   context: ProcessingContext = {},
