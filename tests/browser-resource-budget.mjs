@@ -114,9 +114,9 @@ try {
           const zip = await loadEpubInWorker('large.epub', bytes);
           if (!zip.validZip) throw new Error('Worker não abriu ZIP sintético');
           const originalBytes = [...zip.files]
-            .filter(([path]) => /^OPS\\/blob(?:-\\d+)?\\.bin$/u.test(path))
+            .filter(([path]) => /^OPS\/blob(?:-\d+)?\.bin$/u.test(path))
             .reduce((sum, [, entry]) => sum + entry.bytes.length, 0);
-          const expected = Number(input.files[0].name.match(/benchmark-(\\d+)\\.epub/u)?.[1])
+          const expected = Number(input.files[0].name.match(/benchmark-(\d+)\.epub/u)?.[1])
             * 1024 * 1024;
           if (!Number.isFinite(expected) || !originalBytes ||
               originalBytes !== expected) {
