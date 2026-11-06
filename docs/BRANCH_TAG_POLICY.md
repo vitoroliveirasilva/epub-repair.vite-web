@@ -44,3 +44,19 @@ protection.
 
 O item pode ser dado por **revisado/documentado/verificado na CI**,
 não por "dev protegida": essa última afirmação seria falsa.
+
+## Auditoria real aprovada (execução 18)
+
+A [CI 42217527838](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42217527838)
+foi executada no GitHub com `GITHUB_TOKEN` e retornou **PASS E-098**.
+Ela verificou o ruleset ativo `Protect prod`, correspondência exata
+`refs/heads/prod`, `deletion` + `non_fast_forward`, exigência
+de PR, checks estritos Node 20/22 e condições de versão/CI das tags
+geradas pelo release.
+
+O item E-098 está concluído **como revisão automatizada da política
+que foi escolhida e implantada**, não como implantação de nova proteção
+na `dev`. A `dev` continua propositalmente aberta. Criar um
+ruleset contra exclusão/force push de tags existentes requer permissões
+administrativas ausentes da conexão atual; a CI detecta desvios do
+caminho oficial de release, mas não substitui restrição de servidor.

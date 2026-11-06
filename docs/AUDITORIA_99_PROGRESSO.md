@@ -1,13 +1,13 @@
 # Andamento da auditoria de 99 itens
 
-**Última atualização:** 06/11/2026 (execução 17: 94/99, Netlify CSP HTTPS REAL e Workers homologados sem merge) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
+**Última atualização:** 06/11/2026 (execução 18: 96/99, Kindle Previewer 4 e política de branches auditados) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.
 
 Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progresso aqui indica escopo entregue com CI ou avançado parcialmente, **não uma certificação global de segurança ou compatibilidade**.
 
 | Situação | Itens |
 | --- | ---: |
-| Concluídos no escopo definido, com CI Node 20/22 aprovada | **94** |
-| Parcialmente tratados, com testes/validação adicionais necessários | **5** |
+| Concluídos no escopo definido, com CI Node 20/22 aprovada | **96** |
+| Parcialmente tratados, com testes/validação adicionais necessários | **3** |
 | Não iniciados ou ainda não evidenciados | **0** |
 | Total | **99** |
 
@@ -114,7 +114,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-087 | P1 | CI executa em push para prod e PR para prod, não em push para dev | Concluído · CI |
 | E-088 | P1 | Workflow release manual aceita disparo sem condição de sucesso da CI | Concluído · CI |
 | E-089 | P1 | Matriz de browsers Chromium/Firefox/WebKit e dispositivos móveis | Parcial |
-| E-090 | P1 | Matriz de leitores: Kindle Previewer, Calibre e leitores EPUB 2/3 | Parcial |
+| E-090 | P1 | Matriz de leitores: Kindle Previewer, Calibre e leitores EPUB 2/3 | Concluído · CI |
 | E-091 | P1 | Regressão diferencial: EPUBCheck original × reparado | Concluído · CI |
 | E-092 | P1 | Validação pós-reparo de conteúdo real e links, não só ZIP/OPF | Concluído · CI |
 | E-093 | P1 | Testes de propriedades: idempotência e preservação de bytes em no-op | Concluído · CI |
@@ -122,7 +122,7 @@ Este arquivo acompanha o [inventário integral](./AUDITORIA_99_BASE.md). O progr
 | E-095 | P2 | Cobertura de testes e thresholds por módulo crítico | Concluído · CI |
 | E-096 | P2 | Testes de performance/memória com limites documentados | Concluído · CI |
 | E-097 | P2 | Versionamento das decisões, changelog e matriz de suporte | Concluído · CI |
-| E-098 | P2 | Revisar regras de proteção da dev e política de branch/tag | Parcial |
+| E-098 | P2 | Revisar regras de proteção da dev e política de branch/tag | Concluído · CI |
 | E-099 | P2 | Análise periódica de dependências e licenças além do npm audit | Concluído · CI |
 
 ## Commits desta execução
@@ -723,3 +723,40 @@ Após as alterações finais, estas evidências também foram **aprovadas**:
 
 O saldo continua **94 concluídos, 5 parciais e 0 não iniciados**.
 O escopo de homologação externa não foi reclassificado sem evidência física.
+
+## Execução 18: dois novos fechamentos com comprovação em sistemas reais
+
+**Antes:** 94 concluídos, 5 parciais, 0 pendentes.  
+**Agora: 96 concluídos, 3 parciais, 0 pendentes.**
+
+**E-090 fechado no escopo de compatibilidade automatizada com leitores
+desktop:** O **Kindle Previewer 4.0.1 oficial**, instalado pelo
+Homebrew no macOS CI, realizou conversão efetiva para **KPF** de três
+arquivos EPUB reparados (EPUB 2, EPUB 3 e EPUB 3 com NCX→NAV
+hierárquico) [run 42219786288 aprovado](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42219786288).
+Além disso, o **Calibre 7.6 real** importou e converteu esses
+arquivos, verificou navegação editorial e extraiu texto original
+[run 42215134048 aprovado](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42215134048).
+Estas são execuções de programas externos reais, não simuladores.
+**Limite:** a CLI do Kindle Previewer converte e valida a estrutura;
+não equivale a uma captura visual na GUI do Previewer, no Apple Books,
+nem a leitura em Kindle físico. Essas homologações são adicionais.
+
+**E-098 fechado no escopo de REVISÃO e controle da política atual:**
+`ea80570`, `docs/BRANCH_TAG_POLICY.md` e
+`scripts/audit-branch-policy.mjs` confirmam que existe ruleset ativo
+**Protect prod** (ID 18459289), com proteção contra force push/
+exclusão, exigência de PR e checks estritos Node20/22. O workflow
+de release só cria tag `vX.Y.Z` após CI da `prod` e commit SHA
+atual. [Auditoria automática aprovada](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42217527838).
+A `dev` **permanece intencionalmente sem bloqueio de push** para
+permitir commits diretos pedidos pelo responsável. Nenhuma alteração
+administrativa das regras foi feita; consulta ao endpoint legado
+protection exige `Administration` e retornou HTTP 403.
+**Tags não possuem ruleset imutável**, portanto a política de
+publicação automática é verificada, mas criação manual de tags
+por colaboradores com permissão não é bloqueada por esta CI.
+
+**Três parciais:** E-076 (homologação GUI/layout do leitor),
+E-082 (Safari iOS e download real) e E-089 (dispositivos móveis reais).
+`prod` e release v2.2.0 intactas.

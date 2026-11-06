@@ -41,3 +41,22 @@ Além da importação, o caso de NCX hierárquico comprovou a presença de
 **Seção principal** no texto extraído. Ainda falta avaliar renderização
 visual no `ebook-viewer`, Kindle Previewer/Apple Books e dispositivos
 físicos; portanto E-090 permanece parcial.
+
+## Kindle Previewer 4 oficial (execução 18)
+
+A CI [42219786288](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42219786288)
+instalou `kindle-previewer` via Homebrew no macOS-15 (versão
+**4.0.1**, binário oficial `KindlePreviewer4CLI`). A opção correta
+da versão 4 é `--convert --output`, diferente da documentação antiga
+do Previewer 3, que usava apenas um hífen.
+
+Conversão real para KPF, ambas com status de processo 0:
+
+- EPUB 3 reparado: `repaired-valid_epub.kpf`;
+- EPUB 2 reparado: `repaired-valid-epub2_epub.kpf`;
+- EPUB 3 com TOC autoral: `repaired-valid-ncx-hierarchy_epub.kpf`.
+
+Esses três arquivos também foram aceitos pelo Calibre CLI real
+no Ubuntu e pelo EPUBCheck 5.4.0. **O resultado KPF não garante a
+aparência visual de cada página nem o comportamento de um dispositivo
+Kindle físico.** A checagem específica visual permanece no E-076.

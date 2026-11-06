@@ -214,3 +214,19 @@ deploy-preview hospedado. Não significa que produção recebeu
 `worker-src 'self'` ou as mudanças de código.
 
 **94 concluídos, 5 parciais, zero pendentes.**
+
+## Execução 18: Kindle Previewer 4 e regras GitHub
+
+- Kindle Previewer **4.0.1 real** converteu EPUB 2/3 reparados e
+  NCX hierárquico para KPF; Calibre real importou EPUBs 2/3 e
+  extraiu texto. Não alegar visualização GUI, iOS físico ou
+  Kindle de hardware apenas com sucesso do conversor.
+- A revisão E-098 examinou a **ruleset ativa de prod** e
+  implantou gate de auditoria. Não ativou proteção na dev,
+  preservando commits diretos. Não afirmar tags imutáveis:
+  somente o caminho de release automático é restrito por
+  branch, CI, versão e SHA.
+- Ainda são necessários os testes de GUI Calibre, Safari/iOS
+  real e dispositivos móveis para os itens restantes.
+
+**96 concluídos, 3 parciais, 0 pendentes.**
