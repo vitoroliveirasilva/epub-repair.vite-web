@@ -90,13 +90,11 @@ try {
     // Playwright impõe limite de 50MiB para setInputFiles({buffer}).
     // Arquivos grandes são passados via path temporário, não JSON nem buffer.
     const dir = await mkdtemp(join(tmpdir(), 'epub-benchmark-'));
-    try {
-      const file = join(dir, 'benchmark-' + mib + '.epub');
-      await writeFile(file, source);
-      await page.locator('#benchmark-file-input').setInputFiles(file);
-    } finally {
-      await rm(dir, { recursive: true, force: true });
-    }
+    const file = join(dir, 'benchmark-' + mib + '.epub');
+    await writeFile(file, source);
+    // O Chromium pode abrir o descritor no momento de File.arrayBuffer(),
+    // NÃO no setInputFiles(): manter o arquivo em disco até terminar avaliação.
+    await page.locator('#benchmark-file-input').setInputFiles(file);
     const baseline = await metrics();
     let peak = baseline;
     const timer = setInterval(() => {
@@ -161,6 +159,8 @@ try {
         result.heartbeatTicks + ', output=' + result.outputBytes);
     } finally {
       clearInterval(timer);
+      await page.locator('#benchmark-file-input').setInputFiles([]);
+      await rm(dir, { recursive: true, force: true });
     }
   }
 } finally {
