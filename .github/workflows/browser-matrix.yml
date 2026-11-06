@@ -7,6 +7,7 @@ on:
       - 'src/**'
       - 'tests/browser-smoke.mjs'
       - 'tests/browser-csp.mjs'
+      - 'tests/browser-resource-budget.mjs'
       - 'netlify.toml'
       - 'src/epub/repair/repairImages.ts'
       - 'vite.config.ts'
@@ -77,6 +78,7 @@ jobs:
           done
           curl --fail http://127.0.0.1:4173/ > /dev/null
           node tests/browser-csp.mjs
+          if [ "$BROWSER" = chromium ]; then node tests/browser-resource-budget.mjs; fi
       - name: Upload server diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
