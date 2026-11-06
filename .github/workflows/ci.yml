@@ -178,3 +178,11 @@ jobs:
             test -s "$specimen"
             java -jar "$epubcheck_jar" "$specimen"
           done
+
+          # EPUBs reais de apresentação reflowable/fixed layout são reparados
+          # e precisam passar no EPUBCheck antes da renderização no Calibre.
+          for profile in reflowable fixed-layout; do
+            specimen="${RUNNER_TEMP}/epub-fixtures/visual-${profile}.epub"
+            test -s "$specimen"
+            java -jar "$epubcheck_jar" "$specimen"
+          done

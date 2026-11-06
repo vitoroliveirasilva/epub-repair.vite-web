@@ -40,7 +40,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -qq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends calibre
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends calibre xvfb imagemagick python3-pil
           ebook-convert --version
           ebook-meta --version || true
       - name: Import EPUBs and convert to extracted UTF-8 text
@@ -66,6 +66,13 @@ jobs:
           done
           grep -q 'Seção principal' "${RUNNER_TEMP}/calibre-output/repaired-valid-ncx-hierarchy.txt"
           echo 'PASS E-090 extração editorial de navegação NCX hierárquica'
+      - name: Open repaired EPUBs in actual Calibre visual reader under Xvfb
+        shell: bash
+        run: |
+          set -euo pipefail
+          xvfb-run -a -s "-screen 0 1440x900x24" \
+            bash scripts/calibre-visual-reader.sh \
+              "${RUNNER_TEMP}/epub-fixtures" "${RUNNER_TEMP}/calibre-output"
       - name: Save converter logs for regression evidence
         if: always()
         uses: actions/upload-artifact@v4
