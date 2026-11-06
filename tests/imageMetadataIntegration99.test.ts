@@ -71,6 +71,7 @@ async function book(orientation: number): Promise<Uint8Array> {
 describe('E-075: remover metadados EPUB exige opt-in; integridade e UX', () => {
   it('original permanece intacto com default; seleção gera cópia sem EXIF/XMP', async () => {
     const bytes = await book(1);
+    const pristine = new Uint8Array(bytes);
     const before = await inspectEpub('foto.epub', bytes);
     expect(before.validZip).toBe(true);
     expect(before.issues.some((x) => x.code === 'IMAGE_EMBEDDED_METADATA')).toBe(true);
@@ -109,7 +110,9 @@ describe('E-075: remover metadados EPUB exige opt-in; integridade e UX', () => {
     expect(new TextDecoder().decode(original)).toContain('Exif');
     expect(new TextDecoder().decode(altered)).not.toContain('Exif');
     expect(new TextDecoder().decode(altered)).toContain('ICC_PROFILE');
-    expect([...bytes]).toEqual([...await book(1)]);
+    // JSZip gera timestamps novos: comparar a MESMA entrada antes/depois,
+    // nunca um segundo ZIP reconstituído em outro instante.
+    expect([...bytes]).toEqual([...pristine]);
   }, 30_000);
 
   it('não retira orientação EXIF 6 nem anuncia limpeza total', async () => {
