@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import packageInfo from '../package.json';
 import type { ValidationReport } from '../src/epub';
 import { buildJsonReport, buildTextReport, createReportEvidence, makeReportFileName } from '../src/ui/copyReport';
 import { DEFAULT_REPAIR_OPTIONS } from '../src/epub/utils/constants';
@@ -36,7 +37,8 @@ describe('report export helpers', () => {
     const evidence = await createReportEvidence(
       'livro.epub', new TextEncoder().encode('abc'), DEFAULT_REPAIR_OPTIONS,
     );
-    expect(evidence.appVersion).toBe('2.2.0');
+    expect(evidence.appVersion).toBe(packageInfo.version);
+    expect(evidence.appVersion).toMatch(/^\d+\.\d+\.\d+$/u);
     expect(evidence.sourceFileName).toBe('livro.epub');
     expect(evidence.sourceSha256).toBe(
       'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
