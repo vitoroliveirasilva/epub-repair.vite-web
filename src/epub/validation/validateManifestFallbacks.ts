@@ -13,7 +13,7 @@ import { parseXml } from '../utils/xmlUtils';
 const CONTENT_DOCUMENTS = new Set(['application/xhtml+xml', 'image/svg+xml']);
 const CORE_MEDIA = new Set([
   'application/xhtml+xml', 'image/svg+xml', 'image/gif', 'image/jpeg',
-  'image/png', 'image/webp', 'audio/mpeg', 'audio/mp4', 'audio/ogg',
+  'image/png', 'image/webp', 'audio/mpeg', 'audio/mp4',
   'text/css', 'font/ttf', 'font/otf', 'font/woff', 'font/woff2',
   'application/font-sfnt', 'application/vnd.ms-opentype',
   'application/font-woff', 'application/javascript', 'application/ecmascript',
@@ -24,6 +24,16 @@ function normalizedType(item: ManifestItem): string {
   return item.mediaType.toLowerCase().split(';')[0]?.trim() ?? '';
 }
 
+/** audio/ogg é core apenas quando o codec OPUS está declarado (EPUB 3.3).
+ * Não considerar outros codecs OGG automaticamente suportados.
+ */
+function isCoreMedia(item: ManifestItem): boolean {
+  const media = normalizedType(item);
+  if (media !== 'audio/ogg') return CORE_MEDIA.has(media);
+  return item.mediaType.split(';').slice(1).some((parameter) =>
+    /^\s*codecs\s*=\s*(?:"opus"|'opus'|opus)\s*$/iu.test(parameter));
+}
+ 
 type Chain = { kind: 'ok' | 'missing' | 'cycle' | 'missing-file' | 'no-terminal'; core: boolean; document: boolean };
 
 /** Verifica cadeias de IDs, sem consultar rede, executar ou alterar recursos. */
@@ -47,14 +57,12 @@ function inspectChain(
         (next.remote && CONTENT_DOCUMENTS.has(mediaType))) {
       return { kind: 'missing-file', core, document };
     }
-    if (CORE_MEDIA.has(mediaType)) core = true;
+    if (isCoreMedia(next)) core = true;
     if (CONTENT_DOCUMENTS.has(mediaType)) document = true;
     item = next;
   }
-  // Apenas o formato no término da cadeia é suporte efetivo: ter passado por
-  // uma imagem intermediária não torna válido um terminal proprietário.
-  core = CORE_MEDIA.has(normalizedType(item));
-  document = CONTENT_DOCUMENTS.has(normalizedType(item));
+  // EPUB 3.3: basta haver um core media type ou EPUB Content Document
+  // em qualquer ponto da cadeia. Exigir que seja o último é falso positivo.
   return { kind: core ? 'ok' : 'no-terminal', core, document };
 }
 
@@ -129,7 +137,7 @@ export function validateManifestFallbacks(pkg: PackageDocumentInfo, loaded?: Loa
           const target = resolveReference(docItem.resolvedPath, ref);
           if (!target.safe) continue;
           const resource = byPath.get(target.path);
-          if (!resource || !resource.exists || CORE_MEDIA.has(normalizedType(resource))) continue;
+          if (!resource || !resource.exists || isCoreMedia(resource)) continue;
           const chain = inspectChain(resource, byId);
           if (chain.core || chain.kind === 'missing' || chain.kind === 'cycle') continue;
           issues.push(createIssue({

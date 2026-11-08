@@ -2,7 +2,7 @@ name: Coverage gate (critical EPUB modules)
 
 on:
   push:
-    branches: [dev]
+    branches: [prod]
     paths:
       - 'src/**'
       - 'tests/**'
@@ -10,7 +10,7 @@ on:
       - '.github/workflows/coverage.yml'
       - 'package*.json'
   pull_request:
-    branches: [prod, dev]
+    branches: [prod]
   workflow_dispatch:
 
 permissions:

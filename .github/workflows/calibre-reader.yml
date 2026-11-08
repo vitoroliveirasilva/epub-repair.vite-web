@@ -2,14 +2,14 @@ name: Calibre CLI reader roundtrip (EPUB 2 and 3)
 
 on:
   push:
-    branches: [dev, prod]
+    branches: [prod]
     paths:
       - 'src/epub/**'
       - 'tests/epubCheckFixtureGenerator.test.ts'
       - '.github/workflows/calibre-reader.yml'
       - 'scripts/calibre-visual-reader.sh'
   pull_request:
-    branches: [dev, prod]
+    branches: [prod]
   workflow_dispatch:
 
 permissions:

@@ -39,6 +39,20 @@ export function validateImageResources(loaded: LoadedEpub, pkg: PackageDocumentI
     }
 
     const dimensions = basicImageDimensions(kind, bytes);
+    // SOI por si só não confirma a integridade: JPEG sem marcador SOF
+    // não fornece dimensões verificáveis nem deve parecer íntegro.
+    if (kind === 'jpeg' && !dimensions) {
+      issues.push(createIssue({
+        code: 'IMAGE_MISSING_FRAME',
+        severity: 'warning',
+        title: 'JPEG sem quadro ou dimensões verificáveis',
+        detail: 'O arquivo começa com assinatura JPEG, mas não possui quadro SOF legível. ' +
+          'Pode estar truncado e não será reescrito automaticamente.',
+        file: item.resolvedPath,
+        repairable: false,
+      }));
+      continue;
+    }
     if (dimensions && (dimensions.width < 1 || dimensions.height < 1)) {
       issues.push(createIssue({
         code: 'IMAGE_INVALID_DIMENSIONS',

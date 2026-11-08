@@ -27,9 +27,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version:
-          - 20.x
-          - 22.x
+        # Dev usa uma execução rápida; prod/PR preservam Node 20 e Node 22
+        # exigidos pelo ruleset de publicação.
+        node-version: ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/dev' && '["22.x"]' || '["20.x","22.x"]') }}
 
     steps:
       - name: Checkout
@@ -66,6 +66,8 @@ jobs:
         run: npm run build
 
   epubcheck:
+    # Verificação pesada só em homologação de prod ou execução manual.
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/prod' || (github.event_name == 'pull_request' && github.base_ref == 'prod')
     name: EPUBCheck 5.4.0 / EPUB reparado
     runs-on: ubuntu-latest
     timeout-minutes: 15

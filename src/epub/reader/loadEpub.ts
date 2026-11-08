@@ -104,7 +104,9 @@ export async function loadEpub(
   const fileNames: string[] = [];
   const issues = [...raw.issues];
   let totalUncompressedBytes = 0;
-  const rawByPath = new Map(raw.entries.map((entry) => [entry.fileName, entry]));
+  const rawByPath = new Map(raw.entries
+    .filter((entry) => !entry.unsafeOriginalName)
+    .map((entry) => [entry.fileName, entry]));
 
   const entries = Object.entries(zip.files);
   const progressTotal = entries.filter(([, item]) => !item.dir).length;
@@ -116,8 +118,6 @@ export async function loadEpub(
     }).unsafeOriginalName ?? originalName;
     const normalized = normalizeInternalPath(archivedName);
     if (!normalized.path) continue;
-    fileNames.push(normalized.path);
-
     if (!normalized.safe) {
       issues.push(
         createIssue({
@@ -132,6 +132,7 @@ export async function loadEpub(
       continue;
     }
 
+    fileNames.push(normalized.path);
     if (zipEntry.dir) continue;
 
     if (files.has(normalized.path)) {
@@ -218,8 +219,8 @@ export async function loadEpub(
   // toda entrada física segura e não diretório exista exatamente no mapa final.
   assertZipNotAborted(signal);
   const missingFromJsZip = raw.entries.find((entry) =>
-    !entry.isDirectory && normalizeInternalPath(entry.fileName).safe &&
-    !files.has(entry.fileName));
+    !entry.isDirectory && !entry.unsafeOriginalName &&
+    normalizeInternalPath(entry.fileName).safe && !files.has(entry.fileName));
   if (missingFromJsZip) {
     return {
       fileName, fileSize: bytes.length, bytes, rawEntries: raw.entries,

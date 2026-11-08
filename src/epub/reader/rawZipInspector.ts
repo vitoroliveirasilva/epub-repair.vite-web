@@ -335,6 +335,7 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
 
     const entry: ZipEntryInfo = {
       fileName,
+      ...(normalized.safe ? {} : { unsafeOriginalName: normalized.original }),
       compressionMethod,
       encrypted: (flags & 0x0001) === 0x0001,
       localHeaderOffset,

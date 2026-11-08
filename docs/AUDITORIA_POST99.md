@@ -162,3 +162,28 @@ automatizada não é sinônimo de perfeição editorial de todos os livros.
   inicialização do Appium e download nativo são informadas separadamente.
 - A proteção DTBook é deliberadamente conservadora: diante da impossibilidade
   de garantir equivalência editorial, a alteração é recusada, não improvisada.
+
+## Sétima auditoria: E-150 a E-157 (08/11/2026)
+
+Correções implementadas na branch `dev` em lote único, com casos em
+`tests/epub-audit-150-157.test.ts`. Considere E-150 uma retificação
+normativa da conclusão de E-143.
+
+| Item | Implementação |
+| --- | --- |
+| E-150 | A cadeia fallback EPUB 3.3 é válida quando **algum** recurso intermediário é core; não precisa terminar em core |
+| E-151 | O validador CSS resolve caminhos locais após decodificar escapes CSS |
+| E-152 | O diretório central retém a identidade do caminho ZIP inseguro e ignora a entrada voluntariamente descartada na verificação de divergência JSZip; arquivos seguros não desaparecem |
+| E-153 | JPEG com SOI sem quadro SOF decodificável recebe aviso próprio, sem reescrever imagem |
+| E-154 | Clock-values SMIL exigem minutos/segundos dentro dos limites de formato |
+| E-155 | OGG só é core EPUB 3.3 com MIME `audio/ogg; codecs=opus` |
+| E-156 | Verifica duração global, individual por `refines`, duplicação e divergência superior a um segundo, sem inventar tempos editoriais |
+| E-157 | O usuário pode exportar TXT e JSON do EPUB recusado separadamente, sem confundir com o livro anterior |
+
+As mudanças não modificam imagens ou conteúdo editorial automaticamente fora dos
+reparos já autorizados. A homologação nativa Safari iOS continua independente
+e não pode ser marcada aprovada sem evidência real.
+
+Para reduzir as execuções do GitHub Actions, consultar
+`docs/CI_ECONOMICO.md`: a `dev` utiliza CI rápida, enquanto os workflows
+pesados são concentrados em PR para `prod` ou execução manual.

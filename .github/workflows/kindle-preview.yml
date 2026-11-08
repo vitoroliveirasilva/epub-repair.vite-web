@@ -1,8 +1,9 @@
 name: Kindle Previewer real desktop compatibility
 
 on:
-  push:
-    branches: [dev]
+  # Em dev, não inicializar emuladores a cada commit.
+  pull_request:
+    branches: [prod]
     paths:
       - 'src/epub/**'
       - 'tests/epubCheckFixtureGenerator.test.ts'

@@ -39,6 +39,7 @@ export function validateCssReferences(loaded: LoadedEpub, pkg: PackageDocumentIn
     for (const ref of extractCssResourceReferences(text)) {
       if (!ref.value || ref.value.startsWith('#')) continue;
       const decodedUrl = decodeCssEscapes(ref.value);
+      if (decodedUrl.startsWith('#')) continue;
       if (isRemoteUrl(decodedUrl)) {
         // Fontes e estilos externos passivos são intencionais e não são problemas.
         if (isSafeRemoteResourceUrl(decodedUrl) || isInlineFontDataUrl(decodedUrl) ||
@@ -57,7 +58,9 @@ export function validateCssReferences(loaded: LoadedEpub, pkg: PackageDocumentIn
         continue;
       }
 
-      const resolved = resolveReference(item.resolvedPath, ref.value);
+      // URLs em CSS podem escapar caracteres ASCII com \\hex; resolver a URL
+      // decodificada, como fazem o sanitizador e a troca de capa.
+      const resolved = resolveReference(item.resolvedPath, decodedUrl);
       if (!resolved.safe || !loaded.files.has(resolved.path)) {
         issues.push(
           createIssue({

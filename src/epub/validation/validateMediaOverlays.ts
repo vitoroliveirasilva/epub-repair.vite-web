@@ -4,6 +4,7 @@ import type { PackageDocumentInfo } from '../model/opfTypes';
 import { createIssue } from '../utils/issueFactory';
 import { isRemoteUrl, isSafeRemoteResourceUrl, resolveReference } from '../utils/pathUtils';
 import { parseXml } from '../utils/xmlUtils';
+import { parseSmilClock } from '../utils/smilClock';
 
 const SMIL_NAMESPACE = /^https?:\/\/www\.w3\.org\/ns\/SMIL$/u;
 
@@ -15,6 +16,9 @@ export function validateMediaOverlays(loaded: LoadedEpub, pkg: PackageDocumentIn
   const issues: Issue[] = [];
   const byId = new Map(pkg.manifest.map((item) => [item.id, item]));
   const overlays = pkg.manifest.filter((item) => item.mediaType === 'application/smil+xml');
+  if (overlays.length && pkg.version.startsWith('3')) {
+    issues.push(...validateOverlayDurations(loaded, pkg, overlays));
+  }
   const notify = (code: IssueCode, file: string, title: string, detail: string, context?: string) => {
     issues.push(createIssue({
       code, file, title, detail, severity: 'warning', repairable: false,
@@ -175,8 +179,8 @@ export function validateMediaOverlays(loaded: LoadedEpub, pkg: PackageDocumentIn
             audioRef);
         }
       }
-      const begin = parseClock(audio.getAttribute('clipBegin'));
-      const end = parseClock(audio.getAttribute('clipEnd'));
+      const begin = parseSmilClock(audio.getAttribute('clipBegin'));
+      const end = parseSmilClock(audio.getAttribute('clipEnd'));
       if ((begin !== undefined && !Number.isFinite(begin)) ||
           (end !== undefined && !Number.isFinite(end)) ||
           (end !== undefined && end <= (begin ?? 0))) {
@@ -190,18 +194,81 @@ export function validateMediaOverlays(loaded: LoadedEpub, pkg: PackageDocumentIn
   return issues;
 }
 
-/** Subconjunto de SMIL clock values mais comuns: 1.5s, 400ms, 2min, hh:mm:ss. */
-function parseClock(raw: string | null): number | undefined {
-  if (raw === null) return undefined;
-  const value = raw.trim().replace(/^npt=/iu, '');
-  if (/^\d+(?:\.\d+)?ms$/u.test(value)) return Number.parseFloat(value) / 1000;
-  if (/^\d+(?:\.\d+)?min$/u.test(value)) return Number.parseFloat(value) * 60;
-  if (/^\d+(?:\.\d+)?h$/u.test(value)) return Number.parseFloat(value) * 3600;
-  if (/^\d+(?:\.\d+)?s?$/u.test(value)) return Number.parseFloat(value);
-  const parts = value.split(':');
-  if ((parts.length === 2 || parts.length === 3) &&
-      parts.every((part) => /^\d+(?:\.\d+)?$/u.test(part))) {
-    return parts.reduce((sum, part) => sum * 60 + Number(part), 0);
+/**
+ * EPUB 3.3, §9.3: metadados obrigatórios de duração global e por SMIL.
+ * Não estimar metadados ausentes a partir dos clipes, que podem sobrepor-se.
+ */
+function validateOverlayDurations(
+  loaded: LoadedEpub, pkg: PackageDocumentInfo,
+  overlays: PackageDocumentInfo['manifest'],
+): Issue[] {
+  const issues: Issue[] = [];
+  const raw = loaded.files.get(pkg.opfPath)?.bytes;
+  if (!raw) return issues;
+  let doc: Document;
+  try {
+    doc = parseXml(new TextDecoder('utf-8', { fatal: true }).decode(raw));
+  } catch {
+    return issues; // Erro de OPF é diagnosticado pelo parser do pacote.
   }
-  return Number.NaN;
+  const metadata = Array.from(doc.getElementsByTagName('*'))
+    .find((node) => node.localName === 'metadata');
+  if (!metadata) return issues;
+  const durations = Array.from(metadata.getElementsByTagName('*'))
+    .filter((node) => node.localName === 'meta' &&
+      node.getAttribute('property')?.trim() === 'media:duration');
+  const check = (entries: Element[], label: string, context: string) => {
+    if (entries.length === 0) {
+      issues.push(createIssue({
+        code: 'MEDIA_OVERLAY_DURATION_MISSING', severity: 'warning',
+        title: 'Duração obrigatória de Media Overlay ausente',
+        detail: 'Falta um meta property="media:duration" para ' + label + '.',
+        file: pkg.opfPath, context, repairable: false,
+      }));
+      return undefined;
+    }
+    if (entries.length !== 1) {
+      issues.push(createIssue({
+        code: 'MEDIA_OVERLAY_DURATION_DUPLICATE', severity: 'warning',
+        title: 'Duração de Media Overlay duplicada',
+        detail: 'Deve existir uma única duração para ' + label + '.',
+        file: pkg.opfPath, context, repairable: false,
+      }));
+      return undefined;
+    }
+    const time = parseSmilClock(entries[0]?.textContent ?? '');
+    if (time === undefined || !Number.isFinite(time)) {
+      issues.push(createIssue({
+        code: 'MEDIA_OVERLAY_DURATION_INVALID', severity: 'warning',
+        title: 'Duração de Media Overlay inválida',
+        detail: 'O tempo de ' + label + ' não é um clock-value SMIL válido.',
+        file: pkg.opfPath, context, repairable: false,
+      }));
+      return undefined;
+    }
+    return time;
+  };
+  const overall = check(
+    durations.filter((node) => !(node.getAttribute('refines') ?? '').trim()),
+    'a publicação inteira', 'global');
+  const sectionTimes: number[] = [];
+  for (const overlay of overlays) {
+    const duration = check(durations.filter((node) =>
+      node.getAttribute('refines')?.trim() === '#' + overlay.id),
+    'o documento SMIL "' + overlay.id + '"', overlay.id);
+    if (duration !== undefined) sectionTimes.push(duration);
+  }
+  // O EPUB permite arredondamento, mas diferenças acima de um segundo
+  // precisam ser revistas sem mudar os tempos autorais.
+  if (overall !== undefined && sectionTimes.length === overlays.length &&
+      Math.abs(sectionTimes.reduce((sum, duration) => sum + duration, 0) - overall) > 1) {
+    issues.push(createIssue({
+      code: 'MEDIA_OVERLAY_DURATION_MISMATCH', severity: 'warning',
+      title: 'Soma das durações SMIL difere da publicação',
+      detail: 'A soma dos Media Overlays excede a diferença de um segundo ' +
+        'em relação à duração global. Confira a sincronização editorial.',
+      file: pkg.opfPath, context: 'global', repairable: false,
+    }));
+  }
+  return issues;
 }

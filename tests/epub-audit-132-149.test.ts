@@ -123,12 +123,12 @@ describe('Auditoria E-140 a E-149: parsing e compatibilidade',()=>{
     expect(()=>auditPreservation(fakeLoaded(files),new Map([[path,enc.encode(modified)]]),
       pkg,pkg)).toThrow(/DTBook/u);
   });
-  it('E-143: cadeia fallback não aceita core intermediário com terminal proprietário',()=>{
+  it('E-150: cadeia fallback aceita core intermediário antes de terminal proprietário',()=>{
     const pdf={...item('pdf','OPS/a.pdf','application/pdf'),fallback:'image'};
     const image={...item('image','OPS/a.jpg','image/jpeg'),fallback:'custom'};
     const proprietary=item('custom','OPS/custom.bin','application/octet-stream');
     expect(validateManifestFallbacks(fakePkg([pdf,image,proprietary])).some(x=>
-      x.code==='OPF_FALLBACK_INVALID_TERMINAL')).toBe(true);
+      x.code==='OPF_FALLBACK_INVALID_TERMINAL')).toBe(false);
   });
   it('E-144: normaliza idioma XHTML em operação isolada sem reescrever prosa',()=>{
     const path='OPS/ch.xhtml';

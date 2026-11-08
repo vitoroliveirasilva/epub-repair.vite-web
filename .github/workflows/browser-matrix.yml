@@ -2,7 +2,7 @@ name: Browser compatibility smoke (Chromium, Firefox, WebKit)
 
 on:
   push:
-    branches: [dev, prod]
+    branches: [prod]
     paths:
       - 'src/**'
       - 'tests/browser-smoke.mjs'
@@ -16,7 +16,7 @@ on:
       - 'package-lock.json'
       - '.github/workflows/browser-matrix.yml'
   pull_request:
-    branches: [dev, prod]
+    branches: [prod]
   workflow_dispatch:
 
 permissions:

@@ -18,7 +18,7 @@ import { renderIssueList } from '../ui/components/IssueList';
 import { renderOptionsPanel } from '../ui/components/OptionsPanel';
 import { renderRepairSummary } from '../ui/components/RepairSummary';
 import { renderUploader } from '../ui/components/Uploader';
-import { downloadBlob, el } from '../ui/dom';
+import { button, downloadBlob, el } from '../ui/dom';
 import { abortProcessingError } from './zipWorkerClient';
 import { SerialTaskQueue } from './taskQueue';
 
@@ -154,16 +154,8 @@ function render(
             }),
             renderStatusMessage(state.message, state.error),
             state.invalidUploadReport
-              ? el('section', {
-                  className: 'panel',
-                  attrs: { 'aria-label': 'Diagnóstico do novo EPUB recusado' },
-                  children: [
-                    el('h2', { text: 'Diagnóstico do novo EPUB recusado' }),
-                    renderFileSummary(state.invalidUploadReport),
-                    renderIssueList(state.invalidUploadReport, state.reportViewMode,
-                      (mode) => { state.reportViewMode = mode; rerender(); }),
-                  ],
-                })
+              ? renderRejectedUploadReport(state.invalidUploadReport, state.reportViewMode,
+                (mode) => { state.reportViewMode = mode; rerender(); })
               : undefined,
             state.report ? renderFileSummary(state.report) : renderEmptyState(),
             state.repairResult ? renderRepairSummary(state.repairResult) : undefined,
@@ -181,6 +173,43 @@ function render(
     renderSupportSections(),
     renderFooter(),
   );
+}
+
+/** E-157: relatórios do upload recusado têm nome e ações independentes
+ * para não exportar por engano o diagnóstico do EPUB anterior ainda aberto.
+ */
+export function renderRejectedUploadReport(
+  report: NonNullable<AppState['invalidUploadReport']>,
+  mode: AppState['reportViewMode'],
+  onModeChange: (mode: AppState['reportViewMode']) => void,
+): HTMLElement {
+  const exportRejected = (format: 'txt' | 'json'): void => {
+    const content = format === 'json'
+      ? buildJsonReport(report)
+      : buildTextReport(report);
+    const filename = makeReportFileName(report.fileName.replace(/\.epub$/iu,
+      '-upload-recusado.epub'), format);
+    downloadBlob(new Blob([content], {
+      type: format === 'json'
+        ? 'application/json;charset=utf-8' : 'text/plain;charset=utf-8',
+    }), filename);
+  };
+  return el('section', {
+    className: 'panel',
+    attrs: { 'aria-label': 'Diagnóstico do novo EPUB recusado' },
+    children: [
+      el('h2', { text: 'Diagnóstico do novo EPUB recusado' }),
+      el('p', { className: 'muted',
+        text: 'Este relatório pertence apenas ao novo arquivo recusado. ' +
+          'A cópia anterior e seu download continuam disponíveis.' }),
+      el('div', { className: 'technical-report-actions', children: [
+        button('Baixar TXT do EPUB recusado', 'btn btn-ghost', () => exportRejected('txt')),
+        button('Baixar JSON do EPUB recusado', 'btn btn-ghost', () => exportRejected('json')),
+      ] }),
+      renderFileSummary(report),
+      renderIssueList(report, mode, onModeChange),
+    ],
+  });
 }
 
 async function runAsync(
