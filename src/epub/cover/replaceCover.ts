@@ -2,11 +2,15 @@ import type { LoadedEpub } from '../model/epubTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction, RepairResult } from '../model/repairTypes';
 import { loadEpub } from '../reader/loadEpub';
-import { rebuildEpubZip } from '../repair/rebuildEpubZip';
+import { rebuildEpubZipInWorker } from '../repair/zipBuildWorkerClient';
+import { assertNoNewCriticalIssues } from '../repair/repairSafety';
+import { auditPreservation } from '../repair/preservationAudit';
+import { createTextFileDiffs } from '../repair/textFileDiff';
 import { inspectEpub } from '../validation/validateEpub';
 import { parsePackageDocument } from '../validation/opfParser';
 import { makeRepairedFileName } from '../utils/fileName';
 import { guessMediaType } from '../utils/mediaTypes';
+import { decodeUtf8ForRewrite } from '../utils/textEncoding';
 import {
   basename,
   encodePathForXml,
@@ -20,9 +24,12 @@ import {
   findFirstByLocalName,
   getAttr,
   parseXml,
-  serializeXml,
+  serializeXmlPreservingDeclaration,
 } from '../utils/xmlUtils';
 import type { CoverImageInput, SupportedCoverMediaType } from './coverImageInput';
+import { updateCoverGuideReference, updateCoverReferences } from './updateCoverReferences';
+import { coverReferenceScope } from './coverReferenceScope';
+import { forkSharedCoverStyles } from './forkSharedCoverStyles';
 
 const OPF_NS = 'http://www.idpf.org/2007/opf';
 const SUPPORTED_COVER_MEDIA_TYPES = new Set<string>(['image/jpeg', 'image/png']);
@@ -38,10 +45,25 @@ export async function replaceEpubCover(
   fileName: string,
   bytes: Uint8Array,
   coverImage: CoverImageInput,
+  signal?: AbortSignal,
+  onZipProgress?: (percent: number) => void,
 ): Promise<RepairResult> {
+  const canceled = (): void => {
+    if (signal?.aborted) throw new DOMException(
+      'Operação cancelada pelo usuário.', 'AbortError');
+  };
+  canceled();
   const before = await inspectEpub(fileName, bytes);
+  canceled();
+  if (before.stats.fatalCount > 0) {
+    throw new Error('Não é seguro substituir a capa de um EPUB com problemas fatais.');
+  }
   const loaded = await loadEpub(fileName, bytes);
+  canceled();
 
+  if (loaded.files.has('META-INF/signatures.xml')) {
+    throw new Error('Assinatura digital presente: trocar a capa invalidaria a autenticidade do EPUB.');
+  }
   if (!loaded.validZip) {
     throw new Error(
       'Não é seguro trocar a capa: o arquivo não pôde ser aberto como ZIP/EPUB válido.',
@@ -59,17 +81,26 @@ export async function replaceEpubCover(
   if (!opfFile) throw new Error('OPF não encontrado para troca de capa.');
 
   const files = cloneLoadedFiles(loaded);
-  const doc = parseXml(new TextDecoder('utf-8', { fatal: false }).decode(opfFile.bytes));
+  const opfSource = decodeUtf8ForRewrite(opfFile.bytes, parsed.packageInfo.opfPath);
+  const doc = parseXml(opfSource);
   const packageElement = findFirstByLocalName(doc, 'package') ?? doc.documentElement;
   const metadata = ensureChild(doc, packageElement, 'metadata');
   const manifest = ensureChild(doc, packageElement, 'manifest');
   const target = findCoverTarget(doc, parsed.packageInfo, files);
+  // Não sobrescrever ilustrações de capítulos que reutilizam os bytes da
+  // imagem oficial de capa. A atualização é limitada às páginas de rosto.
+  const scope = coverReferenceScope(doc, parsed.packageInfo, files, target?.path);
+  const independentPath = makeUniqueCoverPath(files, parsed.packageInfo, coverImage.mediaType);
+  const wouldChange = target?.path
+    ? updateCoverReferences(new Map(files), parsed.packageInfo, target.path, independentPath)
+    : [];
+  const reusedElsewhere = wouldChange.some((action) =>
+    !scope.allowed.has(action.file ?? ''));
   const canReplaceInPlace = Boolean(
-    target?.path && coverPathMatchesMediaType(target.path, coverImage.mediaType),
+    target?.path && !reusedElsewhere &&
+      coverPathMatchesMediaType(target.path, coverImage.mediaType),
   );
-  const coverPath = canReplaceInPlace
-    ? target!.path
-    : makeUniqueCoverPath(files, parsed.packageInfo, coverImage.mediaType);
+  const coverPath = canReplaceInPlace ? target!.path : independentPath;
   const coverItem =
     canReplaceInPlace && target?.item
       ? target.item
@@ -84,9 +115,22 @@ export async function replaceEpubCover(
 
   ensureCoverMeta(doc, metadata, coverId);
   ensureSingleCoverImageProperty(manifest, coverItem);
+  const cssActions = target?.path && target.path !== coverPath && reusedElsewhere
+    ? forkSharedCoverStyles(files, parsed.packageInfo, doc, scope.pages,
+      scope.sharedStyles, scope.consumers, target.path, coverPath)
+    : [];
 
+  // Mudança de extensão cria um novo arquivo: sincronizar os locais que
+  // ainda exibiriam a capa antiga antes de serializar o OPF.
+  const referenceActions = target?.path && target.path !== coverPath
+    ? updateCoverReferences(files, parsed.packageInfo, target.path, coverPath,
+      scope.allowed)
+    : [];
+  const guideChanged = target?.path && target.path !== coverPath
+    ? updateCoverGuideReference(doc, parsed.packageInfo.opfPath, target.path, coverPath)
+    : false;
   files.set(coverPath, coverImage.bytes);
-  files.set(parsed.packageInfo.opfPath, new TextEncoder().encode(serializeXml(doc)));
+  files.set(parsed.packageInfo.opfPath, new TextEncoder().encode(serializeXmlPreservingDeclaration(doc, opfSource)));
 
   const actions: RepairAction[] = [
     {
@@ -103,12 +147,37 @@ export async function replaceEpubCover(
       detail: `O OPF agora aponta para o item "${coverId}" como capa principal.`,
       file: parsed.packageInfo.opfPath,
     },
+    ...cssActions,
+    ...referenceActions,
+    ...(guideChanged ? [{
+      type: 'updated' as const,
+      title: 'Referência guide de capa sincronizada',
+      detail: 'O guide EPUB 2 passou a apontar para a imagem substituta.',
+      file: parsed.packageInfo.opfPath,
+    }] : []),
   ];
-  const blob = await rebuildEpubZip(files);
+  canceled();
+  const blob = await rebuildEpubZipInWorker(files, {
+    signal,
+    onProgress: ({ percent }) => onZipProgress?.(percent),
+  });
+  canceled();
   const afterBytes = new Uint8Array(await blob.arrayBuffer());
   const outputFileName = makeRepairedFileName(fileName, '-capa');
   const after = await inspectEpub(outputFileName, afterBytes);
-  const warnings = buildCoverReplacementWarnings(before, after);
+  canceled();
+  assertNoNewCriticalIssues(before, after);
+  // E-122: executar no fluxo da capa o mesmo gate editorial usado pelo reparo.
+  const auditNotes = auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo,
+    new Set(), { path: coverPath, bytes: coverImage.bytes });
+  const warnings = [...buildCoverReplacementWarnings(before, after), ...auditNotes];
+  if (reusedElsewhere) {
+    warnings.push('A imagem antiga também é usada fora da página de capa. ' +
+      'Essas ilustrações foram preservadas; confirme a aparência da capa.');
+  }
+  if (after.stats.errorCount > 0) {
+    warnings.push('O EPUB ainda apresenta erros. A troca de capa não significa validação completa.');
+  }
 
   return {
     blob,
@@ -117,6 +186,8 @@ export async function replaceEpubCover(
     after,
     actions,
     warnings,
+    fileDiffs: createTextFileDiffs(new Map(Array.from(loaded.files, ([name, entry]) =>
+      [name, entry.bytes])), files),
     changed: true,
     operation: 'cover-replacement',
   };
@@ -404,3 +475,4 @@ function ensureChild(doc: Document, parent: Element, localName: string): Element
   parent.append(created);
   return created;
 }
+

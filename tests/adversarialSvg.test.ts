@@ -45,9 +45,76 @@ describe('SVG e XML adversariais dentro de EPUBs', () => {
     expect(doc.getElementById('keep')?.textContent).toBe('Conteúdo legítimo');
   });
 
+  it('E-055: preserva imagem raster embutida no SVG, mas não data:SVG executável', async () => {
+    const { sanitizeActiveContentMarkup } = await import(
+      '../src/epub/sanitize/sanitizeActiveContent'
+    );
+    const original = '<svg xmlns="http://www.w3.org/2000/svg" ' +
+      'xmlns:xlink="http://www.w3.org/1999/xlink">' +
+      '<image id="raster" xlink:href="data:image/png;base64,AAECAw=="/>' +
+      '<image id="active" href="data:image/svg+xml;base64,PHN2Zz4="/>' +
+      '<image id="external" href="https://example.org/capa.png"/>' +
+      '<a id="link" xlink:href="data:image/png;base64,AAECAw=="><text>Texto</text></a>' +
+      '<foreignObject><p xmlns="http://www.w3.org/1999/xhtml">HTML ativo</p></foreignObject>' +
+      '</svg>';
+    const cleaned = sanitizeActiveContentMarkup(original, 'OPS/figure.svg', {
+      sanitizeScripts: true, kindleSafeMode: true, removeRemoteResourceLinks: false,
+    });
+    const parsed = new DOMParser().parseFromString(cleaned.text, 'image/svg+xml');
+    expect(parsed.getElementById('raster')?.getAttribute('xlink:href'))
+      .toBe('data:image/png;base64,AAECAw==');
+    expect(parsed.getElementById('active')?.hasAttribute('href')).toBe(false);
+    expect(parsed.getElementById('external')?.getAttribute('href'))
+      .toBe('https://example.org/capa.png');
+    expect(parsed.getElementById('link')?.hasAttribute('xlink:href')).toBe(false);
+    expect(parsed.getElementsByTagName('foreignObject')).toHaveLength(0);
+    expect(parsed.getElementById('link')?.textContent).toBe('Texto');
+  });
+
+  it('E-053/E-055: detecta URL executável codificada como entidade antes do reparo', async () => {
+    const zip = await JSZip.loadAsync(await buildKindleIssueEpub());
+    const chapter = await zip.file('OEBPS/Text/chapter1.xhtml')!.async('string');
+    zip.file('OEBPS/Text/chapter1.xhtml', chapter.replace('</body>',
+      '<a href="java&#x73;cript:alert(1)">Link</a>' +
+      '<img src="https://example.com/capa.png" alt="Capa remota"/>' +
+      '<img src="data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=" alt="SVG"/>' +
+      '<p onmouseover="alert(1)">Texto preservado</p></body>'));
+    const loaded = await loadEpub('urls-escapadas.epub',
+      await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' }));
+    const pkg = parsePackageDocument(loaded).packageInfo;
+    if (!pkg) throw new Error('Fixture sem pacote OPF');
+    const codes = validateContentReferences(loaded, pkg).map((issue) => issue.code);
+    expect(codes).toContain('CONTENT_UNSAFE_URL');
+    expect(codes).toContain('CONTENT_SCRIPTED');
+    expect(codes).not.toContain('CONTENT_REMOTE_RESOURCE');
+  });
+
   it('rejeita entidades XML personalizadas para evitar amplificação de texto', () => {
     const nested = '<!DOCTYPE root [<!ENTITY data "expandido">]><root>&data;</root>';
     expect(() => parseXml(nested)).toThrow(/Entidades XML/u);
+  });
+
+  it('E-056: mantém DOCTYPE público comum de NCX 2005 e XHTML 1.1', () => {
+    const ncx = '<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" ' +
+      '"http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">' +
+      '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/"><navMap/></ncx>';
+    expect(parseXml(ncx).documentElement.localName).toBe('ncx');
+    const xhtml = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" ' +
+      '"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">' +
+      '<html xmlns="http://www.w3.org/1999/xhtml"><body/></html>';
+    expect(parseXml(xhtml, 'application/xhtml+xml').documentElement.localName).toBe('html');
+  });
+
+  it('E-056: rejeita DTD externa desconhecida, subset e inclusão XInclude', () => {
+    expect(() => parseXml('<!DOCTYPE book SYSTEM "file:///etc/passwd"><book/>'))
+      .toThrow(/DOCTYPE/u);
+    expect(() => parseXml('<!DOCTYPE ncx [<!ELEMENT ncx ANY>]><ncx/>'))
+      .toThrow(/DOCTYPE/u);
+    expect(() => parseXml(
+      '<root xmlns:xi="http://www.w3.org/2001/XInclude">' +
+        '<xi:include href="file:///etc/passwd"/></root>',
+    )).toThrow(/XInclude/u);
+    expect(() => parseXml('<root><title>Seguro</title></root>')).not.toThrow();
   });
 
   it('preserva XML legítimo sem DTDs internos', () => {

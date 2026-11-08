@@ -3,8 +3,10 @@ import {
   canRepairReport,
   getOptionalOptimizationCount,
   hasOptionalOptimizations,
+  hasManualReviewIssues,
 } from '../../epub';
 import type { AppState } from '../../app/state';
+import { getWorkflowState } from '../../app/workflowState';
 import { button, el, downloadBlob } from '../dom';
 
 export function renderControls(
@@ -15,14 +17,18 @@ export function renderControls(
     copy: () => void;
     downloadTextReport: () => void;
     downloadJsonReport: () => void;
+    cancel?: (() => void) | undefined;
   },
 ): HTMLElement {
   const hasFile = Boolean(state.payload);
   const hasReport = Boolean(state.report);
   const hasRepair = Boolean(state.repairResult?.changed && state.repairResult.blob);
   const hasFatalIssues = Boolean(state.report?.stats.fatalCount);
-  const canRepair = canRepairReport(state.report);
-  const canOptimize = canOptimizeReport(state.report);
+  const canRepair = canRepairReport(state.report, state.options);
+  const canOptimize = canOptimizeReport(state.report) ||
+    Boolean(!canRepair && state.options.stripImageMetadata &&
+      state.report?.validZip && state.report.stats.fatalCount === 0 &&
+      state.report.issues.some((issue) => issue.code === 'IMAGE_EMBEDDED_METADATA'));
 
   const primaryActionButtons = buildPrimaryActionButtons(state, actions, {
     hasFile,
@@ -94,14 +100,7 @@ export function renderControls(
       }),
       renderTechnicalReportTools(hasReport, copyButton, textReportButton, jsonReportButton),
       state.busy
-        ? el('div', {
-            className: 'working',
-            attrs: { role: 'status' },
-            children: [
-              el('span', { attrs: { 'aria-hidden': 'true' } }),
-              'Processando estrutura do EPUB...',
-            ],
-          })
+        ? renderProcessingStatus(state, actions.cancel)
         : undefined,
     ],
   });
@@ -120,7 +119,9 @@ function buildPrimaryActionButtons(
 ): HTMLButtonElement[] {
   if (flags.hasRepair) {
     const downloadButton = button(
-      state.repairResult?.operation === 'cover-replacement'
+      hasManualReviewIssues(state.repairResult?.after ?? state.report)
+        ? 'Baixar cópia parcial (revisar)'
+        : state.repairResult?.operation === 'cover-replacement'
         ? 'Baixar EPUB com nova capa'
         : state.repairResult?.operation === 'optimization'
           ? 'Baixar EPUB otimizado'
@@ -132,7 +133,19 @@ function buildPrimaryActionButtons(
       },
     );
     downloadButton.disabled = state.busy;
+    downloadButton.dataset.focusKey = 'epub-download';
 
+    if (flags.canRepair && !flags.hasFatalIssues) {
+      const retryButton = button(
+        'Aplicar reparos restantes',
+        'btn btn-secondary',
+        actions.repair,
+      );
+      retryButton.disabled = state.busy;
+      retryButton.dataset.focusKey = 'epub-repair-remaining';
+      retryButton.title = 'Reparar problemas ainda identificados na cópia atual, preservando o download anterior.';
+      return [downloadButton, retryButton];
+    }
     if (!flags.canOptimize) return [downloadButton];
 
     const optimizeButton = button(
@@ -141,16 +154,28 @@ function buildPrimaryActionButtons(
       actions.repair,
     );
     optimizeButton.disabled = state.busy;
+    optimizeButton.dataset.focusKey = 'epub-optimize';
     optimizeButton.title = repairButtonTitle(state, false, true);
 
     return [downloadButton, optimizeButton];
   }
 
-  const analyzeButton = button('Verificar EPUB', 'btn btn-secondary', actions.analyze);
-  analyzeButton.disabled = !flags.hasFile || state.busy;
+  const analyzeButton = button(
+    state.busy ? 'Enfileirar verificação' : 'Verificar EPUB',
+    'btn btn-secondary', actions.analyze,
+  );
+  const mayEnqueueAnalysis = !state.busy ||
+    ((state.activeTask === 'Verificar EPUB' ||
+      state.activeTask === 'Carregar e analisar EPUB') &&
+      !state.hasPendingMutation);
+  analyzeButton.disabled = !flags.hasFile ||
+    !mayEnqueueAnalysis || (state.pendingTasks ?? 0) >= 8;
+  analyzeButton.dataset.focusKey = 'epub-analyze';
 
   const repairButton = button(
-    flags.canRepair
+    state.busy && (flags.canRepair || flags.canOptimize)
+      ? 'Enfileirar reparo'
+      : flags.canRepair
       ? 'Gerar EPUB corrigido'
       : flags.canOptimize
         ? 'Aplicar otimização opcional'
@@ -158,9 +183,15 @@ function buildPrimaryActionButtons(
     'btn btn-primary',
     actions.repair,
   );
+  repairButton.dataset.focusKey = 'epub-repair';
   repairButton.disabled =
     !flags.hasFile ||
-    state.busy ||
+    (state.busy && (
+      (state.pendingTasks ?? 0) >= 8 ||
+      state.hasPendingMutation ||
+      (state.activeTask !== 'Verificar EPUB' &&
+       state.activeTask !== 'Carregar e analisar EPUB')
+    )) ||
     flags.hasFatalIssues ||
     (!flags.canRepair && !flags.canOptimize);
   repairButton.title = repairButtonTitle(state, flags.canRepair, flags.canOptimize);
@@ -169,10 +200,19 @@ function buildPrimaryActionButtons(
 }
 
 function controlsTitle(state: AppState): string {
-  if (state.repairResult?.operation === 'cover-replacement')
-    return 'EPUB com nova capa pronto para baixar';
-  if (state.repairResult?.operation === 'optimization') return 'EPUB otimizado pronto para baixar';
-  if (state.repairResult) return 'EPUB corrigido pronto para ser baixado';
+  const workflow = getWorkflowState(state);
+  if (workflow === 'invalid') return 'EPUB inválido: revisão necessária';
+  if (workflow === 'processing') return 'Analisando alterações com segurança';
+  if (workflow === 'partial-output') return 'Cópia parcial gerada: revisão manual necessária';
+  if (state.repairResult?.changed && state.repairResult.blob) {
+    if (hasManualReviewIssues(state.repairResult.after)) return 'Cópia parcial gerada: revisão manual necessária';
+    if (state.repairResult.operation === 'cover-replacement') return 'EPUB com nova capa pronto para baixar';
+    if (state.repairResult.operation === 'optimization') return 'EPUB otimizado pronto para baixar';
+    return 'EPUB corrigido pronto para ser baixado';
+  }
+  if (state.report && !canRepairReport(state.report) && hasManualReviewIssues(state.report)) {
+    return 'Revisão manual necessária';
+  }
   if (state.report && !canRepairReport(state.report) && hasOptionalOptimizations(state.report)) {
     return 'Seu EPUB está pronto para uso';
   }
@@ -183,17 +223,27 @@ function controlsTitle(state: AppState): string {
 }
 
 function controlsDescription(state: AppState): string {
-  if (state.repairResult?.operation === 'cover-replacement') {
+  if (state.repairResult?.changed && state.repairResult.blob &&
+      hasManualReviewIssues(state.repairResult.after)) {
+    return 'A cópia contém correções parciais, mas ainda há alertas que exigem revisão humana. ' +
+      'Não considere o EPUB seguro ou pronto para distribuição.';
+  }
+  if (state.repairResult?.changed && state.repairResult.blob &&
+      state.repairResult.operation === 'cover-replacement') {
     return 'Baixe a nova versão do arquivo com a capa aplicada. O relatório técnico fica separado abaixo';
   }
-  if (state.repairResult?.operation === 'optimization') {
+  if (state.repairResult?.changed && state.repairResult.blob &&
+      state.repairResult.operation === 'optimization') {
     return 'Baixe a nova versão otimizada do arquivo. O relatório técnico mostra quais melhorias opcionais foram aplicadas';
   }
-  if (state.repairResult) {
+  if (state.repairResult?.changed && state.repairResult.blob) {
     return 'Baixe a nova versão do arquivo, o relatório técnico fica separado abaixo';
   }
   if (state.report?.stats.fatalCount) {
     return 'Encontramos um problema fatal, o reparo automático fica bloqueado para evitar gerar um arquivo incompleto ou pior que o original.';
+  }
+  if (state.report && !canRepairReport(state.report) && hasManualReviewIssues(state.report)) {
+    return 'Há problemas sem correção automática. Confira o relatório antes de usar este EPUB.';
   }
   if (state.report && !canRepairReport(state.report) && hasOptionalOptimizations(state.report)) {
     const count = getOptionalOptimizationCount(state.report);
@@ -214,7 +264,7 @@ function controlsDescription(state: AppState): string {
 function repairButtonTitle(state: AppState, canRepair: boolean, canOptimize: boolean): string {
   if (canRepair) return 'Gerar uma cópia corrigida do EPUB';
   if (canOptimize) {
-    return 'Tentar aplicar melhorias opcionais, como converter JPEG progressivo para baseline quando o navegador permitir.';
+    return 'Aplicar otimizações opcionais, incluindo remoção de EXIF/XMP/Photoshop se selecionada, ou converter JPEG progressivo quando possível.';
   }
   if (hasOptionalOptimizations(state.report)) {
     return 'O EPUB tem somente notas opcionais, mas nenhuma delas pode ser aplicada automaticamente neste estado.';
@@ -280,4 +330,49 @@ function renderTechnicalReportTools(
   );
 
   return details;
+}
+
+
+function renderProcessingStatus(state: AppState, cancel?: () => void): HTMLElement {
+  const progress = state.processingProgress;
+  const haveCount = progress?.completed !== undefined && Boolean(progress.total);
+  const current = progress?.completed ?? 0;
+  const total = progress?.total ?? 0;
+  const cancelButton = cancel ? button(
+    (state.pendingTasks ?? 0) > 0 ? 'Cancelar operação e fila' : 'Cancelar operação',
+    'btn btn-ghost', cancel,
+  ) : undefined;
+  if (cancelButton) {
+    cancelButton.dataset.focusKey = 'epub-cancel-processing';
+    cancelButton.disabled = state.processingController?.signal.aborted ?? false;
+  }
+  return el('div', {
+    className: 'working processing-status',
+    attrs: { role: 'status', 'aria-live': 'polite' },
+    children: [
+      el('span', { attrs: { 'aria-hidden': 'true' } }),
+      el('div', {
+        className: 'processing-status-content',
+        children: [
+          el('strong', { text: progress?.phase ?? 'Processando estrutura do EPUB...' }),
+          haveCount ? el('progress', {
+            attrs: { max: String(total), value: String(current),
+              'aria-label': progress?.unit === 'percent'
+                ? 'Porcentagem do ZIP recompactado'
+                : 'Arquivos EPUB descompactados' },
+          }) : undefined,
+          haveCount ? el('small', { text: progress?.unit === 'percent'
+            ? Math.min(100, Math.max(0, current)) + '% recompactado'
+            : current + ' de ' + total + ' entradas do ZIP descompactadas' }) : undefined,
+        ],
+      }),
+      (state.pendingTasks ?? 0) > 0
+        ? el('small', {
+            className: 'muted',
+            text: state.pendingTasks + ' ação(ões) agendada(s) para este EPUB',
+            attrs: { 'aria-live': 'polite' },
+          }) : undefined,
+      cancelButton,
+    ],
+  });
 }

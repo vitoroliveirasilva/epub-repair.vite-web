@@ -1,4 +1,5 @@
 import type { ValidationReport } from './epubTypes';
+import type { TextFileDiff } from '../repair/textFileDiff';
 
 export interface RepairOptions {
   kindleSafeMode: boolean;
@@ -13,6 +14,10 @@ export interface RepairOptions {
   sanitizeScripts: boolean;
   removeRemoteResourceLinks: boolean;
   repairCssReferences: boolean;
+  /** Opt-in: transforma imagens ausentes em marcadores textuais visíveis. */
+  replaceMissingImagesWithText: boolean;
+  /** Consentimento explícito para eliminar EXIF/XMP/Photoshop reconhecidos. */
+  stripImageMetadata?: boolean | undefined;
 }
 
 export interface RepairAction {
@@ -30,6 +35,8 @@ export interface RepairResult {
   before: ValidationReport;
   after: ValidationReport;
   actions: RepairAction[];
+  /** Diff somente-leitura dos recursos textuais modificados, com prévia limitada. */
+  fileDiffs?: TextFileDiff[] | undefined;
   warnings: string[];
   changed: boolean;
   operation: RepairOperation;

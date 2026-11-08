@@ -1,7 +1,15 @@
 import JSZip from 'jszip';
 import { EPUB_MIME } from '../utils/constants';
 
-export async function rebuildEpubZip(files: Map<string, Uint8Array>): Promise<Blob> {
+export interface ZipBuildProgress {
+  percent: number;
+  currentFile?: string | undefined;
+}
+
+export async function rebuildEpubZip(
+  files: Map<string, Uint8Array>,
+  onProgress?: (progress: ZipBuildProgress) => void,
+): Promise<Blob> {
   const zip = new JSZip();
   zip.file('mimetype', EPUB_MIME, { compression: 'STORE' });
 
@@ -18,5 +26,8 @@ export async function rebuildEpubZip(files: Map<string, Uint8Array>): Promise<Bl
     mimeType: EPUB_MIME,
     compression: 'DEFLATE',
     compressionOptions: { level: 6 },
+  }, (metadata) => {
+    onProgress?.({ percent: metadata.percent,
+      ...(metadata.currentFile ? { currentFile: metadata.currentFile } : {}) });
   });
 }

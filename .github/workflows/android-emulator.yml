@@ -1,0 +1,78 @@
+name: Android Chrome real OS emulator workflow
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-os-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android-chrome:
+    name: Android 15 Chrome AVD EPUB repair & download
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+      - name: Build production app and install Android Playwright harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
+          mkdir -p "${RUNNER_TEMP}/android-harness"
+          npm install --prefix "${RUNNER_TEMP}/android-harness" \
+            --no-save --package-lock=false --ignore-scripts --no-audit --no-fund \
+            playwright@1.55.1
+      - name: Start production preview on host loopback
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run preview -- --host 0.0.0.0 --port 5173 > "${RUNNER_TEMP}/vite-android.log" 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:5173/ -o /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo 'Vite preview indisponível'
+          cat "${RUNNER_TEMP}/vite-android.log"
+          exit 1
+      - name: Enable KVM on Linux runner for Android AVD
+        shell: bash
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Boot Android 15 emulator and run native Chrome EPUB test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          # Imagem userdebug evita restrições da edição Google Play.
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          ram-size: 4096M
+          heap-size: 512M
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: |
+            adb reverse tcp:5173 tcp:5173
+            timeout 360s env PLAYWRIGHT_MODULE="$RUNNER_TEMP/android-harness/node_modules/playwright/index.mjs" node tests/android-emulator-flow.mjs
+      - name: Archive mobile OS evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-emulator-chrome-evidence
+          path: |
+            ${{ runner.temp }}/android-mobile-web.png
+            ${{ runner.temp }}/android-mobile-evidence.json
+            ${{ runner.temp }}/vite-android.log
+          if-no-files-found: warn
+          retention-days: 14

@@ -169,7 +169,7 @@ function readPngDimensions(bytes: Uint8Array): { width: number; height: number }
   };
 }
 
-function readJpegDimensions(bytes: Uint8Array): { width: number; height: number } | undefined {
+export function readJpegDimensions(bytes: Uint8Array): { width: number; height: number } | undefined {
   const frame = findJpegStartOfFrame(bytes);
   return frame ? { width: frame.width, height: frame.height } : undefined;
 }
@@ -247,8 +247,10 @@ export function buildCoverReportInfo(
   entries?: ReadonlyMap<string, Pick<EpubEntry, 'bytes'>>,
 ): CoverReportInfo {
   const candidate = findCoverImageCandidate(pkg, entries);
-  const selected = pkg.coverItem ?? candidate;
-  const declared = Boolean(pkg.coverMetaDeclared && pkg.coverItem?.exists);
+  const declaredCover = pkg.coverItem?.exists &&
+    isCoverCompatibleImage(pkg.coverItem.mediaType) ? pkg.coverItem : undefined;
+  const selected = declaredCover ?? candidate;
+  const declared = Boolean(pkg.coverMetaDeclared && declaredCover);
 
   if (!selected) {
     return {

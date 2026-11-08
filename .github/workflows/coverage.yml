@@ -1,0 +1,65 @@
+name: Coverage gate (critical EPUB modules)
+
+on:
+  push:
+    branches: [prod]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'vitest.config.ts'
+      - '.github/workflows/coverage.yml'
+      - 'package*.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coverage-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+      - name: Install reproducible app dependencies
+        run: npm ci
+      - name: Install pinned Vitest V8 provider in isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/vitest-coverage"
+          cd "${RUNNER_TEMP}/vitest-coverage"
+          printf '{"name":"epub-coverage-harness","version":"1.0.0","private":true}\n' > package.json
+          npm install --legacy-peer-deps --ignore-scripts --no-audit --no-fund --save-exact @vitest/coverage-v8@4.1.12
+          test -d "${RUNNER_TEMP}/vitest-coverage/node_modules/@vitest/coverage-v8"
+          # ESM resolve os peers pelo realpath do provider, fora do workspace.
+          ln -s "${GITHUB_WORKSPACE}/node_modules/vitest" "${RUNNER_TEMP}/vitest-coverage/node_modules/vitest"
+          cd "${GITHUB_WORKSPACE}"
+          mkdir -p node_modules/@vitest
+          ln -s "${RUNNER_TEMP}/vitest-coverage/node_modules/@vitest/coverage-v8" node_modules/@vitest/coverage-v8
+      - name: Enforce critical module line, branch and function thresholds
+        run: npx vitest run --coverage
+      - name: Report measured coverage
+        if: always()
+        shell: bash
+        run: |
+          if test -f coverage/coverage-summary.json; then
+            node scripts/report-coverage.mjs
+          else
+            echo 'Coverage JSON not generated.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload coverage evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: epub-critical-coverage
+          path: coverage/coverage-summary.json
+          if-no-files-found: ignore
+          retention-days: 14

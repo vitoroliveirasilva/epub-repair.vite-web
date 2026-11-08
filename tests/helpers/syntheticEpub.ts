@@ -1,6 +1,10 @@
 import JSZip from 'jszip';
 import { EPUB_MIME } from '../../src/epub/utils/constants';
 
+/** JPEG baseline monocromático 1×1 válido gerado para fixtures. Não usar SOI/EOI falso como capa. */
+export const BASELINE_JPEG_BYTES = Uint8Array.from(Buffer.from(
+  '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAB//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AP3//2Q==', 'base64'));
+
 export const PROGRESSIVE_JPEG_BYTES = new Uint8Array([
   0xff, 0xd8, 0xff, 0xc2, 0x00, 0x11, 0x08, 0x03, 0x84, 0x02, 0x58, 0x03, 0x01, 0x11, 0x00, 0x02,
   0x11, 0x01, 0x03, 0x11, 0x01, 0xff, 0xd9,

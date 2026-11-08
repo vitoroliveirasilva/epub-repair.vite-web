@@ -19,7 +19,8 @@ export function decodeUriSafe(value: string): string {
 
 export function normalizeInternalPath(input: string): NormalizedPathResult {
   const original = input;
-  const decoded = decodeUriSafe(stripFragmentAndQuery(input.trim())).replace(/\\/g, '/');
+  // Um nome físico ZIP não é uma URI; preservar #, ?, % e espaços.
+  const decoded = input.replace(/\\/g, '/');
   const absolute = decoded.startsWith('/') || /^[a-zA-Z]:\//.test(decoded);
   const hasControlCharacter = containsControlCharacter(decoded);
   const parts: string[] = [];
@@ -175,4 +176,27 @@ export function decodeCssEscapes(value: string): string {
       return escaped ?? '';
     },
   );
+}
+
+/** Imagens raster embutidas são dados passivos. SVG e HTML data: não são permitidos. */
+export function isSafeInlineImageDataUrl(value: string): boolean {
+  return /^data:image\/(?:png|jpe?g|gif|webp);base64,[a-z0-9+/]+={0,2}$/iu.test(
+    value.trim().replace(/\s+/gu, ''),
+  );
+}
+
+/** Divide srcset preservando a primeira vírgula obrigatória em URLs data:. */
+export function splitSrcsetCandidates(value: string): string[] {
+  const candidates: string[] = [];
+  let start = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    if (value[index] !== ',') continue;
+    const current = value.slice(start, index).trim();
+    if (/^data:/iu.test(current) && !current.includes(',')) continue;
+    if (current) candidates.push(current);
+    start = index + 1;
+  }
+  const last = value.slice(start).trim();
+  if (last) candidates.push(last);
+  return candidates;
 }

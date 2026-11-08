@@ -1,29 +1,29 @@
 import type { LoadedEpub } from '../model/epubTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction, RepairOptions } from '../model/repairTypes';
-import { HTML_MEDIA_TYPES, RELEVANT_MEDIA_TYPES, SYSTEM_FILE_PATTERNS } from '../utils/constants';
+import { RELEVANT_MEDIA_TYPES, SYSTEM_FILE_PATTERNS } from '../utils/constants';
 import { deriveTitleFromFileName } from '../utils/fileName';
+import { decodeUtf8ForRewrite } from '../utils/textEncoding';
 import {
-  isInvalidLanguageTag,
   isInvalidOpfDate,
-  normalizeLanguageTag,
   normalizeOpfDate,
   findCoverImageCandidate,
 } from '../utils/kindleCompatibility';
-import { guessMediaType } from '../utils/mediaTypes';
+import { areEquivalentMediaTypes, guessMediaType } from '../utils/mediaTypes';
 import {
   basename,
   encodePathForXml,
   makeUniqueId,
   relativePath,
   resolveFromDir,
+  isSafeRemoteResourceUrl,
 } from '../utils/pathUtils';
 import {
   childElementsByLocalName,
   findFirstByLocalName,
   getAttr,
   parseXml,
-  serializeXml,
+  serializeXmlPreservingDeclaration,
 } from '../utils/xmlUtils';
 import {
   buildNavDocument,
@@ -53,7 +53,8 @@ export function repairOpfDocument(
   const opfFile = loaded.files.get(pkg.opfPath);
   if (!opfFile) throw new Error('OPF não encontrado para reparo.');
 
-  const doc = parseXml(new TextDecoder('utf-8', { fatal: false }).decode(opfFile.bytes));
+  const opfSource = decodeUtf8ForRewrite(opfFile.bytes, pkg.opfPath);
+  const doc = parseXml(opfSource);
   const packageElement = findFirstByLocalName(doc, 'package') ?? doc.documentElement;
   const metadata = ensureChild(doc, packageElement, 'metadata');
   const manifest = ensureChild(doc, packageElement, 'manifest');
@@ -69,7 +70,7 @@ export function repairOpfDocument(
   ensureNavigationFiles(doc, manifest, spine, loaded, pkg, filesToAdd, actions, options);
 
   return {
-    opfText: serializeXml(doc),
+    opfText: serializeXmlPreservingDeclaration(doc, opfSource),
     filesToAdd,
     actions,
   };
@@ -110,27 +111,8 @@ function repairMetadata(
     });
   }
 
-  const language = findFirstByLocalName(metadata, 'language');
-  const languageValue = language?.textContent?.trim();
-  if (!languageValue) {
-    const createdLanguage = doc.createElementNS(DC_NS, 'dc:language');
-    createdLanguage.textContent = 'pt-BR';
-    metadata.append(createdLanguage);
-    actions.push({
-      type: 'updated',
-      title: 'Idioma padrão adicionado',
-      detail: 'Foi usado pt-BR somente porque o OPF não informava idioma.',
-      file: opfPath,
-    });
-  } else if (language && isInvalidLanguageTag(languageValue)) {
-    language.textContent = normalizeLanguageTag(languageValue, 'pt-BR');
-    actions.push({
-      type: 'normalized',
-      title: 'Idioma inválido normalizado',
-      detail: `O idioma "${languageValue}" foi normalizado para "${language.textContent}".`,
-      file: opfPath,
-    });
-  }
+  // O idioma não pode ser deduzido pelo nome ou pela interface em português.
+  // Quando ausente/inválido, o validador exige revisão editorial.
 
   const date = findFirstByLocalName(metadata, 'date');
   const dateValue = date?.textContent?.trim();
@@ -172,6 +154,19 @@ function repairManifest(
 ): void {
   const usedIds = new Set<string>();
   const seenHrefs = new Set<string>();
+  const referencedIds = new Set<string>();
+  for (const element of Array.from(doc.getElementsByTagName('*'))) {
+    for (const attr of ['idref', 'fallback', 'media-overlay', 'toc']) {
+      const target = getAttr(element, attr);
+      if (target) referencedIds.add(target);
+    }
+    if (element.localName === 'meta' && getAttr(element, 'name') === 'cover') {
+      const target = getAttr(element, 'content');
+      if (target) referencedIds.add(target);
+    }
+    const refines = getAttr(element, 'refines');
+    if (refines?.startsWith('#')) referencedIds.add(refines.slice(1));
+  }
 
   for (const item of childElementsByLocalName(manifest, 'item')) {
     const href = getAttr(item, 'href') ?? '';
@@ -179,14 +174,15 @@ function repairManifest(
     const parsedItem = pkg.manifest.find(
       (manifestItem) => manifestItem.href === href && manifestItem.id === id,
     );
-    const resolvedFromDocument = href ? resolveFromDir(pkg.opfDir, href) : undefined;
-    const currentPath = parsedItem?.resolvedPath ?? resolvedFromDocument?.path;
+    const remote = isSafeRemoteResourceUrl(href);
+    const resolvedFromDocument = href && !remote ? resolveFromDir(pkg.opfDir, href) : undefined;
+    const currentPath = remote ? href : parsedItem?.resolvedPath ?? resolvedFromDocument?.path;
     const mediaType = getAttr(item, 'media-type') ?? '';
     const shouldRemove =
       !href ||
       !currentPath ||
       resolvedFromDocument?.safe === false ||
-      !loaded.files.has(currentPath) ||
+      (!remote && !loaded.files.has(currentPath)) ||
       seenHrefs.has(currentPath);
 
     if (shouldRemove) {
@@ -203,20 +199,28 @@ function repairManifest(
     }
 
     seenHrefs.add(currentPath);
-    if (!id || usedIds.has(id)) {
+    if (id && usedIds.has(id) && referencedIds.has(id)) {
+      // Referências duplicadas não têm destino confiável: não adivinhar.
+      actions.push({
+        type: 'skipped',
+        title: 'ID duplicado exige revisão manual',
+        detail: `O ID "${id}" é referenciado por outras partes do OPF; não foi renomeado.`,
+        file: pkg.opfPath,
+      });
+    } else if (!id || usedIds.has(id)) {
       item.setAttribute('id', makeUniqueId(basename(href), usedIds));
       actions.push({
         type: 'updated',
         title: 'ID de manifest corrigido',
-        detail: `O item "${href}" recebeu um id único.`,
+        detail: `O item "${href}" recebeu um id único sem quebrar referência existente.`,
         file: pkg.opfPath,
       });
     } else {
       usedIds.add(id);
     }
 
-    const guessed = guessMediaType(currentPath);
-    if (guessed && mediaType !== guessed && mediaType !== 'image/jpg') {
+    const guessed = remote ? undefined : guessMediaType(currentPath);
+    if (guessed && !areEquivalentMediaTypes(mediaType, guessed)) {
       item.setAttribute('media-type', guessed);
       actions.push({
         type: 'updated',
@@ -243,15 +247,40 @@ function repairManifest(
     childElementsByLocalName(manifest, 'item')
       .map((item) => {
         const href = getAttr(item, 'href');
-        return href ? resolveFromDir(pkg.opfDir, href).path : '';
+        return href
+          ? isSafeRemoteResourceUrl(href) ? href : resolveFromDir(pkg.opfDir, href).path
+          : '';
       })
       .filter(Boolean),
   );
+  // O EPUB com múltiplas renditions não permite atribuir órfãos à edição
+  // ativa com confiança: eles podem pertencer ao OPF de outra rendition.
+  // Mantê-los no ZIP e registrar a decisão em vez de cruzar manifests.
+  if (pkg.rootfileCount > 1) {
+    actions.push({
+      type: 'skipped',
+      title: 'Manifest de outras renditions preservado',
+      detail: 'O container possui múltiplos OPFs. Recursos não declarados no OPF ' +
+        'ativo não serão adotados automaticamente, pois podem pertencer a outra rendition.',
+      file: pkg.opfPath,
+    });
+    return;
+  }
+
   for (const path of loaded.files.keys()) {
     if (path === 'mimetype' || path === 'META-INF/container.xml' || path === pkg.opfPath) continue;
     if (SYSTEM_FILE_PATTERNS.some((pattern) => pattern.test(path))) continue;
     const mediaType = guessMediaType(path);
     if (!mediaType || !RELEVANT_MEDIA_TYPES.has(mediaType)) continue;
+    if (mediaType === 'text/javascript') {
+      actions.push({
+        type: 'skipped',
+        title: 'Script sem declaração preservado para revisão',
+        detail: 'O arquivo JS não foi inserido automaticamente no manifest.',
+        file: path,
+      });
+      continue;
+    }
     const href = relativePath(pkg.opfDir, path);
     if (declaredPaths.has(path)) continue;
     const item = doc.createElementNS(OPF_NS, 'item');
@@ -360,21 +389,10 @@ function repairSpine(
   }
 
   if (childElementsByLocalName(spine, 'itemref').length === 0) {
-    for (const item of childElementsByLocalName(manifest, 'item')) {
-      const mediaType = getAttr(item, 'media-type') ?? '';
-      const properties = getAttr(item, 'properties') ?? '';
-      if (!HTML_MEDIA_TYPES.has(mediaType) || /(^|\s)nav($|\s)/u.test(properties)) continue;
-      const id = getAttr(item, 'id');
-      if (!id) continue;
-      const itemref = item.ownerDocument.createElementNS(OPF_NS, 'itemref');
-      itemref.setAttribute('idref', id);
-      spine.append(itemref);
-    }
     actions.push({
-      type: 'updated',
-      title: 'Spine reconstruído',
-      detail:
-        'A ordem de leitura estava vazia e foi reconstruída com documentos HTML/XHTML existentes.',
+      type: 'skipped',
+      title: 'Spine sem ordem de leitura confiável',
+      detail: 'Não é possível inferir a ordem editorial a partir do manifest. Requer revisão manual.',
       file: opfPath,
     });
   }
@@ -401,8 +419,11 @@ function ensureNavigationFiles(
     shouldCreateNav(pkg) &&
     !currentManifestNavExists(manifest, loaded, pkg, filesToAdd)
   ) {
-    const navPath = pkg.navItem?.resolvedPath || `${pkg.opfDir ? `${pkg.opfDir}/` : ''}nav.xhtml`;
-    filesToAdd.set(navPath, buildNavDocument(pkg, navPath));
+    const navPath = uniqueGeneratedPath(
+      pkg.navItem?.resolvedPath || `${pkg.opfDir ? `${pkg.opfDir}/` : ''}nav.xhtml`,
+      loaded, filesToAdd,
+    );
+    filesToAdd.set(navPath, buildNavDocument(pkg, navPath, loaded.files));
     const item = doc.createElementNS(OPF_NS, 'item');
     item.setAttribute('id', makeUniqueId('nav', usedIds));
     item.setAttribute('href', encodePathForXml(relativePath(pkg.opfDir, navPath)));
@@ -429,10 +450,14 @@ function ensureNavigationFiles(
   }
 
   if (options.generateNcx && shouldCreateNcx(pkg) && !currentNcxId) {
-    const ncxPath = pkg.ncxItem?.resolvedPath || `${pkg.opfDir ? `${pkg.opfDir}/` : ''}toc.ncx`;
-    const ncxId = pkg.ncxItem?.id || makeUniqueId('ncx', usedIds);
-    filesToAdd.set(ncxPath, buildNcxDocument(pkg, ncxPath));
-    if (!pkg.ncxItem) {
+    const ncxPath = uniqueGeneratedPath(
+      pkg.ncxItem?.resolvedPath || `${pkg.opfDir ? `${pkg.opfDir}/` : ''}toc.ncx`,
+      loaded, filesToAdd,
+    );
+    const ncxId = makeUniqueId(pkg.ncxItem?.id || 'ncx', usedIds);
+    filesToAdd.set(ncxPath, buildNcxDocument(pkg, ncxPath, loaded.files));
+    // A entrada NCX ausente pode ter sido removida ao reparar o manifest.
+    if (!childElementsByLocalName(manifest, 'item').some((item) => getAttr(item, 'id') === ncxId)) {
       const item = doc.createElementNS(OPF_NS, 'item');
       item.setAttribute('id', ncxId);
       item.setAttribute('href', encodePathForXml(relativePath(pkg.opfDir, ncxPath)));
@@ -507,4 +532,21 @@ function ensureChild(doc: Document, parent: Element, localName: string): Element
   const created = doc.createElementNS(OPF_NS, localName);
   parent.append(created);
   return created;
+}
+
+/** Nunca sobrescrever um nav/NCX órfão preexistente ao gerar outro. */
+function uniqueGeneratedPath(
+  preferred: string,
+  loaded: LoadedEpub,
+  pending: ReadonlyMap<string, string>,
+): string {
+  if (!loaded.files.has(preferred) && !pending.has(preferred)) return preferred;
+  const dot = preferred.lastIndexOf('.');
+  const stem = dot < 0 ? preferred : preferred.slice(0, dot);
+  const extension = dot < 0 ? '' : preferred.slice(dot);
+  for (let number = 2; number <= 10000; number += 1) {
+    const candidate = stem + '-' + number + extension;
+    if (!loaded.files.has(candidate) && !pending.has(candidate)) return candidate;
+  }
+  throw new Error('Não há um caminho livre para gerar navegação sem sobrescrever arquivos existentes.');
 }

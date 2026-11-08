@@ -1,0 +1,27 @@
+name: Repository release policy audit
+
+on:
+  push:
+    branches: [prod]
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+    branches: [prod]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review-rules:
+    name: Verify prod ruleset and release safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+      - name: Review live GitHub ruleset and release workflow
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/audit-branch-policy.mjs

@@ -6,11 +6,13 @@ import { createIssue } from '../utils/issueFactory';
 import {
   decodeCssEscapes,
   isInlineFontDataUrl,
+  isSafeInlineImageDataUrl,
   isRemoteUrl,
   isSafeRemoteResourceUrl,
   resolveReference,
 } from '../utils/pathUtils';
 import { extractCssResourceReferences } from './referenceExtractor';
+import { containsDangerousCss } from '../sanitize/sanitizeActiveContent';
 
 export function validateCssReferences(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
   const issues: Issue[] = [];
@@ -22,13 +24,26 @@ export function validateCssReferences(loaded: LoadedEpub, pkg: PackageDocumentIn
     const file = loaded.files.get(item.resolvedPath);
     if (!file) continue;
     const text = new TextDecoder('utf-8', { fatal: false }).decode(file.bytes);
+    if (containsDangerousCss(text.replace(/\/\*[\s\S]*?\*\//gu, ''))) {
+      issues.push(createIssue({
+        code: 'CSS_UNSAFE_RESOURCE',
+        severity: 'warning',
+        title: 'Declaração ativa detectada no CSS',
+        detail: 'O CSS contém expressão, behavior, binding ou URL de esquema executável. ' +
+          'Confira se a limpeza automática conseguiu neutralizar o conteúdo.',
+        file: item.resolvedPath,
+        repairable: true,
+      }));
+    }
 
     for (const ref of extractCssResourceReferences(text)) {
       if (!ref.value || ref.value.startsWith('#')) continue;
       const decodedUrl = decodeCssEscapes(ref.value);
+      if (decodedUrl.startsWith('#')) continue;
       if (isRemoteUrl(decodedUrl)) {
         // Fontes e estilos externos passivos são intencionais e não são problemas.
-        if (isSafeRemoteResourceUrl(decodedUrl) || isInlineFontDataUrl(decodedUrl)) continue;
+        if (isSafeRemoteResourceUrl(decodedUrl) || isInlineFontDataUrl(decodedUrl) ||
+          isSafeInlineImageDataUrl(decodedUrl)) continue;
         issues.push(
           createIssue({
             code: 'CSS_UNSAFE_RESOURCE',
@@ -43,7 +58,9 @@ export function validateCssReferences(loaded: LoadedEpub, pkg: PackageDocumentIn
         continue;
       }
 
-      const resolved = resolveReference(item.resolvedPath, ref.value);
+      // URLs em CSS podem escapar caracteres ASCII com \\hex; resolver a URL
+      // decodificada, como fazem o sanitizador e a troca de capa.
+      const resolved = resolveReference(item.resolvedPath, decodedUrl);
       if (!resolved.safe || !loaded.files.has(resolved.path)) {
         issues.push(
           createIssue({

@@ -86,7 +86,7 @@ function renderModeToggle(
     className:
       mode === 'simple' ? 'mode-toggle-button mode-toggle-button-active' : 'mode-toggle-button',
     text: 'Simples',
-    attrs: { type: 'button', 'aria-pressed': String(mode === 'simple') },
+    attrs: { type: 'button', 'aria-pressed': String(mode === 'simple'), 'data-focus-key': 'report-mode-simple' },
   });
   simple.addEventListener('click', () => onModeChange('simple'));
 
@@ -94,7 +94,7 @@ function renderModeToggle(
     className:
       mode === 'technical' ? 'mode-toggle-button mode-toggle-button-active' : 'mode-toggle-button',
     text: 'Técnico',
-    attrs: { type: 'button', 'aria-pressed': String(mode === 'technical') },
+    attrs: { type: 'button', 'aria-pressed': String(mode === 'technical'), 'data-focus-key': 'report-mode-technical' },
   });
   technical.addEventListener('click', () => onModeChange('technical'));
 

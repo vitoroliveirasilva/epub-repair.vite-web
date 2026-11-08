@@ -12,10 +12,13 @@ export interface ManifestItem {
   mediaType: string;
   properties: string[];
   fallback?: string | undefined;
+  mediaOverlay?: string | undefined;
   resolvedPath: string;
   pathSafe: boolean;
   pathReason?: string | undefined;
   exists: boolean;
+  /** Recurso HTTPS/HTTP externo: não é uma entrada ZIP ausente. */
+  remote?: boolean | undefined;
 }
 
 export interface SpineItem {

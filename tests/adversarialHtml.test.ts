@@ -23,6 +23,91 @@ function parse(text: string): Document {
 }
 
 describe('testes adversariais de sanitização XHTML no DOM', () => {
+  it('E-057: preserva imagens raster data: sem permitir data:svg ou HTML executável', () => {
+    const input = xhtml(
+      '<img id="safe" src="data:image/png;base64,AAECAw=="/>' +
+      '<img id="unsafe" src="data:image/svg+xml;base64,PHN2Zz4="/>' +
+      '<a id="link" href="data:text/html;base64,PHNjcmlwdD4=">Texto</a>',
+    );
+    const clean = sanitizeActiveContentMarkup(input, filePath, {
+      ...options, removeRemoteResourceLinks: true,
+    });
+    const doc = parse(clean.text);
+    expect(doc.getElementById('safe')?.getAttribute('src')).toBe('data:image/png;base64,AAECAw==');
+    expect(doc.getElementById('unsafe')?.hasAttribute('src')).toBe(false);
+    expect(doc.getElementById('link')?.hasAttribute('href')).toBe(false);
+  });
+
+  it('E-057: srcset não divide a vírgula dentro de data:image e mantém imagem segura', () => {
+    const input = xhtml('<img srcset="data:image/png;base64,AAECAw== 1x, javascript:alert(1) 2x" />');
+    const clean = sanitizeActiveContentMarkup(input, filePath, options);
+    const node = parse(clean.text).getElementsByTagName('img')[0]!;
+    expect(node.getAttribute('srcset')).toBe('data:image/png;base64,AAECAw== 1x');
+    expect(node.getAttribute('srcset')).not.toContain('javascript');
+  });
+
+
+  it('E-016/E-054: neutraliza expression e behavior sem descartar outras declarações', () => {
+    const markup = xhtml(
+      '<style>p{color:blue;width:expression(alert(1));font-weight:bold}</style>' +
+      '<p style="color:red;behavior:url(#plugin);font-style:italic">Conteúdo</p>',
+    );
+    const result = sanitizeActiveContentMarkup(markup, filePath, options);
+    const doc = parse(result.text);
+    const style = doc.getElementsByTagName('style')[0];
+    expect(style?.textContent).toContain('color:blue');
+    expect(style?.textContent).toContain('font-weight:bold');
+    expect(style?.textContent).not.toContain('expression(');
+    const inline = doc.getElementsByTagName('p')[0]?.getAttribute('style') ?? '';
+    expect(inline).toContain('color:red');
+    expect(inline).toContain('font-style:italic');
+    expect(inline).not.toContain('behavior:');
+  });
+
+  it('E-016: CSS perigoso não elimina regras e estilos legítimos do XHTML', () => {
+    const original = xhtml(
+      '<style>p{color:blue}.bad{background:url("javascript:alert(1)")}</style>' +
+      '<p style="color:red;background:url(&quot;javascript:alert(2)&quot;)">Texto preservado</p>',
+    );
+    const result = sanitizeActiveContentMarkup(original, filePath, {
+      ...options, removeRemoteResourceLinks: false,
+    });
+    const doc = parse(result.text);
+    expect(result.changed).toBe(true);
+    expect(doc.getElementsByTagName('style')).toHaveLength(1);
+    expect(doc.getElementsByTagName('style')[0]?.textContent).toContain('color:blue');
+    expect(doc.getElementsByTagName('style')[0]?.textContent).not.toContain('javascript:');
+    expect(doc.getElementsByTagName('p')[0]?.getAttribute('style')).toContain('color:red');
+    expect(doc.getElementsByTagName('p')[0]?.getAttribute('style')).not.toContain('javascript:');
+    expect(doc.getElementsByTagName('p')[0]?.textContent).toBe('Texto preservado');
+  });
+
+
+  it('E-016/E-054: CSS ofuscado não provoca descarte silencioso do style', () => {
+    const original = xhtml(
+      '<style>p{color:blue;width:expre\\73sion(alert(1));font-weight:bold}</style>' +
+      '<p>Capítulo intacto</p>',
+    );
+    expect(() => sanitizeActiveContentMarkup(original, filePath, options))
+      .toThrow(/revisão manual/u);
+  });
+
+  it('E-054: reconhece escapes CSS, comentários maliciosos e URLs ofuscadas', async () => {
+    const { containsDangerousCss } = await import('../src/epub/sanitize/sanitizeActiveContent');
+    expect(containsDangerousCss('p{width:expre\\73sion(alert(1));}')).toBe(true);
+    expect(containsDangerousCss('p{background:u\\72l("javascript:alert(1)")}')).toBe(true);
+    expect(containsDangerousCss('p{background:url("j\\61vascript:alert(1)")}')).toBe(true);
+    expect(containsDangerousCss('p{width:expre/**/ssion(alert(1))}')).toBe(true);
+    expect(containsDangerousCss('/* expression(alert(1)) */ p{color:blue}')).toBe(false);
+    expect(containsDangerousCss('@font-face{src:url("https://fonts.example/font.woff2")}'))
+      .toBe(false);
+  });
+
+  it('E-016: CSS inline difícil de sanitizar bloqueia o reparo sem perder o parágrafo', () => {
+    const original = xhtml('<p style="color:red;width:expre\\73sion(alert(1))">Texto</p>');
+    expect(() => sanitizeActiveContentMarkup(original, filePath, options))
+      .toThrow(/revisão manual/u);
+  });
   it('remove javascript ofuscado por entidade HTML, handlers e scripts sem perder o texto', () => {
     const input = xhtml(
       '<p id="texto">Capítulo válido</p><a href="java&#x73;cript:alert(1)" onclick="alert(2)">Continuar</a>' +

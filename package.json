@@ -1,6 +1,6 @@
 {
   "name": "epub-repair.vite-web",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Ferramenta front-end estática para validar, reparar e reempacotar EPUBs localmente no navegador com objetivo em aumentar a compatibilidade com fluxos de envio/upload para Kindle.",
   "private": false,
   "type": "module",
@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "scan:av": "node scripts/scan-epub-av.mjs"
   },
   "dependencies": {
     "jszip": "^3.10.2"

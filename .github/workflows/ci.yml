@@ -4,9 +4,12 @@ on:
   push:
     branches:
       - prod
+      - dev
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
     branches:
       - prod
+      - dev
   workflow_dispatch:
 
 permissions:
@@ -18,6 +21,10 @@ concurrency:
 
 jobs:
   quality:
+    # Rascunhos recebem a CI de push em dev. Não repetir a matriz
+    # Node 20/22 em cada sincronização de PR ainda em desenvolvimento.
+    # ready_for_review reativa os dois checks exigidos para prod.
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     name: Quality gate / Node ${{ matrix.node-version }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -25,9 +32,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version:
-          - 20.x
-          - 22.x
+        # Dev usa uma execução rápida; prod/PR preservam Node 20 e Node 22
+        # exigidos pelo ruleset de publicação.
+        node-version: ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/dev' && '["22.x"]' || '["20.x","22.x"]') }}
 
     steps:
       - name: Checkout
@@ -48,6 +55,9 @@ jobs:
       - name: Audit all dependencies
         run: npm audit --audit-level=moderate
 
+      - name: Review dependency licenses (report only)
+        run: node scripts/audit-licenses.mjs
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -59,3 +69,141 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+  epubcheck:
+    # EPUBCheck somente manual ou push na prod; não repetir na PR de homologação em draft.
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/prod'
+    name: EPUBCheck 5.4.0 / EPUB reparado
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate synthetic EPUB before and after real repair
+        env:
+          EPUBCHECK_FIXTURE_OUTPUT: ${{ runner.temp }}/epub-fixtures
+        run: npx vitest run tests/epubCheckFixtureGenerator.test.ts
+
+      - name: Download verified official EPUBCheck 5.4.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 \
+            'https://github.com/w3c/epubcheck/releases/download/v5.4.0/epubcheck-5.4.0.zip' \
+            -o "${RUNNER_TEMP}/epubcheck.zip"
+          printf '%s  %s\n' \
+            '33350c61038e71dfb3d45a76aed04bf5481e6d5500cb780f6e98db8bbd15a28c' \
+            "${RUNNER_TEMP}/epubcheck.zip" | sha256sum --check
+          mkdir -p "${RUNNER_TEMP}/epubcheck"
+          unzip -q "${RUNNER_TEMP}/epubcheck.zip" -d "${RUNNER_TEMP}/epubcheck"
+
+      - name: Assert broken input is rejected and repaired EPUB passes
+        shell: bash
+        run: |
+          set -euo pipefail
+          epubcheck_jar="$(find "${RUNNER_TEMP}/epubcheck" -name 'epubcheck.jar' -print -quit)"
+          test -n "$epubcheck_jar"
+          java -jar "$epubcheck_jar" --version
+
+          original="${RUNNER_TEMP}/epub-fixtures/original-invalid.epub"
+          repaired="${RUNNER_TEMP}/epub-fixtures/repaired-valid.epub"
+          test -s "$original" && test -s "$repaired"
+
+          if java -jar "$epubcheck_jar" "$original"; then
+            echo 'ERRO: a fixture original inválida foi aceita pelo EPUBCheck.'
+            exit 1
+          fi
+
+          java -jar "$epubcheck_jar" "$repaired"
+
+          original2="${RUNNER_TEMP}/epub-fixtures/original-invalid-epub2.epub"
+          repaired2="${RUNNER_TEMP}/epub-fixtures/repaired-valid-epub2.epub"
+          test -s "$original2" && test -s "$repaired2"
+          if java -jar "$epubcheck_jar" "$original2"; then
+            echo 'ERRO: fixture original EPUB 2 sem mimetype foi aceita.'
+            exit 1
+          fi
+          java -jar "$epubcheck_jar" "$repaired2"
+
+          # Variações OCF: conteúdo errado/posição inicial devem reprovar;
+          # mimetype comprimido é diagnóstico próprio, não necessariamente rejeitado
+          # pelo EPUBCheck 5.4.0. Toda cópia reparada deve passar.
+          for variant in mimetype-wrong-content mimetype-out-of-order; do
+            original_extra="${RUNNER_TEMP}/epub-fixtures/original-invalid-${variant}.epub"
+            repaired_extra="${RUNNER_TEMP}/epub-fixtures/repaired-valid-${variant}.epub"
+            test -s "$original_extra" && test -s "$repaired_extra"
+            if java -jar "$epubcheck_jar" "$original_extra"; then
+              echo "ERRO: original OCF inválido aceito pelo EPUBCheck: $variant"
+              exit 1
+            fi
+            java -jar "$epubcheck_jar" "$repaired_extra"
+          done
+
+          # EPUBCheck 5.4.0 aceita o mimetype comprimido nesta fixture.
+          # Não inventar rejeição oficial: registrar a divergência, comprovar
+          # que a nossa regra OCF detectou o caso e que o reparo foi aceito.
+          compressed_original="${RUNNER_TEMP}/epub-fixtures/original-invalid-mimetype-compressed.epub"
+          compressed_repaired="${RUNNER_TEMP}/epub-fixtures/repaired-valid-mimetype-compressed.epub"
+          test -s "$compressed_original" && test -s "$compressed_repaired"
+          echo "EPUBCheck pode aceitar mimetype comprimido: avaliação adicional informativa."
+          java -jar "$epubcheck_jar" "$compressed_original"
+          java -jar "$epubcheck_jar" "$compressed_repaired"
+
+          # Reconstrução NAV de NCX autoral hierárquico: original sem NAV
+          # é inválido em EPUB3, a versão gerada precisa ser oficial e legível.
+          original_ncx="${RUNNER_TEMP}/epub-fixtures/original-invalid-ncx-hierarchy.epub"
+          repaired_ncx="${RUNNER_TEMP}/epub-fixtures/repaired-valid-ncx-hierarchy.epub"
+          test -s "$original_ncx" && test -s "$repaired_ncx"
+          if java -jar "$epubcheck_jar" "$original_ncx"; then
+            echo 'ERRO: EPUB 3 sem NAV e mimetype foi aceito.'
+            exit 1
+          fi
+          java -jar "$epubcheck_jar" "$repaired_ncx"
+
+          # Matriz EPUB 3: o atributo package versão 3.0 é obrigatório tanto
+          # nas revisões 3.2/3.3/3.4. Validar recursos representativos em
+          # fixtures separadas, sem afirmar que EPUBCheck 5.4.0 certifica 3.4.
+          for profile in epub3-core epub32-navigation epub33-mathml epub34-fixed-layout; do
+            specimen="${RUNNER_TEMP}/epub-fixtures/profile-${profile}.epub"
+            test -s "$specimen"
+            java -jar "$epubcheck_jar" "$specimen"
+          done
+
+          # EPUBs reais de apresentação reflowable/fixed layout são reparados
+          # e precisam passar no EPUBCheck antes da renderização no Calibre.
+          for profile in reflowable fixed-layout; do
+            specimen="${RUNNER_TEMP}/epub-fixtures/visual-${profile}.epub"
+            test -s "$specimen"
+            java -jar "$epubcheck_jar" "$specimen"
+          done
+
+      - name: Publicar EPUBs sintéticos para homologação manual em iOS e Android
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: epub-manual-device-fixtures
+          path: |
+            ${{ runner.temp }}/epub-fixtures/repaired-valid.epub
+            ${{ runner.temp }}/epub-fixtures/repaired-valid-epub2.epub
+            ${{ runner.temp }}/epub-fixtures/repaired-valid-ncx-hierarchy.epub
+            ${{ runner.temp }}/epub-fixtures/visual-reflowable.epub
+            ${{ runner.temp }}/epub-fixtures/visual-fixed-layout.epub
+          if-no-files-found: error
+          retention-days: 14
