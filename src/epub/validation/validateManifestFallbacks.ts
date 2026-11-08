@@ -94,8 +94,10 @@ export function validateManifestFallbacks(pkg: PackageDocumentInfo, loaded?: Loa
   }
 
   for (const item of pkg.manifest) {
+    // Um recurso core com fallback opcional não exige outro core na cadeia.
+    // Diagnósticos de referências inexistentes e ciclos ficam no validador OPF.
     if (!item.fallback || reported.has(item.id) ||
-        CONTENT_DOCUMENTS.has(normalizedType(item))) continue;
+        CONTENT_DOCUMENTS.has(normalizedType(item)) || isCoreMedia(item)) continue;
     const chain = inspectChain(item, byId);
     if (chain.kind === 'missing' || chain.kind === 'cycle') continue;
     if (chain.kind === 'ok') continue;

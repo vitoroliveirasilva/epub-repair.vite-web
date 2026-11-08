@@ -4,6 +4,7 @@ import type { LoadedEpub } from '../src/epub/model/epubTypes';
 import type { PackageDocumentInfo, ManifestItem } from '../src/epub/model/opfTypes';
 import { validateImageResources, sniffImageKind } from '../src/epub/validation/validateImageResources';
 import { validateAccessibility } from '../src/epub/validation/validateAccessibility';
+import { BASELINE_JPEG_BYTES } from './helpers/syntheticEpub';
 
 const encoder = new TextEncoder();
 function setup(mime: string, path: string, content: Uint8Array) {
@@ -20,7 +21,7 @@ function setup(mime: string, path: string, content: Uint8Array) {
 
 describe('E-067: inspeção de imagens sem modificação automática', () => {
   it('aceita assinaturas JPEG e PNG coerentes', () => {
-    const jpeg = setup('image/jpeg', 'cover.jpg', Uint8Array.from([0xff, 0xd8, 0xff, 0xd9]));
+    const jpeg = setup('image/jpeg', 'cover.jpg', BASELINE_JPEG_BYTES);
     const png = setup('image/png', 'cover.png', Uint8Array.from([
       0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
     ]));

@@ -6,7 +6,7 @@ import { parsePackageDocument } from '../src/epub/validation/opfParser';
 import { repairOpfDocument } from '../src/epub/repair/repairOpf';
 import { replaceEpubCover } from '../src/epub/cover/replaceCover';
 import { updateCoverReferences } from '../src/epub/cover/updateCoverReferences';
-import { buildKindleIssueEpub } from './helpers/syntheticEpub';
+import { BASELINE_JPEG_BYTES, buildKindleIssueEpub } from './helpers/syntheticEpub';
 import { DEFAULT_REPAIR_OPTIONS } from '../src/epub/utils/constants';
 import type { PackageDocumentInfo } from '../src/epub/model/opfTypes';
 
@@ -131,7 +131,7 @@ describe('E-104: imagens editoriais compartilhadas com a capa', () => {
       '<img src="../Images/old.jpg" alt="Ilustração"/></body></html>');
     const input = new Uint8Array(await z.generateAsync({type:'uint8array'}));
     const result = await replaceEpubCover('livro.epub',input,{
-      fileName:'new.jpg',bytes:Uint8Array.of(0xff,0xd8,0xff,0xe0,0,2,0xff,0xd9),
+      fileName:'new.jpg',bytes:BASELINE_JPEG_BYTES,
       mediaType:'image/jpeg',previewDataUrl:'',
     });
     const out = await JSZip.loadAsync(await result.blob!.arrayBuffer());

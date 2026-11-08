@@ -6,6 +6,7 @@ import { replaceEpubCover } from '../src/epub/cover/replaceCover';
 import { updateCoverGuideReference, updateCoverReferences } from '../src/epub/cover/updateCoverReferences';
 import { parseXml } from '../src/epub/utils/xmlUtils';
 import { EPUB_MIME } from '../src/epub/utils/constants';
+import { BASELINE_JPEG_BYTES } from './helpers/syntheticEpub';
 import type { PackageDocumentInfo } from '../src/epub/model/opfTypes';
 
 const enc = new TextEncoder();
@@ -101,7 +102,7 @@ describe('E-100: sincronização da capa sem alterar conteúdo editorial', () =>
       'alt="Capa"/><p>Texto protegido</p></body></html>');
     const input = new Uint8Array(await z.generateAsync({type:'uint8array'}));
     const replacement = {
-      fileName:'novo.jpg',bytes:Uint8Array.of(0xff,0xd8,0xff,0xd9),
+      fileName:'novo.jpg',bytes:BASELINE_JPEG_BYTES,
       mediaType:'image/jpeg' as const,previewDataUrl:'',
     };
     // jsdom Blob não possui arrayBuffer; o browser real e o NodeBlob possuem.

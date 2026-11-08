@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import JSZip from 'jszip';
 import { replaceEpubCover } from '../src/epub/cover/replaceCover';
 import { EPUB_MIME } from '../src/epub/utils/constants';
+import { BASELINE_JPEG_BYTES } from './helpers/syntheticEpub';
 
 const originalImage = Uint8Array.from(Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jYk0AAAAASUVORK5CYII=', 'base64'));
@@ -52,7 +53,7 @@ function buildEpub(cssCover: boolean, imported = false): Promise<Uint8Array> {
 async function replace(cssCover: boolean, imported = false) {
   const input=await buildEpub(cssCover, imported);
   const cover={
-    fileName:'nova.jpg',bytes:Uint8Array.of(255,216,255,217),
+    fileName:'nova.jpg',bytes:BASELINE_JPEG_BYTES,
     mediaType:'image/jpeg' as const,previewDataUrl:'',
   };
   vi.stubGlobal('Blob',NodeBlob);
