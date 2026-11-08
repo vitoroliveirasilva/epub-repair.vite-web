@@ -154,13 +154,25 @@ describe('Sétima auditoria E-150 a E-157', () => {
     for(const workflow of ['android-emulator','ios-simulator','kindle-preview',
       'browser-matrix','calibre-reader','coverage']){
       const source=read(workflow);
-      expect(source).toContain('branches: [prod]');
       const triggerSection=source.slice(source.indexOf('on:'),source.indexOf('permissions:'));
-      expect(triggerSection).not.toMatch(/branches: \[dev(?:,|\])/u);
+      expect(triggerSection).not.toContain('branches: [dev]');
+      expect(triggerSection).not.toContain('pull_request:');
       expect(triggerSection).toContain('workflow_dispatch:');
+      if(['browser-matrix','calibre-reader','coverage'].includes(workflow)) {
+        expect(triggerSection).toContain('branches: [prod]');
+      } else {
+        expect(triggerSection).not.toContain('push:');
+      }
     }
     const ci=read('ci');
     expect(ci).toContain('["22.x"]');
     expect(ci).toContain('["20.x","22.x"]');
+    expect(ci).toContain('types: [opened, reopened, synchronize, ready_for_review]');
+    expect(ci).toContain("github.event_name != 'pull_request' || !github.event.pull_request.draft");
+    expect(ci).toContain("github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/prod'");
+    const preview=read('netlify-live-preview');
+    expect(preview).toContain('types: [opened, reopened, ready_for_review]');
+    const supply=read('supply-chain');
+    expect(supply).toContain("    paths:\n      - 'package.json'");
   });
 });

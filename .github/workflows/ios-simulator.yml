@@ -1,13 +1,6 @@
 name: iOS Safari Simulator real OS download smoke
 
 on:
-  # Em dev, não inicializar emuladores a cada commit.
-  pull_request:
-    branches: [prod]
-    paths:
-      - 'src/**'
-      - 'tests/ios-safari-simulator.mjs'
-      - '.github/workflows/ios-simulator.yml'
   workflow_dispatch:
 
 permissions:

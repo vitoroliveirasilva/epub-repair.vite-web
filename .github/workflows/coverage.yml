@@ -9,8 +9,6 @@ on:
       - 'vitest.config.ts'
       - '.github/workflows/coverage.yml'
       - 'package*.json'
-  pull_request:
-    branches: [prod]
   workflow_dispatch:
 
 permissions:

@@ -1,14 +1,6 @@
 name: Kindle Previewer real desktop compatibility
 
 on:
-  # Em dev, não inicializar emuladores a cada commit.
-  pull_request:
-    branches: [prod]
-    paths:
-      - 'src/epub/**'
-      - 'tests/epubCheckFixtureGenerator.test.ts'
-      - '.github/workflows/kindle-preview.yml'
-      - 'scripts/kindle-preview-check.py'
   workflow_dispatch:
 
 permissions:

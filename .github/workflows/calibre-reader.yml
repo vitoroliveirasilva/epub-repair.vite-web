@@ -8,8 +8,6 @@ on:
       - 'tests/epubCheckFixtureGenerator.test.ts'
       - '.github/workflows/calibre-reader.yml'
       - 'scripts/calibre-visual-reader.sh'
-  pull_request:
-    branches: [prod]
   workflow_dispatch:
 
 permissions:

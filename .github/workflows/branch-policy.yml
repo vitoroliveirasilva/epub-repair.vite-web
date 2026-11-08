@@ -4,6 +4,7 @@ on:
   push:
     branches: [prod]
   pull_request:
+    types: [opened, reopened, ready_for_review]
     branches: [prod]
   workflow_dispatch:
 

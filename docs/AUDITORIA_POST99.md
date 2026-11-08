@@ -187,3 +187,22 @@ e não pode ser marcada aprovada sem evidência real.
 Para reduzir as execuções do GitHub Actions, consultar
 `docs/CI_ECONOMICO.md`: a `dev` utiliza CI rápida, enquanto os workflows
 pesados são concentrados em PR para `prod` ou execução manual.
+
+### Ajuste de gatilhos da CI após identificar a PR de rascunho #32
+
+A PR #32 está aberta entre `dev` e `prod`, em rascunho, e recebe cada push
+feito em `dev`. Eventos `pull_request.synchronize` estavam executando os
+workflows pesados apesar dos filtros `push` terem sido reduzidos.
+
+Para evitar recorrência: emuladores Android/iOS, Kindle Previewer, Calibre,
+matriz de navegadores, cobertura e EPUBCheck deixam de iniciar automaticamente
+a cada atualização da PR. Continuam disponíveis por `workflow_dispatch`.
+Calibre, navegadores, cobertura e EPUBCheck também continuam em push de `prod`.
+O workflow de prévia HTTPS Netlify é manual (com número da PR) ou roda ao
+abrir/reabrir uma PR não draft ou marcá-la pronta para revisão; não em
+`synchronize`. A `supply-chain` fica restrita a mudanças em dependências e
+políticas, além do cron semanal.
+
+As verificações obrigatórias **Quality gate / Node 20.x** e
+**Quality gate / Node 22.x** continuam automáticas nas PRs para `prod`,
+conforme o ruleset. Detalhes e comandos operacionais em `docs/CI_ECONOMICO.md`.

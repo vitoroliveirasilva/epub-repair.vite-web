@@ -6,6 +6,7 @@ on:
       - prod
       - dev
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
     branches:
       - prod
       - dev
@@ -20,6 +21,10 @@ concurrency:
 
 jobs:
   quality:
+    # Rascunhos recebem a CI de push em dev. Não repetir a matriz
+    # Node 20/22 em cada sincronização de PR ainda em desenvolvimento.
+    # ready_for_review reativa os dois checks exigidos para prod.
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     name: Quality gate / Node ${{ matrix.node-version }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -66,8 +71,8 @@ jobs:
         run: npm run build
 
   epubcheck:
-    # Verificação pesada só em homologação de prod ou execução manual.
-    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/prod' || (github.event_name == 'pull_request' && github.base_ref == 'prod')
+    # EPUBCheck somente manual ou push na prod; não repetir na PR de homologação em draft.
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/prod'
     name: EPUBCheck 5.4.0 / EPUB reparado
     runs-on: ubuntu-latest
     timeout-minutes: 15

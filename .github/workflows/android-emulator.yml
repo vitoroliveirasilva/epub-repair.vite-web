@@ -1,13 +1,6 @@
 name: Android Chrome real OS emulator workflow
 
 on:
-  # Em dev, não inicializar emuladores a cada commit.
-  pull_request:
-    branches: [prod]
-    paths:
-      - 'src/**'
-      - 'tests/android-emulator-flow.mjs'
-      - '.github/workflows/android-emulator.yml'
   workflow_dispatch:
 
 permissions:

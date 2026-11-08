@@ -12,6 +12,13 @@ on:
       - '.github/workflows/supply-chain.yml'
   pull_request:
     branches: [dev, prod]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/audit-licenses.mjs'
+      - 'scripts/licensePolicy.mjs'
+      - 'tests/licensePolicyNode99.test.mjs'
+      - '.github/workflows/supply-chain.yml'
   # Nota: GitHub executa cron apenas se o workflow existir em DEFAULT branch
   # (prod). Por enquanto funciona em push/PR na dev; ao promover, ativa cron.
   schedule:

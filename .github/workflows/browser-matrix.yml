@@ -15,8 +15,6 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/browser-matrix.yml'
-  pull_request:
-    branches: [prod]
   workflow_dispatch:
 
 permissions:

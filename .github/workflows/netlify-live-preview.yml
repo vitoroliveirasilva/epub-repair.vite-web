@@ -2,6 +2,7 @@ name: Live Netlify preview CSP and local EPUB privacy
 
 on:
   pull_request:
+    types: [opened, reopened, ready_for_review]
     branches: [prod]
     paths:
       - 'src/**'
@@ -10,17 +11,24 @@ on:
       - 'tests/browser-large-workflow.mjs'
       - '.github/workflows/netlify-live-preview.yml'
 
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Número da PR com deploy preview Netlify para homologação'
+        required: true
+        type: string
+
 permissions:
   contents: read
 
 concurrency:
-  group: live-netlify-${{ github.event.pull_request.number }}
+  group: live-netlify-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   live-preview:
     name: Live HTTPS CSP, Worker and offline EPUB download
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.head.repo.full_name == github.repository && !github.event.pull_request.draft)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -38,7 +46,7 @@ jobs:
       - name: Wait for this PR's public Netlify deploy preview
         shell: bash
         env:
-          PREVIEW_URL: https://deploy-preview-${{ github.event.number }}--epubrepair.netlify.app/
+          PREVIEW_URL: https://deploy-preview-${{ inputs.pr_number || github.event.pull_request.number }}--epubrepair.netlify.app/
         run: |
           set -euo pipefail
           echo "Verificando deploy preview do PR, sem publicar produção."
@@ -58,7 +66,7 @@ jobs:
       - name: Verify actual deployed HTTPS and security response headers
         shell: bash
         env:
-          PREVIEW_URL: https://deploy-preview-${{ github.event.number }}--epubrepair.netlify.app/
+          PREVIEW_URL: https://deploy-preview-${{ inputs.pr_number || github.event.pull_request.number }}--epubrepair.netlify.app/
         run: |
           set -euo pipefail
           curl --silent --show-error --location --fail --max-time 30             --dump-header "${RUNNER_TEMP}/netlify-live-headers.txt"             -o /dev/null "$PREVIEW_URL"
@@ -72,7 +80,7 @@ jobs:
         shell: bash
         env:
           BROWSER: chromium
-          EPUB_APP_URL: https://deploy-preview-${{ github.event.number }}--epubrepair.netlify.app/
+          EPUB_APP_URL: https://deploy-preview-${{ inputs.pr_number || github.event.pull_request.number }}--epubrepair.netlify.app/
           PLAYWRIGHT_MODULE: ${{ runner.temp }}/browser-harness/node_modules/playwright/index.mjs
         run: |
           set -euo pipefail
