@@ -2,7 +2,7 @@
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/0a6d6315-875c-4375-a73f-87859903eb27/deploy-status)](https://app.netlify.com/projects/epubrepair/deploys)
 [![CI](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/workflows/ci.yml/badge.svg?branch=prod)](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-2.2.0-blue)
+![Version](https://img.shields.io/badge/version-2.3.0-blue)
 ![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?logo=vite&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.x-3178C6?logo=typescript&logoColor=white)
 ![Vitest](https://img.shields.io/badge/tests-Vitest-6E9F18?logo=vitest&logoColor=white)

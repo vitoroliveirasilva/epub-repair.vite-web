@@ -1,8 +1,19 @@
 # Histórico de mudanças do EPUB Repair
 
-Alterações na branch `dev` **ainda não publicadas**. O pacote e a branch `prod` continuam em **v2.2.0**. Esta página documenta desenvolvimento e não representa uma nova release.
+## v2.3.0 (08/11/2026)
 
-## Unreleased: execução 10 (05/11/2026)
+Esta versão consolida as auditorias originais e complementares desenvolvidas na `dev`. A publicação em `prod` é controlada por PR, pelos checks de Node 20/22 e pela CI completa de produção. Os registros abaixo são históricos de desenvolvimento, não certificações universais de compatibilidade.
+
+- Robustez de EPUB/ZIP/XML/OPF/NCX/NAV, preservação de capítulo, capa, anotações, CSS e mídia, e correção de casos adversariais.
+- Workers para compactação e extração, progresso e cancelamento, fila de operações, relatórios e melhorias da interface.
+- Endurecimento de segurança conservador, sem classificar fontes/links HTTP(S) legítimos como malware automaticamente.
+- Auditoria original: **97 de 99 concluídos no escopo automatizado; E-082 e E-089 ainda requerem aparelhos físicos**.
+- Correções complementares E-100 a E-157 documentadas e testadas na `dev`.
+- Homologação em Android/iOS físicos e aparência em leitores reais continuam limitadas. Simuladores e EPUBCheck não substituem testes físicos; esta versão não é antivírus.
+
+Detalhes e evidências em [notas de release](.github/release-notes/v2.3.0.md), [auditoria dos 99](docs/AUDITORIA_99_PROGRESSO.md), [pós-99](docs/AUDITORIA_POST99.md) e [roteiro de homologação](docs/HOMOLOGACAO_MOBILE_REAL.md).
+
+## Histórico de desenvolvimento: execução 10 (05/11/2026)
 
 - Extração ZIP/CRC em Web Worker same-origin com progresso real, cancelamento e fallback seguro em navegadores sem Worker.
 - Botão de cancelamento, bloqueio de resultados atrasados, checkpoints no reparo/troca de capa e progresso de recompactação JSZip.
@@ -15,7 +26,7 @@ Alterações na branch `dev` **ainda não publicadas**. O pacote e a branch `pro
 **Auditoria:** 75 concluídos, 21 parciais e 3 pendentes. 
 O processamento DOM ainda não pode ser cancelado no meio de uma fase síncrona; não houve homologação física em leitores/navegadores.
 
-## Unreleased: execução 9 (05/11/2026)
+## Histórico de desenvolvimento: execução 9 (05/11/2026)
 
 - Fallbacks de tipos estrangeiros, incluindo imagens HEIC em XHTML e fallback XHTML/SVG no spine. Nenhum conteúdo de leitura é inventado.
 - Validação de datas UTC, unique-identifier, prefixos e refines do OPF sem alteração arbitrária dos metadados.
@@ -26,7 +37,7 @@ O processamento DOM ainda não pode ser cancelado no meio de uma fase síncrona;
 
 **Auditoria:** 72 concluídos, 19 parciais e 8 pendentes. Leitores e navegadores físicos permanecem fora da cobertura automatizada.
 
-## Unreleased: execução 8 (05/11/2026)
+## Histórico de desenvolvimento: execução 8 (05/11/2026)
 
 - Corrigida a perda de referências a renditions secundárias quando o container possui múltiplos rootfiles válidos.
 - Manifests de edições diferentes não são fundidos automaticamente e revisões parciais ficam identificadas.
@@ -38,7 +49,7 @@ O processamento DOM ainda não pode ser cancelado no meio de uma fase síncrona;
 
 **Auditoria:** 67 concluídos, 24 parciais e 8 pendentes, conforme o [quadro por item](docs/AUDITORIA_99_PROGRESSO.md).
 
-## Unreleased: auditoria dos 99 itens, execuções 1 a 6 (05/11/2026)
+## Histórico de desenvolvimento: auditoria dos 99 itens, execuções 1 a 6 (05/11/2026)
 
 ### Segurança de entradas e integridade
 
