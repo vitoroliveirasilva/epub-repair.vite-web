@@ -97,6 +97,10 @@ export async function repairEpub(
     }
     canceled();
     const applied = attempted.filter((action) => action.type !== 'skipped');
+    const approvedJpegConversions = new Set(attempted
+      .filter((action) => action.type === 'normalized' &&
+        action.title === 'JPEG progressivo convertido' && Boolean(action.file))
+      .map((action) => action.file!));
     warnings.push(...attempted.filter((action) => action.type === 'skipped')
       .map((action) => `Não aplicado: ${action.title}. ${action.detail}`));
 
@@ -115,6 +119,12 @@ export async function repairEpub(
     const after = await inspectEpub(outName, new Uint8Array(await blob.arrayBuffer()));
     canceled();
     assertNoNewCriticalIssues(before, after);
+    // Otimizar não libera alterações editoriais ou binárias fora das imagens
+    // expressamente convertidas e dos metadados removidos com consentimento.
+    warnings.push(...auditPreservation(loaded, optimizedFiles,
+      parsed.packageInfo, after.packageInfo,
+      canStripMetadata ? metadataCandidates : new Set(),
+      undefined, approvedJpegConversions));
     if (hasResidualActiveContent(after)) {
       warnings.push('Otimização concluída, mas ainda existem recursos suspeitos ou conteúdo ativo a revisar.');
     }
