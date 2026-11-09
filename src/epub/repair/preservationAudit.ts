@@ -21,7 +21,9 @@ export function auditPreservation(
   approvedJpegConversions: ReadonlySet<string> = new Set(),
 ): string[] {
   const warnings: string[] = [];
-  if (!after) return ['Não foi possível confirmar a estrutura editorial após o reparo.'];
+  if (!after) {
+    throw new Error('O EPUB gerado não possui estrutura editorial verificável após o reparo.');
+  }
 
   const readingPaths = (pkg: PackageDocumentInfo) => pkg.spine
     .map((item) => item.manifestItem?.resolvedPath || `ausente:${item.idref}`);
@@ -67,14 +69,13 @@ export function auditPreservation(
 
   const changedText: string[] = [];
   const potentiallyLostText: string[] = [];
-  const unverifiableText: string[] = [];
   for (const item of before.manifest) {
     if (!item.exists || !HTML_MEDIA_TYPES.has(item.mediaType)) continue;
     const oldBytes = original.files.get(item.resolvedPath)?.bytes;
     const newBytes = output.get(item.resolvedPath);
-    if (!oldBytes || !newBytes) {
-      changedText.push(item.resolvedPath);
-      continue;
+    if (!oldBytes) continue;
+    if (!newBytes) {
+      throw new Error('O reparo removeria um documento editorial declarado: ' + item.resolvedPath);
     }
     // DTBook possui book/bodymatter em vez do body XHTML. Preservar bytes
     // editoriais até haver um normalizador DTBook com auditoria própria.
@@ -84,15 +85,18 @@ export function auditPreservation(
     const oldMarkup = textDecoder.decode(oldBytes);
     const newMarkup = textDecoder.decode(newBytes);
     if (!sameBytes(oldBytes, newBytes)) {
-      compareInternalTargets(oldMarkup, newMarkup, item.resolvedPath);
-      compareEditorialBlocks(oldMarkup, newMarkup, item.resolvedPath);
-      compareSpecialMarkup(oldMarkup, newMarkup, item.resolvedPath);
-      compareTypographyPreservation(oldMarkup, newMarkup, item.resolvedPath);
+      compareInternalTargets(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
+      compareEditorialBlocks(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
+      compareSpecialMarkup(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
+      compareTypographyPreservation(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
     }
-    const oldText = extractReadableText(oldMarkup);
-    const newText = extractReadableText(newMarkup);
+    const oldText = extractReadableText(oldMarkup, item.mediaType);
+    const newText = extractReadableText(newMarkup, item.mediaType);
     if (oldText === undefined || newText === undefined) {
-      if (!sameBytes(oldBytes, newBytes)) unverifiableText.push(item.resolvedPath);
+      if (!sameBytes(oldBytes, newBytes)) {
+        throw new Error('A alteração editorial não pôde ser auditada com segurança em ' +
+          item.resolvedPath + '; a cópia modificada foi bloqueada.');
+      }
     } else if (oldText !== newText) {
       changedText.push(item.resolvedPath);
       if (!containsOriginalWordsInOrder(oldText, newText)) {
@@ -115,12 +119,6 @@ export function auditPreservation(
       `Revise o texto: ${changedText.slice(0, 5).join(', ')}`,
     );
   }
-  if (unverifiableText.length > 0) {
-    warnings.push(
-      `Não foi possível comparar o texto de ${unverifiableText.length} documento(s) modificado(s) ` +
-      'por erro de parsing; revisão editorial manual necessária.',
-    );
-  }
 
   // Reparo estrutural não pode regravar imagens/fontes sem ação explícita.
   for (const item of before.manifest) {
@@ -129,7 +127,10 @@ export function auditPreservation(
     }
     const oldBytes = original.files.get(item.resolvedPath)?.bytes;
     const newBytes = output.get(item.resolvedPath);
-    if (!oldBytes || !newBytes) continue;
+    if (!oldBytes) continue;
+    if (!newBytes) {
+      throw new Error('O reparo removeria uma imagem ou fonte editorial declarada: ' + item.resolvedPath);
+    }
     if (!sameBytes(oldBytes, newBytes)) {
       if (item.mediaType === 'image/svg+xml') {
         compareSvgPreservation(textDecoder.decode(oldBytes), textDecoder.decode(newBytes),
@@ -184,12 +185,9 @@ function auditMediaOverlayPreservation(
   }
 }
 
-function extractReadableText(markup: string): string | undefined {
-  if (typeof DOMParser === 'undefined') return undefined;
-  const document = new DOMParser().parseFromString(
-    markup.replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml',
-  );
-  if (document.getElementsByTagName('parsererror').length > 0) return undefined;
+function extractReadableText(markup: string, mediaType = 'application/xhtml+xml'): string | undefined {
+  const document = parseReadableDocument(markup, mediaType);
+  if (!document) return undefined;
   for (const element of Array.from(document.getElementsByTagName('*'))) {
     if (element.localName === 'script' || element.localName === 'style') element.remove();
   }
@@ -224,9 +222,10 @@ function containsOriginalWordsInOrder(before: string, after: string): boolean {
  * mas quebra a semântica de leitura. Conferir parágrafos, itens de lista e headings
  * na mesma sequência, permitindo apenas acréscimos dentro do bloco original.
  */
-function compareEditorialBlocks(before: string, after: string, path: string): void {
-  const original = parseReadableDocument(before);
-  const repaired = parseReadableDocument(after);
+function compareEditorialBlocks(before: string, after: string, path: string,
+  mediaType = 'application/xhtml+xml'): void {
+  const original = parseReadableDocument(before, mediaType);
+  const repaired = parseReadableDocument(after, mediaType);
   if (!original || !repaired) return;
   const blocks = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
     .filter((element) => /^(?:p|li|h[1-6])$/iu.test(element.localName))
@@ -252,9 +251,10 @@ function compareEditorialBlocks(before: string, after: string, path: string): vo
  * O reparo não é editor literário: tags inline e quebras explícitas já
  * existentes não podem desaparecer apenas porque o texto final é igual.
  */
-function compareTypographyPreservation(before: string, after: string, path: string): void {
-  const oldDoc = parseReadableDocument(before);
-  const newDoc = parseReadableDocument(after);
+function compareTypographyPreservation(before: string, after: string, path: string,
+  mediaType = 'application/xhtml+xml'): void {
+  const oldDoc = parseReadableDocument(before, mediaType);
+  const newDoc = parseReadableDocument(after, mediaType);
   if (!oldDoc || !newDoc) return;
   const typographic = /^(?:em|i|strong|b|u|s|small|sup|sub|span|cite|q|blockquote|pre|code|br|wbr)$/iu;
   const nodes = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
@@ -298,9 +298,10 @@ function compareTypographyPreservation(before: string, after: string, path: stri
   }
 }
 
-function compareInternalTargets(before: string, after: string, path: string): void {
-  const original = parseReadableDocument(before);
-  const output = parseReadableDocument(after);
+function compareInternalTargets(before: string, after: string, path: string,
+  mediaType = 'application/xhtml+xml'): void {
+  const original = parseReadableDocument(before, mediaType);
+  const output = parseReadableDocument(after, mediaType);
   if (!original || !output) return; // Já há alerta de comparação textual inconclusiva.
   const elements = (doc: Document): Element[] => Array.from(doc.getElementsByTagName('*'))
     .filter((element) => element.localName !== 'script' && element.localName !== 'style');
@@ -331,12 +332,17 @@ function compareInternalTargets(before: string, after: string, path: string): vo
   }
 }
 
-function parseReadableDocument(markup: string): Document | undefined {
+function parseReadableDocument(markup: string,
+  mediaType = 'application/xhtml+xml'): Document | undefined {
   if (typeof DOMParser === 'undefined') return undefined;
+  // text/html aceita tags void (<meta>, <br>, <img>) sem fechamento XML.
+  // Validar esse formato com parser XHTML fazia a auditoria ignorar seu conteúdo.
+  const isHtml = mediaType === 'text/html';
   const doc = new DOMParser().parseFromString(
-    markup.replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml',
+    isHtml ? markup : markup.replace(/&nbsp;/giu, '&#160;'),
+    isHtml ? 'text/html' : 'application/xhtml+xml',
   );
-  return doc.getElementsByTagName('parsererror').length > 0 ? undefined : doc;
+  return !isHtml && doc.getElementsByTagName('parsererror').length > 0 ? undefined : doc;
 }
 
 
@@ -386,9 +392,10 @@ function auditNavigationPreservation(
  * ruby ou direção explícita não pode ser tratada como sanitização inofensiva.
  * Marcação e estilos devem ser preservados; leitura visual real permanece pendente.
  */
-function compareSpecialMarkup(before: string, after: string, path: string): void {
-  const oldDoc = parseReadableDocument(before);
-  const newDoc = parseReadableDocument(after);
+function compareSpecialMarkup(before: string, after: string, path: string,
+  mediaType = 'application/xhtml+xml'): void {
+  const oldDoc = parseReadableDocument(before, mediaType);
+  const newDoc = parseReadableDocument(after, mediaType);
   if (!oldDoc || !newDoc) return;
   const semantic = (doc: Document): string[] => Array.from(doc.getElementsByTagName('*'))
     .filter((node) => ['math', 'mrow', 'mi', 'mn', 'mo', 'msup', 'msub', 'mfrac',
