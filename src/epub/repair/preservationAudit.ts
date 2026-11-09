@@ -389,6 +389,17 @@ function auditNavigationPreservation(
     if (oldTargets.join('\u0000') !== newTargets.join('\u0000')) {
       throw new Error('O reparo alteraria destinos ou ordem do sumário em ' + item.resolvedPath);
     }
+    // O destino do link, isoladamente, não protege o sumário EPUB 3:
+    // trocar toc/page-list, hierarquia, rótulo acessível ou título pode
+    // destruir a navegação mantendo cada href no mesmo lugar.
+    if (item === before.navItem) {
+      const previous = epubNavSemanticFingerprint(oldDoc);
+      const current = epubNavSemanticFingerprint(newDoc);
+      if (previous.join('\u0000') !== current.join('\u0000')) {
+        throw new Error('O reparo alteraria a hierarquia, semântica ou os rótulos ' +
+          'editoriais do índice EPUB 3 em ' + item.resolvedPath);
+      }
+    }
     if (item.mediaType === 'application/x-dtbncx+xml') {
       const fingerprint = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
         .filter((node) => node.localName === 'navPoint')
@@ -409,6 +420,58 @@ function auditNavigationPreservation(
     }
   }
   return notes;
+}
+
+/**
+ * Impressão digital semântica do NAV: ignora espaços e conteúdo ativo
+ * removível, mas conserva a árvore ol/li, destinos, marcadores EPUB,
+ * títulos e atributos que leitores de tela usam para navegar.
+ */
+function epubNavSemanticFingerprint(doc: Document): string[] {
+  const xhtmlNamespace = 'http://www.w3.org/1999/xhtml';
+  const epubNamespace = 'http://www.idpf.org/2007/ops';
+  const semantic = new Set(['ol', 'li', 'a', 'span']);
+  const semanticValue = (node: Element): string => {
+    const clone = node.cloneNode(true) as Element;
+    for (const element of Array.from(clone.getElementsByTagName('*'))) {
+      if (['script', 'style', 'iframe', 'object', 'embed'].includes(
+        element.localName.toLowerCase())) element.remove();
+    }
+    return (clone.textContent ?? '').replace(/\s+/gu, ' ').trim();
+  };
+  const nodes = Array.from(doc.getElementsByTagName('*')).filter(
+    node => node.localName === 'nav' && node.namespaceURI === xhtmlNamespace);
+  return nodes.map((nav) => {
+    const epubType = (node: Element): string => node.getAttributeNS(epubNamespace, 'type')
+      ?? node.getAttribute('epub:type') ?? '';
+    const meta = [
+      epubType(nav), nav.getAttribute('id') ?? '',
+      nav.getAttribute('role') ?? '', nav.getAttribute('aria-label') ?? '',
+      nav.getAttribute('aria-labelledby') ?? '', nav.hasAttribute('hidden'),
+    ];
+    const descendants = Array.from(nav.getElementsByTagName('*'))
+      .filter(node => semantic.has(node.localName))
+      .map(node => {
+        const ancestry: string[] = [];
+        for (let parent = node.parentElement; parent && parent !== nav;
+          parent = parent.parentElement) {
+          if (semantic.has(parent.localName)) ancestry.push(parent.localName);
+        }
+        ancestry.reverse();
+        return JSON.stringify([
+          ancestry, node.localName, node.getAttribute('id') ?? '',
+          node.getAttribute('href') ?? '', epubType(node),
+          node.getAttribute('role') ?? '',
+          node.getAttribute('aria-label') ?? '',
+          node.getAttribute('aria-labelledby') ?? '',
+          node.getAttribute('title') ?? '',
+          node.getAttribute('class') ?? '',
+          node.getAttribute('start') ?? '', node.hasAttribute('reversed'),
+          ['a', 'span'].includes(node.localName) ? semanticValue(node) : '',
+        ]);
+      });
+    return JSON.stringify([meta, descendants]);
+  });
 }
 
 /**

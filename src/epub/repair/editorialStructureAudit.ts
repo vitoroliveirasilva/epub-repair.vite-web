@@ -1,4 +1,5 @@
 import { isRemoteUrl, isSafeExternalLinkUrl, isSafeRemoteResourceUrl, isSafeInlineImageDataUrl, resolveReference, splitSrcsetCandidates } from '../utils/pathUtils';
+import { containsDangerousCss } from '../sanitize/sanitizeActiveContent';
 
 export interface CoverReferenceApproval {
   path: string;
@@ -166,14 +167,16 @@ function svgSignature(svg: Element): string {
     const attributes = Array.from(node.attributes)
       .filter((attribute) => {
         const name = attribute.name.toLowerCase();
+        if (name === 'style') return !containsDangerousCss(attribute.value);
         return !name.startsWith('on') && !name.startsWith('xmlns') &&
-          !['style', 'href', 'xlink:href', 'src', 'data'].includes(name);
+          !['href', 'xlink:href', 'src', 'data'].includes(name);
       })
       .map((attr) => [attr.namespaceURI ?? '', attr.localName, attr.value])
       .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+    const readable = ['text', 'tspan'].includes(node.localName) ||
+      (node.localName === 'style' && !containsDangerousCss(node.textContent ?? ''));
     nodes.push([node.namespaceURI, node.localName, attributes,
-      (node.localName === 'text' || node.localName === 'tspan')
-        ? (node.textContent ?? '').replace(/\s+/gu, ' ').trim() : '']);
+      readable ? (node.textContent ?? '').replace(/\s+/gu, ' ').trim() : '']);
     for (const child of Array.from(node.children)) visit(child);
   };
   visit(svg);
