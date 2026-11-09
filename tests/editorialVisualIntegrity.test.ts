@@ -17,7 +17,7 @@ function fixture(oldMarkup: string, newMarkup: string, resources: string[] = [],
   const files = new Map([[path, {bytes:encode(oldMarkup)}],
     ...resources.map((item) => [item, {bytes:Uint8Array.of(1,2,3)}] as const)]);
   const loaded = { files } as unknown as LoadedEpub;
-  const output = new Map([[path, encode(newMarkup)],
+  const output = new Map<string, Uint8Array>([[path, encode(newMarkup)],
     ...resources.map((item) => [item, Uint8Array.of(1,2,3)] as const)]);
   if (cover) output.set(cover.path,cover.bytes);
   return () => auditPreservation(loaded, output, pkg, pkg, new Set(), cover);
