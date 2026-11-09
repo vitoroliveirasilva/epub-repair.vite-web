@@ -20,6 +20,7 @@ export function auditPreservation(
   approvedMetadataCleanup: ReadonlySet<string> = new Set(),
   approvedCoverReplacement?: CoverReferenceApproval,
   approvedJpegConversions: ReadonlySet<string> = new Set(),
+  approvedRemoteRemoval = false,
 ): string[] {
   const warnings: string[] = [];
   const originalPaths = new Set(original.files.keys());
@@ -94,7 +95,7 @@ export function auditPreservation(
       compareTypographyPreservation(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
       // Texto intacto não garante tabelas, diagramas ou imagens intactos.
       auditVisualStructures(oldMarkup, newMarkup, item.resolvedPath, item.mediaType,
-        originalPaths, finalPaths, approvedCoverReplacement);
+        originalPaths, finalPaths, approvedCoverReplacement, !approvedRemoteRemoval);
     }
     const oldText = extractReadableText(oldMarkup, item.mediaType);
     const newText = extractReadableText(newMarkup, item.mediaType);

@@ -255,7 +255,8 @@ export async function repairEpub(
   canceled();
   assertNoNewCriticalIssues(before, after);
   warnings.push(...auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo,
-    canStripMetadata ? metadataCandidates : undefined));
+    canStripMetadata ? metadataCandidates : undefined,
+    undefined, new Set(), options.removeRemoteResourceLinks));
   const fileDiffs = createTextFileDiffs(new Map(Array.from(loaded.files, ([name, entry]) =>
     [name, entry.bytes])), files);
   if (hasResidualActiveContent(after)) {

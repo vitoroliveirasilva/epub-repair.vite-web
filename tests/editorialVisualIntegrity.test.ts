@@ -8,7 +8,8 @@ const encode = (text: string) => new TextEncoder().encode(text);
 const wrap = (body: string) => '<html xmlns="http://www.w3.org/1999/xhtml"><body>' +
   body + '</body></html>';
 function fixture(oldMarkup: string, newMarkup: string, resources: string[] = [],
-  cover?: {path:string; bytes:Uint8Array; previousPath?:string; allowedPages?:ReadonlySet<string>}) {
+  cover?: {path:string; bytes:Uint8Array; previousPath?:string; allowedPages?:ReadonlySet<string>},
+  remoteRemoval = false) {
   const path = 'OPS/Text/chapter.xhtml';
   const chapter = { id: 'chapter', resolvedPath: path, mediaType: 'application/xhtml+xml',
     exists: true };
@@ -20,7 +21,8 @@ function fixture(oldMarkup: string, newMarkup: string, resources: string[] = [],
   const output = new Map<string, Uint8Array>([[path, encode(newMarkup)],
     ...resources.map((item) => [item, Uint8Array.of(1,2,3)] as const)]);
   if (cover) output.set(cover.path,cover.bytes);
-  return () => auditPreservation(loaded, output, pkg, pkg, new Set(), cover);
+  return () => auditPreservation(loaded, output, pkg, pkg, new Set(), cover,
+    new Set(), remoteRemoval);
 }
 
 describe('auditoria visual não destrutiva', () => {
@@ -89,6 +91,43 @@ describe('auditoria visual não destrutiva', () => {
     expect(fixture(original,changed,sources,cover)()).toEqual([]);
     expect(fixture(original,changed,sources,
       {...cover,allowedPages:new Set<string>()})).toThrow(/fonte CSS/u);
+  });
+  it('preserva link HTTP(S) externo que não é risco e não teve remoção autorizada', () => {
+    const original=wrap('<p>Veja <a href="https://example.org/reference?q=1&amp;p=2">a referência</a>.</p>');
+    const changed=wrap('<p>Veja <a>a referência</a>.</p>');
+    expect(fixture(original,changed)).toThrow(/mídia|referenciada/u);
+    // Consentimento explícito de remover recursos remotos autoriza o resultado.
+    expect(fixture(original,changed,[],undefined,true)()).toEqual([]);
+  });
+  it('protege fontes CSS externas HTTPS vinculadas ao XHTML', () => {
+    const original=wrap('<link rel="stylesheet" href="https://cdn.example.org/book.css"/>' +
+      '<p>Capítulo</p>');
+    const changed=wrap('<p>Capítulo</p>');
+    expect(fixture(original,changed)).toThrow(/fonte CSS/u);
+    expect(fixture(original,changed,[],undefined,true)()).toEqual([]);
+  });
+  it('não perde imagem remota segura por engano, sem confundir com malware', () => {
+    const original=wrap('<p>Foto</p><img src="https://cdn.example.org/photo.png"/>');
+    const changed=wrap('<p>Foto</p><img/>');
+    expect(fixture(original,changed)).toThrow(/imagem/u);
+  });
+  it('preserva links mailto e tel salvo remoção externa voluntária', () => {
+    const original=wrap('<p><a href="mailto:editor@example.org">Contato</a>' +
+      '<a href="tel:+551100000000">Ligar</a></p>');
+    const changed=wrap('<p><a>Contato</a><a>Ligar</a></p>');
+    expect(fixture(original,changed)).toThrow(/referenciada/u);
+    expect(fixture(original,changed,[],undefined,true)()).toEqual([]);
+  });
+  it('aceita neutralizar javascript: em href sem preservar esquema executável', () => {
+    const original=wrap('<p><a href="javascript:alert(1)">Link</a></p>');
+    const changed=wrap('<p><a>Link</a></p>');
+    expect(fixture(original,changed)()).toEqual([]);
+  });
+  it('não altera referência interna de símbolo SVG enquanto mantém geometria', () => {
+    const original=wrap('<svg xmlns="http://www.w3.org/2000/svg">' +
+      '<symbol id="icon"><rect width="2"/></symbol><use href="#icon"/></svg>');
+    const changed=original.replace('href="#icon"','href="#not-found"');
+    expect(fixture(original,changed)).toThrow(/imagem, mídia ou fonte CSS/u);
   });
   it('protege a geometria de SVG embutido e aceita remover script ativo', () => {
     const root=wrap('<p>Figura</p><svg xmlns="http://www.w3.org/2000/svg">' +

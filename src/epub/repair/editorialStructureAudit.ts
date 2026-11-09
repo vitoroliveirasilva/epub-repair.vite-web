@@ -1,4 +1,4 @@
-import { isRemoteUrl, isSafeInlineImageDataUrl, resolveReference, splitSrcsetCandidates } from '../utils/pathUtils';
+import { isRemoteUrl, isSafeExternalLinkUrl, isSafeRemoteResourceUrl, isSafeInlineImageDataUrl, resolveReference, splitSrcsetCandidates } from '../utils/pathUtils';
 
 export interface CoverReferenceApproval {
   path: string;
@@ -70,13 +70,14 @@ function validateTables(original: Document, repaired: Document, path: string): v
   }
 }
 
-function embeddedMedia(doc: Document, path: string, knownPaths: ReadonlySet<string>): MediaReference[] {
+function embeddedMedia(doc: Document, path: string, knownPaths: ReadonlySet<string>,
+  preserveRemote: boolean): MediaReference[] {
   const output: MediaReference[] = [];
   const selectors: Record<string, string[]> = {
     img: ['src', 'srcset'], source: ['src', 'srcset'],
     video: ['src', 'poster'], audio: ['src'], track: ['src'],
     image: ['href', 'xlink:href'], use: ['href', 'xlink:href'],
-    link: ['href'],
+    link: ['href'], a: ['href'],
   };
   for (const element of Array.from(doc.getElementsByTagName('*'))) {
     const name = element.localName.toLowerCase();
@@ -92,13 +93,28 @@ function embeddedMedia(doc: Document, path: string, knownPaths: ReadonlySet<stri
       const candidates = attr === 'srcset' ? splitSrcsetCandidates(value) : [value];
       for (const candidate of candidates) {
         const raw = (attr === 'srcset' ? candidate.trim().split(/\s+/u)[0] : candidate) ?? '';
-        if (!raw || raw.startsWith('#')) continue;
+        if (!raw) continue;
+        if (raw.startsWith('#')) {
+          // SVG <use href="#symbol"> reutiliza um desenho local sem recurso ZIP.
+          if (name === 'use' || name === 'image') {
+            output.push({ element: name, attribute: attr, target: raw });
+          }
+          continue;
+        }
         // data:imagem segura é parte editorial do livro, não deve sumir ao sanear links.
         if (isSafeInlineImageDataUrl(raw)) {
           output.push({ element: name, attribute: attr, target: raw });
           continue;
         }
-        if (isRemoteUrl(raw)) continue;
+        if (isRemoteUrl(raw)) {
+          // Recursos HTTP(S) externos e links mailto:/tel: são legítimos.
+          // Removê-los silenciosamente é regressão se o usuário não optou por isso.
+          if (preserveRemote && (isSafeRemoteResourceUrl(raw) ||
+              (name === 'a' && isSafeExternalLinkUrl(raw)))) {
+            output.push({ element: name, attribute: attr, target: raw });
+          }
+          continue;
+        }
         const resolved = resolveReference(path, raw);
         if (resolved.safe && knownPaths.has(resolved.path)) {
           output.push({ element: name, attribute: attr, target: resolved.path });
@@ -111,9 +127,9 @@ function embeddedMedia(doc: Document, path: string, knownPaths: ReadonlySet<stri
 
 function validateMedia(original: Document, repaired: Document, path: string,
   oldPaths: ReadonlySet<string>, newPaths: ReadonlySet<string>,
-  approval?: CoverReferenceApproval): void {
-  const originals = embeddedMedia(original, path, oldPaths);
-  const current = embeddedMedia(repaired, path, newPaths);
+  approval?: CoverReferenceApproval, preserveRemote = true): void {
+  const originals = embeddedMedia(original, path, oldPaths, preserveRemote);
+  const current = embeddedMedia(repaired, path, newPaths, preserveRemote);
   let index = 0;
   for (const expected of originals) {
     let found = false;
@@ -185,8 +201,8 @@ function validateInlineSvg(original: Document, repaired: Document, path: string)
  * de texto do EPUB, isoladamente, não consegue proteger.
  *
  * Recursos ausentes não são protegidos por esta camada; o reparador já pode
- * marcá-los com texto mediante consentimento. URL remota não é considerada
- * ameaça nem recurso local: sua política é tratada pelo sanitizer.
+ * marcá-los com texto mediante consentimento. URLs remotas HTTP(S) e links
+ * legítimos são preservados salvo opt-in explícito de remoção no sanitizer.
  */
 export function auditVisualStructures(
   beforeMarkup: string,
@@ -196,6 +212,7 @@ export function auditVisualStructures(
   originalPaths: ReadonlySet<string>,
   finalPaths: ReadonlySet<string>,
   coverApproval?: CoverReferenceApproval,
+  preserveRemote = true,
 ): void {
   const before = parseEditorial(beforeMarkup, mediaType);
   const after = parseEditorial(afterMarkup, mediaType);
@@ -203,6 +220,6 @@ export function auditVisualStructures(
   // possa ser comparada por parsing (fail-closed).
   if (!before || !after) return;
   validateTables(before, after, filePath);
-  validateMedia(before, after, filePath, originalPaths, finalPaths, coverApproval);
+  validateMedia(before, after, filePath, originalPaths, finalPaths, coverApproval, preserveRemote);
   validateInlineSvg(before, after, filePath);
 }
