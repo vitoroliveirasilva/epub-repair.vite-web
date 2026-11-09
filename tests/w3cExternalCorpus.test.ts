@@ -33,6 +33,27 @@ function parse(markup: string): Document {
   return doc;
 }
 
+/** A normalização opcional de idioma adiciona lang equivalente a xml:lang.
+ * Comparar conteúdo semântico em vez de exigir bytes idênticos de serialização.
+ */
+function expectNavSemanticsPreserved(sample: Sample, source: string): void {
+  const before = parse(read(sample, 'EPUB/nav.xhtml'));
+  const after = parse(source);
+  const tags = new Set(['nav', 'ol', 'li', 'a', 'span']);
+  const snapshot = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
+    .filter(node => tags.has(node.localName))
+    .map(node => [
+      node.localName,
+      node.getAttribute('href') ?? '',
+      node.getAttributeNS('http://www.idpf.org/2007/ops', 'type') ??
+        node.getAttribute('epub:type') ?? '',
+      (node.textContent ?? '').replace(/\s+/gu, ' ').trim(),
+    ]);
+  expect(snapshot(after)).toEqual(snapshot(before));
+  expect(after.documentElement.getAttribute('xml:lang'))
+    .toBe(before.documentElement.getAttribute('xml:lang'));
+}
+
 describe('corpus externo W3C EPUB Tests, fonte oficial reempacotada offline', () => {
   for (const sample of samples) {
     it(sample + ': corrigir ZIP sem degradar texto, MathML ou SVG', async () => {
@@ -93,8 +114,8 @@ describe('corpus externo W3C EPUB Tests, fonte oficial reempacotada offline', ()
       const originalText = parse(source).getElementsByTagName('body')[0]?.textContent;
       expect(parse(content).getElementsByTagName('body')[0]?.textContent)
         .toBe(originalText);
-      expect(await fixed.file('EPUB/nav.xhtml')!.async('string'))
-        .toBe(read('cnt-xhtml-support', 'EPUB/nav.xhtml'));
+      expectNavSemanticsPreserved('cnt-xhtml-support',
+        await fixed.file('EPUB/nav.xhtml')!.async('string'));
     } finally {
       vi.unstubAllGlobals();
     }
@@ -126,8 +147,8 @@ describe('corpus externo W3C EPUB Tests, fonte oficial reempacotada offline', ()
         .toEqual(find(originalDoc, 'path').map(node => node.getAttribute('d')));
       expect(find(fixedDoc, 'style').map(node => node.textContent))
         .toEqual(find(originalDoc, 'style').map(node => node.textContent));
-      expect(await fixed.file('EPUB/nav.xhtml')!.async('string'))
-        .toBe(read(sample, 'EPUB/nav.xhtml'));
+      expectNavSemanticsPreserved(sample,
+        await fixed.file('EPUB/nav.xhtml')!.async('string'));
     } finally {
       vi.unstubAllGlobals();
     }
