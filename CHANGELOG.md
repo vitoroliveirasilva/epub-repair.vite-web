@@ -1,5 +1,33 @@
 # Histórico de mudanças do EPUB Repair
 
+## v2.4.0 (candidata, **não publicada**)
+
+Esta entrada registra apenas mudanças existentes na `dev`, ainda
+pendentes de homologação pré-merge e aprovação. A produção permanece
+em v2.3.0 até a conclusão do processo.
+
+- Reforço do gate editorial nas rotas de reparo **e otimização**, com
+  rejeição segura de alterações não verificáveis em HTML legado.
+- Proteção das estruturas e apresentações: ordem do spine, tabelas,
+  âncoras, NAV EPUB 3, NCX hierárquico, MathML, ruby, SVG inline,
+  estilos visuais, mídias e folhas CSS vinculadas.
+- Substituição de capa com aprovação restrita às páginas de rosto e às
+  folhas CSS clonadas, sem alterar estilos de capítulos compartilhados.
+- Preservação de fontes, URLs HTTP(S) e links legítimos por padrão;
+  remoção opcional de recursos remotos somente sob consentimento.
+- Testes ampliados com três amostras **oficiais W3C EPUB Tests** de
+  XHTML, MathML e SVG, além de variantes com scripts adversariais.
+- Base automatizada anterior à candidata: **580 testes em 112 arquivos**
+  e CI rápida Node 22 aprovada. Este número não corresponde à
+  homologação de release v2.4.0.
+- **Limitações mantidas:** E-082 e E-089 dependem de teste em hardware
+  iOS/Android físico; a matriz de release deve ser executada no SHA
+  exato da candidata antes de qualquer promoção.
+
+Detalhes, critérios objetivos e dependências adiadas em
+[plano da candidata](docs/RELEASE_2_4_0_CANDIDATA.md).
+
+
 ## v2.3.0 (08/11/2026)
 
 Esta versão consolida as auditorias originais e complementares desenvolvidas na `dev`. A publicação em `prod` é controlada por PR, pelos checks de Node 20/22 e pela CI completa de produção. Os registros abaixo são históricos de desenvolvimento, não certificações universais de compatibilidade.

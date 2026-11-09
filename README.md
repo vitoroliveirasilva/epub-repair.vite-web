@@ -250,10 +250,18 @@ O índice (`toc.ncx` no EPUB 2 ou `nav.xhtml` no EPUB 3) descreve a navegação 
 
 ## Auditoria de conformidade e segurança
 
-A CI da branch `dev` também utiliza o **EPUBCheck 5.4.0 oficial**, verificando uma fixture
-reparada pelo motor real em navegador simulado. O pacote é baixado da release W3C e
-validado por SHA-256. Essa prova automatizada **não** transforma o site em EPUBCheck
-nem garante conformidade de qualquer livro arbitrário.
+A `dev` executa a **CI rápida** (Node 22, TypeScript, lint, testes, build e
+auditoria npm). O **EPUBCheck 5.4.0 oficial**, Node 20/22, Calibre,
+navegadores Chromium/Firefox/WebKit, cobertura e prévia HTTPS são
+verificados na **homologação de uma PR pronta para `prod`** (conforme
+gatilhos e filtros dos workflows). A PR de candidata permanece em
+rascunho até o início explícito da homologação, economizando minutos
+de CI. O EPUBCheck usa uma distribuição W3C fixada por SHA-256.
+Nenhuma destas verificações certifica qualquer EPUB arbitrário nem
+substitui testes em aparelhos físicos.
+
+- [Política econômica de CI e homologação](docs/CI_ECONOMICO.md)
+- [Plano de homologação da candidata v2.4.0](docs/RELEASE_2_4_0_CANDIDATA.md)
 
 - [Modelo de ameaças, privacidade e limites](docs/SEGURANCA_E_LIMITES.md)
 - [Matriz de formatos EPUB e validações](docs/MATRIZ_COMPATIBILIDADE.md)

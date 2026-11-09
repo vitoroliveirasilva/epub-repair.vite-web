@@ -18,7 +18,9 @@ Estado consultado em 05/11/2026 por API do GitHub, repositório
   as branches. Portanto, a ausência de proteção legada não pode ser
   afirmada apenas a partir desta consulta.
 - A política de tags não foi confirmada por ruleset de tags.
-  A release estável continua `v2.2.0` e nenhuma tag/release foi criada.
+  Este estado de proteção foi observado em 05/11/2026; desde então,
+  a `prod` recebeu a release `v2.3.0` em 08/11/2026.
+  A candidata `v2.4.0` permanece exclusivamente na `dev`.
 
 ## Política operacional observada
 

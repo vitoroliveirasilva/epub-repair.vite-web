@@ -15,10 +15,13 @@ ruleset **Protect prod**, que exige os contextos de qualidade de Node.js 20 e 22
 | Cron semanal | Auditorias de dependências existentes | Verificações recorrentes, fora do ciclo de commits |
 
 **Importante:** publicar alterações somente em `dev` durante o desenvolvimento.
-A PR #32 é um rascunho de homologação `dev` → `prod`, marcada NÃO MERGEAR.
-Ela já existe e sincroniza automaticamente com cada push na `dev`.
-PR em rascunho não repete os dois checks Node 20/22: usa apenas a CI rápida do push na `dev`.
-Ao marcar **Ready for review**, os dois checks voltam a rodar automaticamente.
+A antiga PR #32 foi encerrada e **não é candidata de release**.
+A candidata `v2.4.0` deve ter uma nova PR `dev` → `prod`,
+inicialmente **draft / NÃO MERGEAR**. Rascunhos não repetem a
+matriz Node 20/22: apenas o push na `dev` executa a CI rápida.
+Marcar **Ready for review** inicia a homologação completa, e não
+significa autorização de merge ou promoção para `prod`.
+Ver `docs/RELEASE_2_4_0_CANDIDATA.md`.
 Os workflows de **Calibre, navegadores e cobertura agora rodam automaticamente apenas em PRs para `prod` que não estejam em rascunho**, quando arquivos relevantes mudarem, além do push final em `prod`. EPUBCheck também roda na PR pronta. Kindle Previewer e emuladores iOS/Android permanecem manuais. Evitar abrir PR pronta até terminar os lotes de correção; uma sincronização de PR pronta dispara novamente a homologação pertinente.
 
 ## Regras para economizar
