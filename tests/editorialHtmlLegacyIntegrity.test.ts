@@ -13,8 +13,7 @@ function audit(beforeMarkup: string, afterMarkup: string, mediaType = 'text/html
     manifest: [entry],
     spine: [{ idref: 'chapter', manifestItem: entry }],
   } as unknown as PackageDocumentInfo;
-  const loaded = { files: new Map([[path, { bytes: enc.encode(beforeMarkup) }]]) }
-    as unknown as LoadedEpub;
+  const loaded = { files: new Map([[path, { bytes: enc.encode(beforeMarkup) }]]) } as unknown as LoadedEpub;
   return () => auditPreservation(loaded,
     new Map([[path, enc.encode(afterMarkup)]]), pkg, pkg);
 }
@@ -47,8 +46,7 @@ describe('estabilidade editorial: HTML legado, recursos e falha fechada', () => 
     const path = 'OPS/appendix.html';
     const item = { id: 'appendix', resolvedPath: path, exists: true, mediaType: 'text/html' };
     const pkg = { manifest: [item], spine: [] } as unknown as PackageDocumentInfo;
-    const loaded = { files: new Map([[path, { bytes: enc.encode('<p>Apêndice</p>') }]]) }
-      as unknown as LoadedEpub;
+    const loaded = { files: new Map([[path, { bytes: enc.encode('<p>Apêndice</p>') }]]) } as unknown as LoadedEpub;
     expect(() => auditPreservation(loaded, new Map(), pkg, pkg))
       .toThrow(/documento editorial declarado/u);
   });
@@ -58,8 +56,7 @@ describe('estabilidade editorial: HTML legado, recursos e falha fechada', () => 
       const path = 'OPS/resource';
       const item = { id: 'res', resolvedPath: path, exists: true, mediaType: mime };
       const pkg = { manifest: [item], spine: [] } as unknown as PackageDocumentInfo;
-      const loaded = { files: new Map([[path, { bytes: Uint8Array.of(1, 2) }]]) }
-        as unknown as LoadedEpub;
+      const loaded = { files: new Map([[path, { bytes: Uint8Array.of(1, 2) }]]) } as unknown as LoadedEpub;
       expect(() => auditPreservation(loaded, new Map(), pkg, pkg))
         .toThrow(/imagem ou fonte editorial/u);
     }
@@ -76,8 +73,7 @@ describe('estabilidade editorial: HTML legado, recursos e falha fechada', () => 
     const path = 'OPS/chapter.html';
     const entry = { id: 'c', exists: true, resolvedPath: path, mediaType: 'text/html' };
     const pkg = { manifest: [entry], spine: [] } as unknown as PackageDocumentInfo;
-    const loaded = { files: new Map([[path, { bytes: enc.encode('<p>Oi</p>') }]]) }
-      as unknown as LoadedEpub;
+    const loaded = { files: new Map([[path, { bytes: enc.encode('<p>Oi</p>') }]]) } as unknown as LoadedEpub;
     expect(() => auditPreservation(loaded, new Map([[path, enc.encode('<p>Oi</p>')]]),
       pkg, undefined)).toThrow(/estrutura editorial verificável/u);
   });
