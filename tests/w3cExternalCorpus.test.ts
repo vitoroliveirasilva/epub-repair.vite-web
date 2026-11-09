@@ -88,7 +88,8 @@ describe('corpus externo W3C EPUB Tests, fonte oficial reempacotada offline', ()
       expect(result.after.stats.fatalCount).toBe(0);
       const fixed = await JSZip.loadAsync(await result.blob!.arrayBuffer());
       const content = await fixed.file('EPUB/content_001.xhtml')!.async('string');
-      expect(content).not.toMatch(/<script\\b/iu);
+      expect(Array.from(parse(content).getElementsByTagName('*'))
+        .some(node => node.localName === 'script')).toBe(false);
       const originalText = parse(source).getElementsByTagName('body')[0]?.textContent;
       expect(parse(content).getElementsByTagName('body')[0]?.textContent)
         .toBe(originalText);
