@@ -71,8 +71,9 @@ jobs:
         run: npm run build
 
   epubcheck:
-    # EPUBCheck somente manual ou push na prod; não repetir na PR de homologação em draft.
-    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/prod'
+    # O EPUBCheck deve validar a candidata de release ANTES do merge; drafts
+    # não consomem recursos de certificação e dev continua com gate barato.
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/prod' || (github.event_name == 'pull_request' && github.base_ref == 'prod' && !github.event.pull_request.draft)
     name: EPUBCheck 5.4.0 / EPUB reparado
     runs-on: ubuntu-latest
     timeout-minutes: 15

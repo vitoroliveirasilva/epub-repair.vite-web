@@ -9,6 +9,15 @@ on:
       - 'vitest.config.ts'
       - '.github/workflows/coverage.yml'
       - 'package*.json'
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches: [prod]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'vitest.config.ts'
+      - '.github/workflows/coverage.yml'
+      - 'package*.json'
   workflow_dispatch:
 
 permissions:
@@ -20,6 +29,7 @@ concurrency:
 
 jobs:
   coverage:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:

@@ -15,6 +15,21 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/browser-matrix.yml'
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches: [prod]
+    paths:
+      - 'src/**'
+      - 'tests/browser-smoke.mjs'
+      - 'tests/browser-csp.mjs'
+      - 'tests/browser-resource-budget.mjs'
+      - 'tests/browser-large-workflow.mjs'
+      - 'netlify.toml'
+      - 'src/epub/repair/repairImages.ts'
+      - 'vite.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/browser-matrix.yml'
   workflow_dispatch:
 
 permissions:
@@ -26,6 +41,8 @@ concurrency:
 
 jobs:
   browser:
+    # Drafts sincronizam dezenas de vezes; executar suíte cara só em PR pronta.
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     name: Browser smoke / ${{ matrix.browser }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
