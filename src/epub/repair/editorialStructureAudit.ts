@@ -6,6 +6,8 @@ export interface CoverReferenceApproval {
   /** A substituição de referência só é permitida nas páginas de capa aprovadas. */
   previousPath?: string | undefined;
   allowedPages?: ReadonlySet<string> | undefined;
+  /** Folhas CSS duplicadas para a capa, sem tocar nos estilos dos capítulos. */
+  styleAliases?: ReadonlyMap<string, string> | undefined;
 }
 
 type MediaReference = { element: string; attribute: string; target: string };
@@ -118,10 +120,14 @@ function validateMedia(original: Document, repaired: Document, path: string,
     for (; index < current.length; index += 1) {
       const next = current[index]!;
       const sameLocation = next.target === expected.target;
-      const approvedCover = Boolean(approval?.allowedPages?.has(path) &&
-        approval.previousPath === expected.target && approval.path === next.target);
+      const allowedPage = Boolean(approval?.allowedPages?.has(path));
+      const approvedCover = Boolean(allowedPage &&
+        approval?.previousPath === expected.target && approval.path === next.target);
+      const approvedStyle = Boolean(allowedPage && expected.element === 'link' &&
+        expected.attribute === 'href' &&
+        approval?.styleAliases?.get(expected.target) === next.target);
       if (next.element === expected.element && next.attribute === expected.attribute &&
-          (sameLocation || approvedCover)) {
+          (sameLocation || approvedCover || approvedStyle)) {
         found = true;
         index += 1;
         break;

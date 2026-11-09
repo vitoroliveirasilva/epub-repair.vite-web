@@ -52,7 +52,7 @@ describe('auditoria visual não destrutiva', () => {
   });
   it('permite substituir por marcador apenas quando a imagem realmente falta', () => {
     const original=wrap('<p>Texto</p><img src="../Images/ausente.png"/>');
-    const changed=wrap('<p>Texto</p><span>[Imagem indisponível]</span>');
+    const changed=wrap('<p>Texto </p><span>[Imagem indisponível]</span>');
     expect(fixture(original,changed)()).toEqual(expect.arrayContaining([
       expect.stringMatching(/acréscimos/u),
     ]));
@@ -78,6 +78,17 @@ describe('auditoria visual não destrutiva', () => {
     const after=wrap('<p>Texto</p>');
     expect(fixture(before,after,['OPS/Styles/book.css']))
       .toThrow(/imagem, mídia ou fonte CSS/u);
+  });
+  it('permite clonar CSS da capa apenas nas páginas autorizadas', () => {
+    const original=wrap('<link rel="stylesheet" href="../Styles/book.css"/>');
+    const changed=wrap('<link rel="stylesheet" href="../Styles/book.epub-cover.css"/>');
+    const cover={path:'OPS/Images/cover.jpg',bytes:Uint8Array.of(1),
+      allowedPages:new Set(['OPS/Text/chapter.xhtml']),
+      styleAliases:new Map([['OPS/Styles/book.css','OPS/Styles/book.epub-cover.css']])};
+    const sources=['OPS/Styles/book.css','OPS/Styles/book.epub-cover.css'];
+    expect(fixture(original,changed,sources,cover)()).toEqual([]);
+    expect(fixture(original,changed,sources,
+      {...cover,allowedPages:new Set<string>()})).toThrow(/fonte CSS/u);
   });
   it('protege a geometria de SVG embutido e aceita remover script ativo', () => {
     const root=wrap('<p>Figura</p><svg xmlns="http://www.w3.org/2000/svg">' +

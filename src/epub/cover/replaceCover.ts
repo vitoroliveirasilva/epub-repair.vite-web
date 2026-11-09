@@ -115,9 +115,10 @@ export async function replaceEpubCover(
 
   ensureCoverMeta(doc, metadata, coverId);
   ensureSingleCoverImageProperty(manifest, coverItem);
+  const approvedStyleAliases = new Map<string, string>();
   const cssActions = target?.path && target.path !== coverPath && reusedElsewhere
     ? forkSharedCoverStyles(files, parsed.packageInfo, doc, scope.pages,
-      scope.sharedStyles, scope.consumers, target.path, coverPath)
+      scope.sharedStyles, scope.consumers, target.path, coverPath, approvedStyleAliases)
     : [];
 
   // Mudança de extensão cria um novo arquivo: sincronizar os locais que
@@ -171,7 +172,8 @@ export async function replaceEpubCover(
   const auditNotes = auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo,
     new Set(), { path: coverPath, bytes: coverImage.bytes,
       ...(target?.path ? { previousPath: target.path } : {}),
-      allowedPages: scope.allowed });
+      allowedPages: scope.allowed,
+      styleAliases: approvedStyleAliases });
   const warnings = [...buildCoverReplacementWarnings(before, after), ...auditNotes];
   if (reusedElsewhere) {
     warnings.push('A imagem antiga também é usada fora da página de capa. ' +
