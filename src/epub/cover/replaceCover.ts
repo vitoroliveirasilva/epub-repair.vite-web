@@ -169,7 +169,9 @@ export async function replaceEpubCover(
   assertNoNewCriticalIssues(before, after);
   // E-122: executar no fluxo da capa o mesmo gate editorial usado pelo reparo.
   const auditNotes = auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo,
-    new Set(), { path: coverPath, bytes: coverImage.bytes });
+    new Set(), { path: coverPath, bytes: coverImage.bytes,
+      ...(target?.path ? { previousPath: target.path } : {}),
+      allowedPages: scope.allowed });
   const warnings = [...buildCoverReplacementWarnings(before, after), ...auditNotes];
   if (reusedElsewhere) {
     warnings.push('A imagem antiga também é usada fora da página de capa. ' +

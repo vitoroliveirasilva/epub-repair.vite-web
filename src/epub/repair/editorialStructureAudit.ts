@@ -1,0 +1,203 @@
+import { isRemoteUrl, isSafeInlineImageDataUrl, resolveReference, splitSrcsetCandidates } from '../utils/pathUtils';
+
+export interface CoverReferenceApproval {
+  path: string;
+  bytes: Uint8Array;
+  /** A substituição de referência só é permitida nas páginas de capa aprovadas. */
+  previousPath?: string | undefined;
+  allowedPages?: ReadonlySet<string> | undefined;
+}
+
+type MediaReference = { element: string; attribute: string; target: string };
+type ResourceFile = { bytes: Uint8Array };
+
+function parseEditorial(markup: string, mime: string): Document | undefined {
+  if (typeof DOMParser === 'undefined') return undefined;
+  const html = mime === 'text/html';
+  const doc = new DOMParser().parseFromString(
+    html ? markup : markup.replace(/&nbsp;/giu, '&#160;'),
+    html ? 'text/html' : 'application/xhtml+xml',
+  );
+  if (!html && doc.getElementsByTagName('parsererror').length > 0) return undefined;
+  return doc;
+}
+
+function visibleTableCellText(element: Element): string {
+  const clone = element.cloneNode(true) as Element;
+  for (const node of Array.from(clone.getElementsByTagName('*'))) {
+    if (['script', 'style', 'iframe', 'object', 'embed'].includes(node.localName.toLowerCase())) {
+      node.remove();
+    }
+  }
+  return (clone.textContent ?? '').replace(/\s+/gu, ' ').trim();
+}
+
+function containsWordsInOrder(before: string, after: string): boolean {
+  const wanted = before.split(/\s+/u).filter(Boolean);
+  if (!wanted.length) return true;
+  const got = after.split(/\s+/u).filter(Boolean);
+  let index = 0;
+  for (const word of got) {
+    if (word === wanted[index]) index += 1;
+    if (index === wanted.length) return true;
+  }
+  return false;
+}
+
+function validateTables(original: Document, repaired: Document, path: string): void {
+  const tableTags = new Set(['table', 'caption', 'thead', 'tbody', 'tfoot',
+    'tr', 'th', 'td', 'col', 'colgroup']);
+  const attrs = ['rowspan', 'colspan', 'scope', 'headers', 'abbr'];
+  const tableNodes = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
+    .filter((node) => tableTags.has(node.localName.toLowerCase()));
+  const oldNodes = tableNodes(original);
+  const newNodes = tableNodes(repaired);
+  if (oldNodes.length !== newNodes.length) {
+    throw new Error('O reparo alteraria a estrutura de tabelas editoriais em ' + path);
+  }
+  for (let i = 0; i < oldNodes.length; i += 1) {
+    const before = oldNodes[i]!;
+    const after = newNodes[i]!;
+    if (before.localName !== after.localName ||
+        attrs.some((attr) => (before.getAttribute(attr) ?? '') !== (after.getAttribute(attr) ?? ''))) {
+      throw new Error('O reparo alteraria células, cabeçalhos ou mesclagens de tabelas em ' + path);
+    }
+    if (['th', 'td', 'caption'].includes(before.localName.toLowerCase()) &&
+        !containsWordsInOrder(visibleTableCellText(before), visibleTableCellText(after))) {
+      throw new Error('O reparo perderia ou trocaria texto em células de tabelas em ' + path);
+    }
+  }
+}
+
+function embeddedMedia(doc: Document, path: string, files: ReadonlyMap<string, ResourceFile>): MediaReference[] {
+  const output: MediaReference[] = [];
+  const selectors: Record<string, string[]> = {
+    img: ['src', 'srcset'], source: ['src', 'srcset'],
+    video: ['src', 'poster'], audio: ['src'], track: ['src'],
+    image: ['href', 'xlink:href'], use: ['href', 'xlink:href'],
+    link: ['href'],
+  };
+  for (const element of Array.from(doc.getElementsByTagName('*'))) {
+    const name = element.localName.toLowerCase();
+    const attrs = selectors[name];
+    if (!attrs) continue;
+    if (name === 'link' && !element.getAttribute('rel')?.split(/\s+/u)
+      .some((part) => part.toLowerCase() === 'stylesheet')) continue;
+    if ((name === 'image' || name === 'use') &&
+        element.namespaceURI !== 'http://www.w3.org/2000/svg') continue;
+    for (const attr of attrs) {
+      const value = element.getAttribute(attr)?.trim();
+      if (!value) continue;
+      const candidates = attr === 'srcset' ? splitSrcsetCandidates(value) : [value];
+      for (const candidate of candidates) {
+        const raw = (attr === 'srcset' ? candidate.trim().split(/\s+/u)[0] : candidate) ?? '';
+        if (!raw || raw.startsWith('#')) continue;
+        // data:imagem segura é parte editorial do livro, não deve sumir ao sanear links.
+        if (isSafeInlineImageDataUrl(raw)) {
+          output.push({ element: name, attribute: attr, target: raw });
+          continue;
+        }
+        if (isRemoteUrl(raw)) continue;
+        const resolved = resolveReference(path, raw);
+        if (resolved.safe && files.has(resolved.path)) {
+          output.push({ element: name, attribute: attr, target: resolved.path });
+        }
+      }
+    }
+  }
+  return output;
+}
+
+function validateMedia(original: Document, repaired: Document, path: string,
+  oldFiles: ReadonlyMap<string, ResourceFile>, newFiles: ReadonlyMap<string, ResourceFile>,
+  approval?: CoverReferenceApproval): void {
+  const originals = embeddedMedia(original, path, oldFiles);
+  const current = embeddedMedia(repaired, path, newFiles);
+  let index = 0;
+  for (const expected of originals) {
+    let found = false;
+    for (; index < current.length; index += 1) {
+      const next = current[index]!;
+      const sameLocation = next.target === expected.target;
+      const approvedCover = Boolean(approval?.allowedPages?.has(path) &&
+        approval.previousPath === expected.target && approval.path === next.target);
+      if (next.element === expected.element && next.attribute === expected.attribute &&
+          (sameLocation || approvedCover)) {
+        found = true;
+        index += 1;
+        break;
+      }
+    }
+    if (!found) {
+      throw new Error('O reparo removeria ou trocaria uma imagem, mídia ou fonte CSS ' +
+        'referenciada no conteúdo editorial em ' + path + ' (' + expected.target + ').');
+    }
+  }
+}
+
+const ACTIVE_SVG = new Set(['script', 'foreignobject', 'iframe', 'embed', 'object',
+  'animate', 'animatemotion', 'animatetransform', 'set', 'applet', 'portal']);
+
+function svgSignature(svg: Element): string {
+  const nodes: unknown[] = [];
+  const visit = (node: Element): void => {
+    if (ACTIVE_SVG.has(node.localName.toLowerCase())) return;
+    const attributes = Array.from(node.attributes)
+      .filter((attribute) => {
+        const name = attribute.name.toLowerCase();
+        return !name.startsWith('on') && !name.startsWith('xmlns') &&
+          !['style', 'href', 'xlink:href', 'src', 'data'].includes(name);
+      })
+      .map((attr) => [attr.namespaceURI ?? '', attr.localName, attr.value])
+      .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+    nodes.push([node.namespaceURI, node.localName, attributes,
+      (node.localName === 'text' || node.localName === 'tspan')
+        ? (node.textContent ?? '').replace(/\s+/gu, ' ').trim() : '']);
+    for (const child of Array.from(node.children)) visit(child);
+  };
+  visit(svg);
+  return JSON.stringify(nodes);
+}
+
+function validateInlineSvg(original: Document, repaired: Document, path: string): void {
+  const svgs = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
+    .filter((node) => node.localName === 'svg' &&
+      node.namespaceURI === 'http://www.w3.org/2000/svg');
+  const before = svgs(original);
+  const after = svgs(repaired);
+  if (before.length !== after.length) {
+    throw new Error('O reparo removeria SVG editorial embutido em ' + path);
+  }
+  for (let i = 0; i < before.length; i += 1) {
+    if (svgSignature(before[i]!) !== svgSignature(after[i]!)) {
+      throw new Error('O reparo alteraria geometria ou textos de SVG editorial em ' + path);
+    }
+  }
+}
+
+/**
+ * Protege tabelas, imagens, fontes vinculadas e SVGs inline que a comparação
+ * de texto do EPUB, isoladamente, não consegue proteger.
+ *
+ * Recursos ausentes não são protegidos por esta camada; o reparador já pode
+ * marcá-los com texto mediante consentimento. URL remota não é considerada
+ * ameaça nem recurso local: sua política é tratada pelo sanitizer.
+ */
+export function auditVisualStructures(
+  beforeMarkup: string,
+  afterMarkup: string,
+  filePath: string,
+  mediaType: string,
+  originalFiles: ReadonlyMap<string, ResourceFile>,
+  finalFiles: ReadonlyMap<string, ResourceFile>,
+  coverApproval?: CoverReferenceApproval,
+): void {
+  const before = parseEditorial(beforeMarkup, mediaType);
+  const after = parseEditorial(afterMarkup, mediaType);
+  // A auditoria de texto no chamador bloqueia qualquer alteração que não
+  // possa ser comparada por parsing (fail-closed).
+  if (!before || !after) return;
+  validateTables(before, after, filePath);
+  validateMedia(before, after, filePath, originalFiles, finalFiles, coverApproval);
+  validateInlineSvg(before, after, filePath);
+}

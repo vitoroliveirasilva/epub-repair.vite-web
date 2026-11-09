@@ -3,6 +3,7 @@ import type { PackageDocumentInfo } from '../model/opfTypes';
 import { HTML_MEDIA_TYPES, IMAGE_MEDIA_TYPES } from '../utils/constants';
 import { stripImageMetadata } from './stripImageMetadata';
 import { isJpegMediaType, isProgressiveJpeg } from '../utils/kindleCompatibility';
+import { auditVisualStructures, type CoverReferenceApproval } from './editorialStructureAudit';
 
 const textDecoder = new TextDecoder('utf-8', { fatal: false });
 const FONT_MIME = /^(?:font\/|application\/(?:font-|vnd\.ms-fontobject))/iu;
@@ -17,7 +18,7 @@ export function auditPreservation(
   before: PackageDocumentInfo,
   after: PackageDocumentInfo | undefined,
   approvedMetadataCleanup: ReadonlySet<string> = new Set(),
-  approvedCoverReplacement?: { path: string; bytes: Uint8Array },
+  approvedCoverReplacement?: CoverReferenceApproval,
   approvedJpegConversions: ReadonlySet<string> = new Set(),
 ): string[] {
   const warnings: string[] = [];
@@ -89,6 +90,10 @@ export function auditPreservation(
       compareEditorialBlocks(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
       compareSpecialMarkup(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
       compareTypographyPreservation(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
+      // Texto intacto não garante tabelas, diagramas ou imagens intactos.
+      auditVisualStructures(oldMarkup, newMarkup, item.resolvedPath, item.mediaType,
+        original.files, new Map(Array.from(output, ([path, bytes]) => [path, { bytes }])),
+        approvedCoverReplacement);
     }
     const oldText = extractReadableText(oldMarkup, item.mediaType);
     const newText = extractReadableText(newMarkup, item.mediaType);
@@ -368,9 +373,8 @@ function auditNavigationPreservation(
     const oldDoc = parseReadableDocument(textDecoder.decode(oldBytes));
     const newDoc = parseReadableDocument(textDecoder.decode(newBytes));
     if (!oldDoc || !newDoc) {
-      notes.push('Não foi possível comparar todos os links do índice em ' + item.resolvedPath +
-        '; revise manualmente o sumário.');
-      continue;
+      throw new Error('O índice mudou, mas não pôde ser comparado com segurança em ' +
+        item.resolvedPath + '. A cópia foi bloqueada.');
     }
     const targets = (doc: Document): string[] => Array.from(doc.getElementsByTagName('*'))
       .flatMap((node) => {
@@ -382,6 +386,24 @@ function auditNavigationPreservation(
     const newTargets = targets(newDoc);
     if (oldTargets.join('\u0000') !== newTargets.join('\u0000')) {
       throw new Error('O reparo alteraria destinos ou ordem do sumário em ' + item.resolvedPath);
+    }
+    if (item.mediaType === 'application/x-dtbncx+xml') {
+      const fingerprint = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
+        .filter((node) => node.localName === 'navPoint')
+        .map((node) => {
+          let depth = 0;
+          for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+            if (parent.localName === 'navPoint') depth += 1;
+          }
+          const label = Array.from(node.children).find((child) => child.localName === 'navLabel');
+          const text = label && Array.from(label.children)
+            .find((child) => child.localName === 'text')?.textContent?.replace(/\s+/gu, ' ').trim();
+          return JSON.stringify([depth, node.getAttribute('id') ?? '', text ?? '']);
+        });
+      if (fingerprint(oldDoc).join('\u0000') !== fingerprint(newDoc).join('\u0000')) {
+        throw new Error('O reparo alteraria a hierarquia, IDs ou títulos editoriais do NCX em ' +
+          item.resolvedPath);
+      }
     }
   }
   return notes;
