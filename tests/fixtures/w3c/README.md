@@ -22,6 +22,8 @@ Créditos de autores, direitos e links originais permanecem nos OPFs.
 offline com JSZip. O teste introduz somente compressão indevida do
 `mimetype` no contêiner para provocar correção reproduzível e exige
 integridade do texto, navegação, MathML e geometria SVG no resultado.
+Duas variantes adversariais também injetam scripts nos documentos XHTML e
+SVG para confirmar que a limpeza preserva o conteúdo original e o índice.
 
 **Limitações:** a amostra é pequena e não é o ZIP binário oficial. Não
 comprova compatibilidade universal de EPUBs extensos, produção, mobile

@@ -73,4 +73,63 @@ describe('corpus externo W3C EPUB Tests, fonte oficial reempacotada offline', ()
       }
     }, 30000);
   }
+  it('W3C XHTML: remove script injetável sem perder o texto ou o NAV', async () => {
+    vi.stubGlobal('Blob', NodeBlob);
+    try {
+      const epub = await JSZip.loadAsync(await packOfficialSource('cnt-xhtml-support'));
+      const source = read('cnt-xhtml-support', 'EPUB/content_001.xhtml');
+      const altered = source.replace('</body>',
+        '<script>alert("script injetado em documento oficial")</script></body>');
+      expect(altered).not.toBe(source);
+      epub.file('EPUB/content_001.xhtml', altered);
+      const input = new Uint8Array(await epub.generateAsync({ type: 'uint8array' }));
+      const result = await repairEpub('w3c-xhtml-script.epub', input);
+      expect(result.changed).toBe(true);
+      expect(result.after.stats.fatalCount).toBe(0);
+      const fixed = await JSZip.loadAsync(await result.blob!.arrayBuffer());
+      const content = await fixed.file('EPUB/content_001.xhtml')!.async('string');
+      expect(content).not.toMatch(/<script\\b/iu);
+      const originalText = parse(source).getElementsByTagName('body')[0]?.textContent;
+      expect(parse(content).getElementsByTagName('body')[0]?.textContent)
+        .toBe(originalText);
+      expect(await fixed.file('EPUB/nav.xhtml')!.async('string'))
+        .toBe(read('cnt-xhtml-support', 'EPUB/nav.xhtml'));
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  }, 30000);
+
+  it('W3C SVG: remove script embutido sem apagar geometria e estilos', async () => {
+    vi.stubGlobal('Blob', NodeBlob);
+    try {
+      const sample: Sample = 'cnt-svg-embedded';
+      const epub = await JSZip.loadAsync(await packOfficialSource(sample));
+      const source = read(sample, 'EPUB/content_001.xhtml');
+      const altered = source.replace('</svg>',
+        '<script xmlns="http://www.w3.org/2000/svg">alert(1)</script></svg>');
+      expect(altered).not.toBe(source);
+      epub.file('EPUB/content_001.xhtml', altered);
+      const input = new Uint8Array(await epub.generateAsync({ type: 'uint8array' }));
+      const result = await repairEpub('w3c-svg-script.epub', input);
+      expect(result.changed).toBe(true);
+      expect(result.after.stats.fatalCount).toBe(0);
+      const fixed = await JSZip.loadAsync(await result.blob!.arrayBuffer());
+      const content = await fixed.file('EPUB/content_001.xhtml')!.async('string');
+      const originalDoc = parse(source);
+      const fixedDoc = parse(content);
+      expect(Array.from(fixedDoc.getElementsByTagName('*'))
+        .some(node => node.localName === 'script')).toBe(false);
+      const find = (doc: Document, name: string) =>
+        Array.from(doc.getElementsByTagName('*')).filter(node => node.localName === name);
+      expect(find(fixedDoc, 'path').map(node => node.getAttribute('d')))
+        .toEqual(find(originalDoc, 'path').map(node => node.getAttribute('d')));
+      expect(find(fixedDoc, 'style').map(node => node.textContent))
+        .toEqual(find(originalDoc, 'style').map(node => node.textContent));
+      expect(await fixed.file('EPUB/nav.xhtml')!.async('string'))
+        .toBe(read(sample, 'EPUB/nav.xhtml'));
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  }, 30000);
+
 });
