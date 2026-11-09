@@ -114,7 +114,7 @@ function sanitizeFontFaceBlock(
   const content = block.slice(open + 1, -1);
   const declarations = splitTopLevelCss(content, ';');
   let changed = false;
-  let noValidSource = false;
+  let hasValidSource = false;
 
   const cleaned = declarations.map((declaration) => {
     const separator = declaration.indexOf(':');
@@ -128,18 +128,20 @@ function sanitizeFontFaceBlock(
         isUnsafeCssReference(filePath, (match[2] ?? '').trim(), files, removeRemote),
       );
     });
+    // Várias declarações src são válidas no CSS: uma origem insegura não
+    // pode eliminar outro src local/HTTPS legítimo no mesmo @font-face.
+    if (safeAlternatives.some((alternative) => alternative.trim().length > 0)) {
+      hasValidSource = true;
+    }
     if (safeAlternatives.length === alternatives.length) return declaration;
     changed = true;
-    if (!safeAlternatives.length) {
-      noValidSource = true;
-      return '';
-    }
+    if (!safeAlternatives.length) return '';
     return `${declaration.slice(0, separator + 1)}${safeAlternatives.join(',')}`;
   });
 
   if (!changed) return block;
   // Um @font-face sem qualquer fonte utilizável não pode ser preservado como regra válida.
-  if (noValidSource) return '';
+  if (!hasValidSource) return '';
   return `${block.slice(0, open + 1)}${cleaned.join(';')}}`;
 }
 
