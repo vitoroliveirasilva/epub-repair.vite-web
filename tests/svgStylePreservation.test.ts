@@ -15,8 +15,7 @@ function auditSvg(before: string, after: string) {
     mediaType: 'application/xhtml+xml' };
   const pkg = { manifest: [item], spine: [{ idref: 'chapter',
     manifestItem: item }] } as unknown as PackageDocumentInfo;
-  const original = { files: new Map([[path, { bytes: encode(before) }]]) }
-    as unknown as LoadedEpub;
+  const original = { files: new Map([[path, { bytes: encode(before) }]]) } as unknown as LoadedEpub;
   return () => auditPreservation(original, new Map([[path, encode(after)]]), pkg, pkg);
 }
 
