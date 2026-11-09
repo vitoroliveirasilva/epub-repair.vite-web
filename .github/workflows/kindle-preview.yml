@@ -42,7 +42,7 @@ jobs:
             "${RUNNER_TEMP}/epub-fixtures" "${RUNNER_TEMP}/kindle-results"
       - name: Upload Kindle Previewer logs and KPF metadata
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kindle-preview-results
           path: ${{ runner.temp }}/kindle-results

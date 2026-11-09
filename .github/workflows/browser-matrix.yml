@@ -92,7 +92,7 @@ jobs:
           if [ "$BROWSER" = chromium ]; then node tests/browser-resource-budget.mjs; fi
       - name: Upload server diagnostics on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vite-logs-${{ matrix.browser }}
           path: ${{ runner.temp }}/vite-server.log

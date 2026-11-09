@@ -67,7 +67,7 @@ jobs:
             timeout 360s env PLAYWRIGHT_MODULE="$RUNNER_TEMP/android-harness/node_modules/playwright/index.mjs" node tests/android-emulator-flow.mjs
       - name: Archive mobile OS evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-emulator-chrome-evidence
           path: |

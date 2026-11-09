@@ -74,7 +74,7 @@ jobs:
               "${RUNNER_TEMP}/epub-fixtures" "${RUNNER_TEMP}/calibre-output"
       - name: Save converter logs for regression evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: calibre-epub-reader-logs
           path: ${{ runner.temp }}/calibre-output/
