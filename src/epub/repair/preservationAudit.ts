@@ -22,6 +22,8 @@ export function auditPreservation(
   approvedJpegConversions: ReadonlySet<string> = new Set(),
 ): string[] {
   const warnings: string[] = [];
+  const originalPaths = new Set(original.files.keys());
+  const finalPaths = new Set(output.keys());
   if (!after) {
     throw new Error('O EPUB gerado não possui estrutura editorial verificável após o reparo.');
   }
@@ -92,8 +94,7 @@ export function auditPreservation(
       compareTypographyPreservation(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
       // Texto intacto não garante tabelas, diagramas ou imagens intactos.
       auditVisualStructures(oldMarkup, newMarkup, item.resolvedPath, item.mediaType,
-        original.files, new Map(Array.from(output, ([path, bytes]) => [path, { bytes }])),
-        approvedCoverReplacement);
+        originalPaths, finalPaths, approvedCoverReplacement);
     }
     const oldText = extractReadableText(oldMarkup, item.mediaType);
     const newText = extractReadableText(newMarkup, item.mediaType);

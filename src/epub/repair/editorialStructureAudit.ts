@@ -9,7 +9,6 @@ export interface CoverReferenceApproval {
 }
 
 type MediaReference = { element: string; attribute: string; target: string };
-type ResourceFile = { bytes: Uint8Array };
 
 function parseEditorial(markup: string, mime: string): Document | undefined {
   if (typeof DOMParser === 'undefined') return undefined;
@@ -69,7 +68,7 @@ function validateTables(original: Document, repaired: Document, path: string): v
   }
 }
 
-function embeddedMedia(doc: Document, path: string, files: ReadonlyMap<string, ResourceFile>): MediaReference[] {
+function embeddedMedia(doc: Document, path: string, knownPaths: ReadonlySet<string>): MediaReference[] {
   const output: MediaReference[] = [];
   const selectors: Record<string, string[]> = {
     img: ['src', 'srcset'], source: ['src', 'srcset'],
@@ -99,7 +98,7 @@ function embeddedMedia(doc: Document, path: string, files: ReadonlyMap<string, R
         }
         if (isRemoteUrl(raw)) continue;
         const resolved = resolveReference(path, raw);
-        if (resolved.safe && files.has(resolved.path)) {
+        if (resolved.safe && knownPaths.has(resolved.path)) {
           output.push({ element: name, attribute: attr, target: resolved.path });
         }
       }
@@ -109,10 +108,10 @@ function embeddedMedia(doc: Document, path: string, files: ReadonlyMap<string, R
 }
 
 function validateMedia(original: Document, repaired: Document, path: string,
-  oldFiles: ReadonlyMap<string, ResourceFile>, newFiles: ReadonlyMap<string, ResourceFile>,
+  oldPaths: ReadonlySet<string>, newPaths: ReadonlySet<string>,
   approval?: CoverReferenceApproval): void {
-  const originals = embeddedMedia(original, path, oldFiles);
-  const current = embeddedMedia(repaired, path, newFiles);
+  const originals = embeddedMedia(original, path, oldPaths);
+  const current = embeddedMedia(repaired, path, newPaths);
   let index = 0;
   for (const expected of originals) {
     let found = false;
@@ -188,8 +187,8 @@ export function auditVisualStructures(
   afterMarkup: string,
   filePath: string,
   mediaType: string,
-  originalFiles: ReadonlyMap<string, ResourceFile>,
-  finalFiles: ReadonlyMap<string, ResourceFile>,
+  originalPaths: ReadonlySet<string>,
+  finalPaths: ReadonlySet<string>,
   coverApproval?: CoverReferenceApproval,
 ): void {
   const before = parseEditorial(beforeMarkup, mediaType);
@@ -198,6 +197,6 @@ export function auditVisualStructures(
   // possa ser comparada por parsing (fail-closed).
   if (!before || !after) return;
   validateTables(before, after, filePath);
-  validateMedia(before, after, filePath, originalFiles, finalFiles, coverApproval);
+  validateMedia(before, after, filePath, originalPaths, finalPaths, coverApproval);
   validateInlineSvg(before, after, filePath);
 }

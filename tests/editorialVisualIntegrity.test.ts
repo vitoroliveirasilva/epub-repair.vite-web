@@ -100,8 +100,7 @@ function ncxFixture(before: string, after: string) {
   const chapter={id:'chapter',exists:true,resolvedPath:chapterPath,
     mediaType:'application/xhtml+xml'};
   const ncx={id:'ncx',exists:true,resolvedPath:ncxPath,mediaType:'application/x-dtbncx+xml'};
-  const pkg={manifest:[chapter,ncx],ncxItem:ncx,spine:[{idref:'chapter',manifestItem:chapter}]}
-    as unknown as PackageDocumentInfo;
+  const pkg={manifest:[chapter,ncx],ncxItem:ncx,spine:[{idref:'chapter',manifestItem:chapter}]} as unknown as PackageDocumentInfo;
   const html=wrap('<p>Capítulo</p>');
   const source={files:new Map([[chapterPath,{bytes:encode(html)}],
     [ncxPath,{bytes:encode(before)}]])} as unknown as LoadedEpub;
@@ -122,15 +121,12 @@ describe('auditoria de navegação NCX', () => {
       .toThrow(/títulos editoriais do NCX/u);
   });
   it('não achata hierarquia editorial preservando mesmos links', () => {
-    const flattened=baseNcx.replace('</navPoint></navPoint></navMap>',
-      '</navPoint></navPoint></navMap>');
     // Deslocar p2 para irmão de p1, mantendo mesma ordem e destinos.
     const renamed=baseNcx.replace(
       '<navPoint id="p2"',
       '</navPoint><navPoint id="p2"').replace(
       '</navPoint></navPoint></navMap>',
       '</navPoint></navMap>');
-    expect(flattened).toBe(baseNcx);
     expect(ncxFixture(baseNcx,renamed)).toThrow(/hierarquia/u);
   });
 });
