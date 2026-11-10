@@ -118,7 +118,9 @@ function extractTargets(pkg: PackageDocumentInfo, doc: Document): Array<{path: s
     const resolved = resolveReference(ncxPath, src);
     let fragment = src.includes('#') ? src.slice(src.indexOf('#') + 1) : '';
     try { fragment = decodeURIComponent(fragment); } catch { fragment = ''; }
-    return { path: resolved.safe ? resolved.path : '', fragment };
+    const label = childElementsByLocalName(point, 'navLabel')[0];
+    const title = childElementsByLocalName(label, 'text')[0]?.textContent?.trim() ?? '';
+    return { path: resolved.safe ? resolved.path : '', fragment, title };
   });
 }
 
@@ -151,7 +153,8 @@ export function inspectInternalNcx(
   const targets = extractTargets(pkg, doc);
   const missing = sections.filter((section) => !targets.some((target) =>
     target.path === section.path && (target.fragment === section.id ||
-      (!target.fragment && section.index <= 3))));
+      (!target.fragment && section.index <= 3 &&
+        /^(?:cap[ií]tulo|chapter)\s+(?:\d+|[IVXLCDM]+)(?:\b|\s|$)/iu.test(target.title)))));
   const nav = topPoints(doc);
   if (!nav) return { sections, missing, safeToRepair: false };
   const spineRanks = new Map(pkg.spine.map((entry, index) =>
