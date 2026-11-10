@@ -21,7 +21,7 @@ describe('Prévia superior nunca se passa pelo diagnóstico do arquivo carregado
     const file = {
       name: 'epub-sintetico.epub',
       size: bytes.length,
-      arrayBuffer: async () => Uint8Array.from(bytes).buffer,
+      arrayBuffer: () => Promise.resolve(Uint8Array.from(bytes).buffer),
     } as File;
     const input = root.querySelector<HTMLInputElement>('#epub-file-input');
     expect(input).toBeTruthy();
