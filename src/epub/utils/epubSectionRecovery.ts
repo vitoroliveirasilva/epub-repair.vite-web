@@ -89,6 +89,13 @@ function isOldGenerated(point: Element): boolean {
     childElementsByLocalName(point, 'navPoint').length === 0;
 }
 
+function isExplicitPart(point: Element): boolean {
+  const label = childElementsByLocalName(point, 'navLabel')[0];
+  const title = childElementsByLocalName(label, 'text')[0]?.textContent?.trim() ?? '';
+  return /^(?:parte|part|livro|book|seção|secao|section)\s+(?:\d+|[IVXLCDM]+)(?:\b|\s|$)/iu.test(title) &&
+    !hrefOf(point).includes('#') && childElementsByLocalName(point, 'navPoint').length === 0;
+}
+
 function topPoints(doc: Document): { navMap: Element; points: Element[] } | undefined {
   const navMap = childElementsByLocalName(doc.documentElement, 'navMap')[0];
   if (!navMap) return undefined;
@@ -104,7 +111,8 @@ function hrefOf(point: Element): string {
 
 function extractTargets(pkg: PackageDocumentInfo, doc: Document): Array<{path: string; fragment: string}> {
   const ncxPath = pkg.ncxItem?.resolvedPath ?? '';
-  const points = (topPoints(doc)?.points ?? []).filter((point) => !isOldGenerated(point));
+  const points = Array.from(doc.getElementsByTagName('*'))
+    .filter((point) => point.localName === 'navPoint' && !isOldGenerated(point));
   return points.map((point) => {
     const src = hrefOf(point);
     const resolved = resolveReference(ncxPath, src);
@@ -252,13 +260,42 @@ export function recoverInternalNcx(
       (ranks.get(firstPath) ?? 999999) * 100000);
   }
 
+  let inferredGroup: Element | undefined;
   for (const section of coverage.missing) {
     const point = makePoint(toc, 'epub-repair-section-' + String(section.ordinal),
       'Capítulo ' + section.ordinal + ' (epígrafe inferida)',
       relative(section.path) + '#' + encodeURIComponent(section.id));
-    insert(point, (ranks.get(section.path) ?? 999999) * 100000 + section.index + 1);
+    const existingGroup = original.find((candidate) =>
+      (isOldGenerated(candidate) || isExplicitPart(candidate)) &&
+      resolveReference(tocPath, hrefOf(candidate)).path === section.path);
+    if (existingGroup) {
+      existingGroup.appendChild(point);
+    } else {
+      if (!inferredGroup) {
+        inferredGroup = makePoint(toc, 'epub-repair-inferred-chapters',
+          'Capítulos identificados (inferidos)',
+          relative(section.path) + '#' + encodeURIComponent(section.id));
+        insert(inferredGroup, (ranks.get(section.path) ?? 999999) * 100000);
+      }
+      inferredGroup.appendChild(point);
+    }
   }
-  ordered.forEach((point, index) => point.setAttribute('playOrder', String(index + 1)));
+  const allPoints = Array.from(toc.getElementsByTagName('*'))
+    .filter((element) => element.localName === 'navPoint');
+  allPoints.forEach((point, index) => point.setAttribute('playOrder', String(index + 1)));
+  const head = childElementsByLocalName(toc.documentElement, 'head')[0];
+  const depthMeta = childElementsByLocalName(head, 'meta')
+    .find((element) => element.getAttribute('name') === 'dtb:depth');
+  const depth = Math.max(1, ...allPoints.map((point) => {
+    let value = 1;
+    for (let parent = point.parentElement; parent; parent = parent.parentElement) {
+      if (parent.localName === 'navPoint') value += 1;
+    }
+    return value;
+  }));
+  if (depthMeta && Number(depthMeta.getAttribute('content') ?? '0') < depth) {
+    depthMeta.setAttribute('content', String(depth));
+  }
   for (const [path, doc] of edited) {
     const originalText = decoder.decode(files.get(path));
     files.set(path, encoder.encode(serializeXmlPreservingDeclaration(doc, originalText)));
@@ -269,8 +306,9 @@ export function recoverInternalNcx(
     title: 'Capítulos internos adicionados ao NCX',
     detail: coverage.missing.length +
       ' divisões com epígrafes recorrentes receberam âncoras internas e links no índice. ' +
-      'As entradas anteriores foram preservadas. A numeração foi inferida e exige ' +
-      'conferência editorial; nenhum título foi inventado.',
+      'As entradas e hierarquias anteriores foram preservadas. Os capítulos foram ' +
+      'agrupados por partes existentes quando identificáveis, ou sob um grupo ' +
+      'explicitamente inferido. A numeração exige conferência editorial.',
     file: tocPath,
   }];
 }
