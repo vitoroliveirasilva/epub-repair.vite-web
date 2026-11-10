@@ -145,16 +145,35 @@ describe('EPUB 2 com capítulos múltiplos em um único XHTML', () => {
     expect(recoverInternalNcx(files, pkg)).toEqual([]);
   });
 
-  it('substitui somente o placeholder produzido pela versão anterior', () => {
+  it('conserva placeholders produzidos pelo reparo anterior enquanto adiciona capítulos', () => {
     const { pkg, files } = fixture(true);
     const original = new TextDecoder().decode(files.get('OPS/toc.ncx'));
     expect(original).toContain('Texto principal (parte 1)');
     expect(recoverInternalNcx(files, pkg)).toHaveLength(1);
     const updated = new TextDecoder().decode(files.get('OPS/toc.ncx'));
-    expect(updated).not.toContain('Texto principal (parte 1)');
+    expect(updated).toContain('Texto principal (parte 1)');
     expect(updated).toContain('original-cover');
     expect(updated).toContain('original-end');
     expect(updated).toContain('epub-repair-chapter-005');
+    const originalXml = parseXml(original);
+    const updatedXml = parseXml(updated);
+    const fingerprint = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
+      .filter((node) => node.localName === 'navPoint')
+      .map((node) => [
+        node.getAttribute('id'),
+        Array.from(node.children).find((child) => child.localName === 'navLabel')
+          ?.textContent,
+        Array.from(node.children).find((child) => child.localName === 'content')
+          ?.getAttribute('src'),
+      ]);
+    const originalEntries = fingerprint(originalXml);
+    const finalEntries = fingerprint(updatedXml);
+    expect(finalEntries.filter((entry) =>
+      originalEntries.some((old) => JSON.stringify(old) === JSON.stringify(entry))))
+      .toEqual(originalEntries);
+    expect(finalEntries).toHaveLength(8);
+    expect(recoverInternalNcx(files, pkg)).toEqual([]);
+    expect(new TextDecoder().decode(files.get('OPS/toc.ncx'))).toBe(updated);
   });
 
   it('não reescreve NCX hierárquico de autoria desconhecida', () => {
@@ -182,6 +201,8 @@ describe('EPUB 2 com capítulos múltiplos em um único XHTML', () => {
     expect(after.validZip).toBe(true);
     expect(after.issues.map((item) => item.code)).not.toContain('NCX_INTERNAL_SECTIONS_MISSING');
     expect(after.issues.map((item) => item.code)).toContain('NCX_EDITORIAL_INFERENCE');
+    expect(after.stats.structureScore).toBe(100);
+    expect(after.stats.kindleScore).toBe(100);
     const zip = await JSZip.loadAsync(repaired);
     const toc = parseXml(await zip.file('OPS/toc.ncx')!.async('string'));
     const points = Array.from(toc.getElementsByTagName('*'))
@@ -189,6 +210,11 @@ describe('EPUB 2 com capítulos múltiplos em um único XHTML', () => {
     expect(points).toHaveLength(8);
     expect(points.some((item) => item.getAttribute('id') === 'original-cover')).toBe(true);
     expect(points.some((item) => item.getAttribute('id') === 'original-end')).toBe(true);
+    expect(points.some((item) => item.getAttribute('id') === 'epub-repair-text-1')).toBe(true);
+    const second = await repairEpub('repaired.epub', repaired, DEFAULT_REPAIR_OPTIONS);
+    expect(second.actions.some((action) =>
+      action.title === 'Capítulos internos adicionados ao NCX')).toBe(false);
+    expect(second.changed).toBe(false);
   }, 30000);
 
 });

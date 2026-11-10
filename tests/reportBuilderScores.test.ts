@@ -58,6 +58,23 @@ describe('Pontuação do EPUB sem pendências com notas puramente informativas',
     expect(result.issues).toEqual([note]);
   });
 
+  it('distingue observação editorial de defeito técnico na navegação', () => {
+    const note = createIssue({
+      code: 'NCX_EDITORIAL_INFERENCE',
+      severity: 'info',
+      title: 'Divisões inferidas',
+      detail: 'Revisão editorial recomendada',
+      repairable: false,
+      file: 'OPS/toc.ncx',
+    });
+    const result = report([note]);
+    expect(result.stats.infoCount).toBe(1);
+    expect(result.stats.warningCount).toBe(0);
+    expect(result.stats.kindleScore).toBe(100);
+    expect(result.stats.structureScore).toBe(100);
+    expect(result.issues).toContain(note);
+  });
+
   it('continua descontando otimizações opcionais informativas e avisos reais', () => {
     const optional = createIssue({
       code: 'IMAGE_PROGRESSIVE_JPEG',

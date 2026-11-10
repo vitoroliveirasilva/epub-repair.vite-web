@@ -216,8 +216,7 @@ export function recoverInternalNcx(
     paragraph.setAttribute('id', section.id);
   }
 
-  const original = nav.points.filter((point) => !isOldGenerated(point));
-  for (const point of nav.points) if (isOldGenerated(point)) point.remove();
+  const original = [...nav.points];
   const ordered = [...original];
   const ranks = new Map(pkg.spine.map((entry, index) =>
     [entry.manifestItem?.resolvedPath, index]));
@@ -270,11 +269,9 @@ export function recoverInternalNcx(
     title: 'Capítulos internos adicionados ao NCX',
     detail: coverage.missing.length +
       ' divisões com epígrafes recorrentes receberam âncoras internas e links no índice. ' +
-      'A numeração foi inferida e exige conferência editorial; nenhum título foi inventado.',
+      'As entradas anteriores foram preservadas. A numeração foi inferida e exige ' +
+      'conferência editorial; nenhum título foi inventado.',
     file: tocPath,
   }];
 }
 
-export function isGeneratedSparsePoint(point: Element): boolean {
-  return isOldGenerated(point);
-}

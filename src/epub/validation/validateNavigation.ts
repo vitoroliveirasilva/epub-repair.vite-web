@@ -173,7 +173,7 @@ export function validateNavigation(loaded: LoadedEpub, pkg: PackageDocumentInfo)
         if (internal.sections.length) {
           issues.push(createIssue({
             code: 'NCX_EDITORIAL_INFERENCE',
-            severity: 'warning',
+            severity: 'info',
             title: 'Capítulos identificados por heurística editorial',
             detail: internal.sections.length +
               ' divisões com epígrafes foram identificadas por padrão de formatação. ' +

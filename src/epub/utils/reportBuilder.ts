@@ -54,7 +54,8 @@ export function buildValidationReport(params: {
 function scoreForGroup(issues: Issue[], predicate: (issue: Issue) => boolean): number {
   const penalty = issues
     .filter(predicate)
-    .reduce((total, issue) => total + issueSeverityWeight(issue.severity), 0);
+    .reduce((total, issue) => total + (issue.severity === 'info' && !issue.repairable
+      ? 0 : issueSeverityWeight(issue.severity)), 0);
   return clampScore(100 - penalty);
 }
 
