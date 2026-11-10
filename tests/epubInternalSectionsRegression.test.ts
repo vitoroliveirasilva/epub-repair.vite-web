@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import JSZip from 'jszip';
+import { inspectEpub } from '../src/epub/validation/validateEpub';
+import { repairEpub } from '../src/epub/repair/repairEpub';
+import { DEFAULT_REPAIR_OPTIONS, EPUB_MIME } from '../src/epub/utils/constants';
 import type { ManifestItem, PackageDocumentInfo } from '../src/epub/model/opfTypes';
 import { inspectInternalNcx, recoverInternalNcx } from '../src/epub/utils/epubSectionRecovery';
 import { parseXml } from '../src/epub/utils/xmlUtils';
@@ -68,6 +72,46 @@ function fixture(withGenerated = false): {
   };
 }
 
+beforeAll(() => {
+  if (typeof Blob.prototype.arrayBuffer === 'function') return;
+  Blob.prototype.arrayBuffer = function (): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = () => reject(reader.error ?? new Error('EPUB ilegível'));
+      reader.readAsArrayBuffer(this);
+    });
+  };
+});
+
+async function syntheticEpub(): Promise<Uint8Array> {
+  const { files } = fixture(true);
+  const zip = new JSZip();
+  zip.file('mimetype', EPUB_MIME, { compression: 'STORE' });
+  zip.file('META-INF/container.xml',
+    '<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0">' +
+    '<rootfiles><rootfile full-path="OPS/book.opf" ' +
+    'media-type="application/oebps-package+xml"/></rootfiles></container>');
+  zip.file('OPS/book.opf',
+    '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<package xmlns="http://www.idpf.org/2007/opf" version="2.0" ' +
+    'unique-identifier="uid"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/">' +
+    '<dc:title>Livro sintético</dc:title>' +
+    '<dc:identifier id="uid">urn:uuid:11111111-2222-3333-4444-555555555555</dc:identifier>' +
+    '<dc:language>pt-BR</dc:language></metadata><manifest>' +
+    '<item id="cover" href="Text/cover.xhtml" media-type="application/xhtml+xml"/>' +
+    '<item id="a" href="Text/a.xhtml" media-type="application/xhtml+xml"/>' +
+    '<item id="b" href="Text/b.xhtml" media-type="application/xhtml+xml"/>' +
+    '<item id="end" href="Text/end.xhtml" media-type="application/xhtml+xml"/>' +
+    '<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>' +
+    '</manifest><spine toc="ncx"><itemref idref="cover"/><itemref idref="a"/>' +
+    '<itemref idref="b"/><itemref idref="end"/></spine></package>');
+  for (const [path, contents] of files) zip.file(path, contents);
+  return new Uint8Array(await zip.generateAsync({
+    type: 'uint8array', compression: 'DEFLATE', compressionOptions: { level: 6 },
+  }));
+}
+
 describe('EPUB 2 com capítulos múltiplos em um único XHTML', () => {
   it('detecta cinco divisões internas, mesmo com NCX estruturalmente válido', () => {
     const { pkg, files } = fixture();
@@ -124,4 +168,27 @@ describe('EPUB 2 com capítulos múltiplos em um único XHTML', () => {
     expect(recoverInternalNcx(files, pkg)).toEqual([]);
     expect(new TextDecoder().decode(files.get('OPS/toc.ncx'))).toBe(nested);
   });
+  it('passa pelo reparo completo, preservação e nova inspeção do EPUB ZIP', async () => {
+    const input = await syntheticEpub();
+    const before = await inspectEpub('fixture.epub', input);
+    expect(before.issues.map((item) => item.code)).toContain('NCX_INTERNAL_SECTIONS_MISSING');
+    const result = await repairEpub('fixture.epub', input, DEFAULT_REPAIR_OPTIONS);
+    expect(result.changed).toBe(true);
+    expect(result.actions.some((item) =>
+      item.title === 'Capítulos internos adicionados ao NCX')).toBe(true);
+    expect(result.blob).toBeDefined();
+    const repaired = new Uint8Array(await result.blob!.arrayBuffer());
+    const after = await inspectEpub(result.fileName, repaired);
+    expect(after.validZip).toBe(true);
+    expect(after.issues.map((item) => item.code)).not.toContain('NCX_INTERNAL_SECTIONS_MISSING');
+    expect(after.issues.map((item) => item.code)).toContain('NCX_EDITORIAL_INFERENCE');
+    const zip = await JSZip.loadAsync(repaired);
+    const toc = parseXml(await zip.file('OPS/toc.ncx')!.async('string'));
+    const points = Array.from(toc.getElementsByTagName('*'))
+      .filter((item) => item.localName === 'navPoint');
+    expect(points).toHaveLength(8);
+    expect(points.some((item) => item.getAttribute('id') === 'original-cover')).toBe(true);
+    expect(points.some((item) => item.getAttribute('id') === 'original-end')).toBe(true);
+  }, 30000);
+
 });

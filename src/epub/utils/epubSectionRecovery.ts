@@ -142,7 +142,8 @@ export function inspectInternalNcx(
   if (!doc) return { sections, missing: sections, safeToRepair: false };
   const targets = extractTargets(pkg, doc);
   const missing = sections.filter((section) => !targets.some((target) =>
-    target.path === section.path && target.fragment === section.id));
+    target.path === section.path && (target.fragment === section.id ||
+      (!target.fragment && section.index <= 3))));
   const nav = topPoints(doc);
   if (!nav) return { sections, missing, safeToRepair: false };
   const spineRanks = new Map(pkg.spine.map((entry, index) =>
@@ -210,6 +211,8 @@ export function recoverInternalNcx(
     const paragraph = paragraphs(doc)[section.index];
     if (!paragraph) return [];
     if (paragraph.hasAttribute('id') && paragraph.getAttribute('id') !== section.id) return [];
+    if (Array.from(doc.getElementsByTagName('*')).some((element) =>
+      element !== paragraph && element.getAttribute('id') === section.id)) return [];
     paragraph.setAttribute('id', section.id);
   }
 
