@@ -97,7 +97,6 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    include: ['tests/**/*.test.ts'],
     projects: [
       {
         extends: true,
