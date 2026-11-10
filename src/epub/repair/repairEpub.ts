@@ -8,6 +8,7 @@ import { normalizeInternalPath } from '../utils/pathUtils';
 import { canOptimizeReport, canRepairReport, hasResidualActiveContent } from '../utils/reportGuards';
 import { parsePackageDocument, parseOpfDocument } from '../validation/opfParser';
 import { parseXml } from '../utils/xmlUtils';
+import { completeSparseNcx } from '../utils/ncxCoverage';
 import { auditPreservation } from './preservationAudit';
 import { repairCoverSvgAccessibility } from './repairCoverSvgAccessibility';
 import { createTextFileDiffs } from './textFileDiff';
@@ -218,6 +219,9 @@ export async function repairEpub(
   }
 
   actions.push(...repairKindleCompatibility(files, currentPkg, options));
+  if (options.generateNcx && !options.conservativeMode) {
+    actions.push(...completeSparseNcx(files, currentPkg));
+  }
   if (!options.conservativeMode) {
     actions.push(...repairCoverSvgAccessibility(files, currentPkg));
   }
@@ -268,9 +272,13 @@ export async function repairEpub(
   const approvedSvgLabels = new Set(actions.filter((action) =>
     action.title === 'SVG da capa recebeu rótulo acessível' && Boolean(action.file))
     .map((action) => action.file!));
+  const approvedNcxCompletion = new Set(actions.filter((action) =>
+    action.title === 'Sumário NCX incompleto complementado' && Boolean(action.file))
+    .map((action) => action.file!));
   warnings.push(...auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo,
     canStripMetadata ? metadataCandidates : undefined,
-    undefined, new Set(), options.removeRemoteResourceLinks, approvedSvgLabels));
+    undefined, new Set(), options.removeRemoteResourceLinks, approvedSvgLabels,
+    approvedNcxCompletion));
   const fileDiffs = createTextFileDiffs(new Map(Array.from(loaded.files, ([name, entry]) =>
     [name, entry.bytes])), files);
   if (hasResidualActiveContent(after)) {

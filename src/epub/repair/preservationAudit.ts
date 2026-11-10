@@ -22,6 +22,7 @@ export function auditPreservation(
   approvedJpegConversions: ReadonlySet<string> = new Set(),
   approvedRemoteRemoval = false,
   approvedCoverSvgLabels: ReadonlySet<string> = new Set(),
+  approvedNcxCompletion: ReadonlySet<string> = new Set(),
 ): string[] {
   const warnings: string[] = [];
   const originalPaths = new Set(original.files.keys());
@@ -69,7 +70,7 @@ export function auditPreservation(
     }
   }
 
-  warnings.push(...auditNavigationPreservation(original, output, before));
+  warnings.push(...auditNavigationPreservation(original, output, before, approvedNcxCompletion));
   auditMediaOverlayPreservation(original, output, before, after);
 
   const changedText: string[] = [];
@@ -357,10 +358,19 @@ function parseReadableDocument(markup: string,
 
 
 
+function orderedSubsequence(original: string[], updated: string[]): boolean {
+  let index = 0;
+  for (const value of updated) {
+    if (index < original.length && original[index] === value) index += 1;
+  }
+  return index === original.length;
+}
+
 function auditNavigationPreservation(
   original: LoadedEpub,
   output: ReadonlyMap<string, Uint8Array>,
   before: PackageDocumentInfo,
+  approvedNcxCompletion: ReadonlySet<string>,
 ): string[] {
   const notes: string[] = [];
   for (const item of [before.navItem, before.ncxItem]) {
@@ -385,7 +395,11 @@ function auditNavigationPreservation(
       }).filter(Boolean);
     const oldTargets = targets(oldDoc);
     const newTargets = targets(newDoc);
-    if (oldTargets.join('\u0000') !== newTargets.join('\u0000')) {
+    const allowNcxAdditions = item.mediaType === 'application/x-dtbncx+xml' &&
+      approvedNcxCompletion.has(item.resolvedPath);
+    if (!(allowNcxAdditions
+      ? orderedSubsequence(oldTargets, newTargets)
+      : oldTargets.join('\u0000') === newTargets.join('\u0000'))) {
       throw new Error('O reparo alteraria destinos ou ordem do sumário em ' + item.resolvedPath);
     }
     
@@ -412,7 +426,11 @@ function auditNavigationPreservation(
             .find((child) => child.localName === 'text')?.textContent?.replace(/\s+/gu, ' ').trim();
           return JSON.stringify([depth, node.getAttribute('id') ?? '', text ?? '']);
         });
-      if (fingerprint(oldDoc).join('\u0000') !== fingerprint(newDoc).join('\u0000')) {
+      const oldFingerprint = fingerprint(oldDoc);
+      const newFingerprint = fingerprint(newDoc);
+      if (!(allowNcxAdditions
+        ? orderedSubsequence(oldFingerprint, newFingerprint)
+        : oldFingerprint.join('\u0000') === newFingerprint.join('\u0000'))) {
         throw new Error('O reparo alteraria a hierarquia, IDs ou títulos editoriais do NCX em ' +
           item.resolvedPath);
       }
