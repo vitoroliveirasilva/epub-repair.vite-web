@@ -9,6 +9,7 @@ import { canOptimizeReport, canRepairReport, hasResidualActiveContent } from '..
 import { parsePackageDocument, parseOpfDocument } from '../validation/opfParser';
 import { parseXml } from '../utils/xmlUtils';
 import { auditPreservation } from './preservationAudit';
+import { repairCoverSvgAccessibility } from './repairCoverSvgAccessibility';
 import { createTextFileDiffs } from './textFileDiff';
 import { assertNoNewCriticalIssues } from './repairSafety';
 import { ensureContainerFile } from './repairContainer';
@@ -89,6 +90,10 @@ export async function repairEpub(
     const attempted = await repairImageCompatibility(optimizedFiles, parsed.packageInfo, options);
     if (!options.conservativeMode && before.issues.some((issue) => issue.code === 'XHTML_LANG_MISSING')) {
       attempted.push(...repairOptionalXhtmlLanguage(optimizedFiles, parsed.packageInfo));
+    }
+    if (!options.conservativeMode && before.issues.some((issue) =>
+      issue.code === 'CONTENT_INLINE_SVG_LABEL_MISSING' && issue.repairable)) {
+      attempted.push(...repairCoverSvgAccessibility(optimizedFiles, parsed.packageInfo));
     }
     canceled();
     if (canStripMetadata) {
@@ -213,6 +218,9 @@ export async function repairEpub(
   }
 
   actions.push(...repairKindleCompatibility(files, currentPkg, options));
+  if (!options.conservativeMode) {
+    actions.push(...repairCoverSvgAccessibility(files, currentPkg));
+  }
   // Manifest precisa refletir os recursos efetivos, após a limpeza. Isso
   // evita avisos novos quando o reparo declara arquivos antes órfãos.
   if (options.repairManifest) {
