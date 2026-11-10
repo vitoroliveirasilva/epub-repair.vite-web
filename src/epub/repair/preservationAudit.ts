@@ -144,20 +144,17 @@ export function auditPreservation(
       if (item.mediaType === 'image/svg+xml') {
         compareSvgPreservation(textDecoder.decode(oldBytes), textDecoder.decode(newBytes),
           item.resolvedPath);
-      } else if (approvedCoverReplacement?.path === item.resolvedPath &&
-          sameBytes(approvedCoverReplacement.bytes, newBytes)) {
-        
-      } else if (approvedMetadataCleanup.has(item.resolvedPath) &&
-          sameBytes(stripImageMetadata(oldBytes, item.mediaType).bytes, newBytes)) {
-        
-      } else if (approvedJpegConversions.has(item.resolvedPath) &&
-          isJpegMediaType(item.mediaType) && isProgressiveJpeg(oldBytes) &&
-          !isProgressiveJpeg(newBytes)) {
-        
-        
-        
       } else {
-        throw new Error(`O reparo técnico modificou um recurso binário sem autorização: ${item.resolvedPath}`);
+        const approvedCover = approvedCoverReplacement?.path === item.resolvedPath &&
+          sameBytes(approvedCoverReplacement.bytes, newBytes);
+        const approvedMetadata = approvedMetadataCleanup.has(item.resolvedPath) &&
+          sameBytes(stripImageMetadata(oldBytes, item.mediaType).bytes, newBytes);
+        const approvedJpeg = approvedJpegConversions.has(item.resolvedPath) &&
+          isJpegMediaType(item.mediaType) && isProgressiveJpeg(oldBytes) &&
+          !isProgressiveJpeg(newBytes);
+        if (!approvedCover && !approvedMetadata && !approvedJpeg) {
+          throw new Error(`O reparo técnico modificou um recurso binário sem autorização: ${item.resolvedPath}`);
+        }
       }
     }
   }
