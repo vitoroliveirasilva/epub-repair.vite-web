@@ -45,7 +45,7 @@ function minimalPkg(): PackageDocumentInfo {
       },
     ],
     coverItem: cover, spine: [], rootfileCount: 1,
-  } as PackageDocumentInfo;
+  };
 }
 
 function check(markup: string) {
