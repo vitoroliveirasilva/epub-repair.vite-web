@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { Blob as NodeBlob } from 'node:buffer';
 import { describe, expect, it, vi } from 'vitest';
 import JSZip from 'jszip';
@@ -33,7 +33,7 @@ describe('E-113: nunca perder reparo anterior ao trocar capa ou revalidar', () =
       state.coverImage = {
         fileName:'nova.png',bytes:png,mediaType:'image/png',previewDataUrl:'',
       };
-      // Apenas escolher uma capa não deve alterar a cópia atual.
+      
       expect(state.repairResult?.fileName).toBe(firstName);
       await applyCoverReplacementToCurrentFile(state);
       expect(state.repairResult?.operation).toBe('cover-replacement');

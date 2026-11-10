@@ -4,8 +4,9 @@ import type { Issue } from '../model/issueTypes';
 import { HTML_MEDIA_TYPES } from '../utils/constants';
 import { createIssue } from '../utils/issueFactory';
 import { parseXml } from '../utils/xmlUtils';
+import { coverSvgAccessibleLabel } from '../repair/coverSvgAccessibility';
 
-/** Diagnóstico apenas: alt="" é válido para imagem decorativa. */
+ 
 export function validateAccessibility(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
   const issues: Issue[] = [];
   for (const item of pkg.manifest) {
@@ -19,7 +20,7 @@ export function validateAccessibility(loaded: LoadedEpub, pkg: PackageDocumentIn
         ? new DOMParser().parseFromString(markup, 'text/html')
         : parseXml(markup.replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml');
     } catch {
-      continue; // Conteúdo malformado já possui diagnóstico próprio.
+      continue; 
     }
     const elements = Array.from(document.getElementsByTagName('*'));
     const missingAlt = elements.filter((element) =>
@@ -54,8 +55,8 @@ export function validateAccessibility(loaded: LoadedEpub, pkg: PackageDocumentIn
       }));
     }
 
-    // Relações ARIA quebradas podem deixar descrições invisíveis ao leitor
-    // de tela. Detectar sem reescrever IDs ou conteúdo editorial.
+    
+    
     const missingDescriptions = elements.flatMap((element) => {
       const ids = element.getAttribute('aria-describedby')?.trim().split(/\s+/u) ?? [];
       return ids.filter((id) => id && !existingIds.has(id));
@@ -73,8 +74,8 @@ export function validateAccessibility(loaded: LoadedEpub, pkg: PackageDocumentIn
       }));
     }
 
-    // Quando dois elementos partilham o mesmo ID referenciado por ARIA,
-    // leitores de tela podem escolher destinos distintos.
+    
+    
     const idCount = new Map<string, number>();
     for (const element of elements) {
       const id = element.getAttribute('id');
@@ -151,14 +152,21 @@ export function validateAccessibility(loaded: LoadedEpub, pkg: PackageDocumentIn
         (child.localName === 'title' || child.localName === 'desc') &&
         Boolean(child.textContent?.trim())));
     if (inlineSvg.length > 0) {
+      
+      
+      const canLabelCover = inlineSvg.length === 1 && Boolean(
+        coverSvgAccessibleLabel(inlineSvg[0]!, document, item.resolvedPath, pkg));
       issues.push(createIssue({
         code: 'CONTENT_INLINE_SVG_LABEL_MISSING',
         severity: 'info',
         title: 'SVG inline possivelmente sem descrição acessível',
-        detail: inlineSvg.length + ' SVG(s) não possui(em) título ou rótulo explícito. ' +
-          'Se forem decorativos, informe aria-hidden="true"; caso contrário, descreva-os.',
+        detail: canLabelCover
+          ? 'SVG de capa sem nome acessível. Uma otimização opcional pode ' +
+            'reutilizar o título da página como rótulo, sem alterar a imagem.'
+          : inlineSvg.length + ' SVG(s) não possui(em) título ou rótulo explícito. ' +
+            'Se forem decorativos, informe aria-hidden="true"; caso contrário, descreva-os.',
         file: item.resolvedPath,
-        repairable: false,
+        repairable: canLabelCover,
       }));
     }
   }

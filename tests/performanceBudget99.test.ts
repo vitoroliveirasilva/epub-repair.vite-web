@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import JSZip from 'jszip';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadEpub } from '../src/epub/reader/loadEpub';
@@ -6,7 +6,7 @@ import { repairEpub } from '../src/epub/repair/repairEpub';
 import { DEFAULT_REPAIR_OPTIONS } from '../src/epub/utils/constants';
 
 beforeAll(() => {
-  // JSDOM no Node.js pode não implementar Blob.arrayBuffer diretamente.
+  
   if (typeof Blob.prototype.arrayBuffer === 'function') return;
   Blob.prototype.arrayBuffer = function (): Promise<ArrayBuffer> {
     return new Promise((resolve, reject) => {
@@ -66,7 +66,7 @@ describe('E-031/E-096: orçamento de recursos em EPUB de 2 MiB', () => {
     let maximumRss = baseline;
     const sample = () => { maximumRss = Math.max(maximumRss, process.memoryUsage().rss); };
     const started = performance.now();
-    // A amostragem não capta picos síncronos sub-25ms: o limite é indicativo.
+    
     const monitor = setInterval(sample, 25);
     try {
       const loaded = await loadEpub('livro.epub', source);
@@ -84,7 +84,7 @@ describe('E-031/E-096: orçamento de recursos em EPUB de 2 MiB', () => {
     }
     const seconds = (performance.now() - started) / 1000;
     const growthMiB = Math.max(0, maximumRss - baseline) / MIB;
-    // eslint-disable-next-line no-console -- métrica informativa anexada ao log da CI
+    
     console.info('EPUB benchmark: ' + seconds.toFixed(2) + 's, +' +
       growthMiB.toFixed(1) + ' MiB RSS amostrado');
     expect(seconds).toBeLessThan(MAX_FIXTURE_SECONDS);

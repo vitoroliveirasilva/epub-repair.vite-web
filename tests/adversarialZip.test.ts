@@ -66,7 +66,7 @@ describe('arquivos EPUB maliciosos e ZIPs corrompidos', () => {
   it('E-021: decodifica nome CP437 mas não inventa um mimetype ausente', async () => {
     const original = await buildKindleIssueEpub();
     const input = corrupt(original, ({ view, central, local }) => {
-      // CP437 0x82 equivale a é, não U+FFFD. Altera o mimetype de propósito.
+      
       view.setUint8(local + 30, 0x82);
       view.setUint8(central + 46, 0x82);
     });
@@ -134,7 +134,7 @@ describe('arquivos EPUB maliciosos e ZIPs corrompidos', () => {
     for (let i = 0; i < first.name.length; i += 1) {
       overlap[second.cursor + 46 + i] = overlap[first.cursor + 46 + i]!;
     }
-    // O segundo registro passa a apontar para o mesmo cabeçalho e payload do primeiro.
+    
     for (const offset of [8, 10]) {
       view.setUint16(second.cursor + offset, view.getUint16(first.cursor + offset, true), true);
     }
@@ -260,7 +260,7 @@ describe('arquivos EPUB maliciosos e ZIPs corrompidos', () => {
       x.code === 'ZIP_UNSUPPORTED_COMPRESSION')).toBe(true);
 
     const badExtra = corrupt(original, ({ view, central }) => {
-      // Simula cabeçalho de entrada central com comprimentos que avançam além do diretório.
+      
       view.setUint16(central + 30, 0xffff, true);
     });
     expect(parseZipCentralDirectory(badExtra).issues.some((x) =>

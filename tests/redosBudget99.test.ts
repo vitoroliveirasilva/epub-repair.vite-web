@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { parseXml } from '../src/epub/utils/xmlUtils';
 import { sanitizeCssDocument } from '../src/epub/sanitize/sanitizeCss';
@@ -9,7 +9,7 @@ import { buildKindleIssueEpub } from './helpers/syntheticEpub';
 
 const MAX_CASE_MS = 8_000;
 
-/** Entrada determinística e controlada: não baixar nem executar material externo. */
+ 
 function bounded(label: string, operation: () => void) {
   const start = performance.now();
   operation();
@@ -32,8 +32,8 @@ describe('E-063: orçamento anti-ReDoS e fuzz determinístico de parsers', () =>
         try {
           const result = sanitizeCssDocument('OPS/styles.css', sample, files);
           expect(result.text.length).toBeLessThanOrEqual(sample.length + 100);
-          // Uma recusa também é válida. Nunca tomar a ausência de throw como
-          // prova universal de que CSS arbitrário esteja livre de ameaças.
+          
+          
           containsDangerousCss(result.text);
         } catch (error) {
           expect(error).toBeInstanceOf(Error);

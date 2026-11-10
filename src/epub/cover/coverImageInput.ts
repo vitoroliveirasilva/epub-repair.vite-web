@@ -57,7 +57,7 @@ export async function readCoverImageFile(file: File): Promise<CoverImageInput> {
 }
 
 function detectSupportedCoverMediaType(bytes: Uint8Array): SupportedCoverMediaType | undefined {
-  // O nome do arquivo e o tipo informado pelo navegador não são prova do formato.
+  
   if (hasJpegSignature(bytes)) return 'image/jpeg';
   if (hasPngSignature(bytes)) return 'image/png';
   return undefined;
@@ -91,8 +91,8 @@ async function assertValidCoverImage(
   }
 
   if (typeof createImageBitmap !== 'function') {
-    // Safari antigo e navegadores sem createImageBitmap precisam confirmar
-    // decodificação real. A assinatura JPEG sozinha nunca é prova suficiente.
+    
+    
     if (typeof Image === 'undefined' || typeof URL.createObjectURL !== 'function' ||
         typeof URL.revokeObjectURL !== 'function') {
       throw new Error('Este navegador não oferece decodificador confiável para validar a capa.');
@@ -188,8 +188,8 @@ async function normalizeJpegForEpub(bytes: Uint8Array): Promise<Uint8Array | und
     if (!blob || blob.size <= 0) return undefined;
     const result = new Uint8Array(await blob.arrayBuffer());
     if (result[0] !== 0xff || result[1] !== 0xd8 || result[2] !== 0xff) return undefined;
-    // Antes de substituir uma capa, abrir o JPEG produzido e conferir tamanho
-    // e cores por amostragem. Uma falha mantém o arquivo original byte a byte.
+    
+    
     let decoded: ImageBitmap | undefined;
     try {
       decoded = await createImageBitmap(blob);

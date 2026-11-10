@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { getWorkflowState } from '../src/app/workflowState';
 import { createInitialState } from '../src/app/state';

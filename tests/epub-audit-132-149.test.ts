@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { extractCssResourceReferences } from '../src/epub/validation/referenceExtractor';
 import { coverReferenceScope } from '../src/epub/cover/coverReferenceScope';

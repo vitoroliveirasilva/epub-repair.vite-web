@@ -1,6 +1,6 @@
-// No third-party parser: strict, deterministic support for simple SPDX
-// expressions used by the installed dependency graph. Unknown identifiers
-// are NEVER classified as automatically approved.
+
+
+
 const permissive = new Set([
   'MIT', 'MIT-0', 'Apache-2.0', 'ISC', 'BSD-2-Clause', 'BSD-3-Clause',
   '0BSD', 'CC0-1.0', 'BlueOak-1.0.0', 'Zlib', 'Unlicense',
@@ -27,7 +27,7 @@ function mergeOr(a, b) {
   return { level: 'blocked', reasons: [...a.reasons, ...b.reasons] };
 }
 
-/** SPDX simples (AND/OR e parênteses); falha fechada se não reconhecer. */
+ 
 export function evaluateLicenseExpression(raw) {
   const expression = String(raw ?? '').trim();
   if (!expression) return { level: 'blocked', reasons: ['Identificador de licença ausente'] };

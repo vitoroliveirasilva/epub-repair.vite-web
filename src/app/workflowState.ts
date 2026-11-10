@@ -13,10 +13,10 @@ export type WorkflowState =
   | 'partial-output'
   | 'completed-output';
 
-/**
- * Estado central do fluxo, baseado sempre no relatório final quando existir
- * cópia gerada. Não confundir EPUB reparado com EPUB livre de ameaças.
- */
+
+
+
+
 export function getWorkflowState(state: AppState): WorkflowState {
   if (state.busy) return 'processing';
   if (state.repairResult?.changed && state.repairResult.blob) {

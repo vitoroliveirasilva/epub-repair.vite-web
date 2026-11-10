@@ -1,8 +1,8 @@
-/**
- * SMIL 3.0 clock-value, em segundos. Full clock hh:mm:ss e partial clock
- * mm:ss usam segundos < 60; full clock também requer minutos < 60.
- * Retorna NaN quando presente mas inválido, undefined quando ausente.
- */
+
+
+
+
+
 export function parseSmilClock(raw: string | null): number | undefined {
   if (raw === null) return undefined;
   const value = raw.trim().replace(/^npt=/iu, '');

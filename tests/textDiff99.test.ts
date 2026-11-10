@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { createTextFileDiffs } from '../src/epub/repair/textFileDiff';
 import { renderRepairSummary } from '../src/ui/components/RepairSummary';

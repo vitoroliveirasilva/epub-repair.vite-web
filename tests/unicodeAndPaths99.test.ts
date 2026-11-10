@@ -32,7 +32,7 @@ describe('E-022/E-023/E-024/E-027: nomes ZIP e URLs internas', () => {
       expect(loaded.files.has(name)).toBe(true);
       expect(normalizeInternalPath(name).path).toBe(name);
     }
-    // O ZIP é case-sensitive. Não colapsar arquivos distintos para evitar perda.
+    
     expect(loaded.files.has('OPS/Text/Caps.xhtml')).toBe(true);
     expect(loaded.files.has('OPS/Text/caps.xhtml')).toBe(true);
     expect(names[0]).not.toBe(names[1]);

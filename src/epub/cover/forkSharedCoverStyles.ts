@@ -10,11 +10,11 @@ import { replaceLocalReference, updateCoverReferences } from './updateCoverRefer
 const OPF_NS = 'http://www.idpf.org/2007/opf';
 const encoder = new TextEncoder();
 
-/**
- * Preserva estilos e ilustrações de capítulos: uma referência de capa contida
- * em CSS compartilhado é modificada apenas em cópias dos CSS no caminho de
- * @import até a folha principal utilizada pela página de rosto.
- */
+
+
+
+
+
 export function forkSharedCoverStyles(
   files: Map<string, Uint8Array>,
   pkg: PackageDocumentInfo,
@@ -24,6 +24,7 @@ export function forkSharedCoverStyles(
   consumers: ReadonlyMap<string, ReadonlySet<string>>,
   oldCoverPath: string,
   newCoverPath: string,
+  approvedStyleAliases?: Map<string, string>,
 ): RepairAction[] {
   const actions: RepairAction[] = [];
   const manifest = Array.from(opf.getElementsByTagName('*'))
@@ -45,7 +46,7 @@ export function forkSharedCoverStyles(
         .filter((ref) => ref.safe && declaredPaths.has(ref.path))
         .map((ref) => ref.path));
     } catch {
-      // Arquivo ilegível não deve ser reescrito, adivinhado ou descartado.
+      
     }
   }
 
@@ -62,8 +63,8 @@ export function forkSharedCoverStyles(
       affected.add(path);
     }
   }
-  // Propagar até CSS diretamente vinculados nas páginas. Não reescrever CSS
-  // original usado por qualquer capítulo, mesmo em múltiplos níveis de import.
+  
+  
   let changed = true;
   while (changed) {
     changed = false;
@@ -130,11 +131,14 @@ export function forkSharedCoverStyles(
     pageChanges.push([page, rewritten]);
   }
 
-  // Não publicar folhas clonadas que não puderam ser vinculadas à capa.
+  
   if (pageChanges.length === 0) {
     for (const clone of aliases.values()) files.delete(clone);
     return [];
   }
+  
+  
+  for (const [oldPath, newPath] of aliases) approvedStyleAliases?.set(oldPath, newPath);
   for (const [page, text] of pageChanges) {
     files.set(page, encoder.encode(text));
     actions.push({

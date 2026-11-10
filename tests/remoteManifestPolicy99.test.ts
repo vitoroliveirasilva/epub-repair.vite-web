@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { validateRemoteManifestResources } from '../src/epub/validation/validateRemoteManifestResources';
 import { validateManifestContentProperties } from '../src/epub/validation/validateManifestContentProperties';

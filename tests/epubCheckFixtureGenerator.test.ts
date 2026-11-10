@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import JSZip from 'jszip';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -8,7 +8,7 @@ import { repairEpub } from '../src/epub/repair/repairEpub';
 import { DEFAULT_REPAIR_OPTIONS } from '../src/epub/utils/constants';
 
 beforeAll(() => {
-  // Vitest/jsdom ainda não fornece Blob.arrayBuffer.
+  
   if (typeof Blob.prototype.arrayBuffer === 'function') return;
   Blob.prototype.arrayBuffer = function (): Promise<ArrayBuffer> {
     return new Promise((resolve, reject) => {
@@ -22,7 +22,7 @@ beforeAll(() => {
 
 function createInvalidEpub(): Promise<Uint8Array> {
   const zip = new JSZip();
-  // Simula omissão do mimetype: diagnóstico oficial inequívoco e reparável.
+  
   zip.file('META-INF/container.xml',
     '<?xml version="1.0" encoding="UTF-8"?>' +
     '<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0">' +
@@ -59,7 +59,7 @@ function createInvalidEpub(): Promise<Uint8Array> {
 }
 
 
-/** EPUB 2 sintético: NCX intencionalmente válido, mas sem arquivo mimetype. */
+ 
 function createInvalidEpub2(): Promise<Uint8Array> {
   const zip = new JSZip();
   zip.file('META-INF/container.xml',
@@ -99,7 +99,7 @@ function createInvalidEpub2(): Promise<Uint8Array> {
 
 type MimetypeVariant = 'mimetype-compressed' | 'mimetype-wrong-content' | 'mimetype-out-of-order';
 
-/** Mesmo livro EPUB3 válido, com erro físico OCF isolado no mimetype. */
+ 
 async function makeMimetypeVariant(mode: MimetypeVariant): Promise<Uint8Array> {
   const original = await JSZip.loadAsync(await createInvalidEpub());
   const out = new JSZip();
@@ -121,10 +121,10 @@ async function makeMimetypeVariant(mode: MimetypeVariant): Promise<Uint8Array> {
   return out.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
 }
 
-/**
- * E-036: diferenças de recursos entre perfis, não versões do atributo package.
- * W3C EPUB 3.2/3.3/3.4 exigem TODAS version="3.0" no OPF.
- */
+
+
+
+
 type SpecProfile = 'epub3-core' | 'epub32-navigation' |
   'epub33-mathml' | 'epub34-fixed-layout';
 
@@ -164,7 +164,7 @@ async function createProfileSpecimen(profile: SpecProfile): Promise<Uint8Array> 
 }
 
 
-/** EPUB 3 com NCX editorial hierárquico, mas sem NAV e mimetype. */
+ 
 async function createMissingNavFromNcxSpecimen(): Promise<Uint8Array> {
   const z = new JSZip();
   z.file('META-INF/container.xml',
@@ -205,10 +205,10 @@ async function createMissingNavFromNcxSpecimen(): Promise<Uint8Array> {
 }
 
 
-/**
- * E-076: dois livros de apresentação visual com conteúdo editorial, CSS,
- * imagem SVG e layout distinto. Ambos precisam de reparo real do OCF.
- */
+
+
+
+
 function createVisualReaderSpecimen(fixed: boolean): Promise<Uint8Array> {
   const zip=new JSZip();
   zip.file('META-INF/container.xml',
@@ -396,7 +396,7 @@ describe('Fixture sintética de conformidade oficial', () => {
     expect(result.after.stats.fatalCount).toBe(0);
     expect(result.after.issues.some((issue) => issue.code === 'MIME_MISSING')).toBe(false);
 
-    // E-093: segundo reparo não deve reempacotar um EPUB já corrigido.
+    
     const repairedBytes = new Uint8Array(await result.blob!.arrayBuffer());
     const second = await repairEpub('fixture-k.epub', repairedBytes, {
       ...DEFAULT_REPAIR_OPTIONS, conservativeMode: true,

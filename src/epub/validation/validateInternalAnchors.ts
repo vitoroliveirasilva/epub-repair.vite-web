@@ -6,7 +6,7 @@ import { createIssue } from '../utils/issueFactory';
 import { isRemoteUrl, resolveReference } from '../utils/pathUtils';
 import { parseHtml, parseXml } from '../utils/xmlUtils';
 
-/** Verifica fragmentos locais sem exigir que todo capítulo esteja no índice. */
+ 
 export function validateInternalAnchors(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
   const issues: Issue[] = [];
   const parsed = new Map<string, Document | null>();
@@ -49,7 +49,7 @@ export function validateInternalAnchors(loaded: LoadedEpub, pkg: PackageDocument
       try {
         fragment = decodeURIComponent(rawFragment);
       } catch {
-        continue; // URI malformada é diagnosticada por validação de referências.
+        continue; 
       }
       const ref = href.slice(0, hash);
       const target = ref ? resolveReference(item.resolvedPath, ref) : {

@@ -1,5 +1,11 @@
 # Decisões técnicas e changelog da auditoria
 
+> **Nota de atualidade (09/11/2026):** as menções abaixo a `prod` na
+> versão `v2.2.0` são retratos históricos das auditorias anteriores.
+> A produção atual está na `v2.3.0`; a `v2.4.0` é somente candidata
+> na `dev`. Para status de publicação, consultar
+> [plano da candidata](RELEASE_2_4_0_CANDIDATA.md).
+
 **Data-base:** 05/11/2026. Todos os commits mencionados foram aplicados na `dev`.
 A branch `prod` permanece na versão estável `v2.2.0` até revisão independente.
 

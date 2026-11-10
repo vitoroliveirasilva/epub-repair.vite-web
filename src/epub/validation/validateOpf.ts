@@ -69,9 +69,9 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
     );
   }
 
-  // EPUB 3.2, 3.3 e 3.4 continuam declarando package version="3.0"
-  // conforme W3C: o atributo NÃO identifica a revisão secundária do padrão.
-  // Não converter "3.4" automaticamente nem fingir suporte a perfil novo.
+  
+  
+  
   if (pkg.version.trim() !== '1.0' && pkg.version.trim() !== '2.0' &&
       pkg.version.trim() !== '3.0') {
     issues.push(createIssue({
@@ -140,7 +140,7 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
           title: 'ID ausente ou duplicado no manifest',
           detail: `O item de href "${item.href}" precisa de um id único.`,
           file: pkg.opfPath,
-          // Um ID duplicado pode ser alvo de spine, fallback ou refines: ambiguidade manual.
+          
           repairable: !duplicatedId,
         }),
       );

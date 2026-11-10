@@ -1,21 +1,20 @@
-// @vitest-environment node
+
 import { afterAll, describe, expect, it } from 'vitest';
-import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const folder = mkdtempSync(join(tmpdir(), 'epub-av-test-'));
-const book = join(folder, 'obra com espaços #?.epub');
-const binary = join(folder, 'clamscan-mock');
+const book = join(folder, 'obra com espaços #&!.epub');
+const binary = join(folder, 'clamscan-mock.cjs');
 const log = join(folder, 'args.json');
 const script = resolve('scripts/scan-epub-av.mjs');
 writeFileSync(book, 'EPUB de teste sintético, sem dados privados.');
-writeFileSync(binary, '#!/usr/bin/env node\n' +
+writeFileSync(binary,
   'const fs = require("node:fs");\n' +
   'fs.writeFileSync(process.env.MOCK_ARGS_LOG, JSON.stringify(process.argv.slice(2)));\n' +
   'process.exit(Number(process.env.MOCK_EXIT || 0));\n');
-chmodSync(binary, 0o755);
 afterAll(() => rmSync(folder, { recursive: true, force: true }));
 
 function run(path: string, code = 0, executable = binary) {

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { beforeAll, describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { loadEpub } from '../src/epub/reader/loadEpub';

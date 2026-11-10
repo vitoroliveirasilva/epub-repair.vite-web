@@ -5,10 +5,10 @@ import { createIssue } from '../utils/issueFactory';
 import { resolveFromDir, resolveReference } from '../utils/pathUtils';
 import { parseXml } from '../utils/xmlUtils';
 
-/**
- * Capa: a imagem no manifest e a página de rosto no guide/landmarks
- * podem ser arquivos distintos. Não supor que precisam ter o mesmo caminho.
- */
+
+
+
+
 export function validateCoverConsistency(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
   const issues: Issue[] = [];
   const raw = loaded.files.get(pkg.opfPath)?.bytes;
@@ -21,7 +21,7 @@ export function validateCoverConsistency(loaded: LoadedEpub, pkg: PackageDocumen
   try {
     doc = parseXml(new TextDecoder('utf-8', { fatal: true }).decode(raw));
   } catch {
-    return []; // OPF inválido já reportado pelo parser.
+    return []; 
   }
   const nodes = Array.from(doc.getElementsByTagName('*'));
   const metaCover = nodes.find((el) => el.localName === 'meta' && el.getAttribute('name') === 'cover');
@@ -86,7 +86,7 @@ export function validateCoverConsistency(loaded: LoadedEpub, pkg: PackageDocumen
           }
         }
       } catch {
-        // A análise do próprio documento de navegação reporta XML inválido.
+        
       }
     }
   }

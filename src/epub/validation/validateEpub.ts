@@ -30,10 +30,10 @@ export async function inspectEpub(fileName: string, bytes: Uint8Array): Promise<
   return inspectLoadedEpub(fileName, bytes.length, loaded);
 }
 
-/**
- * Inspeciona a mesma instância descompactada usada pelo reparo. Evita abrir
- * o ZIP duas vezes e reduz o pico de buffers duplicados em EPUBs maiores.
- */
+
+
+
+
 export function inspectLoadedEpub(
   fileName: string,
   fileSize: number,

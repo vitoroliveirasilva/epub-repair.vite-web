@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import JSZip from 'jszip';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createInitialState } from '../src/app/state';
@@ -110,8 +110,8 @@ describe('E-075: remover metadados EPUB exige opt-in; integridade e UX', () => {
     expect(new TextDecoder().decode(original)).toContain('Exif');
     expect(new TextDecoder().decode(altered)).not.toContain('Exif');
     expect(new TextDecoder().decode(altered)).toContain('ICC_PROFILE');
-    // JSZip gera timestamps novos: comparar a MESMA entrada antes/depois,
-    // nunca um segundo ZIP reconstituído em outro instante.
+    
+    
     expect([...bytes]).toEqual([...pristine]);
   }, 30_000);
 

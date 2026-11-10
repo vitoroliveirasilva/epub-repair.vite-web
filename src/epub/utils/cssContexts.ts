@@ -1,4 +1,4 @@
-/** Posições de tokens CSS fora de comentários e strings editoriais. */
+ 
 export function cssCodePosition(source: string): (offset: number) => boolean {
   const ignored: Array<[number, number]> = [];
   for (let i = 0; i < source.length;) {
@@ -22,7 +22,7 @@ export function cssCodePosition(source: string): (offset: number) => boolean {
     if (char === '\\') { i = Math.min(i + 2, source.length); continue; }
     i += 1;
   }
-  // Busca binária: suporta consultas em qualquer ordem sem custo quadrático.
+  
   return (offset: number): boolean => {
     let low = 0;
     let high = ignored.length;

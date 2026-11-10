@@ -3,10 +3,10 @@ import type { Issue } from '../model/issueTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import { createIssue } from '../utils/issueFactory';
 
-/**
- * Diagnóstico apenas. Declarações CSS repetidas frequentemente são fallbacks
- * intencionais; não reescrever cascata sem verificar equivalência visual.
- */
+
+
+
+
 export function validateCssQuality(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
   const issues: Issue[] = [];
   for (const item of pkg.manifest) {
@@ -16,7 +16,7 @@ export function validateCssQuality(loaded: LoadedEpub, pkg: PackageDocumentInfo)
     const text = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
     const duplicates = new Set<string>();
     const conflicts = new Set<string>();
-    // Remover comentários antes de inspecionar seletores planos, sem modificar arquivo.
+    
     const clean = text.replace(/\/\*[\s\S]*?\*\//gu, '');
     for (const match of clean.matchAll(/(?:^|[}])\s*([^{}]+)\{([^{}]*)\}/gmu)) {
       const selector = (match[1] ?? '').trim();

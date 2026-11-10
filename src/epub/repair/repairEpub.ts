@@ -9,6 +9,7 @@ import { canOptimizeReport, canRepairReport, hasResidualActiveContent } from '..
 import { parsePackageDocument, parseOpfDocument } from '../validation/opfParser';
 import { parseXml } from '../utils/xmlUtils';
 import { auditPreservation } from './preservationAudit';
+import { repairCoverSvgAccessibility } from './repairCoverSvgAccessibility';
 import { createTextFileDiffs } from './textFileDiff';
 import { assertNoNewCriticalIssues } from './repairSafety';
 import { ensureContainerFile } from './repairContainer';
@@ -82,13 +83,17 @@ export async function repairEpub(
     );
   }
 
-  // Uma otimização isolada não reexecuta reparos do OPF ou do conteúdo.
+  
   if (mode === 'optimization') {
     const optimizedFiles = new Map<string, Uint8Array>();
     for (const [path, entry] of loaded.files) optimizedFiles.set(path, entry.bytes);
     const attempted = await repairImageCompatibility(optimizedFiles, parsed.packageInfo, options);
     if (!options.conservativeMode && before.issues.some((issue) => issue.code === 'XHTML_LANG_MISSING')) {
       attempted.push(...repairOptionalXhtmlLanguage(optimizedFiles, parsed.packageInfo));
+    }
+    if (!options.conservativeMode && before.issues.some((issue) =>
+      issue.code === 'CONTENT_INLINE_SVG_LABEL_MISSING' && issue.repairable)) {
+      attempted.push(...repairCoverSvgAccessibility(optimizedFiles, parsed.packageInfo));
     }
     canceled();
     if (canStripMetadata) {
@@ -97,6 +102,10 @@ export async function repairEpub(
     }
     canceled();
     const applied = attempted.filter((action) => action.type !== 'skipped');
+    const approvedJpegConversions = new Set(attempted
+      .filter((action) => action.type === 'normalized' &&
+        action.title === 'JPEG progressivo convertido' && Boolean(action.file))
+      .map((action) => action.file!));
     warnings.push(...attempted.filter((action) => action.type === 'skipped')
       .map((action) => `Não aplicado: ${action.title}. ${action.detail}`));
 
@@ -115,6 +124,15 @@ export async function repairEpub(
     const after = await inspectEpub(outName, new Uint8Array(await blob.arrayBuffer()));
     canceled();
     assertNoNewCriticalIssues(before, after);
+    
+    
+    const approvedSvgLabels = new Set(attempted.filter((action) =>
+      action.title === 'SVG da capa recebeu rótulo acessível' && Boolean(action.file))
+      .map((action) => action.file!));
+    warnings.push(...auditPreservation(loaded, optimizedFiles,
+      parsed.packageInfo, after.packageInfo,
+      canStripMetadata ? metadataCandidates : new Set(),
+      undefined, approvedJpegConversions, false, approvedSvgLabels));
     if (hasResidualActiveContent(after)) {
       warnings.push('Otimização concluída, mas ainda existem recursos suspeitos ou conteúdo ativo a revisar.');
     }
@@ -174,8 +192,8 @@ export async function repairEpub(
     actions.push(ensureContainerFile(files, parsed.packageInfo.opfPath));
   }
 
-  // Inspecionar o manifest efetivo também em modo conservador. O OPF reparado
-  // pode declarar XHTML/SVG/CSS que antes eram órfãos no pacote.
+  
+  
   const currentOpf = files.get(parsed.packageInfo.opfPath);
   const currentPkg = currentOpf
     ? parseOpfDocument(
@@ -187,8 +205,8 @@ export async function repairEpub(
   if (!options.conservativeMode) {
     actions.push(...repairContentDocuments(files, loaded, currentPkg, options));
   } else {
-    // O modo conservador não reescreve conteúdo por compatibilidade, mas
-    // respeita o opt-in explícito de remover scripts ou recursos remotos.
+    
+    
     actions.push(...repairActiveContentOnly(files, currentPkg, options));
     warnings.push(
       options.sanitizeScripts
@@ -200,13 +218,16 @@ export async function repairEpub(
   }
 
   actions.push(...repairKindleCompatibility(files, currentPkg, options));
-  // Manifest precisa refletir os recursos efetivos, após a limpeza. Isso
-  // evita avisos novos quando o reparo declara arquivos antes órfãos.
+  if (!options.conservativeMode) {
+    actions.push(...repairCoverSvgAccessibility(files, currentPkg));
+  }
+  
+  
   if (options.repairManifest) {
     actions.push(...synchronizeManifestProperties(files, currentPkg));
   }
-  // E-009: JPEG progressivo só muda na otimização explicitamente solicitada.
-  // E-075: metadados somente com opt-in, sem alterar pixels, e com revalidação.
+  
+  
   if (canStripMetadata) {
     actions.push(...stripEpubImageMetadata(files, currentPkg, metadataCandidates));
   }
@@ -244,8 +265,12 @@ export async function repairEpub(
   const after = await inspectEpub(outputFileName, afterBytes);
   canceled();
   assertNoNewCriticalIssues(before, after);
+  const approvedSvgLabels = new Set(actions.filter((action) =>
+    action.title === 'SVG da capa recebeu rótulo acessível' && Boolean(action.file))
+    .map((action) => action.file!));
   warnings.push(...auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo,
-    canStripMetadata ? metadataCandidates : undefined));
+    canStripMetadata ? metadataCandidates : undefined,
+    undefined, new Set(), options.removeRemoteResourceLinks, approvedSvgLabels));
   const fileDiffs = createTextFileDiffs(new Map(Array.from(loaded.files, ([name, entry]) =>
     [name, entry.bytes])), files);
   if (hasResidualActiveContent(after)) {
@@ -278,8 +303,8 @@ function shouldNormalizeMimetype(
 }
 
 function shouldRebuildContainer(issues: { code: string }[]): boolean {
-  // Múltiplos rootfiles podem representar renditions legítimas. Este aviso
-  // informativo NUNCA autoriza substituir o container e perder outras edições.
+  
+  
   const missingOrBroken = new Set([
     'CONTAINER_MISSING', 'CONTAINER_INVALID_XML', 'CONTAINER_NO_ROOTFILE',
   ]);

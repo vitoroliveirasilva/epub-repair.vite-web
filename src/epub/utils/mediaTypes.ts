@@ -5,7 +5,7 @@ export function guessMediaType(path: string): string | undefined {
   return KNOWN_MEDIA_TYPES[extname(path)];
 }
 
-/** Aliases de MIME válidos não devem ser reescritos apenas por heurística da extensão. */
+ 
 export function areEquivalentMediaTypes(actual: string, expected: string): boolean {
   const a = actual.trim().toLowerCase();
   const e = expected.trim().toLowerCase();

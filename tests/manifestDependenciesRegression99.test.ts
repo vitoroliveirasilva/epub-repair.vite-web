@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 import { buildKindleIssueEpub } from './helpers/syntheticEpub';

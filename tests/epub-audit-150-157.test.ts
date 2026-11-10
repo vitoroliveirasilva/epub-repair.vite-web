@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import JSZip from 'jszip';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -150,17 +150,22 @@ describe('Sétima auditoria E-150 a E-157', () => {
   });
 
   it('CI econômico: commits em dev não acionam emuladores e preservam checks Node 20/22 em prod',()=>{
-    const read=(name:string)=>readFileSync('.github/workflows/'+name+'.yml','utf8');
+    const read=(name:string)=>readFileSync('.github/workflows/'+name+'.yml','utf8')
+      .replace(/\r\n?/gu, '\n');
     for(const workflow of ['android-emulator','ios-simulator','kindle-preview',
       'browser-matrix','calibre-reader','coverage']){
       const source=read(workflow);
       const triggerSection=source.slice(source.indexOf('on:'),source.indexOf('permissions:'));
       expect(triggerSection).not.toContain('branches: [dev]');
-      expect(triggerSection).not.toContain('pull_request:');
       expect(triggerSection).toContain('workflow_dispatch:');
       if(['browser-matrix','calibre-reader','coverage'].includes(workflow)) {
+        
+        expect(triggerSection).toContain('pull_request:');
+        expect(triggerSection).toContain('types: [opened, reopened, synchronize, ready_for_review]');
         expect(triggerSection).toContain('branches: [prod]');
+        expect(source).toContain("if: github.event_name != 'pull_request' || !github.event.pull_request.draft");
       } else {
+        expect(triggerSection).not.toContain('pull_request:');
         expect(triggerSection).not.toContain('push:');
       }
     }
@@ -170,6 +175,7 @@ describe('Sétima auditoria E-150 a E-157', () => {
     expect(ci).toContain('types: [opened, reopened, synchronize, ready_for_review]');
     expect(ci).toContain("github.event_name != 'pull_request' || !github.event.pull_request.draft");
     expect(ci).toContain("github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/prod'");
+    expect(ci).toContain("github.base_ref == 'prod' && !github.event.pull_request.draft");
     const preview=read('netlify-live-preview');
     expect(preview).toContain('types: [opened, reopened, ready_for_review]');
     const supply=read('supply-chain');

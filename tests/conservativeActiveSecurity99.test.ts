@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import JSZip from 'jszip';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { inspectEpub } from '../src/epub/validation/validateEpub';
@@ -87,7 +87,7 @@ describe('E-052: saneamento e diagnóstico em modo conservador', () => {
     const result = await repairEpub('livro.epub', original, {
       ...DEFAULT_REPAIR_OPTIONS, conservativeMode: true, sanitizeScripts: false,
     });
-    expect(result.changed).toBe(true); // Corrige mimetype sem reescrever conteúdo ativo
+    expect(result.changed).toBe(true); 
     expect(result.blob).toBeDefined();
     const zip = await JSZip.loadAsync(await result.blob!.arrayBuffer());
     const chapter = await zip.file('OPS/chapter.xhtml')!.async('string');

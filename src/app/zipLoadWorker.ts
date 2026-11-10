@@ -14,8 +14,8 @@ export type ZipWorkerResponse =
   | { type: 'loaded'; loaded: PortableLoadedEpub }
   | { type: 'error'; message: string };
 
-// Não se usa DOMParser, canvas nem DOM em Worker. A extração ZIP é a única
-// etapa transferida; validação de XML/HTML permanece no contexto principal.
+
+
 const scope = globalThis as unknown as {
   onmessage: ((event: MessageEvent<ZipWorkerRequest>) => void) | null;
   postMessage(message: ZipWorkerResponse, transfer?: Transferable[]): void;
@@ -27,8 +27,8 @@ scope.onmessage = (event) => {
   void loadEpub(fileName, bytes, (progress) => {
     scope.postMessage({ type: 'progress', ...progress });
   }).then((loaded) => {
-    // JSZip contém funções não serializáveis. Transferir somente buffers das
-    // entradas extraídas evita uma segunda cópia da saída completa.
+    
+    
     const portable: PortableLoadedEpub = {
       fileName: loaded.fileName,
       fileSize: loaded.fileSize,

@@ -42,8 +42,8 @@ function repairNcxCompatibility(
     return actions;
   }
 
-  // O NCX representa a navegação editorial e não precisa conter um navPoint
-  // para cada XHTML do spine. Preservamos a organização do sumário original.
+  
+  
 
   const navPoints = findByLocalName(doc, 'navPoint');
   let playOrderChanged = false;
@@ -145,7 +145,7 @@ function repairXhtmlCompatibility(
   return actions;
 }
 
-/** Ajusta somente idioma XHTML na operação opcional; não altera NCX ou prosa. */
+ 
 export function repairOptionalXhtmlLanguage(
   files: Map<string, Uint8Array>,
   pkg: PackageDocumentInfo,
@@ -191,11 +191,27 @@ function normalizeNcxTitle(doc: Document, title: string | undefined): boolean {
 
 function ensureHtmlLanguage(text: string, language: string): string {
   return text.replace(/<html\b([^>]*)>/iu, (_full, attrs: string) => {
+    
+    
+    
+    const xmlLang = readHtmlLanguageAttribute(attrs, 'xml:lang');
+    const lang = readHtmlLanguageAttribute(attrs, 'lang');
+    if (xmlLang && lang && xmlLang.toLowerCase() !== lang.toLowerCase()) {
+      
+      return `<html${attrs}>`;
+    }
+    const pageLanguage = xmlLang || lang || language;
     let nextAttrs = attrs;
-    nextAttrs = upsertLanguageAttribute(nextAttrs, 'xml:lang', language);
-    nextAttrs = upsertLanguageAttribute(nextAttrs, 'lang', language);
+    nextAttrs = upsertLanguageAttribute(nextAttrs, 'xml:lang', pageLanguage);
+    nextAttrs = upsertLanguageAttribute(nextAttrs, 'lang', pageLanguage);
     return `<html${nextAttrs.trimEnd()}>`;
   });
+}
+
+function readHtmlLanguageAttribute(attrs: string, name: 'lang' | 'xml:lang'): string | undefined {
+  
+  const pattern = new RegExp(`(?:^|\\s)${name}\\s*=\\s*(["'])(.*?)\\1`, 'iu');
+  return pattern.exec(attrs)?.[2]?.trim() || undefined;
 }
 
 function upsertLanguageAttribute(attrs: string, name: string, language: string): string {

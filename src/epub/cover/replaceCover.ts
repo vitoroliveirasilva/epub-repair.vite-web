@@ -87,8 +87,8 @@ export async function replaceEpubCover(
   const metadata = ensureChild(doc, packageElement, 'metadata');
   const manifest = ensureChild(doc, packageElement, 'manifest');
   const target = findCoverTarget(doc, parsed.packageInfo, files);
-  // Não sobrescrever ilustrações de capítulos que reutilizam os bytes da
-  // imagem oficial de capa. A atualização é limitada às páginas de rosto.
+  
+  
   const scope = coverReferenceScope(doc, parsed.packageInfo, files, target?.path);
   const independentPath = makeUniqueCoverPath(files, parsed.packageInfo, coverImage.mediaType);
   const wouldChange = target?.path
@@ -114,14 +114,17 @@ export async function replaceEpubCover(
   );
 
   ensureCoverMeta(doc, metadata, coverId);
-  ensureSingleCoverImageProperty(manifest, coverItem);
+  
+  ensureSingleCoverImageProperty(manifest, coverItem,
+    parsed.packageInfo.version.trim().startsWith('3'));
+  const approvedStyleAliases = new Map<string, string>();
   const cssActions = target?.path && target.path !== coverPath && reusedElsewhere
     ? forkSharedCoverStyles(files, parsed.packageInfo, doc, scope.pages,
-      scope.sharedStyles, scope.consumers, target.path, coverPath)
+      scope.sharedStyles, scope.consumers, target.path, coverPath, approvedStyleAliases)
     : [];
 
-  // Mudança de extensão cria um novo arquivo: sincronizar os locais que
-  // ainda exibiriam a capa antiga antes de serializar o OPF.
+  
+  
   const referenceActions = target?.path && target.path !== coverPath
     ? updateCoverReferences(files, parsed.packageInfo, target.path, coverPath,
       scope.allowed)
@@ -167,9 +170,12 @@ export async function replaceEpubCover(
   const after = await inspectEpub(outputFileName, afterBytes);
   canceled();
   assertNoNewCriticalIssues(before, after);
-  // E-122: executar no fluxo da capa o mesmo gate editorial usado pelo reparo.
+  
   const auditNotes = auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo,
-    new Set(), { path: coverPath, bytes: coverImage.bytes });
+    new Set(), { path: coverPath, bytes: coverImage.bytes,
+      ...(target?.path ? { previousPath: target.path } : {}),
+      allowedPages: scope.allowed,
+      styleAliases: approvedStyleAliases });
   const warnings = [...buildCoverReplacementWarnings(before, after), ...auditNotes];
   if (reusedElsewhere) {
     warnings.push('A imagem antiga também é usada fora da página de capa. ' +
@@ -407,13 +413,16 @@ function ensureCoverMeta(doc: Document, metadata: Element, coverId: string): voi
   for (const extra of coverMetas.slice(1)) extra.remove();
 }
 
-function ensureSingleCoverImageProperty(manifest: Element, coverItem: Element): void {
+function ensureSingleCoverImageProperty(
+  manifest: Element, coverItem: Element, isEpub3: boolean,
+): void {
   for (const item of childElementsByLocalName(manifest, 'item')) {
-    if (item === coverItem) continue;
+    if (item === coverItem && isEpub3) continue;
+    
     removeTokenAttribute(item, 'properties', 'cover-image');
   }
 
-  addTokenAttribute(coverItem, 'properties', 'cover-image');
+  if (isEpub3) addTokenAttribute(coverItem, 'properties', 'cover-image');
 }
 
 function addTokenAttribute(element: Element, attribute: string, token: string): void {

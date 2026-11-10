@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { buildRepairConsentMessage } from '../src/app/repairConsent';
 import { DEFAULT_REPAIR_OPTIONS } from '../src/epub/utils/constants';

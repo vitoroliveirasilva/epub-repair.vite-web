@@ -2,24 +2,33 @@ import type { LoadedEpub } from '../model/epubTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import { HTML_MEDIA_TYPES, IMAGE_MEDIA_TYPES } from '../utils/constants';
 import { stripImageMetadata } from './stripImageMetadata';
+import { isJpegMediaType, isProgressiveJpeg } from '../utils/kindleCompatibility';
+import { auditVisualStructures, type CoverReferenceApproval } from './editorialStructureAudit';
 
 const textDecoder = new TextDecoder('utf-8', { fatal: false });
 const FONT_MIME = /^(?:font\/|application\/(?:font-|vnd\.ms-fontobject))/iu;
 
-/**
- * Audita regressões estruturais e preservação de conteúdo.
- * Nunca reescreve texto editorial para tentar "corrigir" divergências.
- */
+
+
+
+
 export function auditPreservation(
   original: LoadedEpub,
   output: ReadonlyMap<string, Uint8Array>,
   before: PackageDocumentInfo,
   after: PackageDocumentInfo | undefined,
   approvedMetadataCleanup: ReadonlySet<string> = new Set(),
-  approvedCoverReplacement?: { path: string; bytes: Uint8Array },
+  approvedCoverReplacement?: CoverReferenceApproval,
+  approvedJpegConversions: ReadonlySet<string> = new Set(),
+  approvedRemoteRemoval = false,
+  approvedCoverSvgLabels: ReadonlySet<string> = new Set(),
 ): string[] {
   const warnings: string[] = [];
-  if (!after) return ['Não foi possível confirmar a estrutura editorial após o reparo.'];
+  const originalPaths = new Set(original.files.keys());
+  const finalPaths = new Set(output.keys());
+  if (!after) {
+    throw new Error('O EPUB gerado não possui estrutura editorial verificável após o reparo.');
+  }
 
   const readingPaths = (pkg: PackageDocumentInfo) => pkg.spine
     .map((item) => item.manifestItem?.resolvedPath || `ausente:${item.idref}`);
@@ -40,8 +49,8 @@ export function auditPreservation(
     }
   }
 
-  // Validar não só a presença, mas também a ordem e multiplicidade das páginas
-  // de leitura que já existiam antes do reparo.
+  
+  
   const surviving = after.spine
     .map((item) => item.manifestItem?.resolvedPath)
     .filter((path): path is string => Boolean(path && originalReadingPaths.includes(path)));
@@ -49,8 +58,8 @@ export function auditPreservation(
     throw new Error('A operação alterou a ordem ou repetição de capítulos já existentes.');
   }
 
-  // Uma mudança invisível no valor linear pode alterar a ordem efetiva da leitura.
-  // Não inferir nem alterar silenciosamente quais páginas são auxiliares.
+  
+  
   for (let index = 0; index < before.spine.length; index += 1) {
     const original = before.spine[index];
     const updated = after.spine[index];
@@ -65,32 +74,38 @@ export function auditPreservation(
 
   const changedText: string[] = [];
   const potentiallyLostText: string[] = [];
-  const unverifiableText: string[] = [];
   for (const item of before.manifest) {
     if (!item.exists || !HTML_MEDIA_TYPES.has(item.mediaType)) continue;
     const oldBytes = original.files.get(item.resolvedPath)?.bytes;
     const newBytes = output.get(item.resolvedPath);
-    if (!oldBytes || !newBytes) {
-      changedText.push(item.resolvedPath);
-      continue;
+    if (!oldBytes) continue;
+    if (!newBytes) {
+      throw new Error('O reparo removeria um documento editorial declarado: ' + item.resolvedPath);
     }
-    // DTBook possui book/bodymatter em vez do body XHTML. Preservar bytes
-    // editoriais até haver um normalizador DTBook com auditoria própria.
+    
+    
     if (item.mediaType === 'application/x-dtbook+xml' && !sameBytes(oldBytes, newBytes)) {
       throw new Error('Reparo bloqueado para preservar integralmente texto e estrutura DTBook em ' + item.resolvedPath);
     }
     const oldMarkup = textDecoder.decode(oldBytes);
     const newMarkup = textDecoder.decode(newBytes);
     if (!sameBytes(oldBytes, newBytes)) {
-      compareInternalTargets(oldMarkup, newMarkup, item.resolvedPath);
-      compareEditorialBlocks(oldMarkup, newMarkup, item.resolvedPath);
-      compareSpecialMarkup(oldMarkup, newMarkup, item.resolvedPath);
-      compareTypographyPreservation(oldMarkup, newMarkup, item.resolvedPath);
+      compareInternalTargets(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
+      compareEditorialBlocks(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
+      compareSpecialMarkup(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
+      compareTypographyPreservation(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
+      
+      auditVisualStructures(oldMarkup, newMarkup, item.resolvedPath, item.mediaType,
+        originalPaths, finalPaths, approvedCoverReplacement, !approvedRemoteRemoval,
+        approvedCoverSvgLabels.has(item.resolvedPath));
     }
-    const oldText = extractReadableText(oldMarkup);
-    const newText = extractReadableText(newMarkup);
+    const oldText = extractReadableText(oldMarkup, item.mediaType);
+    const newText = extractReadableText(newMarkup, item.mediaType);
     if (oldText === undefined || newText === undefined) {
-      if (!sameBytes(oldBytes, newBytes)) unverifiableText.push(item.resolvedPath);
+      if (!sameBytes(oldBytes, newBytes)) {
+        throw new Error('A alteração editorial não pôde ser auditada com segurança em ' +
+          item.resolvedPath + '; a cópia modificada foi bloqueada.');
+      }
     } else if (oldText !== newText) {
       changedText.push(item.resolvedPath);
       if (!containsOriginalWordsInOrder(oldText, newText)) {
@@ -98,8 +113,8 @@ export function auditPreservation(
       }
     }
   }
-  // Nunca baixar silenciosamente um livro quando uma sanitização omitiu texto legível.
-  // Conteúdo ativo de <script>/<style> não entra na comparação.
+  
+  
   if (potentiallyLostText.length > 0) {
     throw new Error(
       `A correção alteraria ou removeria texto editorial em ${potentiallyLostText.length} arquivo(s): ` +
@@ -113,33 +128,33 @@ export function auditPreservation(
       `Revise o texto: ${changedText.slice(0, 5).join(', ')}`,
     );
   }
-  if (unverifiableText.length > 0) {
-    warnings.push(
-      `Não foi possível comparar o texto de ${unverifiableText.length} documento(s) modificado(s) ` +
-      'por erro de parsing; revisão editorial manual necessária.',
-    );
-  }
 
-  // Reparo estrutural não pode regravar imagens/fontes sem ação explícita.
+  
   for (const item of before.manifest) {
     if (!item.exists || !(IMAGE_MEDIA_TYPES.has(item.mediaType) || FONT_MIME.test(item.mediaType))) {
       continue;
     }
     const oldBytes = original.files.get(item.resolvedPath)?.bytes;
     const newBytes = output.get(item.resolvedPath);
-    if (!oldBytes || !newBytes) continue;
+    if (!oldBytes) continue;
+    if (!newBytes) {
+      throw new Error('O reparo removeria uma imagem ou fonte editorial declarada: ' + item.resolvedPath);
+    }
     if (!sameBytes(oldBytes, newBytes)) {
       if (item.mediaType === 'image/svg+xml') {
         compareSvgPreservation(textDecoder.decode(oldBytes), textDecoder.decode(newBytes),
           item.resolvedPath);
-      } else if (approvedCoverReplacement?.path === item.resolvedPath &&
-          sameBytes(approvedCoverReplacement.bytes, newBytes)) {
-        // A imagem da capa foi escolhida explicitamente pelo usuário.
-      } else if (approvedMetadataCleanup.has(item.resolvedPath) &&
-          sameBytes(stripImageMetadata(oldBytes, item.mediaType).bytes, newBytes)) {
-        // Somente a transformação exata de metadados previamente autorizada.
       } else {
-        throw new Error(`O reparo técnico modificou um recurso binário sem autorização: ${item.resolvedPath}`);
+        const approvedCover = approvedCoverReplacement?.path === item.resolvedPath &&
+          sameBytes(approvedCoverReplacement.bytes, newBytes);
+        const approvedMetadata = approvedMetadataCleanup.has(item.resolvedPath) &&
+          sameBytes(stripImageMetadata(oldBytes, item.mediaType).bytes, newBytes);
+        const approvedJpeg = approvedJpegConversions.has(item.resolvedPath) &&
+          isJpegMediaType(item.mediaType) && isProgressiveJpeg(oldBytes) &&
+          !isProgressiveJpeg(newBytes);
+        if (!approvedCover && !approvedMetadata && !approvedJpeg) {
+          throw new Error(`O reparo técnico modificou um recurso binário sem autorização: ${item.resolvedPath}`);
+        }
       }
     }
   }
@@ -147,11 +162,11 @@ export function auditPreservation(
 }
 
 
-/**
- * As referências entre XHTML e SMIL são editoriais. Um reparo de EPUB,
- * que não edita narração, nunca deve reconstruí-las nem substituir bytes
- * de SMIL sem solicitação explícita e verificação de sincronização.
- */
+
+
+
+
+
 function auditMediaOverlayPreservation(
   original: LoadedEpub,
   output: ReadonlyMap<string, Uint8Array>,
@@ -176,12 +191,9 @@ function auditMediaOverlayPreservation(
   }
 }
 
-function extractReadableText(markup: string): string | undefined {
-  if (typeof DOMParser === 'undefined') return undefined;
-  const document = new DOMParser().parseFromString(
-    markup.replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml',
-  );
-  if (document.getElementsByTagName('parsererror').length > 0) return undefined;
+function extractReadableText(markup: string, mediaType = 'application/xhtml+xml'): string | undefined {
+  const document = parseReadableDocument(markup, mediaType);
+  if (!document) return undefined;
   for (const element of Array.from(document.getElementsByTagName('*'))) {
     if (element.localName === 'script' || element.localName === 'style') element.remove();
   }
@@ -196,9 +208,9 @@ function sameBytes(left: Uint8Array, right: Uint8Array): boolean {
   return true;
 }
 
-/** Comparação conservadora: texto de capítulos deve permanecer legível e na mesma ordem.
- * Autoriza acréscimos (como aviso sobre imagem ausente), mas não elimina palavras originais.
- */
+
+
+
 function containsOriginalWordsInOrder(before: string, after: string): boolean {
   const originalWords = before.trim().split(/\s+/u).filter(Boolean);
   if (originalWords.length === 0) return true;
@@ -211,14 +223,15 @@ function containsOriginalWordsInOrder(before: string, after: string): boolean {
   return false;
 }
 
-/**
- * O texto integral não basta: fundir dois parágrafos preserva as palavras,
- * mas quebra a semântica de leitura. Conferir parágrafos, itens de lista e headings
- * na mesma sequência, permitindo apenas acréscimos dentro do bloco original.
- */
-function compareEditorialBlocks(before: string, after: string, path: string): void {
-  const original = parseReadableDocument(before);
-  const repaired = parseReadableDocument(after);
+
+
+
+
+
+function compareEditorialBlocks(before: string, after: string, path: string,
+  mediaType = 'application/xhtml+xml'): void {
+  const original = parseReadableDocument(before, mediaType);
+  const repaired = parseReadableDocument(after, mediaType);
   if (!original || !repaired) return;
   const blocks = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
     .filter((element) => /^(?:p|li|h[1-6])$/iu.test(element.localName))
@@ -237,21 +250,22 @@ function compareEditorialBlocks(before: string, after: string, path: string): vo
   }
 }
 
-/** IDs e links editoriais internos não podem desaparecer por efeito colateral do sanitizer. */
+ 
 
-/**
- * Preserva as escolhas de tipografia e os limites de versos/diálogos.
- * O reparo não é editor literário: tags inline e quebras explícitas já
- * existentes não podem desaparecer apenas porque o texto final é igual.
- */
-function compareTypographyPreservation(before: string, after: string, path: string): void {
-  const oldDoc = parseReadableDocument(before);
-  const newDoc = parseReadableDocument(after);
+
+
+
+
+
+function compareTypographyPreservation(before: string, after: string, path: string,
+  mediaType = 'application/xhtml+xml'): void {
+  const oldDoc = parseReadableDocument(before, mediaType);
+  const newDoc = parseReadableDocument(after, mediaType);
   if (!oldDoc || !newDoc) return;
   const typographic = /^(?:em|i|strong|b|u|s|small|sup|sub|span|cite|q|blockquote|pre|code|br|wbr)$/iu;
   const nodes = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
     .filter((element) => typographic.test(element.localName))
-    // Um elemento dentro de script/iframe não é tipografia da obra.
+    
     .filter((element) => !Array.from(element.getElementsByTagName('*')).some((node) =>
       ['script', 'style', 'iframe', 'object'].includes(node.localName.toLowerCase())));
   const original = nodes(oldDoc);
@@ -264,8 +278,8 @@ function compareTypographyPreservation(before: string, after: string, path: stri
     const originalStyle = element.getAttribute('style')?.trim() ?? '';
     const text = (element.textContent ?? '').replace(/\s+/gu, ' ').trim();
     const exactPre = /^(?:pre|code)$/iu.test(name);
-    // O CSS com URLs pode ser neutralizado por opt-in ou por ameaça real.
-    // Estilos editoriais sem URL são obrigatoriamente preservados.
+    
+    
     const protectStyle = originalStyle && !/(?:url\s*\(|@import|expression\s*\()/iu.test(originalStyle);
     let found = false;
     for (; index < output.length; index += 1) {
@@ -290,10 +304,11 @@ function compareTypographyPreservation(before: string, after: string, path: stri
   }
 }
 
-function compareInternalTargets(before: string, after: string, path: string): void {
-  const original = parseReadableDocument(before);
-  const output = parseReadableDocument(after);
-  if (!original || !output) return; // Já há alerta de comparação textual inconclusiva.
+function compareInternalTargets(before: string, after: string, path: string,
+  mediaType = 'application/xhtml+xml'): void {
+  const original = parseReadableDocument(before, mediaType);
+  const output = parseReadableDocument(after, mediaType);
+  if (!original || !output) return; 
   const elements = (doc: Document): Element[] => Array.from(doc.getElementsByTagName('*'))
     .filter((element) => element.localName !== 'script' && element.localName !== 'style');
   const ids = (doc: Document) => new Set(elements(doc)
@@ -323,20 +338,25 @@ function compareInternalTargets(before: string, after: string, path: string): vo
   }
 }
 
-function parseReadableDocument(markup: string): Document | undefined {
+function parseReadableDocument(markup: string,
+  mediaType = 'application/xhtml+xml'): Document | undefined {
   if (typeof DOMParser === 'undefined') return undefined;
+  
+  
+  const isHtml = mediaType === 'text/html';
   const doc = new DOMParser().parseFromString(
-    markup.replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml',
+    isHtml ? markup : markup.replace(/&nbsp;/giu, '&#160;'),
+    isHtml ? 'text/html' : 'application/xhtml+xml',
   );
-  return doc.getElementsByTagName('parsererror').length > 0 ? undefined : doc;
+  return !isHtml && doc.getElementsByTagName('parsererror').length > 0 ? undefined : doc;
 }
 
 
-/**
- * Referências do sumário EPUB 3 e NCX são editoriais, não enumeram o spine.
- * Nunca permitir que sanitização ou normalização silenciosamente perca links
- * que existiam antes, mesmo quando o destino original já era problemático.
- */
+
+
+
+
+
 function auditNavigationPreservation(
   original: LoadedEpub,
   output: ReadonlyMap<string, Uint8Array>,
@@ -354,9 +374,8 @@ function auditNavigationPreservation(
     const oldDoc = parseReadableDocument(textDecoder.decode(oldBytes));
     const newDoc = parseReadableDocument(textDecoder.decode(newBytes));
     if (!oldDoc || !newDoc) {
-      notes.push('Não foi possível comparar todos os links do índice em ' + item.resolvedPath +
-        '; revise manualmente o sumário.');
-      continue;
+      throw new Error('O índice mudou, mas não pôde ser comparado com segurança em ' +
+        item.resolvedPath + '. A cópia foi bloqueada.');
     }
     const targets = (doc: Document): string[] => Array.from(doc.getElementsByTagName('*'))
       .flatMap((node) => {
@@ -369,18 +388,100 @@ function auditNavigationPreservation(
     if (oldTargets.join('\u0000') !== newTargets.join('\u0000')) {
       throw new Error('O reparo alteraria destinos ou ordem do sumário em ' + item.resolvedPath);
     }
+    
+    
+    
+    if (item === before.navItem) {
+      const previous = epubNavSemanticFingerprint(oldDoc);
+      const current = epubNavSemanticFingerprint(newDoc);
+      if (previous.join('\u0000') !== current.join('\u0000')) {
+        throw new Error('O reparo alteraria a hierarquia, semântica ou os rótulos ' +
+          'editoriais do índice EPUB 3 em ' + item.resolvedPath);
+      }
+    }
+    if (item.mediaType === 'application/x-dtbncx+xml') {
+      const fingerprint = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
+        .filter((node) => node.localName === 'navPoint')
+        .map((node) => {
+          let depth = 0;
+          for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+            if (parent.localName === 'navPoint') depth += 1;
+          }
+          const label = Array.from(node.children).find((child) => child.localName === 'navLabel');
+          const text = label && Array.from(label.children)
+            .find((child) => child.localName === 'text')?.textContent?.replace(/\s+/gu, ' ').trim();
+          return JSON.stringify([depth, node.getAttribute('id') ?? '', text ?? '']);
+        });
+      if (fingerprint(oldDoc).join('\u0000') !== fingerprint(newDoc).join('\u0000')) {
+        throw new Error('O reparo alteraria a hierarquia, IDs ou títulos editoriais do NCX em ' +
+          item.resolvedPath);
+      }
+    }
   }
   return notes;
 }
 
-/**
- * Proteger blocos semânticos especiais. Uma alteração em texto/estrutura MathML,
- * ruby ou direção explícita não pode ser tratada como sanitização inofensiva.
- * Marcação e estilos devem ser preservados; leitura visual real permanece pendente.
- */
-function compareSpecialMarkup(before: string, after: string, path: string): void {
-  const oldDoc = parseReadableDocument(before);
-  const newDoc = parseReadableDocument(after);
+
+
+
+
+
+function epubNavSemanticFingerprint(doc: Document): string[] {
+  const xhtmlNamespace = 'http://www.w3.org/1999/xhtml';
+  const epubNamespace = 'http://www.idpf.org/2007/ops';
+  const semantic = new Set(['ol', 'li', 'a', 'span']);
+  const semanticValue = (node: Element): string => {
+    const clone = node.cloneNode(true) as Element;
+    for (const element of Array.from(clone.getElementsByTagName('*'))) {
+      if (['script', 'style', 'iframe', 'object', 'embed'].includes(
+        element.localName.toLowerCase())) element.remove();
+    }
+    return (clone.textContent ?? '').replace(/\s+/gu, ' ').trim();
+  };
+  const nodes = Array.from(doc.getElementsByTagName('*')).filter(
+    node => node.localName === 'nav' && node.namespaceURI === xhtmlNamespace);
+  return nodes.map((nav) => {
+    const epubType = (node: Element): string => node.getAttributeNS(epubNamespace, 'type')
+      ?? node.getAttribute('epub:type') ?? '';
+    const meta = [
+      epubType(nav), nav.getAttribute('id') ?? '',
+      nav.getAttribute('role') ?? '', nav.getAttribute('aria-label') ?? '',
+      nav.getAttribute('aria-labelledby') ?? '', nav.hasAttribute('hidden'),
+    ];
+    const descendants = Array.from(nav.getElementsByTagName('*'))
+      .filter(node => semantic.has(node.localName))
+      .map(node => {
+        const ancestry: string[] = [];
+        for (let parent = node.parentElement; parent && parent !== nav;
+          parent = parent.parentElement) {
+          if (semantic.has(parent.localName)) ancestry.push(parent.localName);
+        }
+        ancestry.reverse();
+        return JSON.stringify([
+          ancestry, node.localName, node.getAttribute('id') ?? '',
+          node.getAttribute('href') ?? '', epubType(node),
+          node.getAttribute('role') ?? '',
+          node.getAttribute('aria-label') ?? '',
+          node.getAttribute('aria-labelledby') ?? '',
+          node.getAttribute('title') ?? '',
+          node.getAttribute('class') ?? '',
+          node.getAttribute('start') ?? '', node.hasAttribute('reversed'),
+          ['a', 'span'].includes(node.localName) ? semanticValue(node) : '',
+        ]);
+      });
+    return JSON.stringify([meta, descendants]);
+  });
+}
+
+
+
+
+
+
+function compareSpecialMarkup(before: string, after: string, path: string,
+  mediaType = 'application/xhtml+xml'): void {
+  const oldDoc = parseReadableDocument(before, mediaType);
+  const newDoc = parseReadableDocument(after, mediaType);
   if (!oldDoc || !newDoc) return;
   const semantic = (doc: Document): string[] => Array.from(doc.getElementsByTagName('*'))
     .filter((node) => ['math', 'mrow', 'mi', 'mn', 'mo', 'msup', 'msub', 'mfrac',
@@ -405,9 +506,9 @@ function compareSpecialMarkup(before: string, after: string, path: string): void
     }
   }
 
-  // E-049: preservar idioma por trecho e modo de escrita vertical, inclusive
-  // fora de span/ruby. Conteúdos mistos podem ter vários idiomas e direções.
-  // A ordem relativa de todos os marcadores originais deve sobreviver.
+  
+  
+  
   const readingMarkers = (doc: Document): string[] =>
     Array.from(doc.getElementsByTagName('*'))
       .filter((node) => !['script', 'style', 'iframe', 'object', 'embed']
@@ -417,8 +518,8 @@ function compareSpecialMarkup(before: string, after: string, path: string): void
         const rawXmlLang = node.getAttributeNS(
           'http://www.w3.org/XML/1998/namespace', 'lang',
         ) ?? '';
-        // O normalizador XHTML pode adicionar o alias ausente (lang/xml:lang).
-        // Comparar o idioma efetivo, mas nunca ignorar divergência explícita.
+        
+        
         const lang = rawLang || rawXmlLang;
         const xmlLang = rawXmlLang || rawLang;
         const dir = node.getAttribute('dir') ?? '';
@@ -449,11 +550,11 @@ function compareSpecialMarkup(before: string, after: string, path: string): void
 }
 
 
-/**
- * SVG é XML, não binário opaco: somente elementos ativos podem desaparecer e
- * atributos de evento/URL/style podem ser neutralizados. IDs, texto, geometria
- * e os atributos estruturais de conteúdo passivo devem permanecer equivalentes.
- */
+
+
+
+
+
 function compareSvgPreservation(before: string, after: string, path: string): void {
   const original = parseReadableDocument(before);
   const repaired = parseReadableDocument(after);

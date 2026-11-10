@@ -13,7 +13,7 @@ protegido de terceiros. Inclui EPUB 2, EPUB 3, sumário NCX hierárquico
 e exemplos reflowable/fixed. Faça download do artifact no GitHub Actions
 e extraia os arquivos no dispositivo, ou disponibilize-os por canal seguro.
 
-Use a URL do **deploy de homologação da dev**, nunca a produção v2.2.0
+Use a URL do **deploy de homologação da dev**, nunca a produção v2.3.0
 para avaliar alterações que ainda não foram integradas. Registre o SHA
 exato servido pelo deploy de homologação e confirme a CSP hospedada.
 
@@ -54,14 +54,21 @@ Falhas devem gerar issue/bug com passos de reprodução.
 A suíte automatizada existente no Linux desktop/viewport móvel
 é evidência complementar, não substitui os testes acima.
 
-## Ambiente de homologação disponível em 06/11/2026
+## Ambiente histórico de homologação em 06/11/2026 (não é o candidato atual)
+
+Os links abaixo registram ensaios anteriores e **não devem ser usados para
+aprovar a candidata v2.4.0**. Para ela, usar o deploy HTTPS referente
+à nova PR de homologação e verificar que ele serve o SHA exato do candidato.
+
+A homologação em hardware real continua pendente até evidências dos
+dispositivos E-082/E-089, mesmo que emuladores ou browsers automatizados passem.
 
 - [Abrir versão de desenvolvimento no Netlify HTTPS](https://6aeddf74dc6a8c922d462128--epubrepair.netlify.app/).
   **Não é produção**. O deploy passou na CI de CSP e Workers
   [42231322872](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42231322872).
-- [PR #32, rascunho e sem merge](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pull/32),
-  originou o deploy-preview e está destinado somente aos testes
-  Android/iOS. Não promover para `prod` sem aprovação explícita.
+- [PR histórica #32 (encerrada sem merge)](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pull/32),
+  originou o preview anterior; não é a candidata v2.4.0 e não
+  autoriza promoção para `prod`.
 - [EPUBs de teste na CI dev 42231064719](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42231064719),
   artifact `epub-manual-device-fixtures`: cinco arquivos EPUB 2/3,
   navegação NCX, reflowable e fixed-layout. Nenhum livro privado.

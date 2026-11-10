@@ -25,8 +25,8 @@ export function sanitizeCssDocument(
   const actions: RepairAction[] = [];
   let changed = false;
 
-  // Comentários CSS são conteúdo inerte: não reescrever URLs que aparecem
-  // em comentários do livro. O parser considera aspas e escapes.
+  
+  
   const fontCommented = cssCodePosition(text);
   let output = text.replace(/@font-face\s*\{[^{}]*\}/giu, (block, offset: number) => {
     if (!fontCommented(offset)) return block;
@@ -64,8 +64,8 @@ export function sanitizeCssDocument(
     },
   );
 
-  // CSS ofuscado que escapou dos padrões de substituição não pode ser
-  // exportado como se tivesse sido saneado. Falhar sem modificar o arquivo.
+  
+  
   if (containsDangerousCss(output)) {
     throw new Error('CSS com escape, comentário ou declaração ativa não ' +
       'neutralizável automaticamente em ' + filePath + '. Revisão manual necessária.');
@@ -100,10 +100,10 @@ function isUnsafeCssReference(
   return !resolved.safe || !existingFiles.has(resolved.path);
 }
 
-/**
- * Sanitiza somente fontes inseguras do src, sem produzir "src:none format(...)"
- * e sem destruir alternativas válidas, incluindo data:font/woff2;base64.
- */
+
+
+
+
 function sanitizeFontFaceBlock(
   block: string,
   filePath: string,
@@ -114,7 +114,7 @@ function sanitizeFontFaceBlock(
   const content = block.slice(open + 1, -1);
   const declarations = splitTopLevelCss(content, ';');
   let changed = false;
-  let noValidSource = false;
+  let hasValidSource = false;
 
   const cleaned = declarations.map((declaration) => {
     const separator = declaration.indexOf(':');
@@ -128,22 +128,24 @@ function sanitizeFontFaceBlock(
         isUnsafeCssReference(filePath, (match[2] ?? '').trim(), files, removeRemote),
       );
     });
+    
+    
+    if (safeAlternatives.some((alternative) => alternative.trim().length > 0)) {
+      hasValidSource = true;
+    }
     if (safeAlternatives.length === alternatives.length) return declaration;
     changed = true;
-    if (!safeAlternatives.length) {
-      noValidSource = true;
-      return '';
-    }
+    if (!safeAlternatives.length) return '';
     return `${declaration.slice(0, separator + 1)}${safeAlternatives.join(',')}`;
   });
 
   if (!changed) return block;
-  // Um @font-face sem qualquer fonte utilizável não pode ser preservado como regra válida.
-  if (noValidSource) return '';
+  
+  if (!hasValidSource) return '';
   return `${block.slice(0, open + 1)}${cleaned.join(';')}}`;
 }
 
-/** Divide listas CSS sem cortar data URIs ou vírgulas dentro de parênteses/strings. */
+ 
 function splitTopLevelCss(input: string, separator: ',' | ';'): string[] {
   const parts: string[] = [];
   let start = 0;

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { validateImageMetadata } from '../src/epub/validation/validateImageMetadata';
 import type { LoadedEpub } from '../src/epub/model/epubTypes';

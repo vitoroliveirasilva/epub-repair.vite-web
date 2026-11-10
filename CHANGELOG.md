@@ -1,5 +1,66 @@
 # Histórico de mudanças do EPUB Repair
 
+## v2.4.0 (candidata, **não publicada**)
+
+- Limpeza de comentários de implementação, configurações e testes, preservando
+  diretivas executáveis (shebang), conteúdo literal e licenças. Testes que
+  dependiam de comentários `@vitest-environment` agora usam projetos
+  explícitos `dom` e `node` no Vitest; exceções de lint usam configuração
+  específica por arquivo. Nenhuma mudança funcional foi pretendida.
+- Configuração proposta de Dependabot aponta atualizações de versão para
+  `dev`, após adoção pela branch padrão `prod`, preservando análise
+  separada das PRs existentes e dos alertas de segurança.
+
+- Acessibilidade: SVG simples que contém exclusivamente a imagem da capa oficial
+  pode receber rótulo usando o título já existente na página, por otimização
+  opcional segura. Diagramas e ilustrações complexas permanecem em revisão manual;
+  a auditoria editorial autoriza apenas os atributos de acessibilidade registrados.
+- UI: barra e indicador de processamento centralizados, ocupando 100% da largura
+  do card em desktop e mobile, preservando porcentagens e cancelamento.
+
+- Score Kindle: notas `INFO` sem ação de reparo não reduzem a pontuação; observações de acessibilidade continuam visíveis e otimizações opcionais continuam pontuadas. Um EPUB apenas com nota informativa pode alcançar 100/100.
+
+- Homologação real com EPUB 2 privado: texto de todos os 8 XHTML, ordem do
+  spine, identificadores, referências e NCX preservados; 395 entidades
+  `&nbsp;` normalizadas sem mudança no texto renderizado. Sem inserir o
+  arquivo privado no repositório.
+- Testes locais no Windows: corrigir nome de fixture com `?` (caractere
+  inválido no NTFS), executar mock de scanner por Node sem shell e
+  normalizar CRLF nas asserções da política econômica de CI.
+- Interface: o cartão ilustrativo de score (92) passa a ter rótulo
+  explícito quando não existe EPUB carregado e mostra as métricas
+  **reais** quando um relatório está disponível.
+
+Esta entrada registra apenas mudanças existentes na `dev`, ainda
+pendentes de homologação pré-merge e aprovação. A produção permanece
+em v2.3.0 até a conclusão do processo.
+
+- Reforço do gate editorial nas rotas de reparo **e otimização**, com
+  rejeição segura de alterações não verificáveis em HTML legado.
+- Regressão EPUB 2: preservar o idioma explícito de cada página ao
+  completar `lang/xml:lang`, mesmo se for diferente do idioma principal do OPF.
+  Isso impede o aviso `CONTENT_LANGUAGE_CONFLICT` introduzido no reparo.
+  Na troca de capa, não inserir `properties="cover-image"` de EPUB 3 no OPF 2.
+- Proteção das estruturas e apresentações: ordem do spine, tabelas,
+  âncoras, NAV EPUB 3, NCX hierárquico, MathML, ruby, SVG inline,
+  estilos visuais, mídias e folhas CSS vinculadas.
+- Substituição de capa com aprovação restrita às páginas de rosto e às
+  folhas CSS clonadas, sem alterar estilos de capítulos compartilhados.
+- Preservação de fontes, URLs HTTP(S) e links legítimos por padrão;
+  remoção opcional de recursos remotos somente sob consentimento.
+- Testes ampliados com três amostras **oficiais W3C EPUB Tests** de
+  XHTML, MathML e SVG, além de variantes com scripts adversariais.
+- Base automatizada anterior à candidata: **580 testes em 112 arquivos**
+  e CI rápida Node 22 aprovada. Este número não corresponde à
+  homologação de release v2.4.0.
+- **Limitações mantidas:** E-082 e E-089 dependem de teste em hardware
+  iOS/Android físico; a matriz de release deve ser executada no SHA
+  exato da candidata antes de qualquer promoção.
+
+Detalhes, critérios objetivos e dependências adiadas em
+[plano da candidata](docs/RELEASE_2_4_0_CANDIDATA.md).
+
+
 ## v2.3.0 (08/11/2026)
 
 Esta versão consolida as auditorias originais e complementares desenvolvidas na `dev`. A publicação em `prod` é controlada por PR, pelos checks de Node 20/22 e pela CI completa de produção. Os registros abaixo são históricos de desenvolvimento, não certificações universais de compatibilidade.

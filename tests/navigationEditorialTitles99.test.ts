@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { buildNavDocument, buildNcxDocument } from '../src/epub/repair/repairNavigation';
 import type { ManifestItem, PackageDocumentInfo } from '../src/epub/model/opfTypes';

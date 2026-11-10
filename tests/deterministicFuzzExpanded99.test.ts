@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { parseXml } from '../src/epub/utils/xmlUtils';
 import { sanitizeActiveContentMarkup, containsDangerousCss } from
@@ -7,7 +7,7 @@ import { sanitizeCssDocument } from '../src/epub/sanitize/sanitizeCss';
 import { parseZipCentralDirectory } from '../src/epub/reader/rawZipInspector';
 import { buildKindleIssueEpub } from './helpers/syntheticEpub';
 
-/** Mutação reproduzível com seed fixa, sem dados privados ou chamadas à rede. */
+ 
 function mutate(text: string, seed: number): string {
   let value = text;
   let state = (seed * 1664525 + 1013904223) >>> 0;
@@ -76,7 +76,7 @@ describe('E-063/E-094: fuzz adversarial determinístico de parsers', () => {
       expect(sample).toBe(original);
       expect(result.text.length).toBeLessThanOrEqual(original.length + 50);
       if (containsDangerousCss(result.text)) {
-        // Um resíduo perigoso precisa continuar explícito no diagnóstico.
+        
         const { validateCssReferences } = await import(
           '../src/epub/validation/validateCssReferences'
         );

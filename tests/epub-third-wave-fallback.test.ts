@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it, vi } from 'vitest';
 import { readCoverImageFile } from '../src/epub/cover/coverImageInput';
 

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { renderControls } from '../src/ui/components/Controls';
 import { createInitialState } from '../src/app/state';

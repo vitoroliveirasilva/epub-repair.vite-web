@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { parseXml, serializeXmlPreservingDeclaration } from '../src/epub/utils/xmlUtils';
 import { decodeUtf8ForRewrite } from '../src/epub/utils/textEncoding';

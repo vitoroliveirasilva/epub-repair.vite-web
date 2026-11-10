@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { Blob as NodeBlob } from 'node:buffer';
 import { describe, expect, it, vi } from 'vitest';
 import JSZip from 'jszip';
@@ -28,7 +28,7 @@ const actions = {
   downloadTextReport: () => {}, downloadJsonReport: () => {},
 };
 function hugeJpeg(): Uint8Array {
-  // JPEG progressivo com dimensões 65535 × 65535 no marcador SOF.
+  
   return Uint8Array.of(255,216,255,194,0,17,8,255,255,255,255,3,
     1,17,0,2,17,1,3,17,1,255,217);
 }

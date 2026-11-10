@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { loadEpub } from '../src/epub/reader/loadEpub';
 import { parsePackageDocument } from '../src/epub/validation/opfParser';

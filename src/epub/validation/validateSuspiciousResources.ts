@@ -12,7 +12,7 @@ function matches(bytes: Uint8Array, ...signature: number[]): boolean {
   return signature.every((value, index) => bytes[index] === value);
 }
 
-/** Reconhece assinaturas com significado conhecido; não é um scanner antivírus. */
+ 
 export function sniffBinaryKind(bytes: Uint8Array): string | undefined {
   if (matches(bytes, 0x4d, 0x5a)) return 'pe-executable';
   if (matches(bytes, 0x7f, 0x45, 0x4c, 0x46)) return 'elf-executable';
@@ -34,10 +34,10 @@ export function sniffBinaryKind(bytes: Uint8Array): string | undefined {
   return undefined;
 }
 
-/**
- * Inventário de payloads potencialmente executáveis, mesmo com extensão inocente.
- * Não executar, não apagar automaticamente e não afirmar que detectou malware.
- */
+
+
+
+
 export function validateSuspiciousResources(loaded: LoadedEpub): Issue[] {
   const issues: Issue[] = [];
   for (const [path, entry] of loaded.files) {
@@ -63,8 +63,8 @@ export function validateSuspiciousResources(loaded: LoadedEpub): Issue[] {
 
     const extension = path.toLowerCase().match(/\.[a-z0-9]+$/u)?.[0] ?? '';
     const expected = EXTENSION_EXPECTATION[extension];
-    // Reconhecimento positivo de outra imagem/fonte, não ausência de assinatura.
-    // Evita alarmes falsos em fontes ofuscadas ou imagens pouco usuais.
+    
+    
     if (expected && kind && kind !== expected) {
       issues.push(createIssue({
         code: 'PACKAGE_BINARY_SIGNATURE_MISMATCH',

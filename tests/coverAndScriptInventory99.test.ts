@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { validateCoverConsistency } from '../src/epub/validation/validateCoverConsistency';
 import { validateDeclaredScripts } from '../src/epub/validation/validateDeclaredScripts';

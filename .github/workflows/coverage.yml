@@ -9,6 +9,15 @@ on:
       - 'vitest.config.ts'
       - '.github/workflows/coverage.yml'
       - 'package*.json'
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches: [prod]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'vitest.config.ts'
+      - '.github/workflows/coverage.yml'
+      - 'package*.json'
   workflow_dispatch:
 
 permissions:
@@ -20,6 +29,7 @@ concurrency:
 
 jobs:
   coverage:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:
@@ -39,7 +49,7 @@ jobs:
           printf '{"name":"epub-coverage-harness","version":"1.0.0","private":true}\n' > package.json
           npm install --legacy-peer-deps --ignore-scripts --no-audit --no-fund --save-exact @vitest/coverage-v8@4.1.12
           test -d "${RUNNER_TEMP}/vitest-coverage/node_modules/@vitest/coverage-v8"
-          # ESM resolve os peers pelo realpath do provider, fora do workspace.
+
           ln -s "${GITHUB_WORKSPACE}/node_modules/vitest" "${RUNNER_TEMP}/vitest-coverage/node_modules/vitest"
           cd "${GITHUB_WORKSPACE}"
           mkdir -p node_modules/@vitest

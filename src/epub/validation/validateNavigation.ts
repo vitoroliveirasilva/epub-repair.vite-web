@@ -55,7 +55,7 @@ export function validateNavigation(loaded: LoadedEpub, pkg: PackageDocumentInfo)
             }));
           }
         }
-        // Um único toc é obrigatório. page-list e landmarks são opcionais e únicos.
+        
         const navs = Array.from(doc.getElementsByTagName('*'))
           .filter((node) => node.localName === 'nav');
         for (const kind of ['toc', 'page-list', 'landmarks']) {
@@ -186,12 +186,12 @@ export function validateNavigation(loaded: LoadedEpub, pkg: PackageDocumentInfo)
 }
 
 
-/**
- * EPUB nav.xhtml: um li contém a ou span, com ol aninhado opcional.
- * Validação sem recriar, achatar ou impor um item de índice por capítulo.
- */
+
+
+
+
 function validNavigationList(list: Element, depth = 0): boolean {
-  // Limitar a profundidade protege contra navs degenerados sem stack overflow.
+  
   if (depth > 80 || list.localName !== 'ol') return false;
   const children = Array.from(list.children);
   if (children.length === 0) return false;

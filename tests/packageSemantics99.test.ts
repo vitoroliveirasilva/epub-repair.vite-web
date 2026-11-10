@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { validatePackageSemantics } from '../src/epub/validation/validatePackageSemantics';
 import { parseOpfDocument } from '../src/epub/validation/opfParser';

@@ -4,7 +4,7 @@ import type { PackageDocumentInfo } from './opfTypes';
 
 export interface ZipEntryInfo {
   fileName: string;
-  /** Nome físico inseguro, retido somente para diagnosticar e evitar falsa perda. */
+   
   unsafeOriginalName?: string | undefined;
   compressionMethod: number;
   encrypted: boolean;

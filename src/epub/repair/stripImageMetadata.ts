@@ -1,12 +1,12 @@
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import type { RepairAction } from '../model/repairTypes';
 
-/**
- * Remoção estritamente opt-in e estrutural de metadados EXIF/XMP/Photoshop.
- * Nunca reencoda pixels, não reinterpreta ICC/gAMA ou outras tags editoriais.
- * EXIF com orientação diferente de 1 ou ilegível é mantido por segurança.
- * Arquivos truncados retornam os bytes originais byte a byte.
- */
+
+
+
+
+
+
 export type MetadataImageType = 'image/jpeg' | 'image/png' | 'image/webp';
 export interface MetadataStripResult {
   bytes: Uint8Array;
@@ -19,8 +19,8 @@ const ascii = (bytes: Uint8Array, at: number, value: string): boolean =>
   [...value].every((char, i) => bytes[at + i] === char.charCodeAt(0));
 
 function safeTiffOrientation(bytes: Uint8Array, at: number, limit: number): boolean {
-  // Não interpretar o TIFF sem offsets coerentes. Orientação ausente
-  // é permitida somente quando IFD0 e sua tabela são legíveis.
+  
+  
   if (at + 8 > limit) return false;
   const little = ascii(bytes, at, 'II');
   if (!little && !ascii(bytes, at, 'MM')) return false;
@@ -33,7 +33,7 @@ function safeTiffOrientation(bytes: Uint8Array, at: number, limit: number): bool
   for (let i = 0; i < count; i++) {
     const entry = ifd + 2 + i * 12;
     if (view.getUint16(entry, little) !== 0x0112) continue;
-    // Tag orientation deve ser SHORT, count=1 e inline.
+    
     if (view.getUint16(entry + 2, little) !== 3 ||
         view.getUint32(entry + 4, little) !== 1) return false;
     return view.getUint16(entry + 8, little) === 1;
@@ -90,8 +90,8 @@ function jpeg(original: Uint8Array): MetadataStripResult {
     else chunks.push(original.subarray(begin, end));
     at = end;
   }
-  // Falha fechada: nenhum segmento anterior é publicado se estrutura JPEG não
-  // permitiu chegar ao início do bitstream ou EOF oficial.
+  
+  
   return { bytes: original, removed: [], skipped: 'JPEG truncado ou estrutura ambígua' };
 }
 
@@ -153,8 +153,8 @@ function webp(original: Uint8Array): MetadataStripResult {
     if (end > original.length || !Number.isSafeInteger(end)) break;
     if (name === 'VP8X') vp8xOffset = at;
     if (name === 'EXIF') {
-      // WebP EXIF começa diretamente com TIFF, cuja orientação pode
-      // rotacionar a figura. Nunca apagar orientação não convencional.
+      
+      
       if (safeTiffOrientation(original, at + 8, at + 8 + size)) {
         removed.push('EXIF');
       } else chunks.push(original.subarray(at, end));
@@ -170,9 +170,9 @@ function webp(original: Uint8Array): MetadataStripResult {
   const combined = result(original, chunks, removed);
   const out = combined.bytes;
   new DataView(out.buffer).setUint32(4, out.length - 8, true);
-  // VP8X fica depois do cabeçalho RIFF e antes dos dados de imagem.
-  // Flags E=0x08, X=0x04, I/ALPHA/ANIMATION precisam permanecer.
-  // O VP8X não é movido, apenas offset recalculado após quaisquer chunks removidos.
+  
+  
+  
   const pos = chunks.slice(0, chunks.findIndex((p) =>
     p.length >= 4 && ascii(p, 0, 'VP8X'))).reduce((n, p) => n + p.length, 0);
   if (removed.includes('EXIF')) out[pos + 8] = out[pos + 8]! & ~0x08;
@@ -189,7 +189,7 @@ export function stripImageMetadata(
   return { bytes, removed: [], skipped: 'Formato sem limpeza metadata implementada' };
 }
 
-/** Aplica somente a candidatos identificados no relatório original. */
+ 
 export function stripEpubImageMetadata(
   files: Map<string, Uint8Array>,
   pkg: PackageDocumentInfo,

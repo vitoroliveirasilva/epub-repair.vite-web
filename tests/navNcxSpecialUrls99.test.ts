@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { validateNavigation } from '../src/epub/validation/validateNavigation';
 import { validateInternalAnchors } from '../src/epub/validation/validateInternalAnchors';

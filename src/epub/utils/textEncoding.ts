@@ -1,8 +1,8 @@
-/**
- * Reescrita editorial é diferente de mera leitura: não reinterpretar
- * silenciosamente bytes ISO-8859/Windows-1252/UTF-16 como UTF-8.
- * Se um charset não é suportado para saída equivalente, bloquear a edição.
- */
+
+
+
+
+
 export function decodeUtf8ForRewrite(bytes: Uint8Array, path: string): string {
   if (bytes.length >= 2 &&
     ((bytes[0] === 0xff && bytes[1] === 0xfe) ||
@@ -27,7 +27,7 @@ export function decodeUtf8ForRewrite(bytes: Uint8Array, path: string): string {
     throw new Error('Declaração de codificação não suportada (' + declared + ') em ' +
       path + '. Não é seguro reescrever o recurso sem converter seu charset.');
   }
-  // A eventual marca BOM UTF-8 é aceita; o serializer pode normalizá-la,
-  // mas nunca troca o charset para um valor incompatível.
+  
+  
   return text;
 }

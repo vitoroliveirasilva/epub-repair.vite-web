@@ -87,7 +87,7 @@ function render(
 ): void {
   root.replaceChildren(
     renderAppHeader(),
-    renderHero(),
+    renderHero(state.report),
     el('main', {
       className: 'layout',
       attrs: { id: 'app-workspace', tabindex: '-1' },
@@ -175,9 +175,9 @@ function render(
   );
 }
 
-/** E-157: relatórios do upload recusado têm nome e ações independentes
- * para não exportar por engano o diagnóstico do EPUB anterior ainda aberto.
- */
+
+
+
 export function renderRejectedUploadReport(
   report: NonNullable<AppState['invalidUploadReport']>,
   mode: AppState['reportViewMode'],
@@ -220,7 +220,7 @@ async function runAsync(
     onProgress: (progress: ProcessingProgress) => void;
   }) => Promise<void>,
 ): Promise<void> {
-  // Um único job ativo evita misturar resultados de livros diferentes.
+  
   if (state.busy) return;
   const controller = new AbortController();
   let lastProgressKey = '';
@@ -329,7 +329,7 @@ function renderAppHeader(): HTMLElement {
   });
 }
 
-function renderHero(): HTMLElement {
+function renderHero(report: AppState['report']): HTMLElement {
   return el('section', {
     className: 'hero',
     attrs: { id: 'top' },
@@ -360,30 +360,42 @@ function renderHero(): HTMLElement {
           }),
         ],
       }),
-      renderHeroPreview(),
+      renderHeroPreview(report),
     ],
   });
 }
 
-function renderHeroPreview(): HTMLElement {
+function renderHeroPreview(report: AppState['report']): HTMLElement {
+  
+  
+  const hasReport = Boolean(report);
   return el('aside', {
     className: 'hero-preview',
-    attrs: { 'aria-label': 'Prévia visual do relatório EPUB Repair' },
+    attrs: {
+      'aria-label': hasReport
+        ? 'Resumo do EPUB analisado'
+        : 'Exemplo ilustrativo de relatório EPUB Repair',
+    },
     children: [
       el('div', {
         className: 'preview-toolbar',
-        children: [el('span'), el('span'), el('span'), el('strong', { text: 'Relatório local' })],
+        children: [el('span'), el('span'), el('span'), el('strong', {
+          text: hasReport ? 'Relatório atual' : 'Exemplo ilustrativo',
+        })],
       }),
       el('div', {
         className: 'preview-score score-good',
-        children: [el('span', { text: '92' }), el('small', { text: 'Kindle score' })],
+        children: [
+          el('span', { text: report ? String(report.stats.kindleScore) : '92' }),
+          el('small', { text: 'Kindle score' }),
+        ],
       }),
       el('div', {
         className: 'preview-grid',
         children: [
-          renderPreviewMetric('0', 'Fatais', 'success'),
-          renderPreviewMetric('2', 'Erros', 'error'),
-          renderPreviewMetric('6', 'Avisos', 'warning'),
+          renderPreviewMetric(String(report?.stats.fatalCount ?? 0), 'Fatais', 'success'),
+          renderPreviewMetric(String(report?.stats.errorCount ?? 2), 'Erros', 'error'),
+          renderPreviewMetric(String(report?.stats.warningCount ?? 6), 'Avisos', 'warning'),
         ],
       }),
       el('div', {

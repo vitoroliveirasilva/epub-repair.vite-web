@@ -8,6 +8,14 @@ on:
       - 'tests/epubCheckFixtureGenerator.test.ts'
       - '.github/workflows/calibre-reader.yml'
       - 'scripts/calibre-visual-reader.sh'
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches: [prod]
+    paths:
+      - 'src/epub/**'
+      - 'tests/epubCheckFixtureGenerator.test.ts'
+      - '.github/workflows/calibre-reader.yml'
+      - 'scripts/calibre-visual-reader.sh'
   workflow_dispatch:
 
 permissions:
@@ -19,6 +27,7 @@ concurrency:
 
 jobs:
   calibre-reader:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     name: Calibre parses and extracts revalidated EPUBs
     runs-on: ubuntu-latest
     timeout-minutes: 20

@@ -46,7 +46,7 @@ video {
   line-height: 1.15;
 }
 
-/* Header */
+ 
 .app-header {
   justify-content: center;
 }
@@ -71,7 +71,7 @@ video {
   justify-content: flex-end;
 }
 
-/* Hero */
+ 
 .hero {
   grid-template-columns: minmax(0, 0.95fr) minmax(18rem, 26rem);
   justify-content: center;
@@ -118,7 +118,7 @@ video {
   margin-top: 0.46rem;
 }
 
-/* Main */
+ 
 .layout {
   grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
   justify-content: center;
@@ -184,7 +184,7 @@ video {
   min-width: 0;
 }
 
-/* Upload */
+ 
 .upload-panel .section-heading,
 .dropzone {
   text-align: center;
@@ -444,7 +444,7 @@ video {
   margin-top: 0.34rem;
 }
 
-/* Sidebar */
+ 
 .sidebar .panel {
   width: 100%;
 }
@@ -870,7 +870,7 @@ video {
   }
 }
 
-/* Footer */
+ 
 .app-footer {
   display: grid;
   gap: var(--space-5);

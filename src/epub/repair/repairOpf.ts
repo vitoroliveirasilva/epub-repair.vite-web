@@ -111,8 +111,8 @@ function repairMetadata(
     });
   }
 
-  // O idioma não pode ser deduzido pelo nome ou pela interface em português.
-  // Quando ausente/inválido, o validador exige revisão editorial.
+  
+  
 
   const date = findFirstByLocalName(metadata, 'date');
   const dateValue = date?.textContent?.trim();
@@ -200,7 +200,7 @@ function repairManifest(
 
     seenHrefs.add(currentPath);
     if (id && usedIds.has(id) && referencedIds.has(id)) {
-      // Referências duplicadas não têm destino confiável: não adivinhar.
+      
       actions.push({
         type: 'skipped',
         title: 'ID duplicado exige revisão manual',
@@ -253,9 +253,9 @@ function repairManifest(
       })
       .filter(Boolean),
   );
-  // O EPUB com múltiplas renditions não permite atribuir órfãos à edição
-  // ativa com confiança: eles podem pertencer ao OPF de outra rendition.
-  // Mantê-los no ZIP e registrar a decisão em vez de cruzar manifests.
+  
+  
+  
   if (pkg.rootfileCount > 1) {
     actions.push({
       type: 'skipped',
@@ -456,7 +456,7 @@ function ensureNavigationFiles(
     );
     const ncxId = makeUniqueId(pkg.ncxItem?.id || 'ncx', usedIds);
     filesToAdd.set(ncxPath, buildNcxDocument(pkg, ncxPath, loaded.files));
-    // A entrada NCX ausente pode ter sido removida ao reparar o manifest.
+    
     if (!childElementsByLocalName(manifest, 'item').some((item) => getAttr(item, 'id') === ncxId)) {
       const item = doc.createElementNS(OPF_NS, 'item');
       item.setAttribute('id', ncxId);
@@ -534,7 +534,7 @@ function ensureChild(doc: Document, parent: Element, localName: string): Element
   return created;
 }
 
-/** Nunca sobrescrever um nav/NCX órfão preexistente ao gerar outro. */
+ 
 function uniqueGeneratedPath(
   preferred: string,
   loaded: LoadedEpub,

@@ -15,3 +15,10 @@ obras protegidas. Elas são verificadas na CI com Vitest, sem upload de EPUBs de
 do mercado. A cobertura dos casos já observados não substitui testes em leitores reais,
 novos ataques adversariais nem a validação de desempenho/memória. EPUBCheck 5.4.0
 continua validando separadamente os EPUB 2/3 gerados pelo teste oficial do workflow.
+
+
+## Corpus oficial W3C (testes externos)
+
+`tests/w3cExternalCorpus.test.ts` utiliza três fontes originais do projeto
+W3C EPUB Tests (XHTML, MathML e SVG inline), montadas offline em EPUB ZIP.
+Licença, revisão fixada e limitações em `w3c/README.md`.

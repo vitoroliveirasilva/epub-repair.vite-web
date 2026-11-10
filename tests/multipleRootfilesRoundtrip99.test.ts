@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import JSZip from 'jszip';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadEpub } from '../src/epub/reader/loadEpub';
@@ -81,10 +81,10 @@ describe('E-029: múltiplas renditions/rootfiles sem perda de dados', () => {
     const repaired = await repairEpub('multirendition.epub', raw, {
       ...DEFAULT_REPAIR_OPTIONS, conservativeMode: true,
     });
-    expect(repaired.changed).toBe(true); // mimetype ausente
+    expect(repaired.changed).toBe(true); 
     expect(repaired.blob).toBeDefined();
     const output = await JSZip.loadAsync(await repaired.blob!.arrayBuffer());
-    // CONTAINER_MULTIPLE_ROOTFILES é aviso, nunca pedido para substituir rootfiles.
+    
     expect(await output.file('META-INF/container.xml')!.async('uint8array'))
       .toEqual(original.files.get('META-INF/container.xml')!.bytes);
     for (const name of ['OPS/content.opf','OPS/nav.xhtml','OPS/chapter.xhtml',

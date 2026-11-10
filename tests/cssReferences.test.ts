@@ -13,6 +13,34 @@ describe('cssReferences', () => {
     expect(result.text).not.toContain('src:none');
   });
 
+  it('mantém segunda declaração src HTTPS quando a primeira é perigosa', () => {
+    const original = '@font-face{font-family:"F";src:url("javascript:alert(1)");' +
+      'src:url("https://cdn.example/fonts/F.woff2") format("woff2");font-display:swap}';
+    const result = sanitizeCssDocument('OPS/font.css', original, new Set());
+    expect(result.changed).toBe(true);
+    expect(result.text).toContain('@font-face');
+    expect(result.text).toContain('https://cdn.example/fonts/F.woff2');
+    expect(result.text).toContain('font-display:swap');
+    expect(result.text).not.toContain('javascript:');
+  });
+
+  it('mantém primeira declaração local quando a última é insegura', () => {
+    const original = '@font-face{font-family:"F";src:local("Aptos");' +
+      'src:url("javascript:alert(1)") format("woff2");font-weight:700}';
+    const result = sanitizeCssDocument('OPS/font.css', original, new Set());
+    expect(result.text).toContain('local("Aptos")');
+    expect(result.text).toContain('font-weight:700');
+    expect(result.text).not.toContain('javascript:');
+  });
+
+  it('remove bloco sem fonte válida mesmo com múltiplas declarações inseguras', () => {
+    const original = '@font-face{font-family:"F";src:url("javascript:one");' +
+      'src:url("file:///secrets/font.woff2")}p{color:blue}';
+    const result = sanitizeCssDocument('OPS/font.css', original, new Set());
+    expect(result.text).not.toContain('@font-face');
+    expect(result.text).toContain('p{color:blue}');
+  });
+
   it('E-015: elimina @font-face sem fonte segura, preservando demais regras', () => {
     const result = sanitizeCssDocument(
       'OPS/css/main.css',

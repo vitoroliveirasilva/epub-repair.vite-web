@@ -32,12 +32,12 @@ function linkedStyles(
   return found;
 }
 
-/**
- * Limites editoriais para uma troca de capa:
- * - guia/landmark/nome inequívoco;
- * - primeira página do spine sem prosa, usando a capa como única ilustração;
- * - CSS usado exclusivamente por páginas de capa.
- */
+
+
+
+
+
+
 export function coverReferenceScope(
   opf: Document,
   pkg: PackageDocumentInfo,
@@ -78,8 +78,8 @@ export function coverReferenceScope(
       .test(basename(path))) pages.add(path);
   }
   const consumers = new Map<string, Set<string>>();
-  // Um CSS importado é consumido indiretamente por cada página que usa a
-  // folha importadora. Percorrer a árvore com proteção contra ciclos.
+  
+  
   const markUsage = (css: string, page: string, visited: Set<string>): void => {
     if (visited.has(css)) return;
     visited.add(css);
@@ -98,7 +98,7 @@ export function coverReferenceScope(
         }
       }
     } catch {
-      // Preservar um CSS legado ambíguo sem inferir seus imports.
+      
     }
   };
   for (const path of htmlPaths) {
@@ -108,8 +108,8 @@ export function coverReferenceScope(
       markUsage(css, path, new Set<string>());
     }
   }
-  // EPUBs antigos frequentemente usam 0001.xhtml como página de capa.
-  // A primeira página deve ser essencialmente visual e sem texto editorial.
+  
+  
   const first = pkg.spine[0]?.manifestItem?.resolvedPath;
   if (first && oldCoverPath && htmlPaths.has(first)) {
     const doc = documentOf(first, files);

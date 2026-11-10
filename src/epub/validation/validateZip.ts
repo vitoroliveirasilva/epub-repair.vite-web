@@ -73,9 +73,9 @@ export function validateZipAndOcf(loaded: LoadedEpub): Issue[] {
   return issues;
 }
 
-/** OCF 3.2: ofuscação IDPF é distinta de criptografia/DRM.
- * Se houver algoritmo ou referência ambíguos, manter alerta conservador.
- */
+
+
+
 function containsOnlyIdpfFontObfuscation(loaded: LoadedEpub): boolean {
   const entry = loaded.files.get('META-INF/encryption.xml');
   if (!entry) return false;

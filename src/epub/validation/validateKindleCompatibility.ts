@@ -70,7 +70,7 @@ function validateNcxKindleRules(loaded: LoadedEpub, pkg: PackageDocumentInfo): I
       if (fragmentRaw && !/^(?:epubcfi\(|svgView\(|xywh=|t=)/iu.test(fragmentRaw) &&
           /\.(?:xhtml?|svg)$/iu.test(resolved.path)) {
         let fragment = '';
-        try { fragment = decodeURIComponent(fragmentRaw); } catch { /* URI inválida já é avaliada alhures. */ }
+        try { fragment = decodeURIComponent(fragmentRaw); } catch {   }
         if (fragment) {
           let target = documents.get(resolved.path);
           if (target === undefined) {
@@ -89,7 +89,7 @@ function validateNcxKindleRules(loaded: LoadedEpub, pkg: PackageDocumentInfo): I
         }
       }
     }
-    // Caminhos presentes são válidos mesmo quando o TOC cobre apenas seções principais.
+    
     if (index > 10000) break;
   }
 
