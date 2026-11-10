@@ -8,8 +8,6 @@ type Section = {
   path: string;
   index: number;
   id: string;
-  contentIndex: number;
-  contentId: string;
   ordinal: number;
 };
 type Candidate = {
@@ -17,18 +15,23 @@ type Candidate = {
   index: number;
   pair: string;
   originalId: string;
-  contentIndex: number;
-  originalContentId: string;
+  exceptional: boolean;
 };
 export interface InternalNcxAnalysis {
   sections: Section[];
   missing: Section[];
   safeToRepair: boolean;
+  needsMigration: boolean;
 }
 
 const decoder = new TextDecoder('utf-8', { fatal: true });
 const encoder = new TextEncoder();
 const AUTO_POINT = /^epub-repair-text-\d+$/u;
+const GENERATED_CHAPTER_ID = /^epub-repair-chapter-\d+$/u;
+const GENERATED_SECTION_ID = /^epub-repair-section-\d+$/u;
+const GENERATED_TEXT_ID = /^epub-repair-(?:chapter|section)-text-\d+$/u;
+const ASCENSION_ATTRIBUTION = /(?:imperador|emperor).*?(?:ascens[aã]o|ascension).*?(?:trono|throne)/iu;
+const DIALOGUE_ATTRIBUTION = /\b(?:disse|perguntou|respondeu|exclamou|murmurou|said|asked|replied|whispered)\b/iu;
 
 function readXml(bytes: Uint8Array): Document {
   return parseXml(decoder.decode(bytes).replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml');
@@ -61,7 +64,21 @@ function candidates(path: string, bytes: Uint8Array): Candidate[] {
         attribution.length > 200) continue;
     const before = ps[i - 1]!;
     const quoteClass = nameOf(before);
-    if (!quoteClass || quoteClass === citationClass || !visible(before)) continue;
+    const quote = visible(before);
+    if (!quoteClass || !quote) continue;
+    if (quoteClass === citationClass) {
+      if (quote.length < 8 || quote.length > 400 || /^[—–-]\s*/u.test(quote) ||
+          attribution.length < 30 || !ASCENSION_ATTRIBUTION.test(attribution) ||
+          DIALOGUE_ATTRIBUTION.test(attribution)) continue;
+      let contentIndex = i + 1;
+      while (contentIndex < ps.length && !visible(ps[contentIndex]!)) contentIndex += 1;
+      if (contentIndex >= ps.length || visible(ps[contentIndex]!).length < 20) continue;
+      result.push({
+        path, index: i - 1, pair: '__epub_repair_source_attribution__',
+        originalId: before.getAttribute('id') ?? '', exceptional: true,
+      });
+      continue;
+    }
     let start = i - 1;
     while (start > 0 && nameOf(ps[start - 1]!) === quoteClass &&
       Boolean(visible(ps[start - 1]!))) start -= 1;
@@ -77,9 +94,7 @@ function candidates(path: string, bytes: Uint8Array): Candidate[] {
         visible(ps[contentIndex]!).length < 20) continue;
     result.push({
       path, index: start, pair: quoteClass + '\u0000' + citationClass,
-      originalId: ps[start]!.getAttribute('id') ?? '',
-      contentIndex,
-      originalContentId: ps[contentIndex]!.getAttribute('id') ?? '',
+      originalId: ps[start]!.getAttribute('id') ?? '', exceptional: false,
     });
     i = endAttribution - 1;
   }
@@ -143,7 +158,9 @@ export function inspectInternalNcx(
   pkg: PackageDocumentInfo,
   read: ResourceReader,
 ): InternalNcxAnalysis {
-  const empty: InternalNcxAnalysis = { sections: [], missing: [], safeToRepair: false };
+  const empty: InternalNcxAnalysis = {
+    sections: [], missing: [], safeToRepair: false, needsMigration: false,
+  };
   if (pkg.version.startsWith('3') || !pkg.ncxItem?.exists ||
       pkg.rootfileCount !== 1) return empty;
   const raw: Candidate[] = [];
@@ -156,29 +173,49 @@ export function inspectInternalNcx(
   }
   const pairs = new Map<string, number>();
   for (const item of raw) pairs.set(item.pair, (pairs.get(item.pair) ?? 0) + 1);
-  const selected = raw.filter((item) => (pairs.get(item.pair) ?? 0) >= 4);
+  const regular = raw.filter((item) => !item.exceptional && (pairs.get(item.pair) ?? 0) >= 4);
+  const selected = raw.filter((item) =>
+    (!item.exceptional && (pairs.get(item.pair) ?? 0) >= 4) ||
+    (item.exceptional && regular.length >= 4));
   if (selected.length < 4 || selected.length > 150) return empty;
   const sections = selected.map((item, ordinal): Section => ({
     path: item.path, index: item.index,
-    id: item.originalId || 'epub-repair-chapter-' + String(ordinal + 1).padStart(3, '0'),
-    contentIndex: item.contentIndex,
-    contentId: item.originalContentId ||
-      'epub-repair-chapter-text-' + String(ordinal + 1).padStart(3, '0'),
+    id: item.originalId && !GENERATED_CHAPTER_ID.test(item.originalId)
+      ? item.originalId
+      : 'epub-repair-chapter-' + String(ordinal + 1).padStart(3, '0'),
     ordinal: ordinal + 1,
   }));
   const doc = getNcx(pkg, read);
-  if (!doc) return { sections, missing: sections, safeToRepair: false };
+  if (!doc) return {
+    sections, missing: sections, safeToRepair: false, needsMigration: false,
+  };
   const targets = extractTargets(pkg, doc);
-  const missing = sections.filter((section) => {
-    const chapter = targets.some((target) => target.path === section.path &&
+  const generatedSections = Array.from(doc.getElementsByTagName('*')).filter((point) =>
+    point.localName === 'navPoint' && GENERATED_SECTION_ID.test(point.getAttribute('id') ?? ''));
+  const generatedText = Array.from(doc.getElementsByTagName('*')).some((point) =>
+    point.localName === 'navPoint' && GENERATED_TEXT_ID.test(point.getAttribute('id') ?? ''));
+  const legacyGroup = Array.from(doc.getElementsByTagName('*')).some((point) =>
+    point.localName === 'navPoint' && isLegacyInferredGroup(point));
+  const generatedMatch = generatedSections.length === sections.length && sections.every((section) =>
+    generatedSections.some((point) => {
+      const resolved = resolveReference(pkg.ncxItem!.resolvedPath, hrefOf(point));
+      const fragment = hrefOf(point).includes('#')
+        ? hrefOf(point).slice(hrefOf(point).indexOf('#') + 1)
+        : '';
+      let decoded: string;
+      try { decoded = decodeURIComponent(fragment); } catch { decoded = ''; }
+      return resolved.safe && resolved.path === section.path && decoded === section.id &&
+        point.getAttribute('id') === 'epub-repair-section-' + section.ordinal;
+    }));
+  const needsMigration = generatedText || legacyGroup ||
+    (generatedSections.length > 0 && !generatedMatch);
+  const individuallyMissing = sections.filter((section) =>
+    !targets.some((target) => target.path === section.path &&
       (target.fragment === section.id || (!target.fragment && section.index <= 3 &&
-        /^(?:cap[ií]tulo|chapter)\s+(?:\d+|[IVXLCDM]+)(?:\b|\s|$)/iu.test(target.title))));
-    const content = targets.some((target) =>
-      target.path === section.path && target.fragment === section.contentId);
-    return !chapter || !content;
-  });
+        /^(?:cap[ií]tulo|chapter)\s+(?:\d+|[IVXLCDM]+)(?:\b|\s|$)/iu.test(target.title)))));
+  const missing = needsMigration ? sections : individuallyMissing;
   const navMap = childElementsByLocalName(doc.documentElement, 'navMap')[0];
-  if (!navMap) return { sections, missing, safeToRepair: false };
+  if (!navMap) return { sections, missing, safeToRepair: false, needsMigration };
   const allPoints = Array.from(doc.getElementsByTagName('*'))
     .filter((item) => item.localName === 'navPoint');
   const topLevelPoints = childElementsByLocalName(navMap, 'navPoint');
@@ -204,7 +241,7 @@ export function inspectInternalNcx(
     previousRank = rank;
     return true;
   }) && allPoints.length <= 250;
-  return { sections, missing, safeToRepair };
+  return { sections, missing, safeToRepair, needsMigration };
 }
 
 function uniquePointId(doc: Document, suggested: string): string {
@@ -244,9 +281,16 @@ export function recoverInternalNcx(
   const toc = parseXml(source);
   const navMap = childElementsByLocalName(toc.documentElement, 'navMap')[0];
   if (!navMap) return [];
+  if (coverage.needsMigration) {
+    Array.from(toc.getElementsByTagName('*'))
+      .filter((element) => element.localName === 'navPoint' &&
+        (GENERATED_SECTION_ID.test(element.getAttribute('id') ?? '') ||
+          isLegacyInferredGroup(element)))
+      .forEach((element) => element.remove());
+  }
   const nav = { navMap, points: childElementsByLocalName(navMap, 'navPoint') };
   const edited = new Map<string, Document>();
-  for (const section of coverage.missing) {
+  for (const section of coverage.sections) {
     let doc = edited.get(section.path);
     if (!doc) {
       const bytes = files.get(section.path);
@@ -254,19 +298,25 @@ export function recoverInternalNcx(
       try { doc = readXml(bytes); } catch { return []; }
       edited.set(section.path, doc);
     }
+  }
+  if (coverage.needsMigration) {
+    for (const doc of edited.values()) {
+      Array.from(doc.getElementsByTagName('*')).forEach((element) => {
+        const id = element.getAttribute('id') ?? '';
+        if (GENERATED_CHAPTER_ID.test(id)) {
+          element.removeAttribute('id');
+        }
+      });
+    }
+  }
+  for (const section of coverage.missing) {
+    const doc = edited.get(section.path)!;
     const paragraph = paragraphs(doc)[section.index];
     if (!paragraph) return [];
     if (paragraph.hasAttribute('id') && paragraph.getAttribute('id') !== section.id) return [];
     if (Array.from(doc.getElementsByTagName('*')).some((element) =>
       element !== paragraph && element.getAttribute('id') === section.id)) return [];
     paragraph.setAttribute('id', section.id);
-    const contentParagraph = paragraphs(doc)[section.contentIndex];
-    if (!contentParagraph) return [];
-    if (contentParagraph.hasAttribute('id') &&
-        contentParagraph.getAttribute('id') !== section.contentId) return [];
-    if (Array.from(doc.getElementsByTagName('*')).some((element) =>
-      element !== contentParagraph && element.getAttribute('id') === section.contentId)) return [];
-    contentParagraph.setAttribute('id', section.contentId);
   }
 
   const original = [...nav.points];
@@ -313,8 +363,6 @@ export function recoverInternalNcx(
       existingGroups.set(resolved.path, candidate);
     }
   }
-  const legacyGroup = Array.from(toc.getElementsByTagName('*')).find((element) =>
-    element.localName === 'navPoint' && isLegacyInferredGroup(element));
   for (const section of coverage.missing) {
     let point = Array.from(toc.getElementsByTagName('*')).find((element) =>
       element.localName === 'navPoint' &&
@@ -328,25 +376,12 @@ export function recoverInternalNcx(
       const text = childElementsByLocalName(label, 'text')[0];
       if (text) text.textContent = 'Capítulo ' + section.ordinal;
     }
-    const contentHref = relative(section.path) + '#' + encodeURIComponent(section.contentId);
-    const hasContentChild = childElementsByLocalName(point, 'navPoint').some((child) =>
-      hrefOf(child) === contentHref);
-    if (!hasContentChild) {
-      point.appendChild(makePoint(toc,
-        'epub-repair-section-text-' + String(section.ordinal),
-        'Texto do capítulo ' + section.ordinal, contentHref));
-    }
     const existingGroup = existingGroups.get(section.path);
     if (existingGroup) {
       existingGroup.appendChild(point);
     } else {
       insert(point, (ranks.get(section.path) ?? 999999) * 100000 + section.index);
     }
-  }
-  if (legacyGroup && childElementsByLocalName(legacyGroup, 'navPoint').length === 0) {
-    legacyGroup.remove();
-    const legacyIndex = ordered.indexOf(legacyGroup);
-    if (legacyIndex >= 0) ordered.splice(legacyIndex, 1);
   }
   const allPoints = Array.from(toc.getElementsByTagName('*'))
     .filter((element) => element.localName === 'navPoint');
@@ -361,9 +396,7 @@ export function recoverInternalNcx(
     }
     return value;
   }));
-  if (depthMeta && Number(depthMeta.getAttribute('content') ?? '0') < depth) {
-    depthMeta.setAttribute('content', String(depth));
-  }
+  if (depthMeta) depthMeta.setAttribute('content', String(depth));
   for (const [path, doc] of edited) {
     const originalText = decoder.decode(files.get(path));
     files.set(path, encoder.encode(serializeXmlPreservingDeclaration(doc, originalText)));
@@ -372,11 +405,11 @@ export function recoverInternalNcx(
   return [{
     type: 'updated',
     title: 'Capítulos internos adicionados ao NCX',
-    detail: coverage.missing.length +
+    detail: coverage.sections.length +
       ' divisões com epígrafes recorrentes receberam âncoras internas e links no índice. ' +
-      'Cada capítulo aponta para a epígrafe e contém uma subdivisão para o início do ' +
-      'texto narrativo. Partes editoriais existentes foram preservadas e agrupadores ' +
-      'artificiais de versões anteriores foram migrados. A numeração exige conferência editorial.',
+      'Cada capítulo aponta diretamente para sua epígrafe, sem subdivisões artificiais para o ' +
+      'texto narrativo. Partes editoriais existentes foram preservadas e estruturas geradas por ' +
+      'versões anteriores foram migradas. A numeração exige conferência editorial.',
     file: tocPath,
   }];
 }

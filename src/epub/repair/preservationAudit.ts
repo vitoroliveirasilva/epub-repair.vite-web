@@ -91,7 +91,8 @@ export function auditPreservation(
     const oldMarkup = textDecoder.decode(oldBytes);
     const newMarkup = textDecoder.decode(newBytes);
     if (!sameBytes(oldBytes, newBytes)) {
-      compareInternalTargets(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
+      compareInternalTargets(oldMarkup, newMarkup, item.resolvedPath, item.mediaType,
+        approvedNcxCompletion.size > 0);
       compareEditorialBlocks(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
       compareSpecialMarkup(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
       compareTypographyPreservation(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
@@ -306,7 +307,7 @@ function compareTypographyPreservation(before: string, after: string, path: stri
 }
 
 function compareInternalTargets(before: string, after: string, path: string,
-  mediaType = 'application/xhtml+xml'): void {
+  mediaType = 'application/xhtml+xml', allowGeneratedChapterMigration = false): void {
   const original = parseReadableDocument(before, mediaType);
   const output = parseReadableDocument(after, mediaType);
   if (!original || !output) return; 
@@ -320,6 +321,7 @@ function compareInternalTargets(before: string, after: string, path: string,
   const originalIds = ids(original);
   const afterIds = ids(output);
   for (const id of originalIds) {
+    if (allowGeneratedChapterMigration && /^epub-repair-chapter-\d+$/u.test(id)) continue;
     if (!afterIds.has(id)) {
       throw new Error(`O reparo removeria uma âncora editorial (${id}) em ${path}.`);
     }
@@ -390,13 +392,23 @@ function auditNavigationPreservation(
     const allowNcxAdditions = item.mediaType === 'application/x-dtbncx+xml' &&
       approvedNcxCompletion.has(item.resolvedPath);
     const oldComparable = oldDoc;
-    const targets = (doc: Document): string[] => Array.from(doc.getElementsByTagName('*'))
+    const belongsToGeneratedPoint = (node: Element): boolean => {
+      for (let current: Element | null = node; current; current = current.parentElement) {
+        if (current.localName === 'navPoint') {
+          return (current.getAttribute('id') ?? '').startsWith('epub-repair-');
+        }
+      }
+      return false;
+    };
+    const targets = (doc: Document, omitGenerated = false): string[] =>
+      Array.from(doc.getElementsByTagName('*'))
       .flatMap((node) => {
+        if (omitGenerated && belongsToGeneratedPoint(node)) return [];
         if (node.localName === 'a') return [node.getAttribute('href') ?? ''];
         if (node.localName === 'content') return [node.getAttribute('src') ?? ''];
         return [];
       }).filter(Boolean);
-    const oldTargets = targets(oldComparable);
+    const oldTargets = targets(oldComparable, allowNcxAdditions);
     const newTargets = targets(newDoc);
     if (!(allowNcxAdditions
       ? orderedSubsequence(oldTargets, newTargets)
@@ -416,7 +428,8 @@ function auditNavigationPreservation(
     }
     if (item.mediaType === 'application/x-dtbncx+xml') {
       const fingerprint = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
-        .filter((node) => node.localName === 'navPoint')
+        .filter((node) => node.localName === 'navPoint' &&
+          !(doc === oldComparable && allowNcxAdditions && belongsToGeneratedPoint(node)))
         .map((node) => {
           let depth = 0;
           for (let parent = node.parentElement; parent; parent = parent.parentElement) {
