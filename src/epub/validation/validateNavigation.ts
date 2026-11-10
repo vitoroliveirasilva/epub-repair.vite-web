@@ -3,6 +3,7 @@ import type { Issue } from '../model/issueTypes';
 import type { PackageDocumentInfo } from '../model/opfTypes';
 import { createIssue } from '../utils/issueFactory';
 import { parseXml } from '../utils/xmlUtils';
+import { inspectInternalNcx } from '../utils/epubSectionRecovery';
 import { inspectNcxCoverage } from '../utils/ncxCoverage';
 
 export function validateNavigation(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
@@ -168,6 +169,35 @@ export function validateNavigation(loaded: LoadedEpub, pkg: PackageDocumentInfo)
     if (ncxFile) {
       try {
         parseXml(new TextDecoder('utf-8', { fatal: false }).decode(ncxFile.bytes));
+        const internal = inspectInternalNcx(pkg, (path) => loaded.files.get(path)?.bytes);
+        if (internal.sections.length) {
+          issues.push(createIssue({
+            code: 'NCX_EDITORIAL_INFERENCE',
+            severity: 'warning',
+            title: 'Capítulos identificados por heurística editorial',
+            detail: internal.sections.length +
+              ' divisões com epígrafes foram identificadas por padrão de formatação. ' +
+              'A correspondência com os capítulos da edição exige conferência editorial.',
+            file: pkg.ncxItem.resolvedPath,
+            context: 'epigrafes:' + internal.sections.length,
+            repairable: false,
+          }));
+        }
+        if (internal.missing.length) {
+          issues.push(createIssue({
+            code: 'NCX_INTERNAL_SECTIONS_MISSING',
+            severity: 'warning',
+            title: 'Índice NCX ignora divisões dentro dos arquivos',
+            detail: internal.missing.length +
+              ' divisões internas com epígrafes ainda não possuem destino no índice. ' +
+              (internal.safeToRepair
+                ? 'É possível adicionar âncoras e links sem modificar o texto.'
+                : 'A estrutura existente exige revisão manual para preservar a hierarquia.'),
+            file: pkg.ncxItem.resolvedPath,
+            context: 'secoes:' + internal.missing.length,
+            repairable: internal.safeToRepair,
+          }));
+        }
         const coverage = inspectNcxCoverage(pkg, (path) => loaded.files.get(path)?.bytes);
         if (coverage.missing.length) {
           issues.push(createIssue({

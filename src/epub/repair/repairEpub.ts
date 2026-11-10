@@ -9,6 +9,7 @@ import { canOptimizeReport, canRepairReport, hasResidualActiveContent } from '..
 import { parsePackageDocument, parseOpfDocument } from '../validation/opfParser';
 import { parseXml } from '../utils/xmlUtils';
 import { completeSparseNcx } from '../utils/ncxCoverage';
+import { recoverInternalNcx } from '../utils/epubSectionRecovery';
 import { auditPreservation } from './preservationAudit';
 import { repairCoverSvgAccessibility } from './repairCoverSvgAccessibility';
 import { createTextFileDiffs } from './textFileDiff';
@@ -220,6 +221,7 @@ export async function repairEpub(
 
   actions.push(...repairKindleCompatibility(files, currentPkg, options));
   if (options.generateNcx && !options.conservativeMode) {
+    actions.push(...recoverInternalNcx(files, currentPkg));
     actions.push(...completeSparseNcx(files, currentPkg));
   }
   if (!options.conservativeMode) {
@@ -273,7 +275,8 @@ export async function repairEpub(
     action.title === 'SVG da capa recebeu rótulo acessível' && Boolean(action.file))
     .map((action) => action.file!));
   const approvedNcxCompletion = new Set(actions.filter((action) =>
-    action.title === 'Sumário NCX incompleto complementado' && Boolean(action.file))
+    (action.title === 'Sumário NCX incompleto complementado' ||
+      action.title === 'Capítulos internos adicionados ao NCX') && Boolean(action.file))
     .map((action) => action.file!));
   warnings.push(...auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo,
     canStripMetadata ? metadataCandidates : undefined,

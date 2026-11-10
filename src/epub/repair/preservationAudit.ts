@@ -4,6 +4,7 @@ import { HTML_MEDIA_TYPES, IMAGE_MEDIA_TYPES } from '../utils/constants';
 import { stripImageMetadata } from './stripImageMetadata';
 import { isJpegMediaType, isProgressiveJpeg } from '../utils/kindleCompatibility';
 import { auditVisualStructures, type CoverReferenceApproval } from './editorialStructureAudit';
+import { isGeneratedSparsePoint } from '../utils/epubSectionRecovery';
 
 const textDecoder = new TextDecoder('utf-8', { fatal: false });
 const FONT_MIME = /^(?:font\/|application\/(?:font-|vnd\.ms-fontobject))/iu;
@@ -387,16 +388,22 @@ function auditNavigationPreservation(
       throw new Error('O índice mudou, mas não pôde ser comparado com segurança em ' +
         item.resolvedPath + '. A cópia foi bloqueada.');
     }
+    const allowNcxAdditions = item.mediaType === 'application/x-dtbncx+xml' &&
+      approvedNcxCompletion.has(item.resolvedPath);
+    const oldComparable = allowNcxAdditions ? oldDoc.cloneNode(true) as Document : oldDoc;
+    if (allowNcxAdditions) {
+      for (const point of Array.from(oldComparable.getElementsByTagName('*'))) {
+        if (point.localName === 'navPoint' && isGeneratedSparsePoint(point)) point.remove();
+      }
+    }
     const targets = (doc: Document): string[] => Array.from(doc.getElementsByTagName('*'))
       .flatMap((node) => {
         if (node.localName === 'a') return [node.getAttribute('href') ?? ''];
         if (node.localName === 'content') return [node.getAttribute('src') ?? ''];
         return [];
       }).filter(Boolean);
-    const oldTargets = targets(oldDoc);
+    const oldTargets = targets(oldComparable);
     const newTargets = targets(newDoc);
-    const allowNcxAdditions = item.mediaType === 'application/x-dtbncx+xml' &&
-      approvedNcxCompletion.has(item.resolvedPath);
     if (!(allowNcxAdditions
       ? orderedSubsequence(oldTargets, newTargets)
       : oldTargets.join('\u0000') === newTargets.join('\u0000'))) {
@@ -426,7 +433,7 @@ function auditNavigationPreservation(
             .find((child) => child.localName === 'text')?.textContent?.replace(/\s+/gu, ' ').trim();
           return JSON.stringify([depth, node.getAttribute('id') ?? '', text ?? '']);
         });
-      const oldFingerprint = fingerprint(oldDoc);
+      const oldFingerprint = fingerprint(oldComparable);
       const newFingerprint = fingerprint(newDoc);
       if (!(allowNcxAdditions
         ? orderedSubsequence(oldFingerprint, newFingerprint)
