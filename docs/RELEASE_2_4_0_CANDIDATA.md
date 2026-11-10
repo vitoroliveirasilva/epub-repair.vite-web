@@ -51,6 +51,10 @@ para encerrar essa diferença de ambiente. O EPUBCheck oficial e Calibre
 continuam na matriz de release, não são substituídos por nossa
 comparação estrutural independente.
 
+## Ajuste de pontuação após homologação
+
+Um EPUB real revalidado ficou com 0 avisos, 0 erros, 0 reparos e 0 otimizações, porém score 99 porque `CONTENT_INLINE_SVG_LABEL_MISSING` era uma nota `INFO` não corrigível. Ajustado o cálculo para **não penalizar notas meramente informativas**, preservando a exibição do diagnóstico e o desconto por otimização opcional. Testes sintéticos cobrem a nota do SVG, aviso reparável e JPEG opcional. A pontuação é heurística e não certificação externa.
+
 ## Somente homologação pendente
 
 As verificações seguintes devem ser executadas **no SHA exato da

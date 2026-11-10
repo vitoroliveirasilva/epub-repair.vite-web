@@ -2,6 +2,8 @@
 
 ## v2.4.0 (candidata, **não publicada**)
 
+- Score Kindle: notas `INFO` sem ação de reparo não reduzem a pontuação; observações de acessibilidade continuam visíveis e otimizações opcionais continuam pontuadas. Um EPUB apenas com nota informativa pode alcançar 100/100.
+
 - Homologação real com EPUB 2 privado: texto de todos os 8 XHTML, ordem do
   spine, identificadores, referências e NCX preservados; 395 entidades
   `&nbsp;` normalizadas sem mudança no texto renderizado. Sem inserir o
