@@ -9,6 +9,8 @@ import { parseXml } from '../src/epub/utils/xmlUtils';
 
 const enc = (value: string): Uint8Array => new TextEncoder().encode(value);
 const passage = 'Conteúdo narrativo de um livro sintético para testes de navegação. '.repeat(3);
+const childNavPoints = (point: Element): Element[] => Array.from(point.children)
+  .filter((node) => node.localName === 'navPoint');
 
 function chapterFile(count: number, introductory: boolean): string {
   const sections: string[] = [];
@@ -130,22 +132,23 @@ describe('EPUB 2 com capítulos múltiplos em um único XHTML', () => {
     const toc = parseXml(new TextDecoder().decode(files.get('OPS/toc.ncx')));
     const navs = Array.from(toc.getElementsByTagName('*'))
       .filter((element) => element.localName === 'navPoint');
-    expect(navs).toHaveLength(9);
+    expect(navs).toHaveLength(13);
     expect(navs[0]!.getAttribute('id')).toBe('original-cover');
     expect(navs[navs.length - 1]!.getAttribute('id')).toBe('original-end');
     const hrefs = navs.map((point) => Array.from(point.children)
       .find((element) => element.localName === 'content')?.getAttribute('src') ?? '');
-    expect(hrefs.filter((href) => href.includes('#epub-repair-chapter-'))).toHaveLength(5);
-    expect(hrefs).toContain('Text/a.xhtml');
-    const group = navs.find((point) => point.getAttribute('id') ===
-      'epub-repair-inferred-chapters');
-    expect(group).toBeDefined();
-    expect(Array.from(group!.children).filter((node) => node.localName === 'navPoint'))
+    expect(hrefs.filter((href) => /#epub-repair-chapter-\d+$/u.test(href))).toHaveLength(5);
+    expect(hrefs.filter((href) => href.includes('#epub-repair-chapter-text-')))
       .toHaveLength(5);
-    expect(navs.filter((point) => point.getAttribute('id')?.startsWith('epub-repair-section-'))
-      .every((point) => point.parentElement === group)).toBe(true);
+    expect(hrefs).toContain('Text/a.xhtml');
+    const chapters = navs.filter((point) => /^epub-repair-section-\d+$/u
+      .test(point.getAttribute('id') ?? ''));
+    expect(chapters).toHaveLength(5);
+    expect(chapters.every((point) => point.parentElement?.localName === 'navMap')).toBe(true);
+    expect(chapters.every((point) => Array.from(point.children)
+      .filter((node) => node.localName === 'navPoint').length === 1)).toBe(true);
     expect(navs.map((point) => point.getAttribute('playOrder')))
-      .toEqual(Array.from({ length: 9 }, (_, index) => String(index + 1)));
+      .toEqual(Array.from({ length: 13 }, (_, index) => String(index + 1)));
     const after = ['OPS/Text/a.xhtml', 'OPS/Text/b.xhtml']
       .map((path) => parseXml(new TextDecoder().decode(files.get(path))).documentElement.textContent);
     expect(after).toEqual(before);
@@ -171,7 +174,7 @@ describe('EPUB 2 com capítulos múltiplos em um único XHTML', () => {
       .toHaveLength(3);
     expect(Array.from(nested.getElementsByTagName('*'))
       .find((node) => node.getAttribute('id') === 'epub-repair-inferred-chapters'))
-      .toBeDefined();
+      .toBeUndefined();
     const originalXml = parseXml(original);
     const updatedXml = parseXml(updated);
     const fingerprint = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
@@ -188,7 +191,7 @@ describe('EPUB 2 com capítulos múltiplos em um único XHTML', () => {
     expect(finalEntries.filter((entry) =>
       originalEntries.some((old) => JSON.stringify(old) === JSON.stringify(entry))))
       .toEqual(originalEntries);
-    expect(finalEntries).toHaveLength(9);
+    expect(finalEntries).toHaveLength(13);
     expect(recoverInternalNcx(files, pkg)).toEqual([]);
     expect(new TextDecoder().decode(files.get('OPS/toc.ncx'))).toBe(updated);
   });
@@ -210,6 +213,70 @@ describe('EPUB 2 com capítulos múltiplos em um único XHTML', () => {
     expect(new TextDecoder().decode(files.get('OPS/toc.ncx'))).toContain('Parte I');
     expect(before).toContain('Parte I');
     expect(inspectInternalNcx(pkg, (path) => files.get(path)).missing).toHaveLength(0);
+  });
+
+  it('migra o agrupador artificial antigo para capítulos navegáveis no nível principal', () => {
+    const { pkg, files } = fixture();
+    let ordinal = 0;
+    for (const path of ['OPS/Text/a.xhtml', 'OPS/Text/b.xhtml']) {
+      let contents = new TextDecoder().decode(files.get(path));
+      contents = contents.replace(/<p class="sgc1">/gu, () => {
+        ordinal += 1;
+        return '<p class="sgc1" id="epub-repair-chapter-' +
+          String(ordinal).padStart(3, '0') + '">';
+      });
+      files.set(path, enc(contents));
+    }
+    const oldPoints = Array.from({ length: 5 }, (_, index) => {
+      const number = index + 1;
+      const file = number <= 3 ? 'a.xhtml' : 'b.xhtml';
+      return '<navPoint id="epub-repair-section-' + number + '" playOrder="' +
+        (number + 1) + '"><navLabel><text>Capítulo ' + number +
+        ' (epígrafe inferida)</text></navLabel><content src="Text/' + file +
+        '#epub-repair-chapter-' + String(number).padStart(3, '0') + '"/></navPoint>';
+    }).join('');
+    const toc = new TextDecoder().decode(files.get('OPS/toc.ncx'));
+    files.set('OPS/toc.ncx', enc(toc.replace('<navPoint id="original-end"',
+      '<navPoint id="epub-repair-inferred-chapters" playOrder="2">' +
+      '<navLabel><text>Capítulos identificados (inferidos)</text></navLabel>' +
+      '<content src="Text/a.xhtml"/>' + oldPoints + '</navPoint>' +
+      '<navPoint id="original-end"')));
+
+    expect(inspectInternalNcx(pkg, (path) => files.get(path)).safeToRepair).toBe(true);
+    expect(recoverInternalNcx(files, pkg)).toHaveLength(1);
+    const output = parseXml(new TextDecoder().decode(files.get('OPS/toc.ncx')));
+    const points = Array.from(output.getElementsByTagName('*'))
+      .filter((node) => node.localName === 'navPoint');
+    expect(points.some((node) =>
+      node.getAttribute('id') === 'epub-repair-inferred-chapters')).toBe(false);
+    const chapters = points.filter((node) => /^epub-repair-section-\d+$/u
+      .test(node.getAttribute('id') ?? ''));
+    expect(chapters).toHaveLength(5);
+    expect(chapters.every((node) => node.parentElement?.localName === 'navMap')).toBe(true);
+    expect(chapters.every((node) => childNavPoints(node).length === 1)).toBe(true);
+    expect(inspectInternalNcx(pkg, (path) => files.get(path)).missing).toHaveLength(0);
+    expect(recoverInternalNcx(files, pkg)).toEqual([]);
+  });
+
+  it('expõe 23 capítulos e 23 subdivisões sem esconder tudo em um único grupo', () => {
+    const { pkg, files } = fixture();
+    files.set('OPS/Text/a.xhtml', enc(chapterFile(9, true)));
+    files.set('OPS/Text/b.xhtml', enc(chapterFile(14, false)));
+    const report = inspectInternalNcx(pkg, (path) => files.get(path));
+    expect(report.sections).toHaveLength(23);
+    expect(report.missing).toHaveLength(23);
+    expect(recoverInternalNcx(files, pkg)).toHaveLength(1);
+    const output = parseXml(new TextDecoder().decode(files.get('OPS/toc.ncx')));
+    const points = Array.from(output.getElementsByTagName('*'))
+      .filter((node) => node.localName === 'navPoint');
+    const chapters = points.filter((node) => /^epub-repair-section-\d+$/u
+      .test(node.getAttribute('id') ?? ''));
+    expect(chapters).toHaveLength(23);
+    expect(chapters.every((node) => node.parentElement?.localName === 'navMap')).toBe(true);
+    expect(chapters.every((node) => childNavPoints(node).length === 1)).toBe(true);
+    expect(points.filter((node) =>
+      /^epub-repair-section-text-\d+$/u.test(node.getAttribute('id') ?? '')))
+      .toHaveLength(23);
   });
 
   it('não reescreve NCX hierárquico de autoria desconhecida', () => {
@@ -243,7 +310,7 @@ describe('EPUB 2 com capítulos múltiplos em um único XHTML', () => {
     const toc = parseXml(await zip.file('OPS/toc.ncx')!.async('string'));
     const points = Array.from(toc.getElementsByTagName('*'))
       .filter((item) => item.localName === 'navPoint');
-    expect(points).toHaveLength(9);
+    expect(points).toHaveLength(13);
     expect(points.some((item) => item.getAttribute('id') === 'original-cover')).toBe(true);
     expect(points.some((item) => item.getAttribute('id') === 'original-end')).toBe(true);
     expect(points.some((item) => item.getAttribute('id') === 'epub-repair-text-1')).toBe(true);
@@ -252,7 +319,7 @@ describe('EPUB 2 com capítulos múltiplos em um único XHTML', () => {
       .toHaveLength(3);
     expect(Array.from(toc.getElementsByTagName('*')).find((node) =>
       node.localName === 'navPoint' &&
-      node.getAttribute('id') === 'epub-repair-inferred-chapters')).toBeDefined();
+      node.getAttribute('id') === 'epub-repair-inferred-chapters')).toBeUndefined();
     const second = await repairEpub('repaired.epub', repaired, DEFAULT_REPAIR_OPTIONS);
     expect(second.actions.some((action) =>
       action.title === 'Capítulos internos adicionados ao NCX')).toBe(false);

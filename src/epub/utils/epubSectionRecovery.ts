@@ -4,8 +4,22 @@ import { encodePathForXml, relativePath, resolveReference } from './pathUtils';
 import { childElementsByLocalName, parseXml, serializeXmlPreservingDeclaration } from './xmlUtils';
 
 type ResourceReader = (path: string) => Uint8Array | undefined;
-type Section = { path: string; index: number; id: string; ordinal: number };
-type Candidate = { path: string; index: number; pair: string; originalId: string };
+type Section = {
+  path: string;
+  index: number;
+  id: string;
+  contentIndex: number;
+  contentId: string;
+  ordinal: number;
+};
+type Candidate = {
+  path: string;
+  index: number;
+  pair: string;
+  originalId: string;
+  contentIndex: number;
+  originalContentId: string;
+};
 export interface InternalNcxAnalysis {
   sections: Section[];
   missing: Section[];
@@ -64,6 +78,8 @@ function candidates(path: string, bytes: Uint8Array): Candidate[] {
     result.push({
       path, index: start, pair: quoteClass + '\u0000' + citationClass,
       originalId: ps[start]!.getAttribute('id') ?? '',
+      contentIndex,
+      originalContentId: ps[contentIndex]!.getAttribute('id') ?? '',
     });
     i = endAttribution - 1;
   }
@@ -96,13 +112,12 @@ function isExplicitPart(point: Element): boolean {
     !hrefOf(point).includes('#') && childElementsByLocalName(point, 'navPoint').length === 0;
 }
 
-function topPoints(doc: Document): { navMap: Element; points: Element[] } | undefined {
-  const navMap = childElementsByLocalName(doc.documentElement, 'navMap')[0];
-  if (!navMap) return undefined;
-  const points = childElementsByLocalName(navMap, 'navPoint');
-  if (points.length !== Array.from(navMap.getElementsByTagName('*'))
-    .filter((item) => item.localName === 'navPoint').length) return undefined;
-  return { navMap, points };
+function isGeneratedPoint(point: Element): boolean {
+  return (point.getAttribute('id') ?? '').startsWith('epub-repair-');
+}
+
+function isLegacyInferredGroup(point: Element): boolean {
+  return (point.getAttribute('id') ?? '') === 'epub-repair-inferred-chapters';
 }
 
 function hrefOf(point: Element): string {
@@ -146,30 +161,49 @@ export function inspectInternalNcx(
   const sections = selected.map((item, ordinal): Section => ({
     path: item.path, index: item.index,
     id: item.originalId || 'epub-repair-chapter-' + String(ordinal + 1).padStart(3, '0'),
+    contentIndex: item.contentIndex,
+    contentId: item.originalContentId ||
+      'epub-repair-chapter-text-' + String(ordinal + 1).padStart(3, '0'),
     ordinal: ordinal + 1,
   }));
   const doc = getNcx(pkg, read);
   if (!doc) return { sections, missing: sections, safeToRepair: false };
   const targets = extractTargets(pkg, doc);
-  const missing = sections.filter((section) => !targets.some((target) =>
-    target.path === section.path && (target.fragment === section.id ||
-      (!target.fragment && section.index <= 3 &&
-        /^(?:cap[ií]tulo|chapter)\s+(?:\d+|[IVXLCDM]+)(?:\b|\s|$)/iu.test(target.title)))));
-  const nav = topPoints(doc);
-  if (!nav) return { sections, missing, safeToRepair: false };
+  const missing = sections.filter((section) => {
+    const chapter = targets.some((target) => target.path === section.path &&
+      (target.fragment === section.id || (!target.fragment && section.index <= 3 &&
+        /^(?:cap[ií]tulo|chapter)\s+(?:\d+|[IVXLCDM]+)(?:\b|\s|$)/iu.test(target.title))));
+    const content = targets.some((target) =>
+      target.path === section.path && target.fragment === section.contentId);
+    return !chapter || !content;
+  });
+  const navMap = childElementsByLocalName(doc.documentElement, 'navMap')[0];
+  if (!navMap) return { sections, missing, safeToRepair: false };
+  const allPoints = Array.from(doc.getElementsByTagName('*'))
+    .filter((item) => item.localName === 'navPoint');
+  const topLevelPoints = childElementsByLocalName(navMap, 'navPoint');
+  const hierarchyIsSafe = allPoints.every((point) =>
+    point.parentElement === navMap || isGeneratedPoint(point));
   const spineRanks = new Map(pkg.spine.map((entry, index) =>
     [entry.manifestItem?.resolvedPath, index]));
+  const targetsAreSafe = allPoints.every((point) => {
+    const src = hrefOf(point);
+    if (!src || /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/iu.test(src)) return false;
+    const resolved = resolveReference(pkg.ncxItem!.resolvedPath, src);
+    return resolved.safe && spineRanks.has(resolved.path) &&
+      (!src.includes('#') || isGeneratedPoint(point));
+  });
   let previousRank = -1;
-  const safeToRepair = nav.points.every((point) => {
+  const safeToRepair = hierarchyIsSafe && targetsAreSafe && topLevelPoints.every((point) => {
     const src = hrefOf(point);
     if (!src || /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/iu.test(src)) return false;
     const resolved = resolveReference(pkg.ncxItem!.resolvedPath, src);
     const rank = spineRanks.get(resolved.path);
     if (!resolved.safe || rank === undefined || rank < previousRank) return false;
-    if (src.includes('#') && !isOldGenerated(point)) return false;
+    if (src.includes('#') && !isGeneratedPoint(point)) return false;
     previousRank = rank;
     return true;
-  }) && nav.points.length <= 250;
+  }) && allPoints.length <= 250;
   return { sections, missing, safeToRepair };
 }
 
@@ -208,8 +242,9 @@ export function recoverInternalNcx(
   if (!sourceBytes) return [];
   const source = decoder.decode(sourceBytes);
   const toc = parseXml(source);
-  const nav = topPoints(toc);
-  if (!nav) return [];
+  const navMap = childElementsByLocalName(toc.documentElement, 'navMap')[0];
+  if (!navMap) return [];
+  const nav = { navMap, points: childElementsByLocalName(navMap, 'navPoint') };
   const edited = new Map<string, Document>();
   for (const section of coverage.missing) {
     let doc = edited.get(section.path);
@@ -225,6 +260,13 @@ export function recoverInternalNcx(
     if (Array.from(doc.getElementsByTagName('*')).some((element) =>
       element !== paragraph && element.getAttribute('id') === section.id)) return [];
     paragraph.setAttribute('id', section.id);
+    const contentParagraph = paragraphs(doc)[section.contentIndex];
+    if (!contentParagraph) return [];
+    if (contentParagraph.hasAttribute('id') &&
+        contentParagraph.getAttribute('id') !== section.contentId) return [];
+    if (Array.from(doc.getElementsByTagName('*')).some((element) =>
+      element !== contentParagraph && element.getAttribute('id') === section.contentId)) return [];
+    contentParagraph.setAttribute('id', section.contentId);
   }
 
   const original = [...nav.points];
@@ -271,23 +313,40 @@ export function recoverInternalNcx(
       existingGroups.set(resolved.path, candidate);
     }
   }
-  let inferredGroup: Element | undefined;
+  const legacyGroup = Array.from(toc.getElementsByTagName('*')).find((element) =>
+    element.localName === 'navPoint' && isLegacyInferredGroup(element));
   for (const section of coverage.missing) {
-    const point = makePoint(toc, 'epub-repair-section-' + String(section.ordinal),
-      'Capítulo ' + section.ordinal + ' (epígrafe inferida)',
-      relative(section.path) + '#' + encodeURIComponent(section.id));
+    let point = Array.from(toc.getElementsByTagName('*')).find((element) =>
+      element.localName === 'navPoint' &&
+      element.getAttribute('id') === 'epub-repair-section-' + String(section.ordinal));
+    if (!point) {
+      point = makePoint(toc, 'epub-repair-section-' + String(section.ordinal),
+        'Capítulo ' + section.ordinal,
+        relative(section.path) + '#' + encodeURIComponent(section.id));
+    } else {
+      const label = childElementsByLocalName(point, 'navLabel')[0];
+      const text = childElementsByLocalName(label, 'text')[0];
+      if (text) text.textContent = 'Capítulo ' + section.ordinal;
+    }
+    const contentHref = relative(section.path) + '#' + encodeURIComponent(section.contentId);
+    const hasContentChild = childElementsByLocalName(point, 'navPoint').some((child) =>
+      hrefOf(child) === contentHref);
+    if (!hasContentChild) {
+      point.appendChild(makePoint(toc,
+        'epub-repair-section-text-' + String(section.ordinal),
+        'Texto do capítulo ' + section.ordinal, contentHref));
+    }
     const existingGroup = existingGroups.get(section.path);
     if (existingGroup) {
       existingGroup.appendChild(point);
     } else {
-      if (!inferredGroup) {
-        inferredGroup = makePoint(toc, 'epub-repair-inferred-chapters',
-          'Capítulos identificados (inferidos)',
-          relative(section.path));
-        insert(inferredGroup, (ranks.get(section.path) ?? 999999) * 100000);
-      }
-      inferredGroup.appendChild(point);
+      insert(point, (ranks.get(section.path) ?? 999999) * 100000 + section.index);
     }
+  }
+  if (legacyGroup && childElementsByLocalName(legacyGroup, 'navPoint').length === 0) {
+    legacyGroup.remove();
+    const legacyIndex = ordered.indexOf(legacyGroup);
+    if (legacyIndex >= 0) ordered.splice(legacyIndex, 1);
   }
   const allPoints = Array.from(toc.getElementsByTagName('*'))
     .filter((element) => element.localName === 'navPoint');
@@ -315,9 +374,9 @@ export function recoverInternalNcx(
     title: 'Capítulos internos adicionados ao NCX',
     detail: coverage.missing.length +
       ' divisões com epígrafes recorrentes receberam âncoras internas e links no índice. ' +
-      'As entradas e hierarquias anteriores foram preservadas. Os capítulos foram ' +
-      'agrupados por partes existentes quando identificáveis, ou sob um grupo ' +
-      'explicitamente inferido. A numeração exige conferência editorial.',
+      'Cada capítulo aponta para a epígrafe e contém uma subdivisão para o início do ' +
+      'texto narrativo. Partes editoriais existentes foram preservadas e agrupadores ' +
+      'artificiais de versões anteriores foram migrados. A numeração exige conferência editorial.',
     file: tocPath,
   }];
 }
