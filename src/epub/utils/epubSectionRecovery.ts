@@ -109,7 +109,7 @@ function hrefOf(point: Element): string {
   return childElementsByLocalName(point, 'content')[0]?.getAttribute('src')?.trim() ?? '';
 }
 
-function extractTargets(pkg: PackageDocumentInfo, doc: Document): Array<{path: string; fragment: string}> {
+function extractTargets(pkg: PackageDocumentInfo, doc: Document): Array<{path: string; fragment: string; title: string}> {
   const ncxPath = pkg.ncxItem?.resolvedPath ?? '';
   const points = Array.from(doc.getElementsByTagName('*'))
     .filter((point) => point.localName === 'navPoint' && !isOldGenerated(point));
