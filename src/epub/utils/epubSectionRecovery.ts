@@ -104,7 +104,7 @@ function hrefOf(point: Element): string {
 
 function extractTargets(pkg: PackageDocumentInfo, doc: Document): Array<{path: string; fragment: string}> {
   const ncxPath = pkg.ncxItem?.resolvedPath ?? '';
-  const points = topPoints(doc)?.points ?? [];
+  const points = (topPoints(doc)?.points ?? []).filter((point) => !isOldGenerated(point));
   return points.map((point) => {
     const src = hrefOf(point);
     const resolved = resolveReference(ncxPath, src);
