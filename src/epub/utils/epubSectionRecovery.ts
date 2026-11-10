@@ -260,21 +260,27 @@ export function recoverInternalNcx(
       (ranks.get(firstPath) ?? 999999) * 100000);
   }
 
+  const existingGroups = new Map<string, Element>();
+  for (const candidate of original) {
+    if (!isOldGenerated(candidate) && !isExplicitPart(candidate)) continue;
+    const resolved = resolveReference(tocPath, hrefOf(candidate));
+    if (resolved.safe && !existingGroups.has(resolved.path)) {
+      existingGroups.set(resolved.path, candidate);
+    }
+  }
   let inferredGroup: Element | undefined;
   for (const section of coverage.missing) {
     const point = makePoint(toc, 'epub-repair-section-' + String(section.ordinal),
       'Capítulo ' + section.ordinal + ' (epígrafe inferida)',
       relative(section.path) + '#' + encodeURIComponent(section.id));
-    const existingGroup = original.find((candidate) =>
-      (isOldGenerated(candidate) || isExplicitPart(candidate)) &&
-      resolveReference(tocPath, hrefOf(candidate)).path === section.path);
+    const existingGroup = existingGroups.get(section.path);
     if (existingGroup) {
       existingGroup.appendChild(point);
     } else {
       if (!inferredGroup) {
         inferredGroup = makePoint(toc, 'epub-repair-inferred-chapters',
           'Capítulos identificados (inferidos)',
-          relative(section.path) + '#' + encodeURIComponent(section.id));
+          relative(section.path));
         insert(inferredGroup, (ranks.get(section.path) ?? 999999) * 100000);
       }
       inferredGroup.appendChild(point);
