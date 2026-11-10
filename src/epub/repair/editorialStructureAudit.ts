@@ -160,13 +160,15 @@ function validateMedia(original: Document, repaired: Document, path: string,
 const ACTIVE_SVG = new Set(['script', 'foreignobject', 'iframe', 'embed', 'object',
   'animate', 'animatemotion', 'animatetransform', 'set', 'applet', 'portal']);
 
-function svgSignature(svg: Element): string {
+function svgSignature(svg: Element, ignoreNewRootAccessibleName = false): string {
   const nodes: unknown[] = [];
   const visit = (node: Element): void => {
     if (ACTIVE_SVG.has(node.localName.toLowerCase())) return;
     const attributes = Array.from(node.attributes)
       .filter((attribute) => {
         const name = attribute.name.toLowerCase();
+        if (ignoreNewRootAccessibleName && node === svg &&
+            (name === 'role' || name === 'aria-label')) return false;
         if (name === 'style') return !containsDangerousCss(attribute.value);
         return !name.startsWith('on') && !name.startsWith('xmlns') &&
           !['href', 'xlink:href', 'src', 'data'].includes(name);
@@ -183,7 +185,8 @@ function svgSignature(svg: Element): string {
   return JSON.stringify(nodes);
 }
 
-function validateInlineSvg(original: Document, repaired: Document, path: string): void {
+function validateInlineSvg(original: Document, repaired: Document, path: string,
+  approvedCoverSvgLabel = false): void {
   const svgs = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
     .filter((node) => node.localName === 'svg' &&
       node.namespaceURI === 'http://www.w3.org/2000/svg');
@@ -193,7 +196,19 @@ function validateInlineSvg(original: Document, repaired: Document, path: string)
     throw new Error('O reparo removeria SVG editorial embutido em ' + path);
   }
   for (let i = 0; i < before.length; i += 1) {
-    if (svgSignature(before[i]!) !== svgSignature(after[i]!)) {
+    const oldSvg = before[i]!;
+    const newSvg = after[i]!;
+    if (svgSignature(oldSvg) === svgSignature(newSvg)) continue;
+    // A única exceção é a otimização explicitamente registrada do rótulo
+    // de capa. Todas as demais propriedades, nós e estruturas ainda precisam
+    // ser idênticos. Uma alteração de label preexistente também é bloqueada.
+    const allowedLabel = approvedCoverSvgLabel &&
+      !oldSvg.hasAttribute('aria-label') &&
+      (!oldSvg.hasAttribute('role') || oldSvg.getAttribute('role') === 'img') &&
+      newSvg.getAttribute('role') === 'img' &&
+      Boolean(newSvg.getAttribute('aria-label')?.trim()) &&
+      svgSignature(oldSvg, true) === svgSignature(newSvg, true);
+    if (!allowedLabel) {
       throw new Error('O reparo alteraria geometria ou textos de SVG editorial em ' + path);
     }
   }
@@ -216,6 +231,7 @@ export function auditVisualStructures(
   finalPaths: ReadonlySet<string>,
   coverApproval?: CoverReferenceApproval,
   preserveRemote = true,
+  approvedCoverSvgLabel = false,
 ): void {
   const before = parseEditorial(beforeMarkup, mediaType);
   const after = parseEditorial(afterMarkup, mediaType);
@@ -224,5 +240,5 @@ export function auditVisualStructures(
   if (!before || !after) return;
   validateTables(before, after, filePath);
   validateMedia(before, after, filePath, originalPaths, finalPaths, coverApproval, preserveRemote);
-  validateInlineSvg(before, after, filePath);
+  validateInlineSvg(before, after, filePath, approvedCoverSvgLabel);
 }

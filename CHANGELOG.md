@@ -2,6 +2,13 @@
 
 ## v2.4.0 (candidata, **não publicada**)
 
+- Acessibilidade: SVG simples que contém exclusivamente a imagem da capa oficial
+  pode receber rótulo usando o título já existente na página, por otimização
+  opcional segura. Diagramas e ilustrações complexas permanecem em revisão manual;
+  a auditoria editorial autoriza apenas os atributos de acessibilidade registrados.
+- UI: barra e indicador de processamento centralizados, ocupando 100% da largura
+  do card em desktop e mobile, preservando porcentagens e cancelamento.
+
 - Score Kindle: notas `INFO` sem ação de reparo não reduzem a pontuação; observações de acessibilidade continuam visíveis e otimizações opcionais continuam pontuadas. Um EPUB apenas com nota informativa pode alcançar 100/100.
 
 - Homologação real com EPUB 2 privado: texto de todos os 8 XHTML, ordem do

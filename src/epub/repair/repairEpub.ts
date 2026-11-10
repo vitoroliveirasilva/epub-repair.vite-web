@@ -121,10 +121,13 @@ export async function repairEpub(
     assertNoNewCriticalIssues(before, after);
     // Otimizar não libera alterações editoriais ou binárias fora das imagens
     // expressamente convertidas e dos metadados removidos com consentimento.
+    const approvedSvgLabels = new Set(attempted.filter((action) =>
+      action.title === 'SVG da capa recebeu rótulo acessível' && Boolean(action.file))
+      .map((action) => action.file!));
     warnings.push(...auditPreservation(loaded, optimizedFiles,
       parsed.packageInfo, after.packageInfo,
       canStripMetadata ? metadataCandidates : new Set(),
-      undefined, approvedJpegConversions));
+      undefined, approvedJpegConversions, false, approvedSvgLabels));
     if (hasResidualActiveContent(after)) {
       warnings.push('Otimização concluída, mas ainda existem recursos suspeitos ou conteúdo ativo a revisar.');
     }
@@ -254,9 +257,12 @@ export async function repairEpub(
   const after = await inspectEpub(outputFileName, afterBytes);
   canceled();
   assertNoNewCriticalIssues(before, after);
+  const approvedSvgLabels = new Set(actions.filter((action) =>
+    action.title === 'SVG da capa recebeu rótulo acessível' && Boolean(action.file))
+    .map((action) => action.file!));
   warnings.push(...auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo,
     canStripMetadata ? metadataCandidates : undefined,
-    undefined, new Set(), options.removeRemoteResourceLinks));
+    undefined, new Set(), options.removeRemoteResourceLinks, approvedSvgLabels));
   const fileDiffs = createTextFileDiffs(new Map(Array.from(loaded.files, ([name, entry]) =>
     [name, entry.bytes])), files);
   if (hasResidualActiveContent(after)) {

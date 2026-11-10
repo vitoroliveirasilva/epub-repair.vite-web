@@ -495,3 +495,37 @@
 .processing-status-content small {
   color: var(--color-text-muted);
 }
+
+
+/* Indicador de trabalho: ocupar todo o card, com conteúdo centralizado.
+ * A regra genérica .working { width: fit-content } não se aplica aqui. */
+.controls-panel > .processing-status {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--space-4);
+  gap: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface-2) 72%, transparent);
+  text-align: center;
+}
+
+.controls-panel > .processing-status > span[aria-hidden="true"] {
+  flex: none;
+}
+
+.controls-panel .processing-status-content {
+  width: 100%;
+  flex: none;
+  justify-items: center;
+}
+
+.controls-panel .processing-status-content progress {
+  width: 100%;
+  max-width: 100%;
+}

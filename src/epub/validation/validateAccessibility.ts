@@ -4,6 +4,7 @@ import type { Issue } from '../model/issueTypes';
 import { HTML_MEDIA_TYPES } from '../utils/constants';
 import { createIssue } from '../utils/issueFactory';
 import { parseXml } from '../utils/xmlUtils';
+import { coverSvgAccessibleLabel } from '../repair/coverSvgAccessibility';
 
 /** Diagnóstico apenas: alt="" é válido para imagem decorativa. */
 export function validateAccessibility(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
@@ -151,14 +152,21 @@ export function validateAccessibility(loaded: LoadedEpub, pkg: PackageDocumentIn
         (child.localName === 'title' || child.localName === 'desc') &&
         Boolean(child.textContent?.trim())));
     if (inlineSvg.length > 0) {
+      // O SVG que exibe somente a capa oficial pode aproveitar o título
+      // editorial da página; diagramas genéricos não recebem rótulo inventado.
+      const canLabelCover = inlineSvg.length === 1 && Boolean(
+        coverSvgAccessibleLabel(inlineSvg[0]!, document, item.resolvedPath, pkg));
       issues.push(createIssue({
         code: 'CONTENT_INLINE_SVG_LABEL_MISSING',
         severity: 'info',
         title: 'SVG inline possivelmente sem descrição acessível',
-        detail: inlineSvg.length + ' SVG(s) não possui(em) título ou rótulo explícito. ' +
-          'Se forem decorativos, informe aria-hidden="true"; caso contrário, descreva-os.',
+        detail: canLabelCover
+          ? 'SVG de capa sem nome acessível. Uma otimização opcional pode ' +
+            'reutilizar o título da página como rótulo, sem alterar a imagem.'
+          : inlineSvg.length + ' SVG(s) não possui(em) título ou rótulo explícito. ' +
+            'Se forem decorativos, informe aria-hidden="true"; caso contrário, descreva-os.',
         file: item.resolvedPath,
-        repairable: false,
+        repairable: canLabelCover,
       }));
     }
   }

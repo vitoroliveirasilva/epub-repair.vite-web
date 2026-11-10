@@ -53,6 +53,24 @@ comparação estrutural independente.
 
 ## Ajuste de pontuação após homologação
 
+## Rodada de homologação: SVG de capa e progresso
+
+O EPUB privado de teste contém SVG inline simples com uma única `image`
+apontando para a capa oficial. O XHTML da página já declara `<title>Cover</title>`,
+mas o SVG não possui nome acessível. Esse caso é semanticamente relevante e
+não deve ser escondido. Uma otimização opcional pode acrescentar somente
+`role="img" aria-label="Cover"`, aproveitando o título existente e
+preservando os demais bytes do XHTML, a imagem e o NCX. A auditoria editorial
+bloqueia mudanças nos outros atributos, na geometria e no texto.
+
+SVG de diagramas ou capítulos com múltiplos elementos continuam exigindo
+revisão manual e não recebem rótulo inventado.
+
+O status de carregamento tinha largura `fit-content` herdada da classe
+`.working`; agora ocupa a largura do card, centralizado e com barra de
+progresso preservada.
+
+
 Um EPUB real revalidado ficou com 0 avisos, 0 erros, 0 reparos e 0 otimizações, porém score 99 porque `CONTENT_INLINE_SVG_LABEL_MISSING` era uma nota `INFO` não corrigível. Ajustado o cálculo para **não penalizar notas meramente informativas**, preservando a exibição do diagnóstico e o desconto por otimização opcional. Testes sintéticos cobrem a nota do SVG, aviso reparável e JPEG opcional. A pontuação é heurística e não certificação externa.
 
 ## Somente homologação pendente
