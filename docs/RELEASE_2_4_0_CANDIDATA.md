@@ -28,6 +28,29 @@ O número de versão em `package.json` e nos dois campos de raiz de
 - PR para `prod` deve permanecer **draft** enquanto só há
   CI rápida de `dev`. Sem tag nem publicação antecipada.
 
+## Resultado adicional de EPUB real e regressões Windows
+
+Um EPUB 2 privado, analisado localmente pelo responsável e comparado
+independentemente após reparo, preservou o conteúdo dos **8 XHTML**,
+NCX, spine, IDs e referências internas; 395 entidades `&nbsp;` foram
+normalizadas sem mudança no texto extraído. A capa foi substituída
+intencionalmente; outras duas imagens ficaram idênticas em bytes.
+Nenhum arquivo ou trecho do livro integra o repositório.
+
+Os testes do usuário em Windows revelaram duas limitações **dos testes**, e
+não prova de defeito no EPUB reparado: caminho com `?` inválido no NTFS
+e comparação literal de LF/CRLF. Corrigidos com fixture portátil,
+mock de scanner executado diretamente pelo Node sem shell e
+normalização de fim de linha. O score fictício do cartão de topo,
+que parecia contradizer o relatório, agora fica identificado como
+ilustrativo e acompanha métricas reais após upload.
+
+**A CI Node 22 é Linux**. A aprovação dessa CI não certifica o resultado
+de `npm test` no Windows: é preciso obter execução Windows sem falhas
+para encerrar essa diferença de ambiente. O EPUBCheck oficial e Calibre
+continuam na matriz de release, não são substituídos por nossa
+comparação estrutural independente.
+
 ## Somente homologação pendente
 
 As verificações seguintes devem ser executadas **no SHA exato da

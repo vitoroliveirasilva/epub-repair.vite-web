@@ -24,7 +24,15 @@ if (args.length !== 1 || extname(args[0] ?? '').toLowerCase() !== '.epub') {
     const scanner = process.env.CLAMSCAN_BIN || 'clamscan';
     // Nenhum shell: caracteres especiais nos nomes não viram comandos.
     // O scanner recebe um caminho absoluto que não inicia com hifen.
-    const result = spawnSync(scanner, ['--no-summary', filePath], {
+    // Suporte a scanners com wrapper Node (.js/.cjs/.mjs) configurados
+    // explicitamente, inclusive para testes portáveis em Windows.
+    // Nunca usar shell para interpretar nomes de arquivos ou comandos.
+    const isNodeWrapper = /\.(?:c|m)?js$/iu.test(scanner);
+    const command = isNodeWrapper ? process.execPath : scanner;
+    const scannerArgs = isNodeWrapper
+      ? [scanner, '--no-summary', filePath]
+      : ['--no-summary', filePath];
+    const result = spawnSync(command, scannerArgs, {
       shell: false, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024,
     });
     if (result.stdout) process.stdout.write(result.stdout);

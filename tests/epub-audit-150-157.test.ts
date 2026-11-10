@@ -150,7 +150,8 @@ describe('Sétima auditoria E-150 a E-157', () => {
   });
 
   it('CI econômico: commits em dev não acionam emuladores e preservam checks Node 20/22 em prod',()=>{
-    const read=(name:string)=>readFileSync('.github/workflows/'+name+'.yml','utf8');
+    const read=(name:string)=>readFileSync('.github/workflows/'+name+'.yml','utf8')
+      .replace(/\r\n?/gu, '\n');
     for(const workflow of ['android-emulator','ios-simulator','kindle-preview',
       'browser-matrix','calibre-reader','coverage']){
       const source=read(workflow);

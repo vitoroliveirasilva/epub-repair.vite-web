@@ -2,6 +2,17 @@
 
 ## v2.4.0 (candidata, **não publicada**)
 
+- Homologação real com EPUB 2 privado: texto de todos os 8 XHTML, ordem do
+  spine, identificadores, referências e NCX preservados; 395 entidades
+  `&nbsp;` normalizadas sem mudança no texto renderizado. Sem inserir o
+  arquivo privado no repositório.
+- Testes locais no Windows: corrigir nome de fixture com `?` (caractere
+  inválido no NTFS), executar mock de scanner por Node sem shell e
+  normalizar CRLF nas asserções da política econômica de CI.
+- Interface: o cartão ilustrativo de score (92) passa a ter rótulo
+  explícito quando não existe EPUB carregado e mostra as métricas
+  **reais** quando um relatório está disponível.
+
 Esta entrada registra apenas mudanças existentes na `dev`, ainda
 pendentes de homologação pré-merge e aprovação. A produção permanece
 em v2.3.0 até a conclusão do processo.
