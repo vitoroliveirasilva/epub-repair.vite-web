@@ -8,6 +8,10 @@ em v2.3.0 até a conclusão do processo.
 
 - Reforço do gate editorial nas rotas de reparo **e otimização**, com
   rejeição segura de alterações não verificáveis em HTML legado.
+- Regressão EPUB 2: preservar o idioma explícito de cada página ao
+  completar `lang/xml:lang`, mesmo se for diferente do idioma principal do OPF.
+  Isso impede o aviso `CONTENT_LANGUAGE_CONFLICT` introduzido no reparo.
+  Na troca de capa, não inserir `properties="cover-image"` de EPUB 3 no OPF 2.
 - Proteção das estruturas e apresentações: ordem do spine, tabelas,
   âncoras, NAV EPUB 3, NCX hierárquico, MathML, ruby, SVG inline,
   estilos visuais, mídias e folhas CSS vinculadas.

@@ -9,6 +9,14 @@ O número de versão em `package.json` e nos dois campos de raiz de
 ## Preparação encerrada antes da homologação
 
 - Código e testes de estabilização presentes apenas em `dev`.
+- Caso reproduzido por homologação com EPUB 2 privado: normalização
+  de idioma cria `CONTENT_LANGUAGE_CONFLICT` em página de rosto com
+  `xml:lang` próprio. Corrigido no motor, com regressões sintéticas
+  para páginas em idiomas diferentes, `&nbsp;` e sequência
+  troca de capa → reparo.
+- Correção adicional: troca de capa EPUB 2 não deve introduzir
+  `properties="cover-image"` no manifest. EPUB 3 mantém a propriedade.
+- O livro privado do usuário **não integra** o repositório ou fixtures de CI.
 - Histórico `prod` reconciliado em `dev` sem copiar regressões.
 - Versão e notas de release sincronizadas; documentação de CI e
   de testes físicos atualizada.

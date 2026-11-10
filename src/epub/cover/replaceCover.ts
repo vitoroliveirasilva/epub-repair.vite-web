@@ -114,7 +114,9 @@ export async function replaceEpubCover(
   );
 
   ensureCoverMeta(doc, metadata, coverId);
-  ensureSingleCoverImageProperty(manifest, coverItem);
+  // `properties="cover-image"` pertence ao EPUB 3. EPUB 2 usa meta name="cover".
+  ensureSingleCoverImageProperty(manifest, coverItem,
+    parsed.packageInfo.version.trim().startsWith('3'));
   const approvedStyleAliases = new Map<string, string>();
   const cssActions = target?.path && target.path !== coverPath && reusedElsewhere
     ? forkSharedCoverStyles(files, parsed.packageInfo, doc, scope.pages,
@@ -411,13 +413,16 @@ function ensureCoverMeta(doc: Document, metadata: Element, coverId: string): voi
   for (const extra of coverMetas.slice(1)) extra.remove();
 }
 
-function ensureSingleCoverImageProperty(manifest: Element, coverItem: Element): void {
+function ensureSingleCoverImageProperty(
+  manifest: Element, coverItem: Element, isEpub3: boolean,
+): void {
   for (const item of childElementsByLocalName(manifest, 'item')) {
-    if (item === coverItem) continue;
+    if (item === coverItem && isEpub3) continue;
+    // Em EPUB 2 não conservar nem introduzir uma propriedade EPUB 3 inválida.
     removeTokenAttribute(item, 'properties', 'cover-image');
   }
 
-  addTokenAttribute(coverItem, 'properties', 'cover-image');
+  if (isEpub3) addTokenAttribute(coverItem, 'properties', 'cover-image');
 }
 
 function addTokenAttribute(element: Element, attribute: string, token: string): void {
