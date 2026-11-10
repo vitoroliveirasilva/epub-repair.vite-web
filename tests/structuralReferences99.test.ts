@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { validateContentReferences } from '../src/epub/validation/validateContentReferences';
 import { extractDocumentResourceReferences } from '../src/epub/validation/referenceExtractor';

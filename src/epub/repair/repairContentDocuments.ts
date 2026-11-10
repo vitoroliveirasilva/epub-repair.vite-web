@@ -38,7 +38,7 @@ export function repairContentDocuments(
       }
     }
 
-    // SVGs são documentos XML ativos: devem passar pela mesma proteção que o XHTML.
+    
     if (
       item.mediaType === 'image/svg+xml' &&
       (options.sanitizeScripts || options.removeRemoteResourceLinks)
@@ -76,11 +76,11 @@ export function repairContentDocuments(
   return actions;
 }
 
-/**
- * Modo conservador: sanitizar apenas riscos ativos que o usuário optou remover.
- * Não substituir imagens, reorganizar XHTML, corrigir CSS faltante ou apagar
- * fontes externas HTTP/HTTPS legítimas. Recursos órfãos permanecem revisáveis.
- */
+
+
+
+
+
 export function repairActiveContentOnly(
   files: Map<string, Uint8Array>,
   pkg: PackageDocumentInfo,
@@ -97,8 +97,8 @@ export function repairActiveContentOnly(
     processed.add(path);
     const bytes = files.get(path);
     if (!bytes) continue;
-    // A verificação de tipo PRECISA preceder a decodificação. Imagens, fontes
-    // e anexos binários nunca devem passar pelo decodificador de XML/CSS.
+    
+    
     const isMarkup = HTML_MEDIA_TYPES.has(item.mediaType) ||
       item.mediaType === 'image/svg+xml';
     if (!isMarkup && item.mediaType !== 'text/css') continue;
@@ -124,8 +124,8 @@ export function repairActiveContentOnly(
     if (item.mediaType !== 'text/css' ||
         (!containsDangerousCss(original) && !options.removeRemoteResourceLinks)) continue;
 
-    // Para este modo, arquivos locais ausentes não são uma justificativa para
-    // eliminar o estilo: declarar provisoriamente os caminhos como existentes.
+    
+    
     const knownResources = new Set(files.keys());
     for (const reference of extractCssResourceReferences(original)) {
       const normalized = decodeCssEscapes(reference.value);

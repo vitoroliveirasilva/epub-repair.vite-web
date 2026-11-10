@@ -4,7 +4,7 @@ import type { LoadedEpub } from '../src/epub/model/epubTypes';
 import type { PackageDocumentInfo } from '../src/epub/model/opfTypes';
 
 function mockJpeg(sofMarker: number): Uint8Array {
-  // Cabeçalho JPEG mínimo suficiente para testar o marcador SOF.
+  
   return Uint8Array.from([
     0xff, 0xd8, 0xff, sofMarker, 0x00, 0x0b,
     0x08, 0x00, 0x10, 0x00, 0x10, 0x01, 0x01, 0x11, 0x00,

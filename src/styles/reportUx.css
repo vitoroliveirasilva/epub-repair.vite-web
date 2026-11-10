@@ -435,7 +435,7 @@
     width: 100%;
   }
 }
-/* Comparação textual auditável: detalhes recolhidos para não sobrecarregar o relatório. */
+ 
 .repair-file-diffs {
   margin: var(--space-4) 0;
   border: 1px solid var(--color-border);
@@ -469,7 +469,7 @@
 }
 
 
-/* Progresso real da extração ZIP no Worker e controle de cancelamento. */
+ 
 .processing-status {
   display: flex;
   align-items: center;
@@ -497,8 +497,8 @@
 }
 
 
-/* Indicador de trabalho: ocupar todo o card, com conteúdo centralizado.
- * A regra genérica .working { width: fit-content } não se aplica aqui. */
+
+
 .controls-panel > .processing-status {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

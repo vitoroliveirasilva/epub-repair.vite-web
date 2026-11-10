@@ -21,9 +21,9 @@ concurrency:
 
 jobs:
   quality:
-    # Rascunhos recebem a CI de push em dev. Não repetir a matriz
-    # Node 20/22 em cada sincronização de PR ainda em desenvolvimento.
-    # ready_for_review reativa os dois checks exigidos para prod.
+
+
+
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     name: Quality gate / Node ${{ matrix.node-version }}
     runs-on: ubuntu-latest
@@ -32,8 +32,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Dev usa uma execução rápida; prod/PR preservam Node 20 e Node 22
-        # exigidos pelo ruleset de publicação.
+
+
         node-version: ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/dev' && '["22.x"]' || '["20.x","22.x"]') }}
 
     steps:
@@ -71,8 +71,8 @@ jobs:
         run: npm run build
 
   epubcheck:
-    # O EPUBCheck deve validar a candidata de release ANTES do merge; drafts
-    # não consomem recursos de certificação e dev continua com gate barato.
+
+
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/prod' || (github.event_name == 'pull_request' && github.base_ref == 'prod' && !github.event.pull_request.draft)
     name: EPUBCheck 5.4.0 / EPUB reparado
     runs-on: ubuntu-latest
@@ -143,9 +143,9 @@ jobs:
           fi
           java -jar "$epubcheck_jar" "$repaired2"
 
-          # Variações OCF: conteúdo errado/posição inicial devem reprovar;
-          # mimetype comprimido é diagnóstico próprio, não necessariamente rejeitado
-          # pelo EPUBCheck 5.4.0. Toda cópia reparada deve passar.
+
+
+
           for variant in mimetype-wrong-content mimetype-out-of-order; do
             original_extra="${RUNNER_TEMP}/epub-fixtures/original-invalid-${variant}.epub"
             repaired_extra="${RUNNER_TEMP}/epub-fixtures/repaired-valid-${variant}.epub"
@@ -157,9 +157,9 @@ jobs:
             java -jar "$epubcheck_jar" "$repaired_extra"
           done
 
-          # EPUBCheck 5.4.0 aceita o mimetype comprimido nesta fixture.
-          # Não inventar rejeição oficial: registrar a divergência, comprovar
-          # que a nossa regra OCF detectou o caso e que o reparo foi aceito.
+
+
+
           compressed_original="${RUNNER_TEMP}/epub-fixtures/original-invalid-mimetype-compressed.epub"
           compressed_repaired="${RUNNER_TEMP}/epub-fixtures/repaired-valid-mimetype-compressed.epub"
           test -s "$compressed_original" && test -s "$compressed_repaired"
@@ -167,8 +167,8 @@ jobs:
           java -jar "$epubcheck_jar" "$compressed_original"
           java -jar "$epubcheck_jar" "$compressed_repaired"
 
-          # Reconstrução NAV de NCX autoral hierárquico: original sem NAV
-          # é inválido em EPUB3, a versão gerada precisa ser oficial e legível.
+
+
           original_ncx="${RUNNER_TEMP}/epub-fixtures/original-invalid-ncx-hierarchy.epub"
           repaired_ncx="${RUNNER_TEMP}/epub-fixtures/repaired-valid-ncx-hierarchy.epub"
           test -s "$original_ncx" && test -s "$repaired_ncx"
@@ -178,17 +178,17 @@ jobs:
           fi
           java -jar "$epubcheck_jar" "$repaired_ncx"
 
-          # Matriz EPUB 3: o atributo package versão 3.0 é obrigatório tanto
-          # nas revisões 3.2/3.3/3.4. Validar recursos representativos em
-          # fixtures separadas, sem afirmar que EPUBCheck 5.4.0 certifica 3.4.
+
+
+
           for profile in epub3-core epub32-navigation epub33-mathml epub34-fixed-layout; do
             specimen="${RUNNER_TEMP}/epub-fixtures/profile-${profile}.epub"
             test -s "$specimen"
             java -jar "$epubcheck_jar" "$specimen"
           done
 
-          # EPUBs reais de apresentação reflowable/fixed layout são reparados
-          # e precisam passar no EPUBCheck antes da renderização no Calibre.
+
+
           for profile in reflowable fixed-layout; do
             specimen="${RUNNER_TEMP}/epub-fixtures/visual-${profile}.epub"
             test -s "$specimen"

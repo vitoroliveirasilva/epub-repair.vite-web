@@ -8,10 +8,10 @@ import { parseSmilClock } from '../utils/smilClock';
 
 const SMIL_NAMESPACE = /^https?:\/\/www\.w3\.org\/ns\/SMIL$/u;
 
-/**
- * Validação não destrutiva de EPUB Media Overlays (SMIL).
- * O motor não converte áudio nem infere novos pontos de sincronização.
- */
+
+
+
+
 export function validateMediaOverlays(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
   const issues: Issue[] = [];
   const byId = new Map(pkg.manifest.map((item) => [item.id, item]));
@@ -29,7 +29,7 @@ export function validateMediaOverlays(loaded: LoadedEpub, pkg: PackageDocumentIn
   for (const contentItem of pkg.manifest) {
     if (!contentItem.mediaOverlay) continue;
     const overlay = byId.get(contentItem.mediaOverlay);
-    if (!overlay || !overlay.exists) continue; // Ausência já detectada em validateOpf.
+    if (!overlay || !overlay.exists) continue; 
     if (overlay.mediaType !== 'application/smil+xml') {
       notify('MEDIA_OVERLAY_INVALID_TARGET', pkg.opfPath,
         'Media Overlay não aponta para SMIL',
@@ -69,8 +69,8 @@ export function validateMediaOverlays(loaded: LoadedEpub, pkg: PackageDocumentIn
       continue;
     }
 
-    // Mesmo se o SMIL tem um body, não confiar em estruturas importadas
-    // de outro namespace para fabricar sincronizações.
+    
+    
     const identities = new Set<string>();
     for (const node of nodes) {
       const identity = node.getAttribute('id')?.trim();
@@ -194,10 +194,10 @@ export function validateMediaOverlays(loaded: LoadedEpub, pkg: PackageDocumentIn
   return issues;
 }
 
-/**
- * EPUB 3.3, §9.3: metadados obrigatórios de duração global e por SMIL.
- * Não estimar metadados ausentes a partir dos clipes, que podem sobrepor-se.
- */
+
+
+
+
 function validateOverlayDurations(
   loaded: LoadedEpub, pkg: PackageDocumentInfo,
   overlays: PackageDocumentInfo['manifest'],
@@ -209,7 +209,7 @@ function validateOverlayDurations(
   try {
     doc = parseXml(new TextDecoder('utf-8', { fatal: true }).decode(raw));
   } catch {
-    return issues; // Erro de OPF é diagnosticado pelo parser do pacote.
+    return issues; 
   }
   const metadata = Array.from(doc.getElementsByTagName('*'))
     .find((node) => node.localName === 'metadata');
@@ -258,8 +258,8 @@ function validateOverlayDurations(
     'o documento SMIL "' + overlay.id + '"', overlay.id);
     if (duration !== undefined) sectionTimes.push(duration);
   }
-  // O EPUB permite arredondamento, mas diferenças acima de um segundo
-  // precisam ser revistas sem mudar os tempos autorais.
+  
+  
   if (overall !== undefined && sectionTimes.length === overlays.length &&
       Math.abs(sectionTimes.reduce((sum, duration) => sum + duration, 0) - overall) > 1) {
     issues.push(createIssue({

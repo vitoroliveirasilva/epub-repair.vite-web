@@ -38,7 +38,7 @@ function filenameCrc32(bytes: Uint8Array): number {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-/** Um extra field malformado ou ZIP64 não pode ser ignorado pelo leitor ZIP. */
+ 
 function checkExtraFields(
   bytes: Uint8Array,
   start: number,
@@ -88,9 +88,9 @@ function checkExtraFields(
   return undefined;
 }
 
-/** ZIP permite data descriptor com ou sem assinatura (12 ou 16 bytes).
- * É obrigatório validar CRC e tamanhos antes de confiar no payload.
- */
+
+
+
 function dataDescriptorLength(
   bytes: Uint8Array,
   offset: number,
@@ -346,8 +346,8 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
       isDirectory: decodeZipFileName(rawName, Boolean(flags & 0x0800)).endsWith('/'),
     };
 
-    // Duas entradas ZIP não podem apontar para o mesmo cabeçalho local ou
-    // disputar os mesmos bytes de payload: JSZip poderia escolher uma delas.
+    
+    
     const currentRange = {
       start: localHeaderOffset,
       end: payloadEnd + descriptorLength,
@@ -422,8 +422,8 @@ export function parseZipCentralDirectory(bytes: Uint8Array): {
     }
     seen.set(fileName, seenCount + 1);
 
-    // Sistemas de arquivos/leitores podem tratar diferenças de caixa e formas
-    // Unicode como equivalentes. Não unificar nomes válidos: avisar somente.
+    
+    
     const portableKey = fileName.normalize('NFC').toLowerCase();
     const previousPortable = portableNames.get(portableKey);
     if (previousPortable && previousPortable !== fileName) {

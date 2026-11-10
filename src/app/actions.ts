@@ -44,7 +44,7 @@ async function loadZipForTask(
 
 
 export async function loadFileIntoState(file: File, state: AppState, signal?: AbortSignal): Promise<void> {
-  // Validar o novo arquivo antes de substituir uma cópia corrigida ainda não baixada.
+  
   if (!file.name.toLowerCase().endsWith('.epub')) {
     throw new Error('Selecione um arquivo .epub.');
   }
@@ -70,11 +70,11 @@ export async function loadFileIntoState(file: File, state: AppState, signal?: Ab
   state.message = 'Arquivo carregado localmente.';
 }
 
-/**
- * Avalia um novo EPUB em estado temporário antes de substituir a sessão.
- * Se a nova entrada é inválida, mantém o livro anterior e seu download,
- * expondo o relatório diagnóstico do upload rejeitado separadamente.
- */
+
+
+
+
+
 export async function loadAndAnalyzeCandidate(
   file: File, state: AppState, context: ProcessingContext = {},
 ): Promise<void> {
@@ -118,13 +118,13 @@ export async function analyzeCurrentFile(
   try {
     const loaded = await loadZipForTask(state, context);
     publishProgress(context, 'Validando XML, links e recursos...');
-    // Entregar a UI um frame para mostrar a fase antes da validação síncrona.
+    
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     throwIfProcessingAborted(context.signal);
     const report = inspectLoadedEpub(state.payload.file.name, state.payload.bytes.length, loaded);
     throwIfProcessingAborted(context.signal);
     state.report = report;
-    // Revalidar a cópia atual não descarta um download já produzido.
+    
     if (state.repairResult?.fileName !== state.payload.file.name) {
       state.repairResult = undefined;
     }
@@ -143,7 +143,7 @@ export async function repairCurrentFile(
   if (!state.payload) throw new Error('Envie um EPUB antes de repará-lo.');
   state.busy = true;
   state.error = undefined;
-  // Snapshot antes do primeiro await: alterações na UI não afetam o job ativo.
+  
   const appliedOptions = { ...state.options };
   try {
     const loaded = await loadZipForTask(state, context);
@@ -161,7 +161,7 @@ export async function repairCurrentFile(
         currentReport.issues.some((issue) => issue.code === 'IMAGE_EMBEDDED_METADATA'));
 
     if (!canRunRequiredRepair && !canRunOptionalOptimization) {
-      // A análise sem mudanças não elimina o último download válido.
+      
       state.message = readyWithoutRequiredRepairMessage(currentReport);
       return;
     }
@@ -178,7 +178,7 @@ export async function repairCurrentFile(
     );
     throwIfProcessingAborted(context.signal);
     if (!result.changed || !result.blob) {
-      // Não apagar uma cópia já gerada quando uma operação posterior é no-op.
+      
       state.report = result.after;
       state.message = hasManualReviewIssues(result.after)
         ? 'Nada foi alterado e ainda existem pendências para revisão manual.'
@@ -188,8 +188,8 @@ export async function repairCurrentFile(
       return;
     }
 
-    // Cada operação futura deve partir da última cópia efetivamente entregue.
-    // O original permanece separado para auditoria e comparação.
+    
+    
     const repairedBytes = new Uint8Array(await result.blob.arrayBuffer());
     throwIfProcessingAborted(context.signal);
     state.payload = {
@@ -217,7 +217,7 @@ export async function loadCoverImageIntoState(file: File, state: AppState, signa
   const image = await readCoverImageFile(file);
   throwIfProcessingAborted(signal);
   state.coverImage = image;
-  // Selecionar capa não descarta a cópia reparada ainda disponível para download.
+  
   state.error = undefined;
   state.message = 'Nova capa carregada, confira a prévia e aplique quando quiser.';
 }

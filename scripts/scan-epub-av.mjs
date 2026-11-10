@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Varredura de AV opcional: nunca envia o EPUB à rede nem altera seu conteúdo.
-// Requer clamscan instalado e assinaturas atualizadas pelo administrador.
+
+
 import { spawnSync } from 'node:child_process';
 import { statSync } from 'node:fs';
 import { extname, resolve } from 'node:path';
@@ -15,18 +15,18 @@ if (args.length !== 1 || extname(args[0] ?? '').toLowerCase() !== '.epub') {
   try {
     readable = statSync(filePath).isFile();
   } catch {
-    // Não executar scanner em diretórios ou caminhos inexistentes.
+    
   }
   if (!readable) {
     console.error('Arquivo EPUB não encontrado ou não é um arquivo regular.');
     process.exitCode = 64;
   } else {
     const scanner = process.env.CLAMSCAN_BIN || 'clamscan';
-    // Nenhum shell: caracteres especiais nos nomes não viram comandos.
-    // O scanner recebe um caminho absoluto que não inicia com hifen.
-    // Suporte a scanners com wrapper Node (.js/.cjs/.mjs) configurados
-    // explicitamente, inclusive para testes portáveis em Windows.
-    // Nunca usar shell para interpretar nomes de arquivos ou comandos.
+    
+    
+    
+    
+    
     const isNodeWrapper = /\.(?:c|m)?js$/iu.test(scanner);
     const command = isNodeWrapper ? process.execPath : scanner;
     const scannerArgs = isNodeWrapper

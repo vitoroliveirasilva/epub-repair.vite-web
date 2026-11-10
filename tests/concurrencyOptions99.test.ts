@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it, vi } from 'vitest';
 import { createInitialState } from '../src/app/state';
 import { renderOptionsPanel } from '../src/ui/components/OptionsPanel';

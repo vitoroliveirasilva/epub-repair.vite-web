@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import type { LoadedEpub } from '../src/epub/model/epubTypes';
 import type { PackageDocumentInfo, ManifestItem } from '../src/epub/model/opfTypes';

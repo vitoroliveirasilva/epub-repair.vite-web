@@ -46,7 +46,7 @@ async function convertProgressiveJpegToBaseline(
 ): Promise<Uint8Array | undefined> {
   if (typeof document === 'undefined') return undefined;
 
-  // Consultar o cabeçalho SOF antes de pedir ao navegador que aloque pixels.
+  
   const dimensions = readJpegDimensions(bytes);
   if (!dimensions || dimensions.width < 1 || dimensions.height < 1 ||
       dimensions.width * dimensions.height > MAX_CANVAS_PIXELS) return undefined;
@@ -75,8 +75,8 @@ async function convertProgressiveJpegToBaseline(
   });
   if (!outputBlob || outputBlob.size === 0) return undefined;
   const output = new Uint8Array(await outputBlob.arrayBuffer());
-  // A conversão só vale se o encoder emitiu JPEG baseline decodificável e
-  // se uma amostra dos pixels permaneceu visualmente equivalente.
+  
+  
   if (output.length < 4 || output[0] !== 0xff || output[1] !== 0xd8 ||
       isProgressiveJpeg(output)) return undefined;
   const decodedOutput = await loadImage(outputBlob);
@@ -106,11 +106,11 @@ async function loadImage(blob: Blob): Promise<HTMLImageElement | undefined> {
   }
 }
 
-/**
- * Inspeção visual limitada: amostragem em miniatura protege contra mudanças
- * grosseiras de cores, geometria e quadros vazios após compressão JPEG.
- * Não é comparação bit a bit nem garantia de igualdade de cada pixel.
- */
+
+
+
+
+
 export function sampledCanvasPixels(
   image: CanvasImageSource, width: number, height: number,
 ): Uint8ClampedArray | undefined {
@@ -138,6 +138,6 @@ export function isJpegSampleVisuallyComparable(
       error += Math.abs((before[index + channel] ?? 0) - (after[index + channel] ?? 0));
     }
   }
-  // Diferença média de até 22 níveis RGB (8-bit) para compressão lossy.
+  
   return error / (before.length / 4 * 3) <= 22;
 }

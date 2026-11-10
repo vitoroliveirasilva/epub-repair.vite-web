@@ -78,8 +78,8 @@ export function sanitizeHtmlDocument(
   output = outsideHtmlComments(output, (part) => filterUnsafeSrcset(part, options, actions));
   output = outsideHtmlComments(output, (part) => removeBrokenResourceAttributes(part, options, actions));
 
-  // O parser interpreta entidades e namespaces antes de validar atributos,
-  // cobrindo variações que expressões regulares não conseguem reconhecer.
+  
+  
   const structurallySanitized = sanitizeActiveContentMarkup(output, options.filePath, options);
   if (structurallySanitized.changed) {
     output = structurallySanitized.text;
@@ -152,8 +152,8 @@ function replaceBrokenKindleEmbeds(
       return '<p>[Conteúdo Kindle indisponível]</p>';
     },
   );
-  // Referências Kindle são neutralizadas somente quando aparecem em atributos
-  // ou elementos reais. Texto literal de livros técnicos deve permanecer intacto.
+  
+  
 
   if (changed) {
     actions.push({
@@ -218,7 +218,7 @@ function replaceRemoteAnchors(text: string, filePath: string, actions: RepairAct
     (full, before: string, _quote: string, href: string, after: string, label: string) => {
       if (!isRemoteUrl(href)) return full;
       changed = true;
-      // Preservar tags editoriais e entidades ao remover apenas o link.
+      
       const titleMatch = `${before} ${after}`.match(/\btitle\s*=\s*(["'])(.*?)\1/iu);
       const title = titleMatch?.[2]?.trim();
       return label.trim() ? label : escapeHtml(title || href);
@@ -274,7 +274,7 @@ function removeBrokenResourceAttributes(
     tag.replace(
       /\s(?:src|poster|data|xlink:href)\s*=\s*(["'])(.*?)\1/giu,
       (full, _quote: string, value: string) => {
-        // O marcador altera o conteúdo editorial e exige opt-in. Sem ele, manter o img.
+        
         if (!options.replaceMissingImagesWithText &&
             /^<img\b/iu.test(tag) && /^\s+src\s*=/iu.test(full)) return full;
         const raw = value.trim();
@@ -314,7 +314,7 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
-/** Preserva comentários editoriais que exibem exemplos literais de tags. */
+ 
 function outsideHtmlComments(source: string, transform: (part: string) => string): string {
   return source.split(/(<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>)/gu).map((part) =>
     (part.startsWith('<!--') && part.endsWith('-->')) ||

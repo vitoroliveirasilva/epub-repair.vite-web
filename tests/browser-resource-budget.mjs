@@ -10,12 +10,12 @@ const harness = process.env.PLAYWRIGHT_MODULE;
 assert.ok(harness, 'PLAYWRIGHT_MODULE ausente');
 const { chromium } = await import(pathToFileURL(harness).href);
 const MiB = 1024 * 1024;
-/**
- * RSS residente agregado dos processos do Chromium no runner.
- * É uma estimativa de limite superior: páginas compartilhadas podem ser
- * contadas em mais de um processo, mas inclui heap de Worker e memória nativa
- * ausentes da métrica CDP JSHeapUsedSize da aba.
- */
+
+
+
+
+
+
 function chromiumResidentMemoryMiB() {
   const data = execFileSync('ps', ['-e', '-o', 'comm=,rss='],
     { encoding: 'utf8', maxBuffer: 1024 * 1024 });
@@ -34,8 +34,8 @@ const scenarios = [
   { mib: 1, maxMs: 45_000, maxHeapGrowthMiB: 320, maxRssGrowthMiB: 550 },
   { mib: 12, maxMs: 115_000, maxHeapGrowthMiB: 440, maxRssGrowthMiB: 950 },
   { mib: 48, maxMs: 180_000, maxHeapGrowthMiB: 760, maxRssGrowthMiB: 1800 },
-  // Cenário de fronteira: 250 MiB DESCOMPACTADOS, não 250 MiB enviados.
-  // Cada entrada fica <128 MiB (limite por recurso do aplicativo).
+  
+  
   { mib: 250, maxMs: 300_000, maxHeapGrowthMiB: 1600, maxRssGrowthMiB: 3200 },
 ];
 async function epubFixture(sizeMiB) {
@@ -75,8 +75,8 @@ async function epubFixture(sizeMiB) {
       seed ^= seed << 13;
       seed ^= seed >>> 17;
       seed ^= seed << 5;
-      // EPUB de fronteira inclui alternância 64KiB random/zero para o
-      // arquivo ZIP caber no teto de entrada de 250MiB e não exceder ratio.
+      
+      
       payload[i] = sizeMiB > 128 && ((i >>> 16) & 1) === 0 ? 0 : seed & 255;
     }
     zip.file(paths[part], payload, { compression: 'DEFLATE' });
@@ -95,10 +95,10 @@ const metrics = async () => {
 await session.send('Performance.enable');
 try {
   await page.goto('http://127.0.0.1:5173/', { waitUntil: 'load' });
-  // O harness anterior serializava 12 MiB como Array.from(source) para
-  // page.evaluate e incluía custo de transporte Playwright no cronômetro:
-  // não era uma medição pura da aplicação. File upload permite transferência
-  // nativa e inicia o cronômetro APÓS arquivo disponível no browser.
+  
+  
+  
+  
   await page.evaluate(() => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -108,13 +108,13 @@ try {
   });
   for (const { mib, maxMs, maxHeapGrowthMiB, maxRssGrowthMiB } of scenarios) {
     const source = await epubFixture(mib);
-    // Playwright impõe limite de 50MiB para setInputFiles({buffer}).
-    // Arquivos grandes são passados via path temporário, não JSON nem buffer.
+    
+    
     const dir = await mkdtemp(join(tmpdir(), 'epub-benchmark-'));
     const file = join(dir, 'benchmark-' + mib + '.epub');
     await writeFile(file, source);
-    // O Chromium pode abrir o descritor no momento de File.arrayBuffer(),
-    // NÃO no setInputFiles(): manter o arquivo em disco até terminar avaliação.
+    
+    
     await page.locator('#benchmark-file-input').setInputFiles(file);
     const baseline = await metrics();
     const baselineRss = chromiumResidentMemoryMiB();

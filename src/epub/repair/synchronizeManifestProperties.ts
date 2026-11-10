@@ -7,11 +7,11 @@ import { childElementsByLocalName, findFirstByLocalName, parseXml,
 import { decodeUtf8ForRewrite } from '../utils/textEncoding';
 import { inferRequiredManifestProperties } from '../validation/validateManifestContentProperties';
 
-/**
- * O OPF inicialmente pode declarar novos recursos órfãos; depois do saneamento
- * efetivo, ajustar somente as propriedades COMPROVADAS dos bytes finais.
- * Nunca marcar um hyperlink HTTP como recurso remoto nem inventar scripting.
- */
+
+
+
+
+
 export function synchronizeManifestProperties(
   files: Map<string, Uint8Array>,
   pkg: PackageDocumentInfo,

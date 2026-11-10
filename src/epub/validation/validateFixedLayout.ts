@@ -4,10 +4,10 @@ import type { PackageDocumentInfo } from '../model/opfTypes';
 import { createIssue } from '../utils/issueFactory';
 import { parseXml } from '../utils/xmlUtils';
 
-/**
- * Inspeção somente-leitura dos requisitos de dimensões do EPUB 3 fixed-layout.
- * Não transforma SVG, altera zoom ou tenta inferir tamanhos de páginas.
- */
+
+
+
+
 export function validateFixedLayout(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
   if (!pkg.version.startsWith('3')) return [];
   const opfBytes = loaded.files.get(pkg.opfPath)?.bytes;
@@ -21,7 +21,7 @@ export function validateFixedLayout(loaded: LoadedEpub, pkg: PackageDocumentInfo
   try {
     doc = parseXml(new TextDecoder('utf-8', { fatal: true }).decode(opfBytes));
   } catch {
-    return issues; // O parser OPF já reporta XML inválido.
+    return issues; 
   }
   const elements = Array.from(doc.getElementsByTagName('*'));
   const globalLayouts = elements.filter((element) =>
@@ -62,7 +62,7 @@ export function validateFixedLayout(loaded: LoadedEpub, pkg: PackageDocumentInfo
           .replace(/&nbsp;/giu, '&#160;'),
       );
     } catch {
-      continue; // XML malformado já recebe diagnóstico na inspeção de conteúdo.
+      continue; 
     }
     if (item.mediaType === 'application/xhtml+xml') {
       const head = Array.from(content.getElementsByTagName('*'))

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { validateMediaOverlays } from '../src/epub/validation/validateMediaOverlays';
 import type { LoadedEpub } from '../src/epub/model/epubTypes';
@@ -59,8 +59,8 @@ describe('E-047: relações e namespaces de Media Overlays', () => {
   it('rejeita clipEnd infinito e segundos malformados', () => {
     const bad = '<par>' + text + '<audio src="audio.mp3" clipBegin="0s" ' +
       'clipEnd="9999999999999999999999999999999999999999999999999999999s"/></par>';
-    // Um número finito muito grande é permitido pela sintaxe; a falha abaixo
-    // precisa ser de intervalo cronológico, não por overflow artificial.
+    
+    
     expect(check(xml(bad)).every((code) => code !== 'MEDIA_OVERLAY_INVALID_XML')).toBe(true);
     expect(check(xml('<par>' + text +
       '<audio src="audio.mp3" clipBegin="abc" clipEnd="2s"/></par>')))

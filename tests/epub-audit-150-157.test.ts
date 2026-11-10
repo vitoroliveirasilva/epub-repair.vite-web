@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import JSZip from 'jszip';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -159,7 +159,7 @@ describe('Sétima auditoria E-150 a E-157', () => {
       expect(triggerSection).not.toContain('branches: [dev]');
       expect(triggerSection).toContain('workflow_dispatch:');
       if(['browser-matrix','calibre-reader','coverage'].includes(workflow)) {
-        // Suíte cara só em PR de release pronta; nunca em push da dev.
+        
         expect(triggerSection).toContain('pull_request:');
         expect(triggerSection).toContain('types: [opened, reopened, synchronize, ready_for_review]');
         expect(triggerSection).toContain('branches: [prod]');

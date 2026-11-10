@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/app/createApp';
 import { buildKindleIssueEpub } from './helpers/syntheticEpub';

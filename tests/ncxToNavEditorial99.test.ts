@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import JSZip from 'jszip';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { buildNavDocument } from '../src/epub/repair/repairNavigation';
@@ -100,7 +100,7 @@ describe('E-068: NAV gerado respeita hierarquia e rótulos do NCX original', () 
   });
   it('reparo EPUB 3 sem NAV reaproveita NCX sem alterar XHTML ou NCX', async () => {
     const z=new JSZip();
-    // Mimetype ausente torna o reparo obrigatório e permite validar o roundtrip.
+    
     z.file('META-INF/container.xml',
       '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">' +
       '<rootfiles><rootfile full-path="OPS/book.opf" ' +

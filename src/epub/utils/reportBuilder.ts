@@ -18,9 +18,9 @@ export function buildValidationReport(params: {
   const warningCount = issues.filter((issue) => issue.severity === 'warning').length;
   const infoCount = issues.filter((issue) => issue.severity === 'info').length;
   const repairableCount = issues.filter((issue) => issue.repairable).length;
-  // Notas informativas que não são ações de reparo ou otimização não são
-  // defeitos: mantenha-as no relatório sem retirar pontos do score Kindle.
-  // Informações corrigíveis (otimizações opcionais) continuam pontuadas.
+  
+  
+  
   const penalty = issues.reduce((total, issue) =>
     total + (issue.severity === 'info' && !issue.repairable
       ? 0 : issueSeverityWeight(issue.severity)), 0);

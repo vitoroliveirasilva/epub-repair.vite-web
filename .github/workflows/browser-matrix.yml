@@ -41,7 +41,7 @@ concurrency:
 
 jobs:
   browser:
-    # Drafts sincronizam dezenas de vezes; executar suíte cara só em PR pronta.
+
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     name: Browser smoke / ${{ matrix.browser }}
     runs-on: ubuntu-latest
@@ -60,8 +60,8 @@ jobs:
         run: npm ci
       - name: Install isolated Playwright test harness
         run: |
-          # Isolar o harness evita o erro npm Arborist "edgesOut" ao modificar
-          # node_modules de uma instalação reproduzível com npm ci.
+
+
           mkdir -p "${RUNNER_TEMP}/browser-harness"
           npm install --prefix "${RUNNER_TEMP}/browser-harness" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.55.1
       - name: Install browser with cached runner system libraries
@@ -70,8 +70,8 @@ jobs:
           set -euo pipefail
           playwright="${RUNNER_TEMP}/browser-harness/node_modules/.bin/playwright"
           if [ "${{ matrix.browser }}" = chromium ]; then
-            # Chromium já dispõe de bibliotecas no Ubuntu hosted runner.
-            # Evita apt update/downloads repetitivos que podem travar o job.
+
+
             "$playwright" install chromium
           else
             "$playwright" install --with-deps "${{ matrix.browser }}"
@@ -92,10 +92,10 @@ jobs:
           done
           curl --fail http://127.0.0.1:5173/ > /dev/null
           node tests/browser-smoke.mjs
-          # 12 MiB reais: verificar Worker de leitura e Worker de ZIP final,
-          # download e preservação de recursos em cada motor com viewport mobile.
+
+
           node tests/browser-large-workflow.mjs
-          # CSP deve ser testada com bundle compilado, não Vite HMR (dev).
+
           npm run build
           npm run preview -- --host 127.0.0.1 --port 4173 > "${RUNNER_TEMP}/preview-server.log" 2>&1 &
           preview_pid=$!

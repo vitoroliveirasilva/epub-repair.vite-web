@@ -6,10 +6,10 @@ import { parseXml } from '../utils/xmlUtils';
 
 const HTML_TYPES = new Set(['application/xhtml+xml', 'text/html']);
 
-/**
- * Sinais objetivos de OCR ruim; nunca reescrever hifens, espaços, cabeçalhos
- * ou rodapés sem revisão humana. Um indício isolado não autoriza "conserto".
- */
+
+
+
+
 export function validateEditorialOcrQuality(
   loaded: LoadedEpub,
   pkg: PackageDocumentInfo,
@@ -28,7 +28,7 @@ export function validateEditorialOcrQuality(
         ? new DOMParser().parseFromString(markup, 'text/html')
         : parseXml(markup.replace(/&nbsp;/giu, '&#160;'));
     } catch {
-      continue; // Erros de XML/encoding são tratados em seus validadores próprios.
+      continue; 
     }
 
     const content = Array.from(doc.getElementsByTagName('*'))
@@ -37,8 +37,8 @@ export function validateEditorialOcrQuality(
       .filter((element) => element.localName.toLowerCase() === 'p')
       .map((element) => element.textContent ?? '');
     const visible = paragraphs.join('\n');
-    // Texto curto repetido nas extremidades de >=3 arquivos pode ter vindo
-    // de cabeçalho/rodapé de páginas digitalizadas. Não editar nem pressupor erro.
+    
+    
     if (paragraphs.length >= 3) {
       for (const [position, value] of [
         ['início', paragraphs[0]],
@@ -54,8 +54,8 @@ export function validateEditorialOcrQuality(
         runningText.set(key, locations);
       }
     }
-    // Reconhecer quebra de linha artificial apenas quando há recorrência em
-    // parágrafos longos. Versos curtos e uma quebra isolada não são suspeitos.
+    
+    
     const hardWrapped = paragraphs.filter((paragraph) => {
       const lines = paragraph.split(/\r?\n/u).map((line) => line.trim()).filter(Boolean);
       return lines.length >= 5 && lines.every((line) => line.length >= 20 &&
@@ -74,7 +74,7 @@ export function validateEditorialOcrQuality(
       }));
     }
     const replacementChars = (visible.match(/\uFFFD/gu) ?? []).length;
-    // Um único hífen de fim de linha pode ser estilístico. Exigir recorrência.
+    
     const splitWords = (visible.match(/[\p{L}]{3,}-[ \t]*\r?\n[ \t]*[\p{L}]{3,}/gu) ?? []).length;
     if (replacementChars >= 2 || splitWords >= 3) {
       issues.push(createIssue({
@@ -89,8 +89,8 @@ export function validateEditorialOcrQuality(
       }));
     }
 
-    // Capturar apenas marcadores explícitos de página. Um título curto
-    // repetido não é necessariamente um cabeçalho OCR e não será sinalizado.
+    
+    
     const labels = paragraphs.map((p) => p.trim())
       .filter((p) => /^(?:p(?:á|a)g(?:ina)?\.?\s*\d+|page\s*\d+|\d{1,4})$/iu.test(p));
     for (const label of labels) {

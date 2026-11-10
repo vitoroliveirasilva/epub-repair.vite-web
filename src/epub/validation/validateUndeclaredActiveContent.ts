@@ -12,10 +12,10 @@ const ACTIVE_ELEMENT = new Set([
   'animatetransform', 'set',
 ]);
 
-/**
- * Mesmo XHTML/SVG/CSS fora do manifest permanece no ZIP. Inventariar
- * conteúdo ativo órfão sem executar/neutralizar cegamente e exigir revisão.
- */
+
+
+
+
 export function validateUndeclaredActiveContent(
   loaded: LoadedEpub,
   pkg: PackageDocumentInfo,
@@ -27,7 +27,7 @@ export function validateUndeclaredActiveContent(
     if (!/\.(?:xhtml?|svg|css)$/iu.test(path)) continue;
     let active: boolean;
     try {
-      // Não transformar bytes corrompidos em texto de substituição silencioso.
+      
       const text = new TextDecoder('utf-8', { fatal: true }).decode(entry.bytes);
       if (/\.css$/iu.test(path)) {
         active = containsDangerousCss(text);
@@ -61,7 +61,7 @@ export function validateUndeclaredActiveContent(
         });
       }
     } catch {
-      // XML/encoding inválido de recurso órfão não autoriza declarar ausência de risco.
+      
       active = true;
     }
     if (active) {

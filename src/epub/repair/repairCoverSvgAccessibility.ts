@@ -4,10 +4,10 @@ import { decodeUtf8ForRewrite } from '../utils/textEncoding';
 import { parseXml } from '../utils/xmlUtils';
 import { labelSingleCoverSvg } from './coverSvgAccessibility';
 
-/**
- * Melhoria acessível estritamente limitada ao SVG simples de página de capa.
- * Preserva integralmente os bytes dos demais XHTML, imagens, CSS e NCX.
- */
+
+
+
+
 export function repairCoverSvgAccessibility(
   files: Map<string, Uint8Array>,
   pkg: PackageDocumentInfo,
@@ -18,7 +18,7 @@ export function repairCoverSvgAccessibility(
     const bytes = files.get(item.resolvedPath);
     if (!bytes) continue;
 
-    // Evitar parse/regravação de capítulos que não contêm SVG.
+    
     const raw = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
     if (!/<svg(?:\s|>)/iu.test(raw)) continue;
     const source = decodeUtf8ForRewrite(bytes, item.resolvedPath);
@@ -26,14 +26,14 @@ export function repairCoverSvgAccessibility(
     try {
       document = parseXml(source.replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml');
     } catch {
-      continue; // XHTML malformado exige diagnóstico próprio.
+      continue; 
     }
     const output = labelSingleCoverSvg(source, document, item.resolvedPath, pkg);
     if (output === source) continue;
     try {
       parseXml(output.replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml');
     } catch {
-      continue; // Nunca liberar um documento reescrito que não pode ser parseado.
+      continue; 
     }
     files.set(item.resolvedPath, new TextEncoder().encode(output));
     actions.push({

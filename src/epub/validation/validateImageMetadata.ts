@@ -49,7 +49,7 @@ function sniffPngMetadata(bytes: Uint8Array, found: Set<string>): void {
   for (let count = 0; count < MAX_IMAGE_SEGMENTS && cursor + 12 <= bytes.length; count += 1) {
     const length = view.getUint32(cursor, false);
     const dataStart = cursor + 8;
-    const end = dataStart + length + 4; // Inclui CRC; não regravar nada.
+    const end = dataStart + length + 4; 
     if (end > bytes.length || end < dataStart) break;
     if (startsWith(bytes, cursor + 4, 'eXIf')) found.add('EXIF');
     if (startsWith(bytes, cursor + 4, 'iTXt') ||
@@ -78,10 +78,10 @@ function sniffWebpMetadata(bytes: Uint8Array, found: Set<string>): void {
   }
 }
 
-/**
- * Somente inventário: metadados podem incluir autoria, orientação, cores e
- * geolocalização. Remoção silenciosa alteraria a obra, portanto é proibida.
- */
+
+
+
+
 export function validateImageMetadata(
   loaded: LoadedEpub,
   pkg: PackageDocumentInfo,

@@ -175,9 +175,9 @@ function render(
   );
 }
 
-/** E-157: relatórios do upload recusado têm nome e ações independentes
- * para não exportar por engano o diagnóstico do EPUB anterior ainda aberto.
- */
+
+
+
 export function renderRejectedUploadReport(
   report: NonNullable<AppState['invalidUploadReport']>,
   mode: AppState['reportViewMode'],
@@ -220,7 +220,7 @@ async function runAsync(
     onProgress: (progress: ProcessingProgress) => void;
   }) => Promise<void>,
 ): Promise<void> {
-  // Um único job ativo evita misturar resultados de livros diferentes.
+  
   if (state.busy) return;
   const controller = new AbortController();
   let lastProgressKey = '';
@@ -366,8 +366,8 @@ function renderHero(report: AppState['report']): HTMLElement {
 }
 
 function renderHeroPreview(report: AppState['report']): HTMLElement {
-  // Sem um arquivo analisado, os números são apenas demonstração visual.
-  // Com relatório real, nunca mostrar scores fictícios como se fossem atuais.
+  
+  
   const hasReport = Boolean(report);
   return el('aside', {
     className: 'hero-preview',

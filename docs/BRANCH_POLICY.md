@@ -43,3 +43,43 @@ completa, EPUBCheck e homologação de EPUBs reais.
 **Nenhuma regra de branch ou tag foi alterada nesta auditoria.** E-098
 permanece parcial até as proteções de `dev` e tags serem realmente
 confirmadas ou aplicadas com aprovação.
+
+## Organização de branches verificada em 10/11/2026
+
+As branches permanentes do projeto são `dev` e `prod`. Existem também
+cinco branches temporárias de dependências abertas pelo Dependabot:
+`dependabot/npm_and_yarn/frontend-tooling-58b15aa916`,
+`dependabot/npm_and_yarn/vitest-5.1.0`,
+`dependabot/npm_and_yarn/jsdom-31.0.0`,
+`dependabot/github_actions/actions/setup-java-6` e
+`dependabot/github_actions/actions/upload-artifact-7`.
+
+As PRs #34, #35, #36, #38 e #39 ainda estão abertas, com base `prod`.
+A PR #37 liga `dev` a `prod` e permanece rascunho até homologação e
+aprovação explícita. Não encerrar essas PRs de dependências ou apagar suas
+branches enquanto houver alterações não examinadas, sobretudo mudanças
+major. Nenhuma atualização de dependências é promovida automaticamente.
+
+O arquivo `.github/dependabot.yml` da `dev` passa a escolher
+`target-branch: dev` para *atualizações de versão*. O Dependabot lê sua
+configuração na branch padrão `prod`, portanto a mudança só entra em vigor
+depois de ser incorporada à `prod` por uma PR homologada. PRs existentes
+não mudam de destino automaticamente. **Atualizações de segurança** do
+Dependabot continuam visando a branch padrão por regra do GitHub.
+
+Fluxo seguro para manter somente duas branches de longa duração:
+1. Receber código funcional exclusivamente em `dev`.
+2. Analisar atualizações de dependências individualmente, testar e aceitar
+   na `dev` ou fechar motivadamente a PR; só então apagar a branch
+   temporária, quando não houver trabalho necessário não incorporado.
+3. Publicar de `dev` para `prod` somente pela PR de release pronta
+   para revisão e com todos os checks de homologação obrigatórios.
+4. Em GitHub Settings, considerar a opção de exclusão automática de branches
+   após merge, preservando `dev` e `prod` por proteção. Isso não impede
+   branches temporárias futuras do Dependabot.
+5. Se a exigência for possuir literalmente só duas branches em todos os
+   momentos, desativar as PRs automáticas de *versão*; isso reduz
+   monitoramento de dependências e não elimina as branches geradas por
+   atualizações de segurança habilitadas.
+
+Esta rodada não fez merge, não fechou PR e não excluiu branches.

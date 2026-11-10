@@ -15,7 +15,7 @@ function validModifiedTimestamp(value: string): boolean {
   if (!MODIFIED_UTC.test(value)) return false;
   const time = new Date(value);
   if (Number.isNaN(time.valueOf())) return false;
-  // Date.parse aceita 30 de fevereiro por normalização: rejeitar a correção silenciosa.
+  
   return time.toISOString().replace(/\.000Z$/u, 'Z') === value;
 }
 
@@ -75,7 +75,7 @@ function validatePackagePrefixes(doc: Document, opfPath: string, root: Element):
 }
 
 
-/** Diagnósticos conformes ao OPF sem inventar ordem, identificadores ou metadados. */
+ 
 export function validatePackageSemantics(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
   const bytes = loaded.files.get(pkg.opfPath)?.bytes;
   if (!bytes) return [];
@@ -83,7 +83,7 @@ export function validatePackageSemantics(loaded: LoadedEpub, pkg: PackageDocumen
   try {
     doc = parseXml(new TextDecoder('utf-8', { fatal: false }).decode(bytes));
   } catch {
-    return []; // OPF_INVALID_XML já é emitido pelo parser.
+    return []; 
   }
   const issues: Issue[] = [];
   const packageElement = findFirstByLocalName(doc, 'package');

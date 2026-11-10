@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { afterEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app/createApp';
 import { captureFocusForRerender } from '../src/app/focusRestoration';

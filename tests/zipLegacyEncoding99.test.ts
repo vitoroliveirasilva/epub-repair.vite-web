@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 import { parseZipCentralDirectory } from '../src/epub/reader/rawZipInspector';
@@ -11,14 +11,14 @@ async function zipWithName(name: string): Promise<Uint8Array> {
   return zip.generateAsync({ type: 'uint8array', compression: 'STORE' });
 }
 
-/** Substitui somente os bytes do nome nos headers local e central. */
+ 
 function legacyName(bytes: Uint8Array): Uint8Array {
   const result = new Uint8Array(bytes);
   const name = new TextEncoder().encode('chapter.xhtml');
   let count = 0;
   for (let i = 0; i + name.length <= result.length; i += 1) {
     if (!name.every((byte, j) => result[i + j] === byte)) continue;
-    result[i + 5] = 0x82; // CP437: é; byte inválido sozinho em UTF-8.
+    result[i + 5] = 0x82; 
     i += name.length - 1;
     count += 1;
   }
@@ -61,7 +61,7 @@ describe('E-021: nomes ZIP antigos e flags UTF-8 sem corrupção silenciosa', ()
 
   it('rejeita mentira na flag UTF-8 sem inferir o nome da obra', async () => {
     const source = legacyName(await zipWithName('chapter.xhtml'));
-    // Corrigir bit 11 (UTF-8) em ambos os cabeçalhos sem alterar os dados.
+    
     for (let i = 0; i + 10 < source.length; i += 1) {
       const local = source[i] === 0x50 && source[i + 1] === 0x4b &&
         source[i + 2] === 0x03 && source[i + 3] === 0x04;

@@ -215,8 +215,8 @@ export async function loadEpub(
     }
   }
 
-  // O JSZip pode normalizar nomes e ignorar registros ambíguos. Garantir que
-  // toda entrada física segura e não diretório exista exatamente no mapa final.
+  
+  
   assertZipNotAborted(signal);
   const missingFromJsZip = raw.entries.find((entry) =>
     !entry.isDirectory && !entry.unsafeOriginalName &&
@@ -249,10 +249,10 @@ export async function loadEpub(
   };
 }
 
-/**
- * Descompacta por blocos, evitando que tamanhos forjados no ZIP contornem
- * o limite baseado nos metadados. Pausa a stream antes de acumular o bloco excedente.
- */
+
+
+
+
 const CRC32_TABLE = Uint32Array.from({ length: 256 }, (_, index) => {
   let crc = index;
   for (let bit = 0; bit < 8; bit += 1) {
@@ -274,13 +274,13 @@ function readZipEntryLimited(
       'A entrada declara um tamanho descompactado acima do limite disponível.'));
   }
   return new Promise((resolve, reject) => {
-    // JSZip 3.x implementa internalStream em JSZipObject, mas não o expõe na interface pública.
-    // O tipo limitado documenta somente a superfície utilizada pelo leitor por blocos.
+    
+    
     const stream = (entry as JSZip.JSZipObject & {
       internalStream(type: 'uint8array'): JSZip.JSZipStreamHelper<Uint8Array>;
     }).internalStream('uint8array');
-    // Pré-alocação estritamente limitada pelo diretório central validado.
-    // Elimina a segunda cópia integral que antes juntava todos os chunks.
+    
+    
     const output = new Uint8Array(expectedBytes);
     let length = 0;
     let crc = 0xffffffff;

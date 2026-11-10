@@ -21,9 +21,9 @@ function equalBytes(left: Uint8Array | undefined, right: Uint8Array | undefined)
   return true;
 }
 
-/** Diferenças apenas de texto: não modifica EPUB, não compara bytes de fontes/imagens.
- * Para arquivos extensos, registrar a modificação sem alocar uma matriz enorme.
- */
+
+
+
 export function createTextFileDiffs(
   before: ReadonlyMap<string, Uint8Array>,
   after: ReadonlyMap<string, Uint8Array>,
@@ -53,7 +53,7 @@ export function createTextFileDiffs(
   });
 }
 
-/** Diff de linhas com programação dinâmica estritamente limitada. */
+ 
 function lineDiff(left: string[], right: string[]): { preview: string; truncated: boolean } {
   if (left.length > 180 || right.length > 180 || left.length * right.length > 20_000) {
     return { truncated: true,
@@ -83,7 +83,7 @@ function lineDiff(left: string[], right: string[]): { preview: string; truncated
       operations.push({ type: '-', text: left[i]! }); i++;
     }
   }
-  // Mostrar três linhas de contexto em cada lado; omitir longos trechos iguais.
+  
   const wanted = new Set<number>();
   operations.forEach((operation, index) => {
     if (operation.type === ' ') return;

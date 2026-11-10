@@ -5,7 +5,7 @@ import type { PortableLoadedEpub, ZipWorkerRequest, ZipWorkerResponse } from './
 export interface ZipWorkerOptions {
   signal?: AbortSignal | undefined;
   onProgress?: ((progress: ZipLoadProgress) => void) | undefined;
-  /** Injeção testável, sem afetar o Worker criado em produção. */
+   
   createWorker?: (() => Worker) | undefined;
 }
 
@@ -17,11 +17,11 @@ export function throwIfProcessingAborted(signal?: AbortSignal): void {
   if (signal?.aborted) throw abortProcessingError();
 }
 
-/**
- * Apenas a extração ZIP é feita no Worker. A origem permanece imutável no
- * navegador principal; o payload de entrada é clonado ao enviar ao Worker.
- * Se não houver Workers, usa-se a implementação normal, sem alegar paralelismo.
- */
+
+
+
+
+
 export async function loadEpubInWorker(
   fileName: string,
   bytes: Uint8Array,

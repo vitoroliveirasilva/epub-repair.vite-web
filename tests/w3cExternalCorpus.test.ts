@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { Blob as NodeBlob } from 'node:buffer';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
@@ -14,8 +14,8 @@ const read = (sample: Sample, path: string): string =>
 
 async function packOfficialSource(sample: Sample): Promise<Uint8Array> {
   const zip = new JSZip();
-  // Perturbação isolada: mimetype comprimido, para provar que o reparo
-  // produz EPUB válido sem alterar o conteúdo editorial oficial.
+  
+  
   zip.file('mimetype', EPUB_MIME, { compression: 'DEFLATE' });
   zip.file('META-INF/container.xml',
     readFileSync('tests/fixtures/w3c/META-INF/container.xml'));
@@ -33,9 +33,9 @@ function parse(markup: string): Document {
   return doc;
 }
 
-/** A normalização opcional de idioma adiciona lang equivalente a xml:lang.
- * Comparar conteúdo semântico em vez de exigir bytes idênticos de serialização.
- */
+
+
+
 function expectNavSemanticsPreserved(sample: Sample, source: string): void {
   const before = parse(read(sample, 'EPUB/nav.xhtml'));
   const after = parse(source);

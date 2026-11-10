@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { sanitizeActiveContentMarkup } from '../src/epub/sanitize/sanitizeActiveContent';
 import { sanitizeHtmlDocument } from '../src/epub/sanitize/sanitizeHtml';

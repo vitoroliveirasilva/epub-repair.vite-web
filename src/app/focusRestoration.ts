@@ -1,7 +1,7 @@
-/**
- * O app reconstrói todo o DOM em cada estado. Sem restauração, navegação por
- * teclado retorna ao body após escolher uma opção ou alternar o relatório.
- */
+
+
+
+
 export function captureFocusForRerender(root: HTMLElement): () => void {
   const active = document.activeElement;
   if (!(active instanceof HTMLElement) || !root.contains(active)) return () => {};

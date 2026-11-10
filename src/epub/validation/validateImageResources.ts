@@ -14,7 +14,7 @@ const declaredType: Record<string, ImageKind> = {
   'image/webp': 'webp',
 };
 
-/** Inspeção conservadora sem executar bytes nem substituir imagens. */
+ 
 export function validateImageResources(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
   const issues: Issue[] = [];
   for (const item of pkg.manifest) {
@@ -39,8 +39,8 @@ export function validateImageResources(loaded: LoadedEpub, pkg: PackageDocumentI
     }
 
     const dimensions = basicImageDimensions(kind, bytes);
-    // SOI por si só não confirma a integridade: JPEG sem marcador SOF
-    // não fornece dimensões verificáveis nem deve parecer íntegro.
+    
+    
     if (kind === 'jpeg' && !dimensions) {
       issues.push(createIssue({
         code: 'IMAGE_MISSING_FRAME',

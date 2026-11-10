@@ -9,11 +9,11 @@ const host = 'http://127.0.0.1:4723';
 const udid = process.env.IOS_SIM_UDID;
 assert.ok(udid, 'IOS_SIM_UDID não informado');
 
-/**
- * Node fetch/Undici interrompe a espera por headers após ~300s mesmo quando
- * AbortSignal.timeout permite 12 minutos. WDA pode compilar no primeiro boot.
- * Usar HTTP nativo com prazo controlado e sem fingir sucesso do simulador.
- */
+
+
+
+
+
 async function webdriver(method, route, payload) {
   const body = payload === undefined ? undefined : JSON.stringify(payload);
   const result = await new Promise((resolve, reject) => {
@@ -128,7 +128,7 @@ try {
         const enabled=await webdriver('GET',root+'/element/'+
           element['element-6066-11e4-a52e-4f735466cecf']+'/enabled');
         if(enabled){handle=element['element-6066-11e4-a52e-4f735466cecf'];break;}
-      }catch{ /* waiting for asynchronous inspection/repair */}
+      }catch{  }
       await pause(1200);
     }
     assert.ok(handle,'Botão não disponível: '+label);
@@ -144,8 +144,8 @@ try {
   }catch {
     evidence.downloadPrompt='nenhum diálogo W3C detectado';
   }
-  // Clipboard e Files downloads não são acessíveis por DOM do Safari;
-  // investigar os containers reais do Simulator (não inventar download).
+  
+  
   const simulatorRoot=join(process.env.HOME,
     'Library/Developer/CoreSimulator/Devices',udid,'data');
   const found=[];
@@ -178,9 +178,9 @@ try {
   }
   console.log('PASS E-082 Safari iOS Simulator actual web app: ',
     JSON.stringify(evidence));
-  // Arquivo salvo é condição para homologar download nativo no simulador.
-  // Se ele não estiver acessível no sandbox, registrar prova parcial e
-  // falhar o gate de download ao invés de declarar sucesso falsamente.
+  
+  
+  
   assert.ok(evidence.downloadSaved,
     'Safari iOS Simulator mostrou o app e acionou download, mas EPUB '+ 
     'não foi localizado no filesystem do Simulator.');

@@ -21,7 +21,7 @@ const PROPERTY_TITLES: Record<ContentProperty, string> = {
 };
 
 function cssHasRemoteResources(style: string): boolean {
-  // Comentários CSS não criam referências e não devem gerar falsos positivos.
+  
   const withoutComments = style.replace(/\/\*[\s\S]*?\*\//gu, '');
   return extractCssResourceReferences(withoutComments).some((ref) =>
     isSafeRemoteResourceUrl(ref.value),
@@ -31,8 +31,8 @@ function cssHasRemoteResources(style: string): boolean {
 function isEmbeddedRemoteReference(node: Element): boolean {
   const name = node.localName.toLowerCase();
   const namespace = node.namespaceURI;
-  // Um hyperlink a href de usuário NÃO é recurso remoto da publicação.
-  // Também não são recursos: action de formulário, cite e metadados.
+  
+  
   const resourceAttrs = new Set(['src', 'srcset', 'poster', 'data']);
   if (namespace === SVG && ['image', 'use', 'feimage'].includes(name)) {
     resourceAttrs.add('href');
@@ -47,8 +47,8 @@ function isEmbeddedRemoteReference(node: Element): boolean {
     if (!resourceAttrs.has(key)) continue;
     if (key === 'data' && name !== 'object') continue;
     if (key === 'srcset') {
-      // As URLs data:image têm vírgula interna. Para detectar HTTPS, não é
-      // necessário dividir o srcset: uma URL https:// é uma entrada distinta.
+      
+      
       if (/(?:^|,\s*)https?:\/\/|(?:^|,\s*)\/\//iu.test(attribute.value)) return true;
       continue;
     }
@@ -60,12 +60,12 @@ function isEmbeddedRemoteReference(node: Element): boolean {
 function isScriptElement(node: Element): boolean {
   if (node.localName.toLowerCase() !== 'script') return false;
   const type = node.getAttribute('type')?.trim().toLowerCase() ?? '';
-  // HTML script com MIME de dados não executa JavaScript.
+  
   return !type || type === 'module' ||
     /^(?:text|application)\/(?:java|ecma)script(?:;|$)/u.test(type);
 }
 
-/** Inferência compartilhada entre diagnóstico e correção de metadados, sem rede. */
+ 
 export function inferRequiredManifestProperties(
   mediaType: string,
   bytes: Uint8Array,
@@ -86,7 +86,7 @@ export function inferRequiredManifestProperties(
       try {
         doc = parseXml(text.replace(/&nbsp;/giu, '&#160;'));
       } catch {
-        return []; // XML inválido já tem diagnóstico próprio.
+        return []; 
       }
       for (const node of Array.from(doc.getElementsByTagName('*'))) {
         if (isXhtml || isSvg) {
@@ -99,7 +99,7 @@ export function inferRequiredManifestProperties(
             required.add('mathml');
           }
           if (isXhtml && node.namespaceURI === SVG && node.localName === 'svg') {
-            required.add('svg'); // Um documento SVG isolado já implica SVG.
+            required.add('svg'); 
           }
           if (node.namespaceURI === EPUB && node.localName === 'switch') {
             required.add('switch');
@@ -118,7 +118,7 @@ export function inferRequiredManifestProperties(
   return Array.from(required);
 }
 
-/** Inspeção estrutural não executa scripts nem acessa referências de rede. */
+ 
 export function validateManifestContentProperties(
   loaded: LoadedEpub,
   pkg: PackageDocumentInfo,

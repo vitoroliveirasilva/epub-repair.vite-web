@@ -69,12 +69,12 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
           }));
         }
       } catch {
-        // XHTML/XML inválido é registrado separadamente.
+        
       }
     }
 
-    // Complementa o scanner textual: entidades HTML são decodificadas pelo parser.
-    // Sem essa camada, java&#115;cript: pode ser confundido com um nome local.
+    
+    
     try {
       const doc = item.mediaType === 'text/html'
         ? new DOMParser().parseFromString(text, 'text/html')
@@ -143,7 +143,7 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
         }));
       }
     } catch {
-      // XHTML inválido já é diagnosticado como CONTENT_INVALID_XML.
+      
     }
 
     for (const ref of contentDoc ? extractDocumentResourceReferences(contentDoc) : []) {
@@ -202,7 +202,7 @@ export function validateContentReferences(loaded: LoadedEpub, pkg: PackageDocume
             detail: `A referência "${ref.raw}" aponta para "${resolved.path}", mas esse arquivo não foi encontrado no EPUB.`,
             file: item.resolvedPath,
             context: isMissingImage ? 'img:src' : ref.attr,
-            // Não alterar imagens quebradas sem consentimento explícito.
+            
             repairable: ref.attr !== 'href',
           }),
         );

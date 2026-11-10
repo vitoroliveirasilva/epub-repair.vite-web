@@ -2,6 +2,15 @@
 
 ## v2.4.0 (candidata, **não publicada**)
 
+- Limpeza de comentários de implementação, configurações e testes, preservando
+  diretivas executáveis (shebang), conteúdo literal e licenças. Testes que
+  dependiam de comentários `@vitest-environment` agora usam projetos
+  explícitos `dom` e `node` no Vitest; exceções de lint usam configuração
+  específica por arquivo. Nenhuma mudança funcional foi pretendida.
+- Configuração proposta de Dependabot aponta atualizações de versão para
+  `dev`, após adoção pela branch padrão `prod`, preservando análise
+  separada das PRs existentes e dos alertas de segurança.
+
 - Acessibilidade: SVG simples que contém exclusivamente a imagem da capa oficial
   pode receber rótulo usando o título já existente na página, por otimização
   opcional segura. Diagramas e ilustrações complexas permanecem em revisão manual;

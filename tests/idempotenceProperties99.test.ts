@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import JSZip from 'jszip';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { repairEpub } from '../src/epub/repair/repairEpub';

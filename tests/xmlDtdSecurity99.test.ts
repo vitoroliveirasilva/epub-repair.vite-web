@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { parseXml } from '../src/epub/utils/xmlUtils';
 

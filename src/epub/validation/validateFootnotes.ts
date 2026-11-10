@@ -46,11 +46,11 @@ function resolveInternalTarget(
     (element.localName === 'a' && element.getAttribute('name') === anchor));
 }
 
-/**
- * Notas e backlinks EPUB: verificar somente links com semântica explícita.
- * A ausência de backlink não é erro: existem notas legítimas sem um.
- * Nunca fabricar remissões nem renomear IDs editoriais.
- */
+
+
+
+
+
 export function validateFootnotes(
   loaded: LoadedEpub,
   pkg: PackageDocumentInfo,

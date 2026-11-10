@@ -28,4 +28,16 @@ export default tseslint.config(
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
   },
+  {
+    files: ['src/epub/utils/pathUtils.ts', 'src/epub/sanitize/sanitizeActiveContent.ts'],
+    rules: {
+      'no-control-regex': 'off',
+    },
+  },
+  {
+    files: ['tests/performanceBudget99.test.ts'],
+    rules: {
+      'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
+    },
+  },
 );

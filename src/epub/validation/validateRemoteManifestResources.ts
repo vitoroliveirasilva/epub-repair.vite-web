@@ -10,12 +10,12 @@ const FONT_TYPES = new Set([
 const SCRIPT_TYPES = new Set(['text/javascript', 'application/javascript',
   'application/ecmascript']);
 
-/**
- * Recursos externos de um EPUB são dependências explícitas de conectividade,
- * não arquivos ZIP ausentes nem indícios de malware.
- * Em EPUB 3.3, arquivos de áudio, vídeo, fontes e dados solicitados por APIs
- * de script podem morar remotamente. XHTML/CSS/imagens e SMIL devem ser locais.
- */
+
+
+
+
+
+
 export function validateRemoteManifestResources(pkg: PackageDocumentInfo): Issue[] {
   const issues: Issue[] = [];
   const epub3 = pkg.version.trim().startsWith('3');
@@ -27,8 +27,8 @@ export function validateRemoteManifestResources(pkg: PackageDocumentInfo): Issue
       mediaType.startsWith('audio/') || mediaType.startsWith('video/') ||
       mediaType.startsWith('font/') || FONT_TYPES.has(mediaType) ||
       SCRIPT_TYPES.has(mediaType) ||
-      // Dados para APIs de script não possuem uma única família MIME; tratar
-      // formatos desconhecidos como ambíguos, não como ameaça automática.
+      
+      
       !(mediaType.startsWith('image/') || mediaType === 'text/css' ||
         mediaType === 'application/xhtml+xml' || mediaType === 'text/html' ||
         mediaType === 'application/smil+xml' ||
@@ -47,7 +47,7 @@ export function validateRemoteManifestResources(pkg: PackageDocumentInfo): Issue
         repairable: false,
       }));
     }
-    // HTTP não é executável nem malware. Preferir HTTPS é recomendação W3C.
+    
     if (/^http:\/\//iu.test(item.href)) {
       issues.push(createIssue({
         code: 'OPF_REMOTE_HTTP_TRANSPORT',

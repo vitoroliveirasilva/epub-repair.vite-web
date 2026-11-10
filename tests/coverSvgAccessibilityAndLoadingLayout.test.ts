@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { Blob as NodeBlob } from 'node:buffer';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { auditPreservation } from '../src/epub/repair/preservationAudit';
 import type { LoadedEpub } from '../src/epub/model/epubTypes';
@@ -46,8 +46,8 @@ function auditNavigation(before: string, after: string) {
 describe('regressão: integridade semântica NAV EPUB 3', () => {
   it('aceita índice preservado e diferença de espaços inofensiva', () => {
     expect(auditNavigation(original, original)()).toEqual([]);
-    // Espaços dentro de uma palavra/etiqueta podem alterar a leitura.
-    // Testar apenas whitespace de serialização XML, não texto editorial.
+    
+    
     const spaced = original.replace('<nav epub:type', '<nav  epub:type');
     expect(auditNavigation(original, spaced)()).toEqual([]);
   });

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { createInitialState } from '../src/app/state';
 import { loadAndAnalyzeCandidate } from '../src/app/actions';

@@ -5,7 +5,7 @@ export interface ResourceReference {
   attr: string;
   value: string;
   raw: string;
-  /** Referência proprietária escrita como texto, não atributo executável. */
+   
   kindleText?: boolean;
 }
 
@@ -68,7 +68,7 @@ export function extractCssResourceReferences(text: string): ResourceReference[] 
   return refs;
 }
 
-/** Não considerar URLs de comentários CSS, inclusive em exemplos editoriais. */
+ 
 function maskCssComments(source: string): string {
   const chars = source.split('');
   let quote = '';
@@ -96,9 +96,9 @@ function inferAttributeName(raw: string): string {
   return raw.split('=')[0]?.trim() || 'resource';
 }
 
-/** A validação baseada em DOM não confunde exemplos do livro com atributos reais.
- * A versão textual acima permanece disponível para análise de fragmentos isolados.
- */
+
+
+
 export function extractDocumentResourceReferences(doc: Document): ResourceReference[] {
   const refs: ResourceReference[] = [];
   const attributes = new Set(['src', 'href', 'poster', 'data', 'xlink:href']);
@@ -117,8 +117,8 @@ export function extractDocumentResourceReferences(doc: Document): ResourceRefere
     }
   }
 
-  // Detectar texto Kindle separadamente, sem tratá-lo como atributo real.
-  // Exemplos em pre/code/kbd/samp são sempre literais editoriais.
+  
+  
   const stack: Node[] = [doc.documentElement];
   while (stack.length) {
     const node = stack.pop()!;

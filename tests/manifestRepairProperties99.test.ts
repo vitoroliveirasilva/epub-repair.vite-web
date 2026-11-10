@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import JSZip from 'jszip';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { repairEpub } from '../src/epub/repair/repairEpub';
@@ -39,8 +39,8 @@ async function fixture() {
     '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Capítulo</title></head>' +
     '<body><h1 id="start">Introdução</h1><a href="https://example.org">Referências</a>' +
     '<form action="#"><label>Pesquisa<input/></label></form></body></html>');
-  // CSS HTTP legítimo começa órfão. O reparo precisa declará-lo sem violar
-  // invariantes do manifest e sem apagar a fonte remota.
+  
+  
   zip.file('OPS/styles.css',
     '@font-face{font-family:Test;src:url("https://example.org/font.woff2");}');
   return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });

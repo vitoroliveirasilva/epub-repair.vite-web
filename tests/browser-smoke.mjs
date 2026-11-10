@@ -3,7 +3,7 @@ import JSZip from 'jszip';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 
-// O harness fica fora de node_modules do projeto para não alterar package-lock.
+
 const playwrightPath = process.env.PLAYWRIGHT_MODULE;
 assert.ok(playwrightPath, 'PLAYWRIGHT_MODULE não configurado');
 const { chromium, firefox, webkit } = await import(pathToFileURL(playwrightPath).href);
@@ -96,10 +96,10 @@ async function scenario(browser, mobile) {
 const samplePng = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNImXbiPwAF5gLCP3lq6QAAAABJRU5ErkJggg==';
 const progressiveJpeg = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCAAQABADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAABgf/xAAVAQEBAAAAAAAAAAAAAAAAAAABA//aAAwDAQACEAMQAAABjThc4k//xAAWEAADAAAAAAAAAAAAAAAAAAAABAX/2gAIAQEAAQUCTkicoTlCco//xAAXEQEAAwAAAAAAAAAAAAAAAAAFACEx/9oACAEDAQE/AQH8uf/EABURAQEAAAAAAAAAAAAAAAAAAAMA/9oACAECAQE/ATa//8QAFRABAQAAAAAAAAAAAAAAAAAAADH/2gAIAQEABj8CiIj/xAAVEAEBAAAAAAAAAAAAAAAAAAAAMf/aAAgBAQABPyGDFixf/9oADAMBAAIAAwAAABAT/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAwEBPxBf/8QAFREBAQAAAAAAAAAAAAAAAAAAAGH/2gAIAQIBAT8Qu//EABUQAQEAAAAAAAAAAAAAAAAAAADx/9oACAEBAAE/EISMjIz/2Q==';
 
-/**
- * E-076/E-067: comparar a apresentação antes/depois no mesmo motor de
- * navegador. Não confundir este smoke visual com Kindle/Calibre físicos.
- */
+
+
+
+
 async function syntheticPresentationEpub() {
   const zip = new JSZip();
   zip.file('META-INF/container.xml',
@@ -228,8 +228,8 @@ async function presentationAndImageSmoke(browser) {
     assert.equal(image.changed, true);
     assert.equal(image.normalized, true);
 
-    // Capa: confirmar que a mesma proteção pixel/dimensões se aplica à
-    // regravação de JPEG quando o browser oferece createImageBitmap.
+    
+    
     const cover = await page.evaluate(async (raw) => {
       const { readCoverImageFile } = await import('/src/epub/cover/coverImageInput.ts');
       const source = Uint8Array.from(raw);

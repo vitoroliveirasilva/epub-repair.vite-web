@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { Blob as NodeBlob } from 'node:buffer';
 import JSZip from 'jszip';
 import { describe, expect, it, vi } from 'vitest';

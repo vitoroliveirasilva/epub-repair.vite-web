@@ -6,11 +6,11 @@ import { createIssue } from '../utils/issueFactory';
 const SCRIPT_MIME = /^(?:text|application)\/(?:javascript|ecmascript)$/iu;
 const SCRIPT_EXTENSION = /\.(?:js|mjs|cjs)$/iu;
 
-/**
- * Inventário dos scripts declarados. EPUB 3 permite scripting;
- * esta informação NÃO equivale a malware nem remove conteúdo automaticamente.
- * Scripts órfãos são catalogados separadamente pelo detector de órfãos.
- */
+
+
+
+
+
 export function validateDeclaredScripts(loaded: LoadedEpub, pkg: PackageDocumentInfo): Issue[] {
   const issues: Issue[] = [];
   for (const item of pkg.manifest) {

@@ -21,15 +21,15 @@ export interface AppState {
   originalSource?: { fileName: string; bytes: Uint8Array } | undefined;
   lastRepairOptions?: RepairOptions | undefined;
   report?: ValidationReport | undefined;
-  /** Diagnóstico separado de uma tentativa inválida sem perder o EPUB anterior. */
+   
   invalidUploadReport?: ValidationReport | undefined;
   repairResult?: RepairResult | undefined;
   coverImage?: CoverImageInput | undefined;
   busy: boolean;
-  /** O usuário pode interromper o Worker que extrai entradas ZIP. */
+   
   processingController?: AbortController | undefined;
   processingProgress?: ProcessingProgress | undefined;
-  /** Ações agendadas para este EPUB, executadas uma a uma. */
+   
   pendingTasks?: number | undefined;
   activeTask?: string | undefined;
   hasPendingMutation?: boolean | undefined;

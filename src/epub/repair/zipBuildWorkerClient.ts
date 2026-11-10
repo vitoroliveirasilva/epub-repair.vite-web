@@ -2,7 +2,7 @@ import { rebuildEpubZip, type ZipBuildProgress } from './rebuildEpubZip';
 import type { BuildZipRequest, BuildZipResponse } from './zipBuildWorker';
 import { EPUB_MIME } from '../utils/constants';
 
-/** Recebe sinal de cancelamento mesmo quando JSZip estiver ocupada. */
+ 
 export interface ZipBuildOptions {
   signal?: AbortSignal | undefined;
   onProgress?: ((progress: ZipBuildProgress) => void) | undefined;
@@ -16,12 +16,12 @@ function ensureNotCanceled(signal?: AbortSignal): void {
   if(signal?.aborted) throw canceled();
 }
 
-/**
- * Compactação fica em Worker para a UI continuar responsiva.
- * A entrada é estruturadamente clonada (sem transferência) para preservar
- * bytes e permitir que auditoria pós-reparo compare o EPUB original.
- * Na ausência de Worker, a mesma API usa JSZip com checkpoints.
- */
+
+
+
+
+
+
 export async function rebuildEpubZipInWorker(
   files: Map<string, Uint8Array>,
   options: ZipBuildOptions = {},

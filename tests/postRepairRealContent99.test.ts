@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { beforeAll, describe, expect, it } from 'vitest';
 import { buildKindleIssueEpub } from './helpers/syntheticEpub';
 import { repairEpub } from '../src/epub/repair/repairEpub';

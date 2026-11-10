@@ -56,8 +56,8 @@ export function downloadBlob(blob: Blob, fileName: string): void {
   const url = URL.createObjectURL(blob);
   pendingDownloadUrls.add(url);
   if (!downloadCleanupRegistered) {
-    // Fecha os URLs imediatamente quando a página é abandonada, sem interferir
-    // na janela necessária para o Safari/WebKit iniciar o download.
+    
+    
     window.addEventListener('pagehide', releasePendingDownloads);
     downloadCleanupRegistered = true;
   }
@@ -70,8 +70,8 @@ export function downloadBlob(blob: Blob, fileName: string): void {
   } finally {
     anchor.remove();
   }
-  // Revogar imediatamente após click() pode resultar em arquivo vazio no iOS.
-  // Limite de 60s como fallback; pagehide libera antes, sem revogação dupla.
+  
+  
   window.setTimeout(() => {
     if (pendingDownloadUrls.delete(url)) URL.revokeObjectURL(url);
   }, 60_000);

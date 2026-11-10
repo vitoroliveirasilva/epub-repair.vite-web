@@ -3,11 +3,11 @@ export interface ScheduledTask {
   run: () => Promise<void>;
 }
 
-/**
- * FIFO delimitada. As tarefas são executadas estritamente uma de cada vez:
- * não permite que dois reparos mutem o estado de um mesmo EPUB simultaneamente.
- * Jobs pendentes podem ser descartados, sem interromper o Worker ativo.
- */
+
+
+
+
+
 export class SerialTaskQueue {
   private readonly pending: ScheduledTask[] = [];
   private running = false;
@@ -24,7 +24,7 @@ export class SerialTaskQueue {
     return this.pending.length;
   }
 
-  /** Evita enfileirar novas verificações que sobrescreveriam um EPUB reparado. */
+   
   get hasPendingMutation(): boolean {
     return this.pending.some((task) =>
       task.label === 'Reparar EPUB' || task.label === 'Substituir capa');
@@ -55,8 +55,8 @@ export class SerialTaskQueue {
         try {
           await task.run();
         } catch {
-          // O executor da UI já apresenta falhas; não interromper os jobs
-          // seguintes nem rejeitar uma Promise sem observador.
+          
+          
         }
       }
     } finally {

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { decodeUtf8ForRewrite } from '../src/epub/utils/textEncoding';
 import { repairContentDocuments } from '../src/epub/repair/repairContentDocuments';

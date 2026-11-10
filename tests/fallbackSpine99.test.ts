@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { validateManifestFallbacks } from '../src/epub/validation/validateManifestFallbacks';
 import type { ManifestItem, PackageDocumentInfo } from '../src/epub/model/opfTypes';

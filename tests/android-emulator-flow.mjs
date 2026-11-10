@@ -6,10 +6,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-/**
- * E-089: Android OS + Chrome reais em um EMULADOR Google APIs/Play Store,
- * NÃO dispositivo físico. Usa ADB e a automação Android experimental Playwright.
- */
+
+
+
+
 const playwrightFile = process.env.PLAYWRIGHT_MODULE;
 assert.ok(playwrightFile, 'PLAYWRIGHT_MODULE ausente');
 const { chromium, _android } = await import(pathToFileURL(playwrightFile).href);
@@ -54,29 +54,29 @@ let browser;
 let androidDevice;
 let androidContext;
 try {
-  // Playwright._android.launchBrowser() requer flag manual
-  // "Enable command line on non-rooted devices" e bloqueava o runner.
-  // Conectamos ao Chrome Android verdadeiro pelo CDP oficial via ADB.
+  
+  
+  
   console.log('Starting Chrome via Android activity...');
   adb('shell','am','force-stop','com.android.chrome');
   adb('shell','am','start','-a','android.intent.action.VIEW','-d',
     'http://127.0.0.1:5173/','com.android.chrome');
-  // Play Store builds differ in socket naming. Probe the *actual* Android
-  // Unix sockets; never pretend a desktop Chromium instance is Android.
+  
+  
   const availableSockets = new Set(['chrome_devtools_remote']);
   try {
     for (const name of adb('shell','cat','/proc/net/unix')
       .matchAll(/@((?:chrome|webview)_devtools_remote[^\s]*)/gu)) {
       availableSockets.add(name[1]);
     }
-  } catch { /* /proc may be restricted on newer Google Play images */ }
+  } catch {   }
   console.log('Android devtools socket candidates:', [...availableSockets]);
   let versionInfo;
   let connectedSocket;
   for (const socket of availableSockets) {
     try {
       adb('forward','--remove','tcp:9222');
-    } catch { /* no previous forward */ }
+    } catch {   }
     try { adb('forward','tcp:9222','localabstract:'+socket); }
     catch { continue; }
     for (let tries=0;tries<8;tries++){
@@ -90,7 +90,7 @@ try {
             versionInfo=candidate;connectedSocket=socket;break;
           }
         }
-      }catch{ /* socket not ready */ }
+      }catch{   }
       await new Promise(resolve=>setTimeout(resolve,1000));
     }
     if(versionInfo) break;
@@ -103,7 +103,7 @@ try {
         {timeout:10000});
       await writeFile(join(process.env.RUNNER_TEMP??'.',
         'android-mobile-web.png'),snap);
-    }catch{ /* screenshot diagnostic only */ }
+    }catch{   }
   }
   let context;
   if (versionInfo?.webSocketDebuggerUrl) {
@@ -113,8 +113,8 @@ try {
       { timeout: 30000 });
     context = browser.contexts()[0];
   } else {
-    // Fallback oficial de automação Android Playwright. Nunca usar Chromium desktop
-    // como substituto de um Chrome nativo e nunca declarar sucesso sem download real.
+    
+    
     console.log('CDP não exposto; tentando AndroidDevice.launchBrowser.');
     const devices = await _android.devices();
     assert.ok(devices.length, 'Nenhum dispositivo AVD reconhecido pelo Playwright.');
@@ -139,8 +139,8 @@ try {
   assert.ok(viewport.touch > 0, 'Android não reporta touch nativo');
   assert.match(viewport.userAgent, /Android/u);
   const bytes=await makeEpub();
-  // Arquivo construído dentro do Chrome Android, sem transferência de
-  // file chooser cujo suporte CDP no Android varia entre builds.
+  
+  
   const upload=await page.evaluate((base64)=>{
     const bytes=Uint8Array.from(atob(base64),ch=>ch.charCodeAt(0));
     const file=new File([bytes],'android-test.epub',
@@ -198,5 +198,5 @@ try {
   await androidContext?.close();
   await browser?.close();
   await androidDevice?.close();
-  try{adb('forward','--remove','tcp:9222')}catch{/* cleanup */}
+  try{adb('forward','--remove','tcp:9222')}catch{ }
 }

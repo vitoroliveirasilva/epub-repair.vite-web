@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { loadEpubInWorker } from '../src/app/zipWorkerClient';
 import type { ZipWorkerResponse } from '../src/app/zipLoadWorker';

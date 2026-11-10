@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import JSZip from 'jszip';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { buildKindleIssueEpub } from './helpers/syntheticEpub';
@@ -10,7 +10,7 @@ import { parsePackageDocument } from '../src/epub/validation/opfParser';
 import { repairOpfDocument } from '../src/epub/repair/repairOpf';
 import { DEFAULT_REPAIR_OPTIONS } from '../src/epub/utils/constants';
 
-// O jsdom não implementa Blob.arrayBuffer; navegadores modernos implementam.
+
 beforeAll(() => {
   if (typeof Blob.prototype.arrayBuffer === 'function') return;
   Blob.prototype.arrayBuffer = function (): Promise<ArrayBuffer> {

@@ -21,7 +21,7 @@ function pseudoRandom(length) {
 }
 async function largeEpub() {
   const zip=new JSZip();
-  // Mimetype ausente: o app deve executar reparo e reempacotamento efetivos.
+  
   zip.file('META-INF/container.xml',
     '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">' +
     '<rootfiles><rootfile full-path="OPS/book.opf" media-type="application/oebps-package+xml"/>' +

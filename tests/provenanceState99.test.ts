@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createInitialState } from '../src/app/state';
 import { loadFileIntoState } from '../src/app/actions';

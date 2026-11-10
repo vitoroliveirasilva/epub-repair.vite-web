@@ -3,14 +3,14 @@ import JSZip from 'jszip';
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-// Testa a política real da versão netlify.toml em todos os engines Playwright.
-// Header é reproduzido no browser em localhost, sem alegar deploy Netlify.
+
+
 const config = readFileSync('netlify.toml', 'utf8');
 const policy = /Content-Security-Policy\s*=\s*"([^"]+)"/u.exec(config)?.[1];
 assert.ok(policy, 'Política CSP não encontrada no netlify.toml');
-// Em HTTP 127.0.0.1 o upgrade-insecure-requests promove os assets para HTTPS
-// sem servidor TLS. Remover SOMENTE a diretiva de upgrade do harness localhost;
-// ela continua ativa e intacta na configuração Netlify de produção (HTTPS).
+
+
+
 const liveUrl = process.env.EPUB_APP_URL;
 const isHostedPreview = Boolean(liveUrl);
 const targetUrl = liveUrl ?? 'http://127.0.0.1:4173/';
@@ -57,7 +57,7 @@ try {
       ': ' + errors.join(' | ') + ' HTML=' + (await page.content()).slice(0,900),
       { cause: error });
   }
-  // EPUB válido e local: o bundle de produção precisa iniciar Worker real.
+  
   const zip = new JSZip();
   zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
   zip.file('META-INF/container.xml',
@@ -95,12 +95,12 @@ try {
     document.addEventListener('securitypolicyviolation', (e) => {
       violations.push({ directive: e.violatedDirective, blocked: e.blockedURI });
     });
-    // Um script inline inserido no DOM NÃO pode executar sob script-src 'self'.
+    
     const element = document.createElement('script');
     element.textContent = 'window.__CSP_MARKER__ = 1;';
     document.head.append(element);
     element.remove();
-    // Dados raster passivos devem funcionar, tanto em data: quanto em blob:.
+    
     const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNImXbiPwAF5gLCP3lq6QAAAABJRU5ErkJggg==';
     const raw = Uint8Array.from(atob(png), (char) => char.charCodeAt(0));
     const url = URL.createObjectURL(new Blob([raw], { type: 'image/png' }));
@@ -118,7 +118,7 @@ try {
     } finally {
       URL.revokeObjectURL(url);
     }
-    // connect-src 'self': nunca tentar acesso externo real para EPUBs locais.
+    
     let remoteBlocked = false;
     try {
       await fetch('https://example.invalid/epub-csp-probe', {
@@ -150,8 +150,8 @@ try {
     page.getByRole('button', { name: 'JSON', exact: true }).click(),
   ]);
   assert.match(download.suggestedFilename(), /\.json$/u);
-  // As duas violações intencionais abaixo devem ser registradas no console;
-  // nenhuma exceção de aplicação é aceitável.
+  
+  
   assert.deepEqual(errors.filter((e) => !/Content Security Policy|Content-Security-Policy|Refused to|Load denied by X-Frame-Options|example\.invalid|Content blocker|because it violates|violates the following|Potential permissions policy violation: (?:camera|microphone) is not allowed in this document/u.test(e)), [],
     'Erro inesperado na aplicação com CSP');
   console.log('PASS E-062 CSP enforce ' + engineName + ' data/blob/worker/download' +

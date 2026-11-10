@@ -28,8 +28,8 @@ for (const relative of lockPaths) {
       reasons: sameVersion ? checked.reasons : ['Versão instalada difere do package-lock'],
     });
   } catch {
-    // Optional/platform dependencies from lockfile are often unavailable on this runner.
-    // Their metadata remains visible in a separate count, not silently "approved".
+    
+    
   }
 }
 records.sort((a,b)=>a.name.localeCompare(b.name)||a.version.localeCompare(b.version));

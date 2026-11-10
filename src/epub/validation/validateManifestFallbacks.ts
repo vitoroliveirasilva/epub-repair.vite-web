@@ -5,11 +5,11 @@ import { createIssue } from '../utils/issueFactory';
 import { isRemoteUrl, resolveReference, splitSrcsetCandidates } from '../utils/pathUtils';
 import { parseXml } from '../utils/xmlUtils';
 
-/**
- * EPUB 3: somente XHTML e SVG podem ser documentos primários do spine sem
- * fallback. Fallbacks apontam por ID, não por href, e não devem ser criados
- * a partir da ordem editorial presumida do manifest.
- */
+
+
+
+
+
 const CONTENT_DOCUMENTS = new Set(['application/xhtml+xml', 'image/svg+xml']);
 const CORE_MEDIA = new Set([
   'application/xhtml+xml', 'image/svg+xml', 'image/gif', 'image/jpeg',
@@ -24,9 +24,9 @@ function normalizedType(item: ManifestItem): string {
   return item.mediaType.toLowerCase().split(';')[0]?.trim() ?? '';
 }
 
-/** audio/ogg é core apenas quando o codec OPUS está declarado (EPUB 3.3).
- * Não considerar outros codecs OGG automaticamente suportados.
- */
+
+
+
 function isCoreMedia(item: ManifestItem): boolean {
   const media = normalizedType(item);
   if (media !== 'audio/ogg') return CORE_MEDIA.has(media);
@@ -36,7 +36,7 @@ function isCoreMedia(item: ManifestItem): boolean {
  
 type Chain = { kind: 'ok' | 'missing' | 'cycle' | 'missing-file' | 'no-terminal'; core: boolean; document: boolean };
 
-/** Verifica cadeias de IDs, sem consultar rede, executar ou alterar recursos. */
+ 
 function inspectChain(
   initial: ManifestItem,
   byId: Map<string, ManifestItem>,
@@ -51,8 +51,8 @@ function inspectChain(
     if (visited.has(next.id)) return { kind: 'cycle', core, document };
     visited.add(next.id);
     const mediaType = normalizedType(next);
-    // Um XHTML/SVG remoto não pode substituir um documento de leitura que
-    // precisa estar dentro do container. Fontes/áudio externos seguem válidos.
+    
+    
     if ((!next.remote && !next.exists) || !next.pathSafe ||
         (next.remote && CONTENT_DOCUMENTS.has(mediaType))) {
       return { kind: 'missing-file', core, document };
@@ -61,8 +61,8 @@ function inspectChain(
     if (CONTENT_DOCUMENTS.has(mediaType)) document = true;
     item = next;
   }
-  // EPUB 3.3: basta haver um core media type ou EPUB Content Document
-  // em qualquer ponto da cadeia. Exigir que seja o último é falso positivo.
+  
+  
   return { kind: core ? 'ok' : 'no-terminal', core, document };
 }
 
@@ -75,7 +75,7 @@ export function validateManifestFallbacks(pkg: PackageDocumentInfo, loaded?: Loa
   for (const spineItem of pkg.spine) {
     const item = spineItem.manifestItem ?? byId.get(spineItem.idref);
     if (!item || CONTENT_DOCUMENTS.has(normalizedType(item))) continue;
-    // Mesmo tipos core (imagem, áudio etc.) são documentos estrangeiros no spine.
+    
     const chain = inspectChain(item, byId);
     if (chain.kind === 'missing' || chain.kind === 'cycle') continue;
     if (chain.document) continue;
@@ -94,8 +94,8 @@ export function validateManifestFallbacks(pkg: PackageDocumentInfo, loaded?: Loa
   }
 
   for (const item of pkg.manifest) {
-    // Um recurso core com fallback opcional não exige outro core na cadeia.
-    // Diagnósticos de referências inexistentes e ciclos ficam no validador OPF.
+    
+    
     if (!item.fallback || reported.has(item.id) ||
         CONTENT_DOCUMENTS.has(normalizedType(item)) || isCoreMedia(item)) continue;
     const chain = inspectChain(item, byId);
@@ -125,7 +125,7 @@ export function validateManifestFallbacks(pkg: PackageDocumentInfo, loaded?: Loa
         doc = parseXml(new TextDecoder('utf-8', { fatal: true }).decode(bytes)
           .replace(/&nbsp;/giu, '&#160;'), 'application/xhtml+xml');
       } catch {
-        continue; // Diagnóstico XML inválido pertence ao validador de conteúdo.
+        continue; 
       }
       for (const image of Array.from(doc.getElementsByTagName('*'))
         .filter((node) => node.localName.toLowerCase() === 'img')) {

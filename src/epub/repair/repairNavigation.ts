@@ -29,9 +29,9 @@ export function buildNavDocument(
   if (entries.length === 0) {
     throw new Error('Não é possível criar nav.xhtml sem um documento de leitura válido.');
   }
-  // EPUB 3 pode ter NCX editorial com partes/capítulos aninhados, mesmo
-  // quando o nav.xhtml foi apagado. Recuperar essa estrutura antes de recorrer
-  // ao inventário linear do spine (que perderia os títulos e fragmentos).
+  
+  
+  
   const preserved = recreateNavFromNcx(pkg, navDir, resources);
   const list = preserved ?? entries
     .map((item, index) => {
@@ -52,11 +52,11 @@ export function buildNavDocument(
 }
 
 
-/**
- * Recupera o sumário NCX editorial para criar nav.xhtml sem achatamento.
- * É deliberadamente fail-closed: um destino ausente, URL externa, falta de
- * rótulo ou NCX inválido leva ao fallback linear. Não faz guesses de títulos.
- */
+
+
+
+
+
 export function recreateNavFromNcx(
   pkg: PackageDocumentInfo,
   navDir: string,
@@ -110,8 +110,8 @@ export function recreateNavFromNcx(
     const output = top.map((point) => item(point, 0)).join('\n');
     return output || undefined;
   } catch {
-    // A validação do EPUB reportará o NCX ruim; a geração não pode transformar
-    // um arquivo suspeito em links ativos ou inventar hierarquia editorial.
+    
+    
     return undefined;
   }
 }
@@ -143,7 +143,7 @@ export function buildNcxDocument(
   return `<?xml version="1.0" encoding="UTF-8"?>\n<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">\n  <head>\n    <meta name="dtb:uid" content="${escapeXml(identifier)}"/>\n    <meta name="dtb:depth" content="1"/>\n    <meta name="dtb:totalPageCount" content="0"/>\n    <meta name="dtb:maxPageNumber" content="0"/>\n  </head>\n  <docTitle><text>${escapeXml(title)}</text></docTitle>\n  <navMap>\n${navPoints || '    <navPoint id="navPoint-1" playOrder="1"><navLabel><text>Início</text></navLabel><content src=""/></navPoint>'}\n  </navMap>\n</ncx>\n`;
 }
 
-/** Extrai título de um heading real sem inventar tradução ou alterar a obra. */
+ 
 function editorialLabel(
   item: ManifestItem,
   index: number,

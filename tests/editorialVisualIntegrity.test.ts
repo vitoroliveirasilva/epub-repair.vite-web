@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { auditPreservation } from '../src/epub/repair/preservationAudit';
 import type { LoadedEpub } from '../src/epub/model/epubTypes';
@@ -96,7 +96,7 @@ describe('auditoria visual não destrutiva', () => {
     const original=wrap('<p>Veja <a href="https://example.org/reference?q=1&amp;p=2">a referência</a>.</p>');
     const changed=wrap('<p>Veja <a>a referência</a>.</p>');
     expect(fixture(original,changed)).toThrow(/mídia|referenciada/u);
-    // Consentimento explícito de remover recursos remotos autoriza o resultado.
+    
     expect(fixture(original,changed,[],undefined,true)()).toEqual([]);
   });
   it('protege fontes CSS externas HTTPS vinculadas ao XHTML', () => {
@@ -171,7 +171,7 @@ describe('auditoria de navegação NCX', () => {
       .toThrow(/títulos editoriais do NCX/u);
   });
   it('não achata hierarquia editorial preservando mesmos links', () => {
-    // Deslocar p2 para irmão de p1, mantendo mesma ordem e destinos.
+    
     const renamed=baseNcx.replace(
       '<navPoint id="p2"',
       '</navPoint><navPoint id="p2"').replace(

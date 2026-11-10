@@ -17,11 +17,11 @@ export interface ReportEvidence {
   sourceSha256: string | null;
   generatedAt: string;
   selectedOptions: RepairOptions;
-  /** Snapshot das opções efetivamente usadas no último reparo, se houve. */
+   
   appliedRepairOptions?: RepairOptions | undefined;
 }
 
-/** Evidência local, calculada apenas quando o usuário solicita relatório. */
+ 
 export async function createReportEvidence(
   sourceFileName: string,
   bytes: Uint8Array,
@@ -31,7 +31,7 @@ export async function createReportEvidence(
   let sourceSha256: string | null = null;
   try {
     if (globalThis.crypto?.subtle) {
-      // A cópia evita BufferSource com memória compartilhada e não persiste dados.
+      
       const safeBytes = new Uint8Array(bytes.byteLength);
       safeBytes.set(bytes);
       const digest = await globalThis.crypto.subtle.digest('SHA-256', safeBytes);
@@ -39,7 +39,7 @@ export async function createReportEvidence(
         .map((byte) => byte.toString(16).padStart(2, '0')).join('');
     }
   } catch {
-    // O relatório nunca inventa um hash quando o browser não oferece Web Crypto.
+    
   }
   return {
     appVersion: packageInfo.version,

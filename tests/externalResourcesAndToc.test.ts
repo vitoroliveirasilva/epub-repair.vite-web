@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 import { inspectEpub } from '../src/epub/validation/validateEpub';
@@ -57,7 +57,7 @@ async function epubFixture(options: { version?: '2.0' | '3.0'; brokenNcx?: boole
       + '<content src="' + (options.brokenNcx ? 'Text/absent.xhtml' : 'Text/one.xhtml#start')
       + '"/></navPoint></navMap></ncx>');
   } else {
-    // O prefixo de namespace pode ser qualquer um, não precisa ser "epub".
+    
     zip.file('OPS/nav.xhtml',
       '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ops="http://www.idpf.org/2007/ops">'
       + '<head><title>Índice</title></head><body><nav ops:type="toc"><ol>'

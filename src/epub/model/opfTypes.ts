@@ -17,7 +17,7 @@ export interface ManifestItem {
   pathSafe: boolean;
   pathReason?: string | undefined;
   exists: boolean;
-  /** Recurso HTTPS/HTTP externo: não é uma entrada ZIP ausente. */
+   
   remote?: boolean | undefined;
 }
 

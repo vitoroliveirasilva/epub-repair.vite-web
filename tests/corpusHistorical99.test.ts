@@ -1,16 +1,16 @@
-// @vitest-environment jsdom
+
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 import type { IssueCode } from '../src/epub/model/issueTypes';
 import { inspectEpub } from '../src/epub/validation/validateEpub';
 import { hasManualReviewIssues } from '../src/epub/utils/reportGuards';
 
-/**
- * Corpus reprodutível e completamente sintético dos problemas registrados na
- * auditoria de reparos: índices seletivos, fontes externas legítimas,
- * entidades HTML, scripts, ZIP/OCF, imagens, OPF e overlays.
- * Não armazena nem publica material de obras protegidas por copyright.
- */
+
+
+
+
+
+
 const chapter = '<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR">' +
   '<head><title>Capítulo sintético</title><link rel="stylesheet" href="style.css"/></head>' +
   '<body><h1 id="inicio">Início</h1><p>O texto original não deve desaparecer.</p></body></html>';

@@ -4,10 +4,10 @@ import { containsDangerousCss } from '../sanitize/sanitizeActiveContent';
 export interface CoverReferenceApproval {
   path: string;
   bytes: Uint8Array;
-  /** A substituição de referência só é permitida nas páginas de capa aprovadas. */
+   
   previousPath?: string | undefined;
   allowedPages?: ReadonlySet<string> | undefined;
-  /** Folhas CSS duplicadas para a capa, sem tocar nos estilos dos capítulos. */
+   
   styleAliases?: ReadonlyMap<string, string> | undefined;
 }
 
@@ -96,20 +96,20 @@ function embeddedMedia(doc: Document, path: string, knownPaths: ReadonlySet<stri
         const raw = (attr === 'srcset' ? candidate.trim().split(/\s+/u)[0] : candidate) ?? '';
         if (!raw) continue;
         if (raw.startsWith('#')) {
-          // SVG <use href="#symbol"> reutiliza um desenho local sem recurso ZIP.
+          
           if (name === 'use' || name === 'image') {
             output.push({ element: name, attribute: attr, target: raw });
           }
           continue;
         }
-        // data:imagem segura é parte editorial do livro, não deve sumir ao sanear links.
+        
         if (isSafeInlineImageDataUrl(raw)) {
           output.push({ element: name, attribute: attr, target: raw });
           continue;
         }
         if (isRemoteUrl(raw)) {
-          // Recursos HTTP(S) externos e links mailto:/tel: são legítimos.
-          // Removê-los silenciosamente é regressão se o usuário não optou por isso.
+          
+          
           if (preserveRemote && (isSafeRemoteResourceUrl(raw) ||
               (name === 'a' && isSafeExternalLinkUrl(raw)))) {
             output.push({ element: name, attribute: attr, target: raw });
@@ -199,9 +199,9 @@ function validateInlineSvg(original: Document, repaired: Document, path: string,
     const oldSvg = before[i]!;
     const newSvg = after[i]!;
     if (svgSignature(oldSvg) === svgSignature(newSvg)) continue;
-    // A única exceção é a otimização explicitamente registrada do rótulo
-    // de capa. Todas as demais propriedades, nós e estruturas ainda precisam
-    // ser idênticos. Uma alteração de label preexistente também é bloqueada.
+    
+    
+    
     const allowedLabel = approvedCoverSvgLabel &&
       !oldSvg.hasAttribute('aria-label') &&
       (!oldSvg.hasAttribute('role') || oldSvg.getAttribute('role') === 'img') &&
@@ -214,14 +214,14 @@ function validateInlineSvg(original: Document, repaired: Document, path: string,
   }
 }
 
-/**
- * Protege tabelas, imagens, fontes vinculadas e SVGs inline que a comparação
- * de texto do EPUB, isoladamente, não consegue proteger.
- *
- * Recursos ausentes não são protegidos por esta camada; o reparador já pode
- * marcá-los com texto mediante consentimento. URLs remotas HTTP(S) e links
- * legítimos são preservados salvo opt-in explícito de remoção no sanitizer.
- */
+
+
+
+
+
+
+
+
 export function auditVisualStructures(
   beforeMarkup: string,
   afterMarkup: string,
@@ -235,8 +235,8 @@ export function auditVisualStructures(
 ): void {
   const before = parseEditorial(beforeMarkup, mediaType);
   const after = parseEditorial(afterMarkup, mediaType);
-  // A auditoria de texto no chamador bloqueia qualquer alteração que não
-  // possa ser comparada por parsing (fail-closed).
+  
+  
   if (!before || !after) return;
   validateTables(before, after, filePath);
   validateMedia(before, after, filePath, originalPaths, finalPaths, coverApproval, preserveRemote);

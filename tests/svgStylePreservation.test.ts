@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { auditPreservation } from '../src/epub/repair/preservationAudit';
 import type { LoadedEpub } from '../src/epub/model/epubTypes';

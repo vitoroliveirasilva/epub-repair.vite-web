@@ -1,6 +1,6 @@
 import type { RepairOptions, ValidationReport } from '../epub';
 
-/** Exibe motivos objetivos antes de executar alterações editoriais perceptíveis. */
+ 
 export function potentialEditorialChanges(
   options: RepairOptions,
   report: ValidationReport | undefined,
@@ -32,7 +32,7 @@ export function potentialEditorialChanges(
 }
 
 
-/** Descreve as alterações prováveis antes da confirmação, sem inventar resultados. */
+ 
 export function buildRepairConsentMessage(
   options: RepairOptions,
   report: ValidationReport | undefined,

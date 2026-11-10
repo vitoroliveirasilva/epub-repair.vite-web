@@ -13,12 +13,12 @@ const URL_ATTRIBUTES = new Set([
   'src', 'href', 'xlink:href', 'poster', 'data', 'background',
 ]);
 
-/**
- * E-100: ao substituir capa por um formato diferente, não basta atualizar
- * cover-image no OPF. As páginas que exibiam o arquivo antigo precisam apontar
- * à nova imagem, sem tocar em URLs externas nem na ordem editorial.
- * Apenas recursos declarados e referências resolvidas ao caminho exato mudam.
- */
+
+
+
+
+
+
 export function updateCoverReferences(
   files: Map<string, Uint8Array>,
   pkg: PackageDocumentInfo,
@@ -40,13 +40,13 @@ export function updateCoverReferences(
         !CSS_MEDIA_TYPES.has(item.mediaType) &&
         item.mediaType !== 'image/svg+xml') continue;
 
-    // Não tentar converter documentos antigos não relacionados à imagem da capa.
-    // O decodificador estrito só é necessário quando há caminho plausível.
+    
+    
     const candidate = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
     const filename = basename(oldCoverPath);
     const encoded = encodeURIComponent(filename);
     const cssDecoded = candidate.includes('\\') ? decodeCssEscapes(candidate) : candidate;
-    // Percent-encoding é case-insensitive (%c3%a9 e %C3%A9 designam o mesmo caminho).
+    
     const comparable = cssDecoded.replace(/%[0-9a-f]{2}/giu, (hex) => hex.toUpperCase());
     if (!comparable.includes(filename) && !comparable.includes(encoded)) continue;
     const original = decodeUtf8ForRewrite(bytes, path);
@@ -105,7 +105,7 @@ export function updateCoverReferences(
   return actions;
 }
 
-/** URLs do guide apontando diretamente à imagem precisam acompanhar o OPF. */
+ 
 export function updateCoverGuideReference(
   opf: Document,
   opfPath: string,
@@ -158,11 +158,11 @@ function rewriteSrcset(
   return changed ? candidates.join(', ') : source;
 }
 
-/**
- * E-108: reconhecer url("capa(2026).png") sem interpretar URLs dentro de
- * comentários ou de strings CSS editoriais. Escapes permanecem intactos quando
- * a referência não aponta para a capa.
- */
+
+
+
+
+
 function rewriteCss(
   source: string, path: string, oldPath: string, newPath: string,
 ): string {
@@ -189,7 +189,7 @@ function rewriteCss(
       cursor = end;
       continue;
     }
-    // A âncora sticky evita criar substrings enormes a cada caractere.
+    
     let prefix: string | undefined;
     if ((ch === 'u' || ch === 'U') &&
         (cursor === 0 || !/[\w-]/u.test(source[cursor - 1] ?? ''))) {

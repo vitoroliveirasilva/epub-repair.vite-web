@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it, vi } from 'vitest';
 import { Blob as NodeBlob } from 'node:buffer';
 import JSZip from 'jszip';
@@ -105,7 +105,7 @@ describe('E-100: sincronização da capa sem alterar conteúdo editorial', () =>
       fileName:'novo.jpg',bytes:BASELINE_JPEG_BYTES,
       mediaType:'image/jpeg' as const,previewDataUrl:'',
     };
-    // jsdom Blob não possui arrayBuffer; o browser real e o NodeBlob possuem.
+    
     vi.stubGlobal('Blob', NodeBlob);
     let output;
     try {

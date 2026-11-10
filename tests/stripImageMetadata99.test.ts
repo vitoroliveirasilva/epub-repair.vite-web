@@ -60,7 +60,7 @@ function webp(): Uint8Array {
   const vp8x = new Uint8Array(18);
   vp8x.set(text('VP8X'));
   new DataView(vp8x.buffer).setUint32(4, 10, true);
-  vp8x[8] = 0x2c; // ICC + EXIF + XMP; preservar ICC=0x20.
+  vp8x[8] = 0x2c; 
   const chunk = (name: string, data: Uint8Array): Uint8Array => {
     const part = new Uint8Array(8 + data.length + (data.length & 1));
     part.set(text(name));

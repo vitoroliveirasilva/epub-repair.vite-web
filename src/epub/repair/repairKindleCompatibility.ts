@@ -42,8 +42,8 @@ function repairNcxCompatibility(
     return actions;
   }
 
-  // O NCX representa a navegação editorial e não precisa conter um navPoint
-  // para cada XHTML do spine. Preservamos a organização do sumário original.
+  
+  
 
   const navPoints = findByLocalName(doc, 'navPoint');
   let playOrderChanged = false;
@@ -145,7 +145,7 @@ function repairXhtmlCompatibility(
   return actions;
 }
 
-/** Ajusta somente idioma XHTML na operação opcional; não altera NCX ou prosa. */
+ 
 export function repairOptionalXhtmlLanguage(
   files: Map<string, Uint8Array>,
   pkg: PackageDocumentInfo,
@@ -191,13 +191,13 @@ function normalizeNcxTitle(doc: Document, title: string | undefined): boolean {
 
 function ensureHtmlLanguage(text: string, language: string): string {
   return text.replace(/<html\b([^>]*)>/iu, (_full, attrs: string) => {
-    // Uma página pode estar legitimamente em outro idioma que o dc:language
-    // do OPF (ex.: folha de rosto em inglês dentro de livro em português).
-    // Nunca misturar o atributo já declarado com o fallback do OPF.
+    
+    
+    
     const xmlLang = readHtmlLanguageAttribute(attrs, 'xml:lang');
     const lang = readHtmlLanguageAttribute(attrs, 'lang');
     if (xmlLang && lang && xmlLang.toLowerCase() !== lang.toLowerCase()) {
-      // Conflito preexistente exige revisão editorial, não decisão automática.
+      
       return `<html${attrs}>`;
     }
     const pageLanguage = xmlLang || lang || language;
@@ -209,7 +209,7 @@ function ensureHtmlLanguage(text: string, language: string): string {
 }
 
 function readHtmlLanguageAttribute(attrs: string, name: 'lang' | 'xml:lang'): string | undefined {
-  // A âncora evita confundir `lang` com o sufixo de `xml:lang`.
+  
   const pattern = new RegExp(`(?:^|\\s)${name}\\s*=\\s*(["'])(.*?)\\1`, 'iu');
   return pattern.exec(attrs)?.[2]?.trim() || undefined;
 }

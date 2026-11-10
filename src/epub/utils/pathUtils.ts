@@ -19,7 +19,7 @@ export function decodeUriSafe(value: string): string {
 
 export function normalizeInternalPath(input: string): NormalizedPathResult {
   const original = input;
-  // Um nome físico ZIP não é uma URI; preservar #, ?, % e espaços.
+  
   const decoded = input.replace(/\\/g, '/');
   const absolute = decoded.startsWith('/') || /^[a-zA-Z]:\//.test(decoded);
   const hasControlCharacter = containsControlCharacter(decoded);
@@ -81,9 +81,9 @@ export function extname(path: string): string {
 }
 
 export function isRemoteUrl(value: string): boolean {
-  // Bloqueia URLs absolutas, protocol-relative e schemes inesperados,
-  // inclusive com espaços/controles usados para ocultar javascript:.
-  // eslint-disable-next-line no-control-regex -- rejeita controles que camuflam schemes
+  
+  
+  
   const normalized = value.trim().replace(/[\u0000-\u0020\u007f]/gu, '');
   return /^(?:[a-z][a-z0-9+.-]*:|\/\/|\\\\)/iu.test(normalized);
 }
@@ -148,10 +148,10 @@ export function makeUniqueId(base: string, usedIds: Set<string>): string {
 }
 
 
-/**
- * URLs de rede passivas são referências legítimas de EPUB, inclusive fontes via CSS.
- * Schemes executáveis (javascript:, file:, data:text/html, etc.) não entram aqui.
- */
+
+
+
+
 export function isSafeRemoteResourceUrl(value: string): boolean {
   const cleaned = value.trim();
   return /^(?:https?:\/\/|\/\/)/iu.test(cleaned);
@@ -161,7 +161,7 @@ export function isSafeExternalLinkUrl(value: string): boolean {
   return isSafeRemoteResourceUrl(value) || /^(?:mailto:|tel:)/iu.test(value.trim());
 }
 
-/** Fontes embutidas em CSS por data URI não são documentos executáveis. */
+ 
 export function isInlineFontDataUrl(value: string): boolean {
   return /^data:(?:font\/(?:woff2?|ttf|otf|sfnt)|application\/(?:font-woff2?|font-sfnt|x-font-(?:woff|ttf|otf)|vnd\.ms-fontobject));base64,[a-z0-9+/=\s]+$/iu.test(value.trim());
 }
@@ -178,14 +178,14 @@ export function decodeCssEscapes(value: string): string {
   );
 }
 
-/** Imagens raster embutidas são dados passivos. SVG e HTML data: não são permitidos. */
+ 
 export function isSafeInlineImageDataUrl(value: string): boolean {
   return /^data:image\/(?:png|jpe?g|gif|webp);base64,[a-z0-9+/]+={0,2}$/iu.test(
     value.trim().replace(/\s+/gu, ''),
   );
 }
 
-/** Divide srcset preservando a primeira vírgula obrigatória em URLs data:. */
+ 
 export function splitSrcsetCandidates(value: string): string[] {
   const candidates: string[] = [];
   let start = 0;

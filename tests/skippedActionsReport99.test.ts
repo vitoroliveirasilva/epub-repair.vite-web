@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { renderRepairSummary } from '../src/ui/components/RepairSummary';
 import type { RepairResult } from '../src/epub/model/repairTypes';

@@ -87,8 +87,8 @@ export async function replaceEpubCover(
   const metadata = ensureChild(doc, packageElement, 'metadata');
   const manifest = ensureChild(doc, packageElement, 'manifest');
   const target = findCoverTarget(doc, parsed.packageInfo, files);
-  // Não sobrescrever ilustrações de capítulos que reutilizam os bytes da
-  // imagem oficial de capa. A atualização é limitada às páginas de rosto.
+  
+  
   const scope = coverReferenceScope(doc, parsed.packageInfo, files, target?.path);
   const independentPath = makeUniqueCoverPath(files, parsed.packageInfo, coverImage.mediaType);
   const wouldChange = target?.path
@@ -114,7 +114,7 @@ export async function replaceEpubCover(
   );
 
   ensureCoverMeta(doc, metadata, coverId);
-  // `properties="cover-image"` pertence ao EPUB 3. EPUB 2 usa meta name="cover".
+  
   ensureSingleCoverImageProperty(manifest, coverItem,
     parsed.packageInfo.version.trim().startsWith('3'));
   const approvedStyleAliases = new Map<string, string>();
@@ -123,8 +123,8 @@ export async function replaceEpubCover(
       scope.sharedStyles, scope.consumers, target.path, coverPath, approvedStyleAliases)
     : [];
 
-  // Mudança de extensão cria um novo arquivo: sincronizar os locais que
-  // ainda exibiriam a capa antiga antes de serializar o OPF.
+  
+  
   const referenceActions = target?.path && target.path !== coverPath
     ? updateCoverReferences(files, parsed.packageInfo, target.path, coverPath,
       scope.allowed)
@@ -170,7 +170,7 @@ export async function replaceEpubCover(
   const after = await inspectEpub(outputFileName, afterBytes);
   canceled();
   assertNoNewCriticalIssues(before, after);
-  // E-122: executar no fluxo da capa o mesmo gate editorial usado pelo reparo.
+  
   const auditNotes = auditPreservation(loaded, files, parsed.packageInfo, after.packageInfo,
     new Set(), { path: coverPath, bytes: coverImage.bytes,
       ...(target?.path ? { previousPath: target.path } : {}),
@@ -418,7 +418,7 @@ function ensureSingleCoverImageProperty(
 ): void {
   for (const item of childElementsByLocalName(manifest, 'item')) {
     if (item === coverItem && isEpub3) continue;
-    // Em EPUB 2 não conservar nem introduzir uma propriedade EPUB 3 inválida.
+    
     removeTokenAttribute(item, 'properties', 'cover-image');
   }
 

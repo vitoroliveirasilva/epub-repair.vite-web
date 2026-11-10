@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { sniffBinaryKind, validateSuspiciousResources } from '../src/epub/validation/validateSuspiciousResources';
 import { validateCssQuality } from '../src/epub/validation/validateCssQuality';

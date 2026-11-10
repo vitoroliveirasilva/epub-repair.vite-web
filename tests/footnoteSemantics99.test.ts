@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { validateFootnotes } from '../src/epub/validation/validateFootnotes';
 import type { LoadedEpub } from '../src/epub/model/epubTypes';
