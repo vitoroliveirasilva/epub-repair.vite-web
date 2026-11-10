@@ -258,7 +258,7 @@ export function recoverInternalNcx(
   }
   ordered.forEach((point, index) => point.setAttribute('playOrder', String(index + 1)));
   for (const [path, doc] of edited) {
-    const originalText = decoder.decode(files.get(path)!);
+    const originalText = decoder.decode(files.get(path));
     files.set(path, encoder.encode(serializeXmlPreservingDeclaration(doc, originalText)));
   }
   files.set(tocPath, encoder.encode(serializeXmlPreservingDeclaration(toc, source)));
