@@ -310,7 +310,7 @@ function visualPageFigure(page: PdfPageAnalysis): string {
   const imageAttributes = hasTranscript
     ? 'alt="" role="presentation"'
     : `alt="Página visual ${page.pageNumber} preservada do PDF"`;
-  return `<figure class="visual-page" id="page-${page.pageNumber}" epub:type="pagebreak" title="${page.pageNumber}" aria-label="Página ${page.pageNumber}"><img src="../Images/visual-page-${number}.jpg" ${imageAttributes}/>${hasTranscript ? `<figcaption>Conteúdo visual preservado da página ${page.pageNumber}</figcaption>` : ''}</figure>`;
+  return `<figure class="visual-page" id="page-${page.pageNumber}" epub:type="pagebreak" title="${page.pageNumber}"><img src="../Images/visual-page-${number}.jpg" ${imageAttributes}/>${hasTranscript ? `<figcaption>Conteúdo visual preservado da página ${page.pageNumber}</figcaption>` : ''}</figure>`;
 }
 
 function coverXhtml(title: string, language: string): string {
@@ -352,16 +352,16 @@ function navXhtml(
   const toc = entries.map((entry) =>
     `<li><a href="${escapeXml(entry.href)}">${escapeXml(entry.title)}</a></li>`).join('\n        ');
   const landmarks = coverHref
-    ? `<nav epub:type="landmarks" aria-label="Pontos de referência"><ol><li><a epub:type="cover" href="${coverHref}">Capa</a></li></ol></nav>`
+    ? `<nav epub:type="landmarks"><h2>Pontos de referência</h2><ol><li><a epub:type="cover" href="${coverHref}">Capa</a></li></ol></nav>`
     : '';
   const pageList = pageCount
-    ? `<nav epub:type="page-list" aria-label="Páginas"><ol>${Array.from({ length: pageCount }, (_, index) => `<li><a href="Text/page-${String(index + 1).padStart(4, '0')}.xhtml">${index + 1}</a></li>`).join('')}</ol></nav>`
+    ? `<nav epub:type="page-list"><h2>Páginas</h2><ol>${Array.from({ length: pageCount }, (_, index) => `<li><a href="Text/page-${String(index + 1).padStart(4, '0')}.xhtml">${index + 1}</a></li>`).join('')}</ol></nav>`
     : '';
   return xml(`
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="${language}" xml:lang="${language}">
   <head><title>Índice — ${escapeXml(title)}</title></head>
   <body>
-    <nav epub:type="toc" aria-label="Índice"><h1>Índice</h1><ol>${toc}</ol></nav>
+    <nav epub:type="toc"><h1>Índice</h1><ol>${toc}</ol></nav>
     ${landmarks}
     ${pageList}
   </body>

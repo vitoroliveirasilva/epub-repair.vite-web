@@ -60,8 +60,8 @@ try {
     buffer: makePdf(),
   });
   await page.getByText(/Análise concluída:/).waitFor({ timeout: 30000 });
-  assert.equal(await page.getByLabel('Título').inputValue(), 'Livro de teste');
-  assert.equal(await page.getByLabel('Autor').inputValue(), 'EPUB Repair');
+  assert.equal(await page.getByLabel('Título', { exact: true }).inputValue(), 'Livro de teste');
+  assert.equal(await page.getByLabel('Autor', { exact: true }).inputValue(), 'EPUB Repair');
   const [download] = await Promise.all([
     page.waitForEvent('download', { timeout: 30000 }),
     page.getByRole('button', { name: 'Gerar EPUB validado' }).click(),
