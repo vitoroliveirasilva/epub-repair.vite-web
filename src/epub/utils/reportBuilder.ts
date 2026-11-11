@@ -54,7 +54,8 @@ export function buildValidationReport(params: {
 function scoreForGroup(issues: Issue[], predicate: (issue: Issue) => boolean): number {
   const penalty = issues
     .filter(predicate)
-    .reduce((total, issue) => total + issueSeverityWeight(issue.severity), 0);
+    .reduce((total, issue) => total + (issue.severity === 'info' && !issue.repairable
+      ? 0 : issueSeverityWeight(issue.severity)), 0);
   return clampScore(100 - penalty);
 }
 
@@ -63,7 +64,7 @@ function clampScore(value: number): number {
 }
 
 function isStructureIssue(issue: Issue): boolean {
-  return /^(?:ZIP|MIME|CONTAINER|OPF_(?:MISSING|INVALID|MANIFEST|SPINE|DUPLICATE|BAD_MEDIA|MISSING_RESOURCE|UNSAFE|FALLBACK|MEDIA_OVERLAY|UNIQUE_IDENTIFIER|MODIFIED|REFINES)|NAV_|NCX_(?:MISSING|INVALID)|ORPHAN|SYSTEM)/u.test(
+  return /^(?:ZIP|MIME|CONTAINER|OPF_(?:MISSING|INVALID|MANIFEST|SPINE|DUPLICATE|BAD_MEDIA|MISSING_RESOURCE|UNSAFE|FALLBACK|MEDIA_OVERLAY|UNIQUE_IDENTIFIER|MODIFIED|REFINES)|NAV_|NCX_(?:MISSING|INVALID|SPINE|INTERNAL|EDITORIAL)|ORPHAN|SYSTEM)/u.test(
     issue.code,
   );
 }

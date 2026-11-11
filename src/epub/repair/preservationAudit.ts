@@ -22,6 +22,7 @@ export function auditPreservation(
   approvedJpegConversions: ReadonlySet<string> = new Set(),
   approvedRemoteRemoval = false,
   approvedCoverSvgLabels: ReadonlySet<string> = new Set(),
+  approvedNcxCompletion: ReadonlySet<string> = new Set(),
 ): string[] {
   const warnings: string[] = [];
   const originalPaths = new Set(original.files.keys());
@@ -69,7 +70,7 @@ export function auditPreservation(
     }
   }
 
-  warnings.push(...auditNavigationPreservation(original, output, before));
+  warnings.push(...auditNavigationPreservation(original, output, before, approvedNcxCompletion));
   auditMediaOverlayPreservation(original, output, before, after);
 
   const changedText: string[] = [];
@@ -90,7 +91,8 @@ export function auditPreservation(
     const oldMarkup = textDecoder.decode(oldBytes);
     const newMarkup = textDecoder.decode(newBytes);
     if (!sameBytes(oldBytes, newBytes)) {
-      compareInternalTargets(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
+      compareInternalTargets(oldMarkup, newMarkup, item.resolvedPath, item.mediaType,
+        approvedNcxCompletion.size > 0);
       compareEditorialBlocks(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
       compareSpecialMarkup(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
       compareTypographyPreservation(oldMarkup, newMarkup, item.resolvedPath, item.mediaType);
@@ -305,7 +307,7 @@ function compareTypographyPreservation(before: string, after: string, path: stri
 }
 
 function compareInternalTargets(before: string, after: string, path: string,
-  mediaType = 'application/xhtml+xml'): void {
+  mediaType = 'application/xhtml+xml', allowGeneratedChapterMigration = false): void {
   const original = parseReadableDocument(before, mediaType);
   const output = parseReadableDocument(after, mediaType);
   if (!original || !output) return; 
@@ -319,6 +321,7 @@ function compareInternalTargets(before: string, after: string, path: string,
   const originalIds = ids(original);
   const afterIds = ids(output);
   for (const id of originalIds) {
+    if (allowGeneratedChapterMigration && /^epub-repair-chapter-\d+$/u.test(id)) continue;
     if (!afterIds.has(id)) {
       throw new Error(`O reparo removeria uma âncora editorial (${id}) em ${path}.`);
     }
@@ -357,10 +360,19 @@ function parseReadableDocument(markup: string,
 
 
 
+function orderedSubsequence(original: string[], updated: string[]): boolean {
+  let index = 0;
+  for (const value of updated) {
+    if (index < original.length && original[index] === value) index += 1;
+  }
+  return index === original.length;
+}
+
 function auditNavigationPreservation(
   original: LoadedEpub,
   output: ReadonlyMap<string, Uint8Array>,
   before: PackageDocumentInfo,
+  approvedNcxCompletion: ReadonlySet<string>,
 ): string[] {
   const notes: string[] = [];
   for (const item of [before.navItem, before.ncxItem]) {
@@ -377,15 +389,30 @@ function auditNavigationPreservation(
       throw new Error('O índice mudou, mas não pôde ser comparado com segurança em ' +
         item.resolvedPath + '. A cópia foi bloqueada.');
     }
-    const targets = (doc: Document): string[] => Array.from(doc.getElementsByTagName('*'))
+    const allowNcxAdditions = item.mediaType === 'application/x-dtbncx+xml' &&
+      approvedNcxCompletion.has(item.resolvedPath);
+    const oldComparable = oldDoc;
+    const belongsToGeneratedPoint = (node: Element): boolean => {
+      for (let current: Element | null = node; current; current = current.parentElement) {
+        if (current.localName === 'navPoint') {
+          return (current.getAttribute('id') ?? '').startsWith('epub-repair-');
+        }
+      }
+      return false;
+    };
+    const targets = (doc: Document, omitGenerated = false): string[] =>
+      Array.from(doc.getElementsByTagName('*'))
       .flatMap((node) => {
+        if (omitGenerated && belongsToGeneratedPoint(node)) return [];
         if (node.localName === 'a') return [node.getAttribute('href') ?? ''];
         if (node.localName === 'content') return [node.getAttribute('src') ?? ''];
         return [];
       }).filter(Boolean);
-    const oldTargets = targets(oldDoc);
+    const oldTargets = targets(oldComparable, allowNcxAdditions);
     const newTargets = targets(newDoc);
-    if (oldTargets.join('\u0000') !== newTargets.join('\u0000')) {
+    if (!(allowNcxAdditions
+      ? orderedSubsequence(oldTargets, newTargets)
+      : oldTargets.join('\u0000') === newTargets.join('\u0000'))) {
       throw new Error('O reparo alteraria destinos ou ordem do sumário em ' + item.resolvedPath);
     }
     
@@ -401,7 +428,8 @@ function auditNavigationPreservation(
     }
     if (item.mediaType === 'application/x-dtbncx+xml') {
       const fingerprint = (doc: Document) => Array.from(doc.getElementsByTagName('*'))
-        .filter((node) => node.localName === 'navPoint')
+        .filter((node) => node.localName === 'navPoint' &&
+          !(doc === oldComparable && allowNcxAdditions && belongsToGeneratedPoint(node)))
         .map((node) => {
           let depth = 0;
           for (let parent = node.parentElement; parent; parent = parent.parentElement) {
@@ -412,7 +440,11 @@ function auditNavigationPreservation(
             .find((child) => child.localName === 'text')?.textContent?.replace(/\s+/gu, ' ').trim();
           return JSON.stringify([depth, node.getAttribute('id') ?? '', text ?? '']);
         });
-      if (fingerprint(oldDoc).join('\u0000') !== fingerprint(newDoc).join('\u0000')) {
+      const oldFingerprint = fingerprint(oldComparable);
+      const newFingerprint = fingerprint(newDoc);
+      if (!(allowNcxAdditions
+        ? orderedSubsequence(oldFingerprint, newFingerprint)
+        : oldFingerprint.join('\u0000') === newFingerprint.join('\u0000'))) {
         throw new Error('O reparo alteraria a hierarquia, IDs ou títulos editoriais do NCX em ' +
           item.resolvedPath);
       }

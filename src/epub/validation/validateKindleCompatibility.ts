@@ -68,7 +68,7 @@ function validateNcxKindleRules(loaded: LoadedEpub, pkg: PackageDocumentInfo): I
     } else if (src.includes('#') && brokenFragments.length < MAX_CONTEXT_ITEMS) {
       const fragmentRaw = src.slice(src.indexOf('#') + 1);
       if (fragmentRaw && !/^(?:epubcfi\(|svgView\(|xywh=|t=)/iu.test(fragmentRaw) &&
-          /\.(?:xhtml?|svg)$/iu.test(resolved.path)) {
+          /\.(?:xhtml?|html?|svg)$/iu.test(resolved.path)) {
         let fragment = '';
         try { fragment = decodeURIComponent(fragmentRaw); } catch {   }
         if (fragment) {

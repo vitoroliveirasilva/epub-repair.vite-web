@@ -56,6 +56,8 @@ navigationEditorialTitles99
 navigationFullRoundtrip99
 navigationHierarchy99
 ncxToNavEditorial99
+ncxSparseCoverageRegression
+epubInternalSectionsRegression
 opfMetadataPrefix99
 opfRepairRegression99
 orphanActiveContent99
