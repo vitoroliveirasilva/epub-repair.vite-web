@@ -10,9 +10,10 @@ const ocrAssets = new Map([
   ['eng.traineddata.gz', 'node_modules/@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz'],
 ]);
 
-function localOcrAssets(): Plugin {
+function buildOcrAssets(): Plugin {
   return {
-    name: 'local-ocr-assets',
+    name: 'build-local-ocr-assets',
+    apply: 'build',
     buildStart() {
       for (const [fileName, source] of ocrAssets) {
         this.emitFile({
@@ -22,6 +23,13 @@ function localOcrAssets(): Plugin {
         });
       }
     },
+  };
+}
+
+function serveOcrAssets(): Plugin {
+  return {
+    name: 'serve-local-ocr-assets',
+    apply: 'serve',
     configureServer(server) {
       server.middlewares.use('/ocr', (request, response, next) => {
         const fileName = basename((request.url ?? '').split('?')[0] ?? '');
@@ -45,7 +53,7 @@ function localOcrAssets(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [localOcrAssets()],
+  plugins: [buildOcrAssets(), serveOcrAssets()],
   build: {
     target: 'es2022',
     sourcemap: false,
