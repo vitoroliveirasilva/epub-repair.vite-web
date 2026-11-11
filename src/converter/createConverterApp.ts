@@ -55,7 +55,7 @@ function renderWorkflowRail(state: ConverterState): HTMLElement {
           : 1;
   const steps = [
     ['Selecionar PDF', 'Escolha o documento'],
-    ['Processar', 'Texto, OCR e estrutura'],
+    ['Processar', 'Texto, imagens e estrutura'],
     ['Revisar', 'Confira e ajuste'],
     ['Gerar e baixar', 'EPUB validado'],
   ];
@@ -127,7 +127,7 @@ function renderHero(): HTMLElement {
           el('h1', { text: 'Transforme PDF em EPUB sem carregar a bagunça junto' }),
           el('p', {
             className: 'hero-copy',
-            text: 'Reconstrua parágrafos, capítulos e ordem de leitura, use OCR quando necessário, compare o resultado e gere um EPUB validado sem enviar o documento para servidor.',
+            text: 'Reconstrua parágrafos, capítulos e ordem de leitura, leia textos de páginas digitalizadas, compare o resultado e gere um EPUB validado sem enviar o documento para servidor.',
           }),
           el('div', { className: 'hero-actions', children: [
             el('a', { className: 'btn btn-primary btn-large', text: 'Converter meu PDF', attrs: { href: '#pdf-upload' } }),
@@ -144,7 +144,7 @@ function renderHero(): HTMLElement {
           ] }),
           renderFeature('Diagnóstico por página', 'Texto, digitalização, colunas e imagens'),
           renderFeature('Reconstrução editorial', 'Parágrafos, capítulos, notas e tipografia'),
-          renderFeature('OCR local', 'Português e inglês sem enviar o arquivo'),
+          renderFeature('Leitura de páginas digitalizadas', 'Reconhece texto em imagens sem enviar o arquivo'),
           renderFeature('Validação final', 'Estrutura EPUB e compatibilidade Kindle'),
         ],
       }),
@@ -220,7 +220,7 @@ function renderUploader(state: ConverterState, rerender: () => void): HTMLElemen
       el('div', { className: 'section-heading', children: [
         el('p', { className: 'eyebrow', text: '1. Documento' }),
         el('h2', { text: state.file ? 'Documento selecionado' : 'Carregue o PDF' }),
-        el('p', { className: 'muted', text: 'O arquivo permanece no dispositivo durante análise, OCR, prévia e geração do EPUB.' }),
+        el('p', { className: 'muted', text: 'O arquivo permanece no dispositivo durante análise, leitura de imagens, prévia e geração do EPUB.' }),
       ] }),
       dropzone,
     ],
@@ -307,7 +307,7 @@ function renderSettings(state: ConverterState, rerender: () => void): HTMLElemen
   const options = el('div', {
     className: 'converter-checkbox-grid',
     children: [
-      optionCheckbox('Usar OCR quando faltar texto', 'Reconhecimento local em português e inglês', state.options.enableOcr, (value) => updateOption('enableOcr', value)),
+      optionCheckbox('Ler texto em páginas digitalizadas', 'Reconhecimento local do texto presente nas imagens', state.options.enableOcr, (value) => updateOption('enableOcr', value)),
       optionCheckbox('Remover cabeçalhos e rodapés repetidos', 'Compara padrões recorrentes entre páginas', state.options.removeRepeatedMargins, (value) => updateOption('removeRepeatedMargins', value)),
       optionCheckbox('Remover números de página', 'Somente quando isolados nas margens', state.options.removePageNumbers, (value) => updateOption('removePageNumbers', value)),
       optionCheckbox('Reconstruir palavras hifenizadas', 'Une quebras artificiais entre linhas', state.options.dehyphenate, (value) => updateOption('dehyphenate', value)),
@@ -368,8 +368,13 @@ function renderSettings(state: ConverterState, rerender: () => void): HTMLElemen
 function renderProgress(state: ConverterState, rerender: () => void): HTMLElement | undefined {
   if (state.result && !state.busy) return undefined;
   if (!state.busy && !state.message && !state.error) return undefined;
-  const cancel = button('Cancelar', 'btn btn-ghost btn-small', () => state.controller?.abort());
-  cancel.disabled = !state.busy;
+  const cancelling = Boolean(state.controller?.signal.aborted);
+  const cancel = button(cancelling ? 'Cancelando…' : 'Cancelar', 'btn btn-ghost btn-small', () => {
+    state.progress = 'Cancelando operação';
+    state.controller?.abort();
+    rerender();
+  });
+  cancel.disabled = !state.busy || cancelling;
   const phaseIndex = progressPhaseIndex(state.progress);
   const fallbackProgress = [12, 32, 58, 78, 94][phaseIndex] ?? 8;
   const progressValue = state.progressValue ?? fallbackProgress;
@@ -395,7 +400,7 @@ function renderProgress(state: ConverterState, rerender: () => void): HTMLElemen
           el('span', { text: 'Nenhum arquivo é enviado para servidor' }),
         ] }),
         el('ol', { className: 'converter-processing-steps', children: [
-          'Abrir PDF', 'Extrair conteúdo', 'Reconstruir leitura', 'Montar EPUB', 'Validar resultado',
+          'Abrir PDF', 'Ler texto e imagens', 'Reconstruir leitura', 'Montar EPUB', 'Validar resultado',
         ].map((label, index) => el('li', {
           className: index < phaseIndex ? 'complete' : index === phaseIndex ? 'active' : '',
           children: [el('span', { text: index < phaseIndex ? '✓' : String(index + 1) }), el('small', { text: label })],
@@ -428,7 +433,7 @@ function progressPhaseIndex(progress: string): number {
   if (/validando|acabamento|revalid/iu.test(progress)) return 4;
   if (/montando|renderizando|compactando|epub/iu.test(progress)) return 3;
   if (/reconstruindo/iu.test(progress)) return 2;
-  if (/analisando|ocr|extraindo/iu.test(progress)) return 1;
+  if (/analisando|lendo texto|digitalizadas|extraindo/iu.test(progress)) return 1;
   return 0;
 }
 
@@ -436,7 +441,7 @@ function progressDetail(progress: string): string {
   const index = progressPhaseIndex(progress);
   return [
     'Abrindo o documento e conferindo se o PDF pode ser processado com segurança.',
-    'Lendo páginas, textos, imagens, colunas e conteúdo que possa exigir OCR.',
+    'Lendo textos, imagens, colunas e páginas digitalizadas. Essa etapa pode demorar um pouco em documentos formados por fotos.',
     'Refazendo parágrafos, capítulos e a ordem de leitura do documento.',
     'Criando os arquivos internos, o índice e o pacote final do EPUB.',
     'Aplicando o acabamento automático e verificando a compatibilidade do resultado.',
@@ -458,7 +463,7 @@ function renderOverview(state: ConverterState): HTMLElement {
         metric(String(analysis.pageCount), 'Páginas'),
         metric(String(analysis.sections.length), 'Seções'),
         metric(String(analysis.nativeTextPages), 'Com texto'),
-        metric(String(analysis.ocrPages), 'Com OCR'),
+        metric(String(analysis.ocrPages), 'Texto recuperado de imagem'),
         metric(String(analysis.visualPages), 'Visuais'),
         metric(String(analysis.blankPages), 'Em branco'),
         metric(analysis.suggestedLayout === 'reflowable' ? 'Ajustável' : 'Visual', 'Recomendação'),
@@ -489,7 +494,7 @@ function renderComparison(state: ConverterState, rerender: () => void): HTMLElem
       el('div', { className: 'section-heading', children: [
         el('p', { className: 'eyebrow', text: 'Revisão visual opcional' }),
         el('h2', { text: 'Compare original e reconstrução' }),
-        el('p', { className: 'muted', text: 'A prévia ajuda a identificar perda de ordem, OCR ruim, capítulos incorretos ou elementos que pedem layout visual.' }),
+        el('p', { className: 'muted', text: 'A prévia ajuda a identificar perda de ordem, texto mal reconhecido em imagens, capítulos incorretos ou elementos que pedem layout visual.' }),
       ] }),
       el('div', { className: 'converter-preview-selectors', children: [pageSelect, sectionSelect] }),
       el('div', { className: 'converter-preview-grid', children: [
@@ -624,7 +629,7 @@ function renderQualitySidebar(state: ConverterState): HTMLElement {
         el('h2', { text: state.analysis ? `${state.analysis.qualityScore}/100` : 'Aguardando PDF' }),
         el('p', { className: 'muted', text: state.analysis
           ? 'Confiança da reconstrução, não nota estética nem garantia editorial.'
-          : 'O diagnóstico mostrará texto nativo, OCR, colunas, imagens e pontos para revisão.' }),
+          : 'O diagnóstico mostrará texto selecionável, páginas digitalizadas, colunas, imagens e pontos para revisão.' }),
         state.analysis ? renderRecommendation(state) : undefined,
       ] }),
       state.analysis ? el('section', { className: 'panel converter-warning-panel', children: [
@@ -641,7 +646,7 @@ function renderQualitySidebar(state: ConverterState): HTMLElement {
       el('section', { className: 'panel converter-privacy-card', attrs: { id: 'converter-privacy' }, children: [
         el('p', { className: 'eyebrow', text: 'Privacidade' }),
         el('h3', { text: 'Arquivo sempre local' }),
-        el('p', { className: 'muted', text: 'PDF.js, OCR, reconstrução, compactação e validação executam no navegador. A CSP impede conexões externas.' }),
+        el('p', { className: 'muted', text: 'Leitura do PDF e das imagens, reconstrução, compactação e validação executam no navegador. A CSP impede conexões externas.' }),
       ] }),
     ],
   });
@@ -719,7 +724,7 @@ function renderHowItWorks(): HTMLElement {
       el('article', { className: 'support-card converter-limitations', children: [
         el('p', { className: 'eyebrow', text: 'Limitações honestas' }),
         el('h2', { text: 'Conversão automática não substitui revisão editorial' }),
-        el('p', { className: 'muted', text: 'OCR pode errar nomes e pontuação. Tabelas, fórmulas, documentos com várias colunas e projetos gráficos complexos podem exigir layout fixo. PDFs protegidos por senha ou DRM não são desbloqueados.' }),
+        el('p', { className: 'muted', text: 'A leitura automática de imagens pode errar nomes e pontuação. Tabelas, fórmulas, documentos com várias colunas e projetos gráficos complexos podem exigir layout fixo. PDFs protegidos por senha ou DRM não são desbloqueados.' }),
       ] }),
     ],
   });

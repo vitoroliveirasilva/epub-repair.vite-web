@@ -12,6 +12,9 @@ import type {
 } from './model';
 import { detectColumnCount, reconstructDocument } from './textReconstruction';
 
+const IMAGE_TEXT_READER_START_TIMEOUT_MS = 25_000;
+const IMAGE_TEXT_PAGE_TIMEOUT_MS = 35_000;
+
 export interface PdfProgress {
   phase: string;
   completed: number;
@@ -40,6 +43,7 @@ export async function analyzePdf(input: AnalyzePdfOptions): Promise<PdfAnalysisR
   input.signal?.addEventListener('abort', cancel, { once: true });
   let document: PDFDocumentProxy | undefined;
   let ocrWorker: Awaited<ReturnType<typeof createOcrWorker>> | undefined;
+  let imageTextReadingUnavailable = false;
   try {
     document = await task.promise;
     throwIfAborted(input.signal);
@@ -49,42 +53,85 @@ export async function analyzePdf(input: AnalyzePdfOptions): Promise<PdfAnalysisR
       throwIfAborted(input.signal);
       input.onProgress?.({
         phase: `Analisando página ${pageNumber} de ${document.numPages}`,
-        completed: pageNumber - 1,
-        total: document.numPages,
+        completed: Math.round(((pageNumber - 1) / document.numPages) * 70),
+        total: 100,
       });
       const page = await document.getPage(pageNumber);
       const pageAnalysis = await analyzePage(page, pageNumber, pdfjs.OPS, pageNumber === 1);
-      const needsOcr = pageAnalysis.kind === 'scanned';
-      if (needsOcr && input.options.enableOcr) {
-        ocrWorker ??= await createOcrWorker(input.options.language, input.signal,
-          (status, progress) => input.onProgress?.({
-            phase: `OCR da página ${pageNumber}: ${translateOcrStatus(status)}`,
-            completed: Math.min(document?.numPages ?? 1,
-              pageNumber - 1 + Math.max(0, Math.min(1, progress))),
-            total: document?.numPages ?? 1,
-          }));
-        const rendered = await renderPageToCanvas(page, 2);
-        throwIfAborted(input.signal);
-        const recognized = await ocrWorker.recognize(rendered.canvas);
-        releaseCanvas(rendered.canvas);
-        throwIfAborted(input.signal);
-        const text = normalizeOcrText(recognized.data.text);
-        if (text.length > 0) {
-          pageAnalysis.lines = ocrTextToLines(text, pageAnalysis.height);
-          pageAnalysis.text = text;
-          pageAnalysis.usedOcr = true;
-          pageAnalysis.ocrConfidence = recognized.data.confidence;
-          pageAnalysis.columnCount = 1;
-        }
-      }
       pages.push(pageAnalysis);
       page.cleanup();
       if (pageNumber % 4 === 0) await yieldToBrowser();
     }
+    const imageTextPages = input.options.enableOcr
+      ? selectPagesForImageTextReading(pages)
+      : [];
+    for (let index = 0; index < imageTextPages.length; index += 1) {
+      if (imageTextReadingUnavailable) break;
+      throwIfAborted(input.signal);
+      const pageAnalysis = imageTextPages[index]!;
+      const pageNumber = pageAnalysis.pageNumber;
+      try {
+        if (!ocrWorker) {
+          const workerPromise = createOcrWorker(input.options.language, input.signal,
+            (status, progress) => input.onProgress?.({
+              phase: `Lendo texto da página ${pageNumber}: ${translateOcrStatus(status)}`,
+              completed: Math.round(70 + ((index + Math.max(0, Math.min(1, progress))) / Math.max(1, imageTextPages.length)) * 25),
+              total: 100,
+            }));
+          try {
+            ocrWorker = await withTimeout(workerPromise, IMAGE_TEXT_READER_START_TIMEOUT_MS,
+              'A leitura de páginas digitalizadas demorou demais para iniciar.', input.signal);
+          } catch (error) {
+            void workerPromise.then((worker) => worker.terminate()).catch(() => undefined);
+            throw error;
+          }
+        }
+        input.onProgress?.({
+          phase: `Lendo texto da página ${pageNumber} de ${document.numPages}`,
+          completed: Math.round(70 + (index / Math.max(1, imageTextPages.length)) * 25),
+          total: 100,
+        });
+        const page = await document.getPage(pageNumber);
+        const rendered = await renderPageToCanvas(page, 1.65);
+        try {
+          throwIfAborted(input.signal);
+          const recognized = await withTimeout(
+            ocrWorker.recognize(rendered.canvas),
+            IMAGE_TEXT_PAGE_TIMEOUT_MS,
+            `A leitura da página ${pageNumber} demorou demais.`,
+            input.signal,
+          );
+          throwIfAborted(input.signal);
+          const text = normalizeOcrText(recognized.data.text);
+          if (text.length > 0) {
+            pageAnalysis.lines = ocrTextToLines(text, pageAnalysis.height);
+            pageAnalysis.text = text;
+            pageAnalysis.usedOcr = true;
+            pageAnalysis.ocrConfidence = recognized.data.confidence;
+            pageAnalysis.columnCount = 1;
+          }
+        } finally {
+          releaseCanvas(rendered.canvas);
+          page.cleanup();
+        }
+      } catch (error) {
+        if (input.signal?.aborted) throw abortError();
+        imageTextReadingUnavailable = true;
+        input.onProgress?.({
+          phase: 'A leitura das páginas digitalizadas demorou demais; continuando sem bloquear',
+          completed: 96,
+          total: 100,
+        });
+        await ocrWorker?.terminate().catch(() => undefined);
+        ocrWorker = undefined;
+        await yieldToBrowser();
+        if (!(error instanceof Error)) break;
+      }
+    }
     input.onProgress?.({
       phase: 'Reconstruindo capítulos e parágrafos',
-      completed: document.numPages,
-      total: document.numPages,
+      completed: 98,
+      total: 100,
     });
     const fallbackTitle = input.fileName.replace(/\.pdf$/iu, '').trim() || 'Documento convertido';
     const title = metadataString(metadata?.info, 'Title') || fallbackTitle;
@@ -100,7 +147,7 @@ export async function analyzePdf(input: AnalyzePdfOptions): Promise<PdfAnalysisR
     const visualPages = pages.filter((page) => page.kind === 'visual').length;
     const blankPages = pages.filter((page) => page.kind === 'blank').length;
     const warnings = [
-      ...baseWarnings(pages, input.options),
+      ...baseWarnings(pages, input.options, imageTextReadingUnavailable),
       ...reconstructed.warnings,
     ];
     const suggestedLayout = suggestLayout(pages, input.options, warnings);
@@ -135,6 +182,15 @@ export async function analyzePdf(input: AnalyzePdfOptions): Promise<PdfAnalysisR
     await ocrWorker?.terminate().catch(() => undefined);
     await document?.destroy();
   }
+}
+
+export function selectPagesForImageTextReading(pages: PdfPageAnalysis[]): PdfPageAnalysis[] {
+  const scanned = pages.filter((page) => page.kind === 'scanned');
+  const contentPages = pages.filter((page) => page.kind !== 'cover' && page.kind !== 'blank');
+  const mostlyScannedDocument = scanned.length >= 2 &&
+    scanned.length >= Math.ceil(Math.max(1, contentPages.length) * 0.35);
+  if (mostlyScannedDocument) return scanned;
+  return scanned.filter((page) => page.pageNumber > 6);
 }
 
 export function inferPublicationMetadata(
@@ -381,12 +437,12 @@ async function createOcrWorker(
 ) {
   const { createWorker, OEM } = await import('tesseract.js');
   throwIfAborted(signal);
-  const worker = await createWorker(language === 'pt-BR' ? 'por+eng' : 'eng', OEM.LSTM_ONLY, {
+  const worker = await createWorker(language === 'pt-BR' ? 'por' : 'eng', OEM.LSTM_ONLY, {
     workerPath: '/ocr/worker.min.js',
     corePath: '/ocr/tesseract-core-lstm.wasm.js',
     langPath: '/ocr',
     workerBlobURL: false,
-    cacheMethod: 'write',
+    cacheMethod: 'readOnly',
     logger: (message) => onProgress(message.status, message.progress),
   });
   const terminate = (): void => { void worker.terminate(); };
@@ -406,14 +462,26 @@ function ocrTextToLines(text: string, pageHeight: number): PdfLine[] {
   }));
 }
 
-function baseWarnings(pages: PdfPageAnalysis[], options: ConverterOptions): ConversionWarning[] {
+function baseWarnings(
+  pages: PdfPageAnalysis[],
+  options: ConverterOptions,
+  imageTextReadingUnavailable: boolean,
+): ConversionWarning[] {
   const warnings: ConversionWarning[] = [];
+  if (imageTextReadingUnavailable) {
+    warnings.push({
+      code: 'PDF_IMAGE_TEXT_READING_TIMEOUT',
+      title: 'Leitura de páginas digitalizadas interrompida',
+      detail: 'A leitura automática demorou além do limite seguro. A análise continuou e preservou essas páginas como imagem, sem travar o restante do documento.',
+      severity: 'warning',
+    });
+  }
   const withoutText = pages.filter((page) => page.kind === 'scanned' && !page.usedOcr);
   if (withoutText.length > 0) {
     warnings.push({
       code: 'PDF_PAGES_WITHOUT_TEXT',
       title: 'Páginas sem texto recuperável',
-      detail: `${withoutText.length} página(s) não possui(em) texto nativo${options.enableOcr ? ' e o OCR não recuperou conteúdo suficiente' : ''}.`,
+      detail: `${withoutText.length} página(s) não possui(em) texto selecionável${options.enableOcr ? ' e a leitura da imagem não recuperou conteúdo suficiente' : ''}.`,
       severity: 'warning',
     });
   }
@@ -507,12 +575,36 @@ function normalizeOcrText(value: string): string {
 function translateOcrStatus(status: string): string {
   const translations: Record<string, string> = {
     'loading tesseract core': 'carregando mecanismo local',
-    'initializing tesseract': 'inicializando OCR',
+    'initializing tesseract': 'preparando leitor de páginas digitalizadas',
     'loading language traineddata': 'carregando idioma',
-    'initializing api': 'preparando reconhecimento',
-    'recognizing text': 'reconhecendo texto',
+    'initializing api': 'preparando leitura da imagem',
+    'recognizing text': 'identificando o texto da imagem',
   };
   return translations[status] ?? status;
+}
+
+export async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  message: string,
+  signal?: AbortSignal,
+): Promise<T> {
+  throwIfAborted(signal);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let abort: (() => void) | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), timeoutMs);
+  });
+  const cancellation = new Promise<never>((_, reject) => {
+    abort = () => reject(abortError());
+    signal?.addEventListener('abort', abort, { once: true });
+  });
+  try {
+    return await Promise.race([promise, timeout, cancellation]);
+  } finally {
+    if (timer) clearTimeout(timer);
+    if (abort) signal?.removeEventListener('abort', abort);
+  }
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob> {
