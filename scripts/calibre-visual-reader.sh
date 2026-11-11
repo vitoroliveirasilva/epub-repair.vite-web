@@ -32,26 +32,29 @@ for mode in reflowable fixed-layout; do
   if command -v xwininfo >/dev/null; then
     timeout 3s xwininfo -root -tree >>"$logfile" 2>&1 || true
   fi
-  timeout 3s xdotool mousemove 240 180 click 1 || true
-  focused="$(timeout 4s xdotool search --onlyvisible --pid "$viewer_pid" | tail -n 1 || true)"
-  if [ -n "$focused" ]; then
-    timeout 4s xdotool windowactivate "$focused" || true
-    timeout 3s xdotool windowfocus "$focused" || true
-    timeout 3s xdotool key --window "$focused" Return || true
+  focused="$(timeout 4s xdotool search --onlyvisible --name 'E-book viewer' | tail -n 1 || true)"
+  if [ -z "$focused" ]; then
+    focused="$(timeout 4s xdotool search --onlyvisible --pid "$viewer_pid" | tail -n 1 || true)"
   fi
-  timeout 3s xdotool key --clearmodifiers space || true
-  timeout 3s xdotool key --clearmodifiers Right || true
-  sleep 7
+  if [ -z "$focused" ]; then
+    echo "Janela do leitor Calibre não encontrada: $mode"
+    cat "$logfile"
+    exit 1
+  fi
+  timeout 4s xdotool windowactivate --sync "$focused"
+  timeout 4s xdotool windowfocus --sync "$focused"
+  timeout 4s xdotool key --clearmodifiers Return
   if ! kill -0 "$viewer_pid" 2>/dev/null; then
     echo "Falha ao iniciar o visualizador Calibre: $mode"
     cat "$logfile"
     exit 1
   fi
-  timeout 12s import -window root "$screenshot"
-  test -s "$screenshot"
-
-
-  /usr/bin/python3 - "$screenshot" "$mode" <<'PY'
+  rendered=0
+  for attempt in 1 2 3 4; do
+    sleep 3
+    timeout 12s import -window root "$screenshot"
+    test -s "$screenshot"
+    if /usr/bin/python3 - "$screenshot" "$mode" <<'PY'
 import sys
 from PIL import Image
 path, mode = sys.argv[1:]
@@ -68,6 +71,17 @@ if pixels < 2000:
 print(f"PASS E-076 Calibre ebook-viewer {mode} screenshot: "
       f"{pixels} pixels da ilustração, {img.size}")
 PY
+    then
+      rendered=1
+      break
+    fi
+    timeout 4s xdotool key --clearmodifiers Right || true
+  done
+  if [ "$rendered" -ne 1 ]; then
+    echo "Calibre não exibiu a ilustração após avançar páginas: $mode"
+    cat "$logfile"
+    exit 1
+  fi
   kill -TERM "$viewer_pid" 2>/dev/null || true
 
   sleep 1
