@@ -118,4 +118,77 @@ describe('reconstrução editorial de PDF', () => {
     ]);
     expect(result.sections[1]?.plainText).toBe('À minha família, com carinho.');
   });
+
+  it('não transforma fragmentos maiores do corpo em centenas de subtítulos', () => {
+    const lines = Array.from({ length: 36 }, (_, index) => line(
+      index === 14
+        ? 'inclui habilidades como a análise em cadeia que ajudará você a pensar de'
+        : `Esta é a linha ${index + 1} de um parágrafo corrido que pertence ao corpo do livro`,
+      740 - index * 18,
+      60,
+      470,
+      index === 14 ? 15 : 12,
+    ));
+    const result = reconstructDocument([page(1, lines)], options, 'Livro');
+    expect(result.sections[0]?.html).not.toContain('<h2>inclui habilidades');
+    expect(result.sections[0]?.html.match(/<h[12]>/gu) ?? []).toHaveLength(0);
+  });
+
+  it('usa o sumário para reconhecer capítulos numerados e ignora suas entradas duplicadas', () => {
+    const title = 'A abordagem DBT para eliminar a compulsão alimentar';
+    const result = reconstructDocument([
+      page(8, [
+        line('Sumário', 740, 220, 160, 20),
+        line('1.', 700, 60, 20),
+        line(title, 680, 90, 430),
+        line('2.', 650, 60, 20),
+        line('Como se comprometer a eliminar a compulsão alimentar', 630, 90, 430),
+        line('3.', 600, 60, 20),
+        line('As metas do programa e as ferramentas para atingi-las', 580, 90, 430),
+      ]),
+      page(9, [
+        line('1', 730, 285, 20, 22),
+        line('A abordagem DBT para eliminar a', 690, 120, 360, 18),
+        line('compulsão alimentar', 665, 180, 240, 18),
+        line('O conteúdo do primeiro capítulo começa aqui.', 620),
+      ]),
+    ], options, 'Programa DBT');
+    expect(result.sections.map((section) => section.title)).toEqual([
+      'Sumário', `1. ${title}`,
+    ]);
+    expect(result.sections.filter((section) => section.title.includes(title))).toHaveLength(1);
+  });
+
+  it('limita parágrafos excessivos somente em fronteiras completas de frase', () => {
+    const lines = Array.from({ length: 42 }, (_, index) =>
+      line(`Frase editorial número ${index + 1} termina corretamente.`, 760 - index * 16));
+    const result = reconstructDocument([page(1, lines)], options, 'Livro');
+    const paragraphs = result.sections[0]?.html.match(/<p>/gu) ?? [];
+    expect(paragraphs.length).toBeGreaterThan(1);
+    expect(result.sections[0]?.plainText).toContain('Frase editorial número 42');
+    const sizes = [...(result.sections[0]?.html.matchAll(/<p>(.*?)<\/p>/gsu) ?? [])]
+      .map((match) => match[1]!.split(/\s+/u).length);
+    expect(Math.max(...sizes)).toBeLessThanOrEqual(180);
+  });
+
+  it('remove sumário técnico e lista de páginas anexados ao final do PDF', () => {
+    const pages = Array.from({ length: 12 }, (_, index) => page(index + 1, [
+      line(index === 2 ? 'CAPÍTULO 1' : `Conteúdo editorial da página ${index + 1}.`, 700,
+        index === 2 ? 210 : 60, index === 2 ? 180 : 470, index === 2 ? 22 : 12),
+    ]));
+    pages[10] = page(11, [
+      line('Sumário', 740, 220, 160, 20),
+      line('1. Primeiro capítulo', 700),
+      line('2. Segundo capítulo', 680),
+      line('3. Terceiro capítulo', 660),
+      line('4. Quarto capítulo', 640),
+      line('Lista de Páginas', 600),
+    ]);
+    pages[11] = page(12, [line('1', 700), line('2', 680), line('3', 660)]);
+    const result = reconstructDocument(pages, options, 'Livro');
+    const content = result.sections.map((section) => section.plainText).join('\n');
+    expect(content).not.toContain('Lista de Páginas');
+    expect(content).not.toContain('Segundo capítulo');
+    expect(result.warnings.map((warning) => warning.code)).toContain('PDF_TRAILING_NAVIGATION_REMOVED');
+  });
 });

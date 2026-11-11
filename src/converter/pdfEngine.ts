@@ -133,11 +133,13 @@ export async function analyzePdf(input: AnalyzePdfOptions): Promise<PdfAnalysisR
       completed: 98,
       total: 100,
     });
-    const fallbackTitle = input.fileName.replace(/\.pdf$/iu, '').trim() || 'Documento convertido';
-    const title = metadataString(metadata?.info, 'Title') || fallbackTitle;
-    const author = metadataString(metadata?.info, 'Author');
+    const fallbackTitle = humanizeFileName(input.fileName) || 'Documento convertido';
+    const frontMatterText = pages.slice(0, 24).map((page) => page.text).join('\n');
+    const identity = inferDocumentIdentity(frontMatterText, fallbackTitle);
+    const title = meaningfulMetadataValue(metadataString(metadata?.info, 'Title')) || identity.title;
+    const author = meaningfulMetadataValue(metadataString(metadata?.info, 'Author')) || identity.author;
     const publicationMetadata = inferPublicationMetadata(
-      pages.slice(0, 15).map((page) => page.text).join('\n'),
+      frontMatterText,
       metadata?.info,
     );
     const reconstructed = reconstructDocument(pages, input.options, title);
@@ -201,12 +203,16 @@ export function inferPublicationMetadata(
   const rawIsbn = normalized.match(/\bISBN(?:-1[03])?\s*:?[\s\u00a0]*((?:97[89][\s-]*)?[\dXx](?:[\dXx\s-]{8,20})[\dXx])\b/u)?.[1] ?? '';
   const isbn = rawIsbn.replace(/[^\dXx]/gu, '').toUpperCase();
   const translator = firstCapture(normalized, [
+    /(?:^|\n)\s*tradu[cç][aã]o\s*:\s*(.+?)(?=\n)/iu,
     /tradu[cç][aã]o\s+de\s+(.+?)(?=\s+\d+[ªº]?\s+edi[cç][aã]o|\s+EDITORA\b|\n)/iu,
     /;\s*tradu[cç][aã]o\s+(.+?)(?=\.\s*-\s*\d|\n)/iu,
     /translated\s+by\s+(.+?)(?=\n|\s+\d{4}\b)/iu,
   ]);
   const publisher = inferPublisher(normalized);
-  const publicationDate = normalized.match(/(?:copyright|©)\s*(?:©\s*)?(19\d{2}|20\d{2})/iu)?.[1]
+  const publicationDate = normalized.match(/copyright\s+(?:da\s+)?tradu[cç][aã]o\s*:\s*(?:©\s*)?(19\d{2}|20\d{2})/iu)?.[1]
+    ?? normalized.match(/edi[cç][aã]o\s+digital\s*:\s*(?:\p{L}+\s+)?(19\d{2}|20\d{2})/iu)?.[1]
+    ?? normalized.match(/\b(?:19\d{2}|20\d{2})\s*\.\s*\n\s*tradu[cç][aã]o\s+de/iu)?.[0]?.match(/(?:19|20)\d{2}/u)?.[0]
+    ?? normalized.match(/(?:copyright|©)\s*(?:©\s*)?(19\d{2}|20\d{2})/iu)?.[1]
     ?? metadataYear(info)
     ?? '';
   const description = metadataString(info, 'Subject');
@@ -219,12 +225,57 @@ export function inferPublicationMetadata(
   };
 }
 
+export function inferDocumentIdentity(
+  text: string,
+  fallbackTitle: string,
+): { title: string; author: string } {
+  const normalized = text.replace(/\r/gu, '');
+  const catalogTitle = firstCapture(normalized, [
+    /(?:^|\n)\s*([^\n]{4,180})\s*\/\s*(?:organizadores?|organizado\s+por|por|by)\b/iu,
+  ]);
+  const title = cleanTitle(catalogTitle) || fallbackTitle;
+  const catalogAuthor = firstCapture(normalized, [
+    /\borganizadores?\s+(.+?)\s*;\s*tradu[cç][aã]o\b/isu,
+    /(?:^|\n)\s*(?:por|by)\s+([^\n]{4,180})(?=\n)/iu,
+  ]);
+  return { title, author: cleanAuthor(catalogAuthor) };
+}
+
+function cleanTitle(value: string): string {
+  return cleanMetadataValue(value)
+    .replace(/^\s*(?:\d{1,4}|[A-Z]\d{2,5})\s+/u, '')
+    .replace(/\s*\[recurso\s+eletr[oô]nico\]\s*$/iu, '')
+    .replace(/\s+/gu, ' ')
+    .trim();
+}
+
+function cleanAuthor(value: string): string {
+  return cleanMetadataValue(value)
+    .replace(/\s*[-–]\s*\d+[ªº]?\s*ed\..*$/iu, '')
+    .replace(/\s+/gu, ' ')
+    .trim();
+}
+
+function humanizeFileName(fileName: string): string {
+  return fileName.replace(/\.pdf$/iu, '')
+    .replace(/[_-]+/gu, ' ')
+    .replace(/\s+/gu, ' ')
+    .trim();
+}
+
+function meaningfulMetadataValue(value: string): string {
+  if (!value || /^(?:untitled|sem\s+t[ií]tulo|unknown|desconhecido)$/iu.test(value)) return '';
+  return value;
+}
+
 function inferPublisher(text: string): string {
   const rights = text.match(/(?:adquiridos|publicados?)\s+(?:pela|por)\s+((?:EDITORA\s+)?[\p{L}\d&'’.-]+(?:\s+[\p{L}\d&'’.-]+){0,5}?)(?=\.\s+(?:Rua|Avenida)|,\s+que\b|\n)/iu)?.[1];
   if (rights) return formatPublisher(rights);
-  const line = text.split('\n').find((candidate) => /\bEDITORA\s+/u.test(candidate));
+  const reserved = text.match(/(?:direitos[^\n]{0,80}?reservados?\s+(?:à|a)\s*)\n?\s*((?:Editora\s+)[^\n]{2,100})/iu)?.[1];
+  if (reserved) return formatPublisher(reserved);
+  const line = text.split('\n').find((candidate) => /\bEDITORA\s+/iu.test(candidate));
   if (!line) return '';
-  const after = line.slice(line.search(/\bEDITORA\s+/u) + 'EDITORA '.length);
+  const after = line.slice(line.search(/\bEDITORA\s+/iu) + 'EDITORA '.length);
   const stopWords = new Set(['RIO', 'SÃO', 'SAO', 'RUA', 'AVENIDA', 'LTDA', 'LTDA.', 'S.A.', 'SA']);
   const tokens: string[] = [];
   for (const token of after.split(/\s+/u)) {
