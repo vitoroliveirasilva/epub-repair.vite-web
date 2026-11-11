@@ -6,6 +6,11 @@ interface IssueExplanation {
 }
 
 const ISSUE_EXPLANATIONS: Partial<Record<Issue['code'], IssueExplanation>> = {
+  OPF_READING_CONTENT_MISSING: {
+    title: 'O arquivo não contém a maior parte do livro.',
+    message:
+      'O pacote lista capítulos que não vieram dentro do EPUB. Eles não podem ser reconstruídos; baixe novamente uma cópia completa do livro.',
+  },
   OPF_COVER_META_MISSING: {
     title: 'A capa existe, mas não está marcada como capa oficial.',
     message:

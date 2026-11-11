@@ -41,6 +41,7 @@ idempotenceProperties99
 imageAndAccessibility99
 imageMetadata99
 imageMetadataIntegration99
+incompleteEpubRegression
 internalAnchorsRegression99
 manifestContentProperties99
 manifestDependenciesRegression99
