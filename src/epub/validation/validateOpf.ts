@@ -127,6 +127,28 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
     );
   }
 
+  const linearSpineItems = pkg.spine.filter((item) =>
+    (item.linear ?? '').trim().toLowerCase() !== 'no' && Boolean(item.manifestItem));
+  const existingLinearItems = linearSpineItems.filter((item) => item.manifestItem?.exists);
+  const missingLinearItems = linearSpineItems.filter((item) => !item.manifestItem?.exists);
+  const readingContentIsIncomplete = missingLinearItems.length > 0 &&
+    (existingLinearItems.length === 0 ||
+      (missingLinearItems.length >= 2 && missingLinearItems.length > existingLinearItems.length));
+
+  if (readingContentIsIncomplete) {
+    issues.push(createIssue({
+      code: 'OPF_READING_CONTENT_MISSING',
+      severity: 'fatal',
+      title: 'Conteúdo principal ausente do EPUB',
+      detail:
+        `A ordem de leitura referencia ${missingLinearItems.length} arquivo(s) inexistente(s), ` +
+        `mas apenas ${existingLinearItems.length} está(ão) presente(s). O reparador não pode ` +
+        'recriar capítulos que não vieram no arquivo. Baixe novamente uma cópia completa do EPUB.',
+      file: pkg.opfPath,
+      repairable: false,
+    }));
+  }
+
   const ids = new Set<string>();
   const hrefs = new Set<string>();
 
@@ -199,7 +221,7 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
           title: 'Arquivo listado no manifest não existe',
           detail: `O manifest referencia "${item.href}", mas esse arquivo não está dentro do EPUB.`,
           file: item.resolvedPath,
-          repairable: true,
+          repairable: !readingContentIsIncomplete,
         }),
       );
     }
@@ -287,7 +309,7 @@ export function validateOpf(pkg: PackageDocumentInfo, loaded?: LoadedEpub): Issu
         detail:
           'O OPF declara uma imagem de capa, mas o arquivo não foi encontrado dentro do EPUB.',
         file: pkg.coverItem.resolvedPath,
-        repairable: true,
+        repairable: !readingContentIsIncomplete,
       }),
     );
   }

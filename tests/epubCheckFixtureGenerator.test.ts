@@ -6,6 +6,8 @@ import { join } from 'node:path';
 import { inspectEpub } from '../src/epub/validation/validateEpub';
 import { repairEpub } from '../src/epub/repair/repairEpub';
 import { DEFAULT_REPAIR_OPTIONS } from '../src/epub/utils/constants';
+import { buildEpubFromPdf } from '../src/converter/buildEpub';
+import type { ConverterOptions, PdfAnalysisResult } from '../src/converter/model';
 
 beforeAll(() => {
   
@@ -252,6 +254,97 @@ function createVisualReaderSpecimen(fixed: boolean): Promise<Uint8Array> {
 }
 
 describe('Fixture sintética de conformidade oficial', () => {
+  it('valida o EPUB ajustável produzido pelo conversor PDF', async () => {
+    const options: ConverterOptions = {
+      profile: 'book',
+      outputLayout: 'reflowable',
+      language: 'pt-BR',
+      enableOcr: true,
+      removeRepeatedMargins: true,
+      removePageNumbers: true,
+      dehyphenate: true,
+      normalizeTypography: true,
+    };
+    const pixel = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAEf/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABBQJ//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAwEBPwF//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAgEBPwF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQAGPwJ//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPyF//9oADAMBAAIAAwAAABCf/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAwEBPxB//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAgEBPxB//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxB//9k=';
+    const analysis: PdfAnalysisResult = {
+      fileName: 'fixture-conversor.pdf',
+      fileSize: 2048,
+      pageCount: 2,
+      title: 'Fixture do conversor',
+      author: 'EPUB Repair',
+      metadata: {
+        publisher: '',
+        publicationDate: '',
+        isbn: '',
+        translator: '',
+        description: '',
+      },
+      pages: [
+        {
+          pageNumber: 1,
+          width: 600,
+          height: 800,
+          lines: [],
+          text: 'Capítulo 1\nTexto reconstruído pelo conversor.',
+          nativeCharacters: 43,
+          usedOcr: false,
+          columnCount: 1,
+          imageCount: 0,
+          kind: 'text',
+          preserveAsImage: false,
+        },
+        {
+          pageNumber: 2,
+          width: 600,
+          height: 800,
+          lines: [],
+          text: '',
+          nativeCharacters: 0,
+          usedOcr: false,
+          columnCount: 1,
+          imageCount: 1,
+          kind: 'visual',
+          preserveAsImage: true,
+          previewDataUrl: pixel,
+        },
+      ],
+      sections: [{
+        id: 'section-001',
+        title: 'Capítulo 1',
+        html: '<h1>Capítulo 1</h1><p>Texto reconstruído pelo conversor.</p>',
+        plainText: 'Capítulo 1\n\nTexto reconstruído pelo conversor.',
+        sourcePages: [1],
+      }],
+      warnings: [],
+      suggestedLayout: 'reflowable',
+      nativeTextPages: 1,
+      ocrPages: 0,
+      scannedPages: 0,
+      visualPages: 1,
+      blankPages: 0,
+      repeatedMarginLines: [],
+      qualityScore: 96,
+    };
+    const result = await buildEpubFromPdf({
+      sourceBytes: new Uint8Array([37, 80, 68, 70]),
+      analysis,
+      sections: analysis.sections,
+      title: analysis.title,
+      author: analysis.author,
+      options,
+    });
+    expect(result.validation.stats.fatalCount).toBe(0);
+    expect(result.validation.stats.errorCount).toBe(0);
+    const zip = await JSZip.loadAsync(result.bytes);
+    expect(zip.file('OEBPS/Images/visual-page-0002.jpg')).not.toBeNull();
+    expect(await zip.file('OEBPS/nav.xhtml')!.async('string')).toContain('Página visual 2');
+    const outputDir = process.env.EPUBCHECK_FIXTURE_OUTPUT;
+    if (outputDir) {
+      await mkdir(outputDir, { recursive: true });
+      await writeFile(join(outputDir, 'converter-reflowable.epub'), Buffer.from(result.bytes));
+    }
+  });
+
   for(const profile of ['reflowable','fixed-layout'] as const) {
     it('E-076: exporta EPUB reparado para Calibre ebook-viewer ' + profile,
       async()=>{

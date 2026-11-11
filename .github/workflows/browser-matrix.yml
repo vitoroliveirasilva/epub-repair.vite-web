@@ -2,13 +2,14 @@ name: Browser compatibility smoke (Chromium, Firefox, WebKit)
 
 on:
   push:
-    branches: [prod]
+    branches: [prod, dev]
     paths:
       - 'src/**'
       - 'tests/browser-smoke.mjs'
       - 'tests/browser-csp.mjs'
       - 'tests/browser-resource-budget.mjs'
       - 'tests/browser-large-workflow.mjs'
+      - 'tests/browser-converter.mjs'
       - 'netlify.toml'
       - 'src/epub/repair/repairImages.ts'
       - 'vite.config.ts'
@@ -24,6 +25,7 @@ on:
       - 'tests/browser-csp.mjs'
       - 'tests/browser-resource-budget.mjs'
       - 'tests/browser-large-workflow.mjs'
+      - 'tests/browser-converter.mjs'
       - 'netlify.toml'
       - 'src/epub/repair/repairImages.ts'
       - 'vite.config.ts'
@@ -42,7 +44,7 @@ concurrency:
 jobs:
   browser:
 
-    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    if: (github.event_name != 'pull_request' || !github.event.pull_request.draft) && (github.event_name != 'push' || github.ref != 'refs/heads/dev' || contains(github.event.head_commit.message, '[browser]'))
     name: Browser smoke / ${{ matrix.browser }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -92,6 +94,8 @@ jobs:
           done
           curl --fail http://127.0.0.1:5173/ > /dev/null
           node tests/browser-smoke.mjs
+
+          node tests/browser-converter.mjs
 
 
           node tests/browser-large-workflow.mjs

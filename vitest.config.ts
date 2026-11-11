@@ -41,6 +41,7 @@ idempotenceProperties99
 imageAndAccessibility99
 imageMetadata99
 imageMetadataIntegration99
+incompleteEpubRegression
 internalAnchorsRegression99
 manifestContentProperties99
 manifestDependenciesRegression99
@@ -63,6 +64,7 @@ opfRepairRegression99
 orphanActiveContent99
 orphanAndBinaryRegression99
 packageSemantics99
+pdfConverterEpub
 performanceBudget99
 post99-coverNavigation
 post99-hardening

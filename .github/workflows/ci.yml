@@ -73,7 +73,7 @@ jobs:
   epubcheck:
 
 
-    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/prod' || (github.event_name == 'pull_request' && github.base_ref == 'prod' && !github.event.pull_request.draft)
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/prod' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[epubcheck]')) || (github.event_name == 'pull_request' && github.base_ref == 'prod' && !github.event.pull_request.draft)
     name: EPUBCheck 5.4.0 / EPUB reparado
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -195,6 +195,10 @@ jobs:
             java -jar "$epubcheck_jar" "$specimen"
           done
 
+          converter="${RUNNER_TEMP}/epub-fixtures/converter-reflowable.epub"
+          test -s "$converter"
+          java -jar "$epubcheck_jar" "$converter"
+
       - name: Publicar EPUBs sintéticos para homologação manual em iOS e Android
         if: success()
         uses: actions/upload-artifact@v4
@@ -206,5 +210,6 @@ jobs:
             ${{ runner.temp }}/epub-fixtures/repaired-valid-ncx-hierarchy.epub
             ${{ runner.temp }}/epub-fixtures/visual-reflowable.epub
             ${{ runner.temp }}/epub-fixtures/visual-fixed-layout.epub
+            ${{ runner.temp }}/epub-fixtures/converter-reflowable.epub
           if-no-files-found: error
           retention-days: 14

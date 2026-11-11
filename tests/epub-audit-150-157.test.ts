@@ -163,7 +163,7 @@ describe('Sétima auditoria E-150 a E-157', () => {
         expect(triggerSection).toContain('pull_request:');
         expect(triggerSection).toContain('types: [opened, reopened, synchronize, ready_for_review]');
         expect(triggerSection).toContain('branches: [prod]');
-        expect(source).toContain("if: github.event_name != 'pull_request' || !github.event.pull_request.draft");
+        expect(source).toContain("github.event_name != 'pull_request' || !github.event.pull_request.draft");
       } else {
         expect(triggerSection).not.toContain('pull_request:');
         expect(triggerSection).not.toContain('push:');
@@ -176,6 +176,8 @@ describe('Sétima auditoria E-150 a E-157', () => {
     expect(ci).toContain("github.event_name != 'pull_request' || !github.event.pull_request.draft");
     expect(ci).toContain("github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/prod'");
     expect(ci).toContain("github.base_ref == 'prod' && !github.event.pull_request.draft");
+    expect(read('browser-matrix')).toContain("contains(github.event.head_commit.message, '[browser]')");
+    expect(ci).toContain("contains(github.event.head_commit.message, '[epubcheck]')");
     const preview=read('netlify-live-preview');
     expect(preview).toContain('types: [opened, reopened, ready_for_review]');
     const supply=read('supply-chain');

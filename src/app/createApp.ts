@@ -302,13 +302,14 @@ function renderAppHeader(): HTMLElement {
     children: [
       el('a', {
         className: 'brand-mark',
-        attrs: { href: '#top', 'aria-label': 'EPUB Repair, início' },
+        attrs: { href: '/', 'aria-label': 'EPUB Repair, início' },
         children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })],
       }),
       el('nav', {
         className: 'header-nav',
         attrs: { 'aria-label': 'Navegação principal' },
         children: [
+          el('a', { text: 'Converter PDF', attrs: { href: '/converter' } }),
           el('a', { text: 'Como funciona', attrs: { href: '#privacy' } }),
           el('a', { text: 'Limitações', attrs: { href: '#limitations' } }),
           el('a', { text: 'Relatório', attrs: { href: '#app-workspace' } }),
@@ -353,8 +354,8 @@ function renderHero(report: AppState['report']): HTMLElement {
               }),
               el('a', {
                 className: 'btn btn-ghost btn-large',
-                text: 'Ver privacidade',
-                attrs: { href: '#privacy' },
+                text: 'Converter PDF em EPUB',
+                attrs: { href: '/converter' },
               }),
             ],
           }),
@@ -508,6 +509,7 @@ function renderFooter(): HTMLElement {
                 'https://github.com/vitoroliveirasilva/epub-repair.vite-web',
                 true,
               ),
+              renderFooterLink('Converter PDF', '/converter', false),
               renderFooterLink('Desenvolvedor', 'https://github.com/vitoroliveirasilva', true),
             ],
           }),
