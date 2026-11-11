@@ -25,30 +25,40 @@ const SENTENCE_END = /[.!?…:;”’»)]$/u;
 const STRONG_SENTENCE_END = /[.!?…][”’»)]?$/u;
 const LOWERCASE_START = /^\p{Ll}/u;
 const LETTER = /\p{L}/u;
+const CHAPTER_NUMBER = /^\s*(\d{1,3})[.)]?(?:\s+|$)/u;
+const EDITORIAL_HEADING = /^(?:sum[aá]rio|contents|pref[aá]cio(?:\s+.+)?|foreword|apêndice|appendix|[ií]ndice(?:\s+remissivo)?|index)$/iu;
+const SENTENCE_LIKE = /(?:[,;:]|\b(?:que|de|da|do|das|dos|para|por|com|como|e|ou|the|of|to|and|with)\s*)$/iu;
 
 export function reconstructDocument(
   pages: PdfPageAnalysis[],
   options: ConverterOptions,
   documentTitle: string,
 ): ReconstructedDocument {
+  const trailingNavigationStart = detectTrailingNavigationStart(pages);
+  const contentPages = trailingNavigationStart >= 0 ? pages.slice(0, trailingNavigationStart) : pages;
   const repeatedMarginLines = options.removeRepeatedMargins
-    ? detectRepeatedMarginLines(pages)
+    ? detectRepeatedMarginLines(contentPages)
     : [];
   const repeated = new Set(repeatedMarginLines.map(normalizeMarginKey));
   const warnings: ConversionWarning[] = [];
   const blocks: Block[] = [];
+  const tocHeadings = extractTocHeadings(contentPages);
 
-  for (const page of pages) {
+  for (const page of contentPages) {
     const ordered = orderLines(page.lines, page.width, page.columnCount);
     const filtered = ordered.filter((line) => {
       const text = normalizeSpaces(line.text);
       if (!text) return false;
       const margin = line.y > page.height * 0.88 || line.y < page.height * 0.12;
       if (margin && repeated.has(normalizeMarginKey(text))) return false;
-      if (options.removePageNumbers && margin && PAGE_NUMBER.test(text)) return false;
+      const paginationMargin = line.y > page.height * 0.96 || line.y < page.height * 0.06;
+      if (options.removePageNumbers && paginationMargin && PAGE_NUMBER.test(text)) return false;
       return true;
     });
-    blocks.push(...linesToBlocks(filtered, page, options));
+    const tocPage = isTocPage(page);
+    const pageHeadings = tocPage ? new Map<number, string>() : tocHeadings;
+    const prepared = collapseKnownHeadings(filtered, pageHeadings);
+    blocks.push(...linesToBlocks(prepared, page, options, pageHeadings, tocPage));
     if (page.columnCount > 1) {
       warnings.push({
         code: 'PDF_MULTIPLE_COLUMNS',
@@ -69,7 +79,10 @@ export function reconstructDocument(
     }
   }
 
-  const sections = splitIntoSections(mergePageBoundaries(blocks, options), documentTitle);
+  const sections = splitIntoSections(
+    splitLongParagraphs(mergePageBoundaries(blocks, options)),
+    documentTitle,
+  );
   if (sections.length === 1 && pages.length >= 12) {
     warnings.push({
       code: 'PDF_CHAPTERS_NOT_DETECTED',
@@ -86,7 +99,105 @@ export function reconstructDocument(
       severity: 'info',
     });
   }
+  if (trailingNavigationStart >= 0) {
+    warnings.push({
+      code: 'PDF_TRAILING_NAVIGATION_REMOVED',
+      title: 'Lista técnica de páginas removida',
+      detail: `${pages.length - trailingNavigationStart} página(s) de navegação exportada pelo gerador do PDF foram retiradas para não duplicar o sumário no EPUB.`,
+      severity: 'info',
+    });
+  }
+  const headingCount = sections.reduce((total, section) =>
+    total + (section.html.match(/<h[12]>/gu)?.length ?? 0), 0);
+  if (headingCount > Math.max(40, sections.length * 12)) {
+    warnings.push({
+      code: 'PDF_HEADING_REVIEW_REQUIRED',
+      title: 'Hierarquia de títulos precisa de conferência',
+      detail: `${headingCount} título(s) foram identificados. A conversão preservou o texto, mas recomenda revisar a hierarquia antes de baixar.`,
+      severity: 'warning',
+    });
+  }
   return { sections, repeatedMarginLines, warnings };
+}
+
+function detectTrailingNavigationStart(pages: PdfPageAnalysis[]): number {
+  const threshold = Math.floor(pages.length * 0.65);
+  return pages.findIndex((page, index) => {
+    if (index < threshold) return false;
+    const lines = page.lines.map((line) => normalizeSpaces(line.text));
+    const chapterEntries = lines.filter((line) => /^\d{1,3}[.)]\s+\p{L}/u.test(line)).length;
+    return lines.some((line) => /^sum[aá]rio$/iu.test(line)) &&
+      lines.some((line) => /^lista\s+de\s+p[aá]ginas$/iu.test(line)) && chapterEntries >= 4;
+  });
+}
+
+function extractTocHeadings(pages: PdfPageAnalysis[]): Map<number, string> {
+  const headings = new Map<number, string>();
+  for (const page of pages.slice(0, Math.min(40, pages.length))) {
+    const lines = orderLines(page.lines, page.width, page.columnCount)
+      .map((line) => normalizeSpaces(line.text))
+      .filter(Boolean);
+    if (!lines.some((line) => /^(?:sum[aá]rio|contents)$/iu.test(line))) continue;
+    for (let index = 0; index < lines.length; index += 1) {
+      const match = lines[index]!.match(CHAPTER_NUMBER);
+      if (!match) continue;
+      const ordinal = Number(match[1]);
+      if (!Number.isInteger(ordinal) || ordinal < 1 || ordinal > 150) continue;
+      const initial = lines[index]!.replace(CHAPTER_NUMBER, '').trim();
+      const pieces = initial ? [initial] : [];
+      for (let cursor = index + 1; cursor < lines.length && pieces.length < 3; cursor += 1) {
+        const candidate = lines[cursor]!;
+        if (CHAPTER_NUMBER.test(candidate) || EDITORIAL_HEADING.test(candidate)) break;
+        pieces.push(candidate);
+        if (STRONG_SENTENCE_END.test(candidate)) break;
+      }
+      const title = normalizeSpaces(pieces.join(' '));
+      if (title.length >= 4 && title.length <= 220) headings.set(ordinal, title);
+    }
+    if (headings.size >= 3) return headings;
+    headings.clear();
+  }
+  return headings;
+}
+
+function isTocPage(page: PdfPageAnalysis): boolean {
+  return page.lines.some((line) => /^(?:sum[aá]rio|contents)$/iu.test(normalizeSpaces(line.text))) &&
+    page.lines.filter((line) => CHAPTER_NUMBER.test(normalizeSpaces(line.text))).length >= 3;
+}
+
+function collapseKnownHeadings(lines: PdfLine[], headings: Map<number, string>): PdfLine[] {
+  if (headings.size === 0) return lines;
+  const output: PdfLine[] = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index]!;
+    const ordinalMatch = normalizeSpaces(line.text).match(/^\s*(\d{1,3})[.)]?\s*$/u);
+    if (ordinalMatch) {
+      const ordinal = Number(ordinalMatch[1]);
+      const expected = headings.get(ordinal);
+      if (expected) {
+        for (let length = 1; length <= 3 && index + length < lines.length; length += 1) {
+          const candidates = lines.slice(index + 1, index + length + 1);
+          const combined = normalizeSpaces(candidates.map((candidate) => candidate.text).join(' '));
+          if (normalizeComparable(combined) === normalizeComparable(expected)) {
+            const right = Math.max(line.x + line.width,
+              ...candidates.map((candidate) => candidate.x + candidate.width));
+            output.push({
+              ...line,
+              text: `${ordinal}. ${expected}`,
+              x: Math.min(line.x, ...candidates.map((candidate) => candidate.x)),
+              width: right - Math.min(line.x, ...candidates.map((candidate) => candidate.x)),
+              fontSize: Math.max(line.fontSize, ...candidates.map((candidate) => candidate.fontSize)),
+            });
+            index += length;
+            break;
+          }
+        }
+        if (output.at(-1)?.text === `${ordinal}. ${expected}`) continue;
+      }
+    }
+    output.push(line);
+  }
+  return output;
 }
 
 export function detectColumnCount(lines: PdfLine[], pageWidth: number): number {
@@ -135,6 +246,8 @@ function linesToBlocks(
   lines: PdfLine[],
   page: PdfPageAnalysis,
   options: ConverterOptions,
+  tocHeadings: Map<number, string>,
+  tocPage: boolean,
 ): Block[] {
   if (lines.length === 0) return [];
   const sizes = lines.map((line) => line.fontSize).filter((size) => size > 0).sort((a, b) => a - b);
@@ -145,6 +258,7 @@ function linesToBlocks(
     .sort((a, b) => a - b);
   const bodyLeft = bodyLeftCandidates[Math.floor(bodyLeftCandidates.length * 0.15)]
     ?? Math.min(...lines.map((line) => line.x));
+  const typicalGap = typicalLineGap(lines, median);
   const blocks: Block[] = [];
   let paragraph = '';
   let previous: PdfLine | undefined;
@@ -155,14 +269,19 @@ function linesToBlocks(
     paragraph = '';
   };
 
-  for (const line of lines) {
+  for (const [index, line] of lines.entries()) {
     let text = normalizeSpaces(line.text);
     if (!text) continue;
     const short = text.length <= 140;
-    const large = line.fontSize >= median * 1.24;
-    const headingPattern = CHAPTER_HEADING.test(text);
     const standaloneHeading = looksLikeStandaloneHeading(text, line, page);
-    const heading = short && (headingPattern || large || standaloneHeading);
+    const headingPattern = CHAPTER_HEADING.test(text) &&
+      (EDITORIAL_HEADING.test(text) || line.fontSize >= median * 1.3 || standaloneHeading);
+    const knownHeading = isKnownHeading(text, tocHeadings);
+    const editorialHeading = EDITORIAL_HEADING.test(text) && (!tocPage || /^(?:sum[aá]rio|contents)$/iu.test(text));
+    const subheading = looksLikeSubheading(text, line, lines[index - 1], lines[index + 1], page, median);
+    const heading = tocPage
+      ? /^(?:sum[aá]rio|contents)$/iu.test(text)
+      : short && (headingPattern || knownHeading || editorialHeading || standaloneHeading || subheading);
     const footnote = line.fontSize <= median * 0.78 && line.y < page.height * 0.32;
 
     if (heading) {
@@ -172,8 +291,7 @@ function linesToBlocks(
         kind: 'heading',
         text,
         sourcePages: [page.pageNumber],
-        level: headingPattern || (standaloneHeading && line.fontSize >= median * 1.55 &&
-          text.trim().split(/\s+/u).length >= 2) ? 1 : 2,
+        level: headingPattern || knownHeading || editorialHeading ? 1 : 2,
       });
       previous = line;
       continue;
@@ -191,14 +309,62 @@ function linesToBlocks(
     }
 
     const verticalGap = previous ? previous.y - line.y : 0;
-    const paragraphGap = previous && verticalGap > Math.max(previous.fontSize, line.fontSize) * 2.05;
-    const indented = previous && line.x < page.width * 0.4 && line.x - bodyLeft > median * 0.68;
-    if (paragraph && (paragraphGap || (indented && SENTENCE_END.test(paragraph)))) flush();
+    const paragraphGap = previous && verticalGap > typicalGap * 1.18;
+    const indented = previous && line.x < page.width * 0.45 && line.x - bodyLeft > Math.max(5, median * 0.52);
+    const wordCount = paragraph.split(/\s+/u).filter(Boolean).length;
+    const readableBoundary = previous && STRONG_SENTENCE_END.test(paragraph) && /^\p{Lu}/u.test(text);
+    const safetyBoundary = wordCount >= 120 && readableBoundary;
+    const listBoundary = /^[•▪◦‣–—*-]\s+|^\d{1,3}[.)]\s+/u.test(text);
+    if (paragraph && (paragraphGap || (indented && SENTENCE_END.test(paragraph)) || safetyBoundary || listBoundary)) flush();
     paragraph = joinLine(paragraph, text, options.dehyphenate);
     previous = line;
   }
   flush();
   return blocks;
+}
+
+function typicalLineGap(lines: PdfLine[], medianFontSize: number): number {
+  const gaps: number[] = [];
+  for (let index = 1; index < lines.length; index += 1) {
+    const previous = lines[index - 1]!;
+    const current = lines[index]!;
+    const ratio = Math.max(previous.fontSize, current.fontSize) /
+      Math.max(1, Math.min(previous.fontSize, current.fontSize));
+    const gap = previous.y - current.y;
+    if (ratio <= 1.15 && gap >= medianFontSize * 0.7 && gap <= medianFontSize * 3.5) gaps.push(gap);
+  }
+  if (gaps.length === 0) return medianFontSize * 1.7;
+  gaps.sort((left, right) => left - right);
+  return gaps[Math.floor(gaps.length / 2)] ?? medianFontSize * 1.7;
+}
+
+function isKnownHeading(text: string, headings: Map<number, string>): boolean {
+  const numbered = text.match(CHAPTER_NUMBER);
+  if (numbered) {
+    const expected = headings.get(Number(numbered[1]));
+    if (expected && normalizeComparable(text.replace(CHAPTER_NUMBER, '')) === normalizeComparable(expected)) return true;
+  }
+  const comparable = normalizeComparable(text);
+  return [...headings.values()].some((heading) => normalizeComparable(heading) === comparable);
+}
+
+function looksLikeSubheading(
+  text: string,
+  line: PdfLine,
+  previous: PdfLine | undefined,
+  next: PdfLine | undefined,
+  page: PdfPageAnalysis,
+  median: number,
+): boolean {
+  const words = text.split(/\s+/u).filter(Boolean);
+  if (words.length === 0 || words.length > 16 || text.length > 120) return false;
+  if (!/^[\p{Lu}\d“‘«]/u.test(text) || /[.!?…][”’»)]?$/u.test(text) || SENTENCE_LIKE.test(text)) return false;
+  if (line.fontSize < median * 1.34) return false;
+  const centered = Math.abs((line.x + line.width / 2) - page.width / 2) < page.width * 0.12;
+  const gapBefore = previous ? previous.y - line.y : Number.POSITIVE_INFINITY;
+  const gapAfter = next ? line.y - next.y : Number.POSITIVE_INFINITY;
+  const isolated = gapBefore > line.fontSize * 1.38 || gapAfter > line.fontSize * 1.38;
+  return centered || isolated;
 }
 
 function looksLikeStandaloneHeading(text: string, line: PdfLine, page: PdfPageAnalysis): boolean {
@@ -240,6 +406,33 @@ function mergePageBoundaries(blocks: Block[], options: ConverterOptions): Block[
   return merged;
 }
 
+function splitLongParagraphs(blocks: Block[]): Block[] {
+  return blocks.flatMap((block) => {
+    if (block.kind !== 'paragraph' || wordCount(block.text) <= 180) return [block];
+    const sentences = block.text.match(/[^.!?…]+(?:[.!?…]+[”’»)]*|$)/gu)
+      ?.map((sentence) => normalizeSpaces(sentence))
+      .filter(Boolean) ?? [block.text];
+    if (sentences.length < 2) return [block];
+    const chunks: string[] = [];
+    let current = '';
+    for (const sentence of sentences) {
+      const candidate = normalizeSpaces(`${current} ${sentence}`);
+      if (current && wordCount(candidate) > 160 && wordCount(current) >= 70) {
+        chunks.push(current);
+        current = sentence;
+      } else {
+        current = candidate;
+      }
+    }
+    if (current) chunks.push(current);
+    return chunks.map((text) => ({ ...block, text, sourcePages: [...block.sourcePages] }));
+  });
+}
+
+function wordCount(value: string): number {
+  return value.split(/\s+/u).filter(Boolean).length;
+}
+
 function splitIntoSections(blocks: Block[], documentTitle: string): EditableSection[] {
   const sections: EditableSection[] = [];
   let title = documentTitle || 'Conteúdo';
@@ -249,11 +442,12 @@ function splitIntoSections(blocks: Block[], documentTitle: string): EditableSect
   const flush = (sectionTitle?: string): void => {
     if (current.length === 0) return;
     const sourcePages = [...new Set(current.flatMap((block) => block.sourcePages))];
-    const html = current.map(blockToHtml).join('\n');
+    const html = blocksToHtml(current);
     const plainText = current.map((block) => block.text).join('\n\n');
+    const resolvedTitle = sectionTitle || inferSectionTitle(current, title, documentTitle, sections.length);
     sections.push({
       id: `section-${String(sections.length + 1).padStart(3, '0')}`,
-      title: sectionTitle || title || `Seção ${sections.length + 1}`,
+      title: resolvedTitle,
       html,
       plainText,
       sourcePages,
@@ -265,8 +459,7 @@ function splitIntoSections(blocks: Block[], documentTitle: string): EditableSect
     const previousPage = current.at(-1)?.sourcePages.at(-1);
     const blockPage = block.sourcePages[0];
     if (index <= firstMajorHeading && current.length > 0 && previousPage !== blockPage) {
-      flush(frontMatterTitle(current, documentTitle, sections.length));
-      title = `Seção editorial ${sections.length + 1}`;
+      flush();
     }
     if (block.kind === 'heading' && block.level === 2 &&
       normalizeComparable(block.text) === normalizeComparable(documentTitle)) {
@@ -291,15 +484,54 @@ function splitIntoSections(blocks: Block[], documentTitle: string): EditableSect
       sourcePages: [],
     });
   }
-  return sections;
+  return mergeAdjacentSections(sections);
 }
 
-function frontMatterTitle(blocks: Block[], documentTitle: string, sectionIndex: number): string {
+function mergeAdjacentSections(sections: EditableSection[]): EditableSection[] {
+  const merged: EditableSection[] = [];
+  for (const section of sections) {
+    const previous = merged.at(-1);
+    if (previous && normalizeComparable(previous.title) === normalizeComparable(section.title)) {
+      previous.html = `${previous.html}\n${section.html}`;
+      previous.plainText = `${previous.plainText}\n\n${section.plainText}`;
+      previous.sourcePages = [...new Set([...previous.sourcePages, ...section.sourcePages])];
+      continue;
+    }
+    merged.push({ ...section, sourcePages: [...section.sourcePages] });
+  }
+  return merged.map((section, index) => ({
+    ...section,
+    id: `section-${String(index + 1).padStart(3, '0')}`,
+  }));
+}
+
+function inferSectionTitle(
+  blocks: Block[],
+  currentTitle: string,
+  documentTitle: string,
+  sectionIndex: number,
+): string {
+  const firstMajor = blocks.find((block) => block.kind === 'heading' && block.level === 1);
+  if (firstMajor) return firstMajor.text;
   const text = blocks.map((block) => block.text).join(' ').toLocaleLowerCase();
   if (/isbn|copyright|todos os direitos|cataloga[cç][aã]o/u.test(text)) return 'Créditos editoriais';
-  if (/editora|www\.|https?:|@/u.test(text)) return 'Editora';
   if (text.length < 650 && sectionIndex > 0) return 'Dedicatória';
-  return sectionIndex === 0 ? documentTitle : `Seção editorial ${sectionIndex + 1}`;
+  if (sectionIndex === 0) return documentTitle || currentTitle || 'Conteúdo';
+  return currentTitle || `Seção ${sectionIndex + 1}`;
+}
+
+function blocksToHtml(blocks: Block[]): string {
+  const output: string[] = [];
+  let page = -1;
+  for (const block of blocks) {
+    const sourcePage = block.sourcePages[0] ?? page;
+    if (sourcePage !== page && sourcePage > 0) {
+      output.push(`<span id="page-${sourcePage}" class="pagebreak" epub:type="pagebreak" title="${sourcePage}"></span>`);
+      page = sourcePage;
+    }
+    output.push(blockToHtml(block));
+  }
+  return output.join('\n');
 }
 
 function normalizeComparable(value: string): string {

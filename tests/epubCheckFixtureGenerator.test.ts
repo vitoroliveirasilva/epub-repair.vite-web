@@ -337,7 +337,8 @@ describe('Fixture sintética de conformidade oficial', () => {
     expect(result.validation.stats.errorCount).toBe(0);
     const zip = await JSZip.loadAsync(result.bytes);
     expect(zip.file('OEBPS/Images/visual-page-0002.jpg')).not.toBeNull();
-    expect(await zip.file('OEBPS/nav.xhtml')!.async('string')).toContain('Página visual 2');
+    expect(await zip.file('OEBPS/nav.xhtml')!.async('string')).not.toContain('Página visual 2');
+    expect(await zip.file('OEBPS/Text/section-001.xhtml')!.async('string')).toContain('visual-page-0002.jpg');
     const outputDir = process.env.EPUBCHECK_FIXTURE_OUTPUT;
     if (outputDir) {
       await mkdir(outputDir, { recursive: true });

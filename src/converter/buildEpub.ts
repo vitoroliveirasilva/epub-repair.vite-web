@@ -161,7 +161,7 @@ function prepareReflowableSections(input: BuildEpubInput): ReflowableSection[] {
   const visualPages = input.analysis.pages.filter((page) =>
     page.pageNumber > 1 && page.preserveAsImage && Boolean(page.previewDataUrl));
   for (const page of visualPages) {
-    const target = sections.find((section) => section.sourcePages.includes(page.pageNumber));
+    const target = findVisualPageSection(sections, page.pageNumber);
     if (target) {
       target.visualPages.push(page);
       continue;
@@ -177,6 +177,26 @@ function prepareReflowableSections(input: BuildEpubInput): ReflowableSection[] {
   }
   return sections.sort((a, b) =>
     (a.sourcePages[0] ?? Number.MAX_SAFE_INTEGER) - (b.sourcePages[0] ?? Number.MAX_SAFE_INTEGER));
+}
+
+function findVisualPageSection(
+  sections: ReflowableSection[],
+  pageNumber: number,
+): ReflowableSection | undefined {
+  const exact = sections.find((section) => section.sourcePages.includes(pageNumber));
+  if (exact) return exact;
+  const containing = sections.find((section) => {
+    const pages = section.sourcePages;
+    return pages.length > 0 && pageNumber >= Math.min(...pages) && pageNumber <= Math.max(...pages);
+  });
+  if (containing) return containing;
+  return [...sections]
+    .filter((section) => section.sourcePages.length > 0)
+    .sort((left, right) => {
+      const leftDistance = Math.min(...left.sourcePages.map((page) => Math.abs(page - pageNumber)));
+      const rightDistance = Math.min(...right.sourcePages.map((page) => Math.abs(page - pageNumber)));
+      return leftDistance - rightDistance;
+    })[0];
 }
 
 async function addFixedLayout(
@@ -313,9 +333,29 @@ function fixedOpf(input: {
 }
 
 function sectionXhtml(section: ReflowableSection, bookTitle: string, language: string): string {
-  const visualPages = section.visualPages.map((page) => visualPageFigure(page)).join('\n');
+  const content = integrateVisualPages(section.html, section.visualPages);
   return xhtml(language, section.title || bookTitle,
-    `<main epub:type="bodymatter">${visualPages}${section.html}</main>`, '../Styles/book.css');
+    `<main epub:type="bodymatter">${content}</main>`, '../Styles/book.css');
+}
+
+function integrateVisualPages(html: string, pages: PdfPageAnalysis[]): string {
+  let output = html;
+  for (const page of [...pages].sort((left, right) => left.pageNumber - right.pageNumber)) {
+    const figure = visualPageFigure(page);
+    const exact = new RegExp(`(<span id="page-${page.pageNumber}"[^>]*><\\/span>)([\\s\\S]*?)(?=<span id="page-\\d+"|$)`, 'u');
+    if (exact.test(output)) {
+      output = output.replace(exact, `$1\n${figure}\n`);
+      continue;
+    }
+    const markers = [...output.matchAll(/<span id="page-(\d+)"[^>]*><\/span>/gu)];
+    const next = markers.find((marker) => Number(marker[1]) > page.pageNumber);
+    if (next?.index !== undefined) {
+      output = `${output.slice(0, next.index)}${figure}\n${output.slice(next.index)}`;
+    } else {
+      output = `${output}\n${figure}`;
+    }
+  }
+  return output;
 }
 
 function visualPageFigure(page: PdfPageAnalysis): string {
@@ -324,7 +364,10 @@ function visualPageFigure(page: PdfPageAnalysis): string {
   const imageAttributes = hasTranscript
     ? 'alt="" role="presentation"'
     : `alt="Página visual ${page.pageNumber} preservada do PDF"`;
-  return `<figure class="visual-page" id="page-${page.pageNumber}" epub:type="pagebreak" title="${page.pageNumber}"><img src="../Images/visual-page-${number}.jpg" ${imageAttributes}/>${hasTranscript ? `<figcaption>Conteúdo visual preservado da página ${page.pageNumber}</figcaption>` : ''}</figure>`;
+  const transcript = hasTranscript
+    ? `<div class="visual-transcript">${escapeXml(page.text).split(/\n+/u).filter(Boolean).map((line) => `<p>${line}</p>`).join('')}</div>`
+    : '';
+  return `<figure class="visual-page"><img src="../Images/visual-page-${number}.jpg" ${imageAttributes}/><figcaption>Conteúdo visual preservado da página ${page.pageNumber}</figcaption>${transcript}</figure>`;
 }
 
 function coverXhtml(title: string, language: string): string {
@@ -411,7 +454,9 @@ h1 + p, h2 + p, aside + p { text-indent: 0; }
 .cover img { display: block; width: auto; max-width: 100%; max-height: 90vh; margin: auto; }
 .visual-page { margin: 1.5em auto; break-before: page; text-align: center; }
 .visual-page img { display: block; width: auto; max-width: 100%; max-height: 90vh; margin: auto; }
-.visual-page figcaption { margin-top: .5em; font-size: .8em; font-style: italic; text-indent: 0; }`;
+.visual-page figcaption { margin-top: .5em; font-size: .8em; font-style: italic; text-indent: 0; }
+.pagebreak { display: block; height: 0; margin: 0; }
+.visual-transcript { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }`;
 }
 
 function publicationMetadataXml(metadata: PublicationMetadata): string {
