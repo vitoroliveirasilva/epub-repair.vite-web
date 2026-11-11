@@ -9,6 +9,7 @@ on:
       - 'tests/browser-csp.mjs'
       - 'tests/browser-resource-budget.mjs'
       - 'tests/browser-large-workflow.mjs'
+      - 'tests/browser-converter.mjs'
       - 'netlify.toml'
       - 'src/epub/repair/repairImages.ts'
       - 'vite.config.ts'
@@ -24,6 +25,7 @@ on:
       - 'tests/browser-csp.mjs'
       - 'tests/browser-resource-budget.mjs'
       - 'tests/browser-large-workflow.mjs'
+      - 'tests/browser-converter.mjs'
       - 'netlify.toml'
       - 'src/epub/repair/repairImages.ts'
       - 'vite.config.ts'
@@ -92,6 +94,8 @@ jobs:
           done
           curl --fail http://127.0.0.1:5173/ > /dev/null
           node tests/browser-smoke.mjs
+
+          node tests/browser-converter.mjs
 
 
           node tests/browser-large-workflow.mjs

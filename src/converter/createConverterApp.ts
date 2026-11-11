@@ -288,6 +288,8 @@ function renderOverview(state: ConverterState): HTMLElement {
         metric(String(analysis.sections.length), 'Seções'),
         metric(String(analysis.nativeTextPages), 'Com texto'),
         metric(String(analysis.ocrPages), 'Com OCR'),
+        metric(String(analysis.visualPages), 'Visuais'),
+        metric(String(analysis.blankPages), 'Em branco'),
         metric(analysis.suggestedLayout === 'reflowable' ? 'Ajustável' : 'Visual', 'Recomendação'),
       ] }),
     ],
@@ -368,6 +370,34 @@ function renderSectionEditor(state: ConverterState, rerender: () => void): HTMLE
     splitSection(state, state.selectedSection, cursor);
     rerender();
   });
+  const add = button('Adicionar seção depois', 'btn btn-secondary', () => {
+    const nextSection: EditableSection = {
+      id: `section-${crypto.randomUUID()}`,
+      title: `Nova seção ${state.selectedSection + 2}`,
+      plainText: '',
+      html: '',
+      sourcePages: [...section.sourcePages],
+    };
+    state.sections.splice(state.selectedSection + 1, 0, nextSection);
+    state.selectedSection += 1;
+    state.result = undefined;
+    rerender();
+  });
+  const moveUp = button('Mover para cima', 'btn btn-ghost', () => {
+    moveSection(state, state.selectedSection, -1);
+    rerender();
+  });
+  moveUp.disabled = state.selectedSection === 0;
+  const moveDown = button('Mover para baixo', 'btn btn-ghost', () => {
+    moveSection(state, state.selectedSection, 1);
+    rerender();
+  });
+  moveDown.disabled = state.selectedSection >= state.sections.length - 1;
+  const merge = button('Unir à seção anterior', 'btn btn-ghost', () => {
+    mergeWithPrevious(state, state.selectedSection);
+    rerender();
+  });
+  merge.disabled = state.selectedSection === 0;
   const remove = button('Remover seção vazia', 'btn btn-ghost', () => {
     if (section.plainText.trim()) return;
     state.sections.splice(state.selectedSection, 1);
@@ -385,7 +415,10 @@ function renderSectionEditor(state: ConverterState, rerender: () => void): HTMLE
       ] }),
       title,
       el('label', { className: 'converter-field', children: [el('span', { text: 'Conteúdo da seção' }), text] }),
-      el('div', { className: 'converter-editor-actions', children: [previous, next, split, remove] }),
+      el('div', {
+        className: 'converter-editor-actions',
+        children: [previous, next, split, add, moveUp, moveDown, merge, remove],
+      }),
     ],
   });
 }
@@ -510,12 +543,17 @@ async function loadAndAnalyze(file: File, state: ConverterState, rerender: () =>
     return;
   }
   const bytes = new Uint8Array(await file.arrayBuffer());
+  if (!isPdfSignature(bytes)) {
+    state.error = 'O arquivo não possui uma assinatura PDF válida.';
+    rerender();
+    return;
+  }
   state.file = file;
   state.bytes = bytes;
   state.analysis = undefined;
   state.sections = [];
   state.result = undefined;
-  state.title = file.name.replace(/\.pdf$/iu, '');
+  state.title = '';
   state.author = '';
   state.selectedPage = 1;
   state.selectedSection = 0;
@@ -525,6 +563,7 @@ async function loadAndAnalyze(file: File, state: ConverterState, rerender: () =>
 async function analyzeCurrent(state: ConverterState, rerender: () => void): Promise<void> {
   if (!state.file || !state.bytes) return;
   await runTask(state, rerender, async (signal) => {
+    const renderProgress = createProgressRenderer(rerender);
     state.progress = 'Abrindo PDF localmente';
     state.progressValue = 0;
     const analysis = await analyzePdf({
@@ -535,7 +574,7 @@ async function analyzeCurrent(state: ConverterState, rerender: () => void): Prom
       onProgress: (progress) => {
         state.progress = progress.phase;
         state.progressValue = Math.round((progress.completed / Math.max(1, progress.total)) * 100);
-        rerender();
+        renderProgress();
       },
     });
     state.analysis = analysis;
@@ -552,6 +591,7 @@ async function analyzeCurrent(state: ConverterState, rerender: () => void): Prom
 async function convertCurrent(state: ConverterState, rerender: () => void): Promise<void> {
   if (!state.analysis || !state.bytes) return;
   await runTask(state, rerender, async (signal) => {
+    const renderProgress = createProgressRenderer(rerender);
     state.progress = 'Preparando EPUB';
     state.progressValue = undefined;
     const result = await buildEpubFromPdf({
@@ -567,7 +607,7 @@ async function convertCurrent(state: ConverterState, rerender: () => void): Prom
         state.progressValue = completed !== undefined && total
           ? Math.round((completed / total) * 100)
           : undefined;
-        rerender();
+        renderProgress();
       },
     });
     state.result = result;
@@ -637,6 +677,47 @@ function splitSection(state: ConverterState, index: number, cursor: number): voi
   state.sections.splice(index + 1, 0, next);
   state.selectedSection = index + 1;
   state.result = undefined;
+}
+
+function moveSection(state: ConverterState, index: number, direction: -1 | 1): void {
+  const target = index + direction;
+  if (target < 0 || target >= state.sections.length) return;
+  const current = state.sections[index];
+  const other = state.sections[target];
+  if (!current || !other) return;
+  state.sections[index] = other;
+  state.sections[target] = current;
+  state.selectedSection = target;
+  state.result = undefined;
+}
+
+function mergeWithPrevious(state: ConverterState, index: number): void {
+  if (index <= 0) return;
+  const previous = state.sections[index - 1];
+  const current = state.sections[index];
+  if (!previous || !current) return;
+  previous.plainText = [previous.plainText.trim(), current.plainText.trim()].filter(Boolean).join('\n\n');
+  previous.html = plainTextToHtml(previous.plainText);
+  previous.sourcePages = [...new Set([...previous.sourcePages, ...current.sourcePages])].sort((a, b) => a - b);
+  state.sections.splice(index, 1);
+  state.selectedSection = index - 1;
+  state.result = undefined;
+}
+
+function createProgressRenderer(rerender: () => void): () => void {
+  let scheduled = false;
+  return () => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      rerender();
+    });
+  };
+}
+
+function isPdfSignature(bytes: Uint8Array): boolean {
+  return bytes.length >= 5 && String.fromCharCode(...bytes.subarray(0, 5)) === '%PDF-';
 }
 
 function plainTextToHtml(value: string): string {

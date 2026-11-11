@@ -11,6 +11,7 @@ import type {
   ConverterOptions,
   EditableSection,
   PdfAnalysisResult,
+  PdfPageAnalysis,
 } from './model';
 import { renderPdfPages } from './pdfEngine';
 
@@ -23,6 +24,10 @@ interface BuildEpubInput {
   options: ConverterOptions;
   signal?: AbortSignal | undefined;
   onProgress?: ((phase: string, completed?: number, total?: number) => void) | undefined;
+}
+
+interface ReflowableSection extends EditableSection {
+  visualPages: PdfPageAnalysis[];
 }
 
 export async function buildEpubFromPdf(input: BuildEpubInput): Promise<ConversionResult> {
@@ -99,9 +104,18 @@ function addReflowableLayout(
   identifier: string,
   modified: string,
 ): void {
-  const sections = input.sections.length > 0 ? input.sections : input.analysis.sections;
-  const cover = dataUrlToBytes(input.analysis.pages[0]?.previewDataUrl);
+  const sections = prepareReflowableSections(input);
+  const firstPage = input.analysis.pages[0];
+  const cover = firstPage && (firstPage.kind === 'cover' || firstPage.imageCount > 0)
+    ? dataUrlToBytes(firstPage.previewDataUrl)
+    : undefined;
   if (cover) zip.file('OEBPS/Images/cover.jpg', cover);
+  const visualPages = sections.flatMap((section) => section.visualPages)
+    .filter((page, index, pages) => pages.findIndex((candidate) => candidate.pageNumber === page.pageNumber) === index);
+  for (const page of visualPages) {
+    const bytes = dataUrlToBytes(page.previewDataUrl);
+    if (bytes) zip.file(`OEBPS/Images/visual-page-${String(page.pageNumber).padStart(4, '0')}.jpg`, bytes);
+  }
   zip.file('OEBPS/Styles/book.css', reflowableCss());
   if (cover) zip.file('OEBPS/Text/cover.xhtml', coverXhtml(title, input.options.language));
   for (const [index, section] of sections.entries()) {
@@ -125,7 +139,36 @@ function addReflowableLayout(
     modified,
     sections,
     hasCover: Boolean(cover),
+    visualPages,
   }));
+}
+
+function prepareReflowableSections(input: BuildEpubInput): ReflowableSection[] {
+  const source = input.sections.length > 0 ? input.sections : input.analysis.sections;
+  const sections: ReflowableSection[] = source.map((section) => ({
+    ...section,
+    sourcePages: [...section.sourcePages],
+    visualPages: [],
+  }));
+  const visualPages = input.analysis.pages.filter((page) =>
+    page.pageNumber > 1 && page.preserveAsImage && Boolean(page.previewDataUrl));
+  for (const page of visualPages) {
+    const target = sections.find((section) => section.sourcePages.includes(page.pageNumber));
+    if (target) {
+      target.visualPages.push(page);
+      continue;
+    }
+    sections.push({
+      id: `visual-page-${String(page.pageNumber).padStart(4, '0')}`,
+      title: `Página visual ${page.pageNumber}`,
+      plainText: page.text,
+      html: page.text ? `<p>${escapeXml(page.text)}</p>` : '',
+      sourcePages: [page.pageNumber],
+      visualPages: [page],
+    });
+  }
+  return sections.sort((a, b) =>
+    (a.sourcePages[0] ?? Number.MAX_SAFE_INTEGER) - (b.sourcePages[0] ?? Number.MAX_SAFE_INTEGER));
 }
 
 async function addFixedLayout(
@@ -145,7 +188,8 @@ async function addFixedLayout(
       const number = String(pageNumber).padStart(4, '0');
       zip.file(`OEBPS/Images/page-${number}.jpg`, image);
       zip.file(`OEBPS/Text/page-${number}.xhtml`, fixedPageXhtml(
-        pageNumber, width, height, title, input.options.language));
+        pageNumber, width, height, title, input.options.language,
+        input.analysis.pages[pageNumber - 1]?.text ?? ''));
       input.onProgress?.(`Renderizando página ${pageNumber} de ${pageCount}`, pageNumber, pageCount);
       return Promise.resolve();
     });
@@ -178,11 +222,14 @@ function reflowableOpf(input: {
   modified: string;
   sections: EditableSection[];
   hasCover: boolean;
+  visualPages: PdfPageAnalysis[];
 }): string {
   const manifestSections = input.sections.map((_, index) =>
     `<item id="section-${index + 1}" href="Text/section-${String(index + 1).padStart(3, '0')}.xhtml" media-type="application/xhtml+xml"/>`).join('\n    ');
   const spineSections = input.sections.map((_, index) =>
     `<itemref idref="section-${index + 1}"/>`).join('\n    ');
+  const visualImages = input.visualPages.map((page) =>
+    `<item id="visual-page-${page.pageNumber}" href="Images/visual-page-${String(page.pageNumber).padStart(4, '0')}.jpg" media-type="image/jpeg"/>`).join('\n    ');
   return xml(`
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id" prefix="rendition: http://www.idpf.org/vocab/rendition/#">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -191,11 +238,13 @@ function reflowableOpf(input: {
     ${input.author ? `<dc:creator>${escapeXml(input.author)}</dc:creator>` : ''}
     <dc:language>${escapeXml(input.language)}</dc:language>
     <meta property="dcterms:modified">${input.modified}</meta>
+    ${input.hasCover ? '<meta name="cover" content="cover-image"/>' : ''}
   </metadata>
   <manifest>
     <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
     <item id="css" href="Styles/book.css" media-type="text/css"/>
     ${input.hasCover ? '<item id="cover-image" href="Images/cover.jpg" media-type="image/jpeg" properties="cover-image"/>\n    <item id="cover-page" href="Text/cover.xhtml" media-type="application/xhtml+xml"/>' : ''}
+    ${visualImages}
     ${manifestSections}
   </manifest>
   <spine>
@@ -235,6 +284,7 @@ function fixedOpf(input: {
     <meta property="rendition:layout">pre-paginated</meta>
     <meta property="rendition:orientation">auto</meta>
     <meta property="rendition:spread">auto</meta>
+    <meta name="cover" content="image-1"/>
   </metadata>
   <manifest>
     <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
@@ -248,9 +298,19 @@ function fixedOpf(input: {
 </package>`);
 }
 
-function sectionXhtml(section: EditableSection, bookTitle: string, language: string): string {
+function sectionXhtml(section: ReflowableSection, bookTitle: string, language: string): string {
+  const visualPages = section.visualPages.map((page) => visualPageFigure(page)).join('\n');
   return xhtml(language, section.title || bookTitle,
-    `<main epub:type="bodymatter">${section.html}</main>`, '../Styles/book.css');
+    `<main epub:type="bodymatter">${visualPages}${section.html}</main>`, '../Styles/book.css');
+}
+
+function visualPageFigure(page: PdfPageAnalysis): string {
+  const number = String(page.pageNumber).padStart(4, '0');
+  const hasTranscript = page.text.trim().length > 0;
+  const imageAttributes = hasTranscript
+    ? 'alt="" role="presentation"'
+    : `alt="Página visual ${page.pageNumber} preservada do PDF"`;
+  return `<figure class="visual-page" id="page-${page.pageNumber}" epub:type="pagebreak" title="${page.pageNumber}" aria-label="Página ${page.pageNumber}"><img src="../Images/visual-page-${number}.jpg" ${imageAttributes}/>${hasTranscript ? `<figcaption>Conteúdo visual preservado da página ${page.pageNumber}</figcaption>` : ''}</figure>`;
 }
 
 function coverXhtml(title: string, language: string): string {
@@ -265,8 +325,12 @@ function fixedPageXhtml(
   height: number,
   title: string,
   language: string,
+  transcript: string,
 ): string {
   const number = String(pageNumber).padStart(4, '0');
+  const transcriptHtml = transcript.trim()
+    ? `<div class="page-transcript">${escapeXml(transcript).split(/\n+/u).filter(Boolean).map((line) => `<p>${line}</p>`).join('')}</div>`
+    : '';
   return xml(`
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="${language}" xml:lang="${language}">
   <head>
@@ -274,7 +338,7 @@ function fixedPageXhtml(
     <meta name="viewport" content="width=${width},height=${height}"/>
     <link rel="stylesheet" type="text/css" href="../Styles/fixed.css"/>
   </head>
-  <body><main class="fixed-page"><img src="../Images/page-${number}.jpg" alt="Página ${pageNumber}"/></main></body>
+  <body><main class="fixed-page" aria-label="Página ${pageNumber}"><img src="../Images/page-${number}.jpg" alt="" role="presentation"/>${transcriptHtml}</main></body>
 </html>`);
 }
 
@@ -330,13 +394,17 @@ h1 + p, h2 + p, aside + p { text-indent: 0; }
 .footnote { margin: 1.5em 0; padding-top: .75em; border-top: 1px solid #888; font-size: .85em; }
 .footnote p { text-indent: 0; }
 .cover { display: grid; min-height: 90vh; place-items: center; }
-.cover img { display: block; width: auto; max-width: 100%; max-height: 90vh; margin: auto; }`;
+.cover img { display: block; width: auto; max-width: 100%; max-height: 90vh; margin: auto; }
+.visual-page { margin: 1.5em auto; break-before: page; text-align: center; }
+.visual-page img { display: block; width: auto; max-width: 100%; max-height: 90vh; margin: auto; }
+.visual-page figcaption { margin-top: .5em; font-size: .8em; font-style: italic; text-indent: 0; }`;
 }
 
 function fixedCss(): string {
   return `html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background: #fff; }
 .fixed-page { width: 100%; height: 100%; margin: 0; }
-.fixed-page img { display: block; width: 100%; height: 100%; margin: 0; object-fit: fill; }`;
+.fixed-page img { display: block; width: 100%; height: 100%; margin: 0; object-fit: fill; }
+.page-transcript { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }`;
 }
 
 function dataUrlToBytes(dataUrl: string | undefined): Uint8Array | undefined {

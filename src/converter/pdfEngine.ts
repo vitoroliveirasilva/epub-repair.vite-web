@@ -53,7 +53,7 @@ export async function analyzePdf(input: AnalyzePdfOptions): Promise<PdfAnalysisR
       });
       const page = await document.getPage(pageNumber);
       const pageAnalysis = await analyzePage(page, pageNumber, pdfjs.OPS, pageNumber === 1);
-      const needsOcr = pageAnalysis.nativeCharacters < 35;
+      const needsOcr = pageAnalysis.kind === 'scanned';
       if (needsOcr && input.options.enableOcr) {
         ocrWorker ??= await createOcrWorker(input.options.language, input.signal,
           (status, progress) => input.onProgress?.({
@@ -65,6 +65,7 @@ export async function analyzePdf(input: AnalyzePdfOptions): Promise<PdfAnalysisR
         const rendered = await renderPageToCanvas(page, 2);
         throwIfAborted(input.signal);
         const recognized = await ocrWorker.recognize(rendered.canvas);
+        releaseCanvas(rendered.canvas);
         throwIfAborted(input.signal);
         const text = normalizeOcrText(recognized.data.text);
         if (text.length > 0) {
@@ -77,6 +78,7 @@ export async function analyzePdf(input: AnalyzePdfOptions): Promise<PdfAnalysisR
       }
       pages.push(pageAnalysis);
       page.cleanup();
+      if (pageNumber % 4 === 0) await yieldToBrowser();
     }
     input.onProgress?.({
       phase: 'Reconstruindo capítulos e parágrafos',
@@ -87,9 +89,11 @@ export async function analyzePdf(input: AnalyzePdfOptions): Promise<PdfAnalysisR
     const title = metadataString(metadata?.info, 'Title') || fallbackTitle;
     const author = metadataString(metadata?.info, 'Author');
     const reconstructed = reconstructDocument(pages, input.options, title);
-    const nativeTextPages = pages.filter((page) => page.nativeCharacters >= 35).length;
+    const nativeTextPages = pages.filter((page) => page.kind === 'text').length;
     const ocrPages = pages.filter((page) => page.usedOcr).length;
-    const scannedPages = pages.length - nativeTextPages;
+    const scannedPages = pages.filter((page) => page.kind === 'scanned').length;
+    const visualPages = pages.filter((page) => page.kind === 'visual').length;
+    const blankPages = pages.filter((page) => page.kind === 'blank').length;
     const warnings = [
       ...baseWarnings(pages, input.options),
       ...reconstructed.warnings,
@@ -108,6 +112,8 @@ export async function analyzePdf(input: AnalyzePdfOptions): Promise<PdfAnalysisR
       nativeTextPages,
       ocrPages,
       scannedPages,
+      visualPages,
+      blankPages,
       repeatedMarginLines: reconstructed.repeatedMarginLines,
       qualityScore: calculateQualityScore(pages, warnings),
     };
@@ -141,10 +147,12 @@ export async function renderPdfPages(
     for (let index = 1; index <= document.numPages; index += 1) {
       throwIfAborted(signal);
       const page = await document.getPage(index);
-      const rendered = await renderPageToCanvas(page, 1.7);
-      const blob = await canvasToBlob(rendered.canvas, 'image/jpeg', 0.9);
+      const rendered = await renderPageToCanvas(page, fixedLayoutScale(page));
+      const blob = await canvasToBlob(rendered.canvas, 'image/jpeg', 0.84);
       await onPage(index, document.numPages, blob, rendered.width, rendered.height);
+      releaseCanvas(rendered.canvas);
       page.cleanup();
+      if (index % 3 === 0) await yieldToBrowser();
     }
   } finally {
     signal?.removeEventListener('abort', cancel);
@@ -169,6 +177,7 @@ export async function renderPdfPagePreview(
     const page = await document.getPage(bounded);
     const rendered = await renderPageToCanvas(page, 1.15);
     const dataUrl = rendered.canvas.toDataURL('image/jpeg', 0.84);
+    releaseCanvas(rendered.canvas);
     page.cleanup();
     return dataUrl;
   } finally {
@@ -211,19 +220,27 @@ async function analyzePage(
     ops.paintSolidColorImageMask,
   ].filter((value): value is number => typeof value === 'number'));
   const imageCount = operatorList.fnArray.filter((operator) => imageOperators.has(operator)).length;
-  const previewDataUrl = createPreview
-    ? (await renderPageToCanvas(page, 1.15)).canvas.toDataURL('image/jpeg', 0.84)
-    : undefined;
+  const nativeCharacters = text.replace(/\s/gu, '').length;
+  const kind = classifyPage(pageNumber, nativeCharacters, imageCount);
+  const preserveAsImage = kind === 'cover' || kind === 'scanned' || kind === 'visual';
+  let previewDataUrl: string | undefined;
+  if (createPreview || preserveAsImage) {
+    const rendered = await renderPageToCanvas(page, kind === 'cover' ? 1.65 : 1.15);
+    previewDataUrl = rendered.canvas.toDataURL('image/jpeg', kind === 'cover' ? 0.9 : 0.84);
+    releaseCanvas(rendered.canvas);
+  }
   return {
     pageNumber,
     width: viewport.width,
     height: viewport.height,
     lines,
     text,
-    nativeCharacters: text.replace(/\s/gu, '').length,
+    nativeCharacters,
     usedOcr: false,
     columnCount: detectColumnCount(lines, viewport.width),
     imageCount,
+    kind,
+    preserveAsImage,
     ...(previewDataUrl ? { previewDataUrl } : {}),
   };
 }
@@ -316,7 +333,7 @@ function ocrTextToLines(text: string, pageHeight: number): PdfLine[] {
 
 function baseWarnings(pages: PdfPageAnalysis[], options: ConverterOptions): ConversionWarning[] {
   const warnings: ConversionWarning[] = [];
-  const withoutText = pages.filter((page) => page.nativeCharacters < 35 && !page.usedOcr);
+  const withoutText = pages.filter((page) => page.kind === 'scanned' && !page.usedOcr);
   if (withoutText.length > 0) {
     warnings.push({
       code: 'PDF_PAGES_WITHOUT_TEXT',
@@ -325,12 +342,12 @@ function baseWarnings(pages: PdfPageAnalysis[], options: ConverterOptions): Conv
       severity: 'warning',
     });
   }
-  const imageRich = pages.filter((page) => page.imageCount >= 3).length;
+  const imageRich = pages.filter((page) => page.kind === 'visual' || page.kind === 'scanned').length;
   if (imageRich > 0) {
     warnings.push({
       code: 'PDF_IMAGE_RICH_PAGES',
       title: 'Documento com páginas visuais',
-      detail: `${imageRich} página(s) contém(êm) várias imagens. O modo visual preserva melhor essa apresentação.`,
+      detail: `${imageRich} página(s) visual(is) será(ão) preservada(s) como imagem no EPUB ajustável. O modo visual mantém todas as páginas integralmente.`,
       severity: 'info',
     });
   }
@@ -343,12 +360,13 @@ function suggestLayout(
   warnings: ConversionWarning[],
 ): ConversionLayout {
   if (options.profile === 'visual') return 'fixed';
-  const weakPages = pages.filter((page) =>
-    page.nativeCharacters < 35 && (!page.usedOcr || (page.ocrConfidence ?? 0) < 68)).length;
-  const imageRich = pages.filter((page) => page.imageCount >= 3).length;
+  const contentPages = pages.filter((page) => page.kind !== 'cover' && page.kind !== 'blank');
+  const weakPages = contentPages.filter((page) =>
+    page.kind === 'scanned' && (!page.usedOcr || (page.ocrConfidence ?? 0) < 68)).length;
+  const imageRich = contentPages.filter((page) => page.kind === 'visual').length;
   const multiColumn = warnings.some((warning) => warning.code === 'PDF_MULTIPLE_COLUMNS');
-  return weakPages > pages.length * 0.2 ||
-    imageRich > pages.length * 0.45 ||
+  return weakPages > contentPages.length * 0.2 ||
+    imageRich > contentPages.length * 0.45 ||
     (options.profile === 'academic' && multiColumn)
     ? 'fixed'
     : 'reflowable';
@@ -359,12 +377,42 @@ function calculateQualityScore(
   warnings: ConversionWarning[],
 ): number {
   if (pages.length === 0) return 0;
-  const readable = pages.filter((page) => page.nativeCharacters >= 35 || page.usedOcr).length;
-  const ocrPenalty = pages.reduce((sum, page) =>
+  const contentPages = pages.filter((page) => page.kind !== 'cover' && page.kind !== 'blank');
+  if (contentPages.length === 0) return 0;
+  const readable = contentPages.filter((page) =>
+    page.kind === 'text' || page.kind === 'visual' || page.usedOcr).length;
+  const ocrPenalty = contentPages.reduce((sum, page) =>
     sum + (page.usedOcr ? Math.max(0, 82 - (page.ocrConfidence ?? 0)) * 0.22 : 0), 0);
   const warningPenalty = warnings.filter((warning) => warning.severity === 'warning').length * 2.5;
   return Math.max(0, Math.min(100,
-    Math.round((readable / pages.length) * 100 - ocrPenalty - warningPenalty)));
+    Math.round((readable / contentPages.length) * 100 - ocrPenalty - warningPenalty)));
+}
+
+export function classifyPage(
+  pageNumber: number,
+  nativeCharacters: number,
+  imageCount: number,
+): PdfPageAnalysis['kind'] {
+  if (pageNumber === 1 && imageCount > 0 && nativeCharacters < 120) return 'cover';
+  if (nativeCharacters === 0 && imageCount === 0) return 'blank';
+  if (nativeCharacters < 12 && imageCount > 0) return 'scanned';
+  if (nativeCharacters < 80 && imageCount > 0) return 'visual';
+  return 'text';
+}
+
+function fixedLayoutScale(page: PDFPageProxy): number {
+  const viewport = page.getViewport({ scale: 1 });
+  const longEdge = Math.max(viewport.width, viewport.height);
+  return Math.max(1, Math.min(1.65, 1600 / Math.max(1, longEdge)));
+}
+
+function releaseCanvas(canvas: HTMLCanvasElement): void {
+  canvas.width = 1;
+  canvas.height = 1;
+}
+
+function yieldToBrowser(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 function metadataString(info: object | undefined, key: string): string {

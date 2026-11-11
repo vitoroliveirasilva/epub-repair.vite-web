@@ -15,13 +15,14 @@ interface ReconstructedDocument {
 interface Block {
   kind: 'heading' | 'paragraph' | 'footnote';
   text: string;
-  pageNumber: number;
+  sourcePages: number[];
   level?: 1 | 2 | undefined;
 }
 
 const PAGE_NUMBER = /^(?:p[aá]g(?:ina)?\.?\s*)?(?:\d{1,4}|[ivxlcdm]{1,10})(?:\s*(?:de|\/|of)\s*\d{1,4})?$/iu;
 const CHAPTER_HEADING = /^(?:(?:cap[ií]tulo|chapter|parte|part|livro|book)\s+[\dIVXLCDM]+\b|pr[oó]logo\b|prologue\b|ep[ií]logo\b|epilogue\b|introdu[cç][aã]o\b|introduction\b|conclus[aã]o\b|conclusion\b)/iu;
 const SENTENCE_END = /[.!?…:;”’»)]$/u;
+const STRONG_SENTENCE_END = /[.!?…][”’»)]?$/u;
 const LOWERCASE_START = /^\p{Ll}/u;
 const LETTER = /\p{L}/u;
 
@@ -68,7 +69,7 @@ export function reconstructDocument(
     }
   }
 
-  const sections = splitIntoSections(blocks, documentTitle);
+  const sections = splitIntoSections(mergePageBoundaries(blocks, options), documentTitle);
   if (sections.length === 1 && pages.length >= 12) {
     warnings.push({
       code: 'PDF_CHAPTERS_NOT_DETECTED',
@@ -144,7 +145,7 @@ function linesToBlocks(
 
   const flush = (): void => {
     const text = normalizeTypography(normalizeSpaces(paragraph), options.normalizeTypography);
-    if (text) blocks.push({ kind: 'paragraph', text, pageNumber: page.pageNumber });
+    if (text) blocks.push({ kind: 'paragraph', text, sourcePages: [page.pageNumber] });
     paragraph = '';
   };
 
@@ -163,7 +164,7 @@ function linesToBlocks(
       blocks.push({
         kind: 'heading',
         text,
-        pageNumber: page.pageNumber,
+        sourcePages: [page.pageNumber],
         level: headingPattern || line.fontSize >= median * 1.55 ? 1 : 2,
       });
       previous = line;
@@ -175,7 +176,7 @@ function linesToBlocks(
       blocks.push({
         kind: 'footnote',
         text: normalizeTypography(text, options.normalizeTypography),
-        pageNumber: page.pageNumber,
+        sourcePages: [page.pageNumber],
       });
       previous = line;
       continue;
@@ -209,6 +210,26 @@ function joinLine(previous: string, next: string, dehyphenate: boolean): string 
   return previous + ' ' + next;
 }
 
+function mergePageBoundaries(blocks: Block[], options: ConverterOptions): Block[] {
+  const merged: Block[] = [];
+  for (const block of blocks) {
+    const previous = merged.at(-1);
+    const previousPage = previous?.sourcePages.at(-1);
+    const nextPage = block.sourcePages[0];
+    const crossesPage = previousPage !== undefined && nextPage !== undefined && nextPage > previousPage;
+    const joinsSentence = previous?.kind === 'paragraph' && block.kind === 'paragraph' && crossesPage &&
+      (/(?<letter>\p{L})-$/u.test(previous.text) ||
+        (!STRONG_SENTENCE_END.test(previous.text) && LOWERCASE_START.test(block.text)));
+    if (previous && joinsSentence) {
+      previous.text = joinLine(previous.text, block.text, options.dehyphenate);
+      previous.sourcePages = [...new Set([...previous.sourcePages, ...block.sourcePages])];
+    } else {
+      merged.push({ ...block, sourcePages: [...block.sourcePages] });
+    }
+  }
+  return merged;
+}
+
 function splitIntoSections(blocks: Block[], documentTitle: string): EditableSection[] {
   const sections: EditableSection[] = [];
   let title = documentTitle || 'Conteúdo';
@@ -216,7 +237,7 @@ function splitIntoSections(blocks: Block[], documentTitle: string): EditableSect
 
   const flush = (): void => {
     if (current.length === 0) return;
-    const sourcePages = [...new Set(current.map((block) => block.pageNumber))];
+    const sourcePages = [...new Set(current.flatMap((block) => block.sourcePages))];
     const html = current.map(blockToHtml).join('\n');
     const plainText = current.map((block) => block.text).join('\n\n');
     sections.push({

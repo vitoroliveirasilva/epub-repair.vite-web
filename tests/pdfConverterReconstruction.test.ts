@@ -28,6 +28,8 @@ function page(pageNumber: number, lines: PdfLine[]): PdfPageAnalysis {
     usedOcr: false,
     columnCount: 1,
     imageCount: 0,
+    kind: 'text',
+    preserveAsImage: false,
   };
 }
 
@@ -65,5 +67,16 @@ describe('reconstrução editorial de PDF', () => {
     ]).flat();
     expect(detectColumnCount(columns, 600)).toBe(2);
     expect(detectColumnCount(columns.slice(0, 4), 600)).toBe(1);
+  });
+
+  it('reconstrói frase e hifenização que atravessam a troca de página', () => {
+    const result = reconstructDocument([
+      page(1, [line('A investigação continua de forma surpreen-', 80)]),
+      page(2, [line('dente quando a porta se abre.', 700)]),
+    ], options, 'Livro');
+    expect(result.sections[0]?.plainText).toContain(
+      'A investigação continua de forma surpreendente quando a porta se abre.',
+    );
+    expect(result.sections[0]?.sourcePages).toEqual([1, 2]);
   });
 });

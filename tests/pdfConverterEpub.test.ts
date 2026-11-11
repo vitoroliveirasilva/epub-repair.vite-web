@@ -30,6 +30,8 @@ const analysis: PdfAnalysisResult = {
     usedOcr: false,
     columnCount: 1,
     imageCount: 0,
+    kind: 'text',
+    preserveAsImage: false,
   }],
   sections: [{
     id: 'section-001',
@@ -43,6 +45,8 @@ const analysis: PdfAnalysisResult = {
   nativeTextPages: 1,
   ocrPages: 0,
   scannedPages: 0,
+  visualPages: 0,
+  blankPages: 0,
   repeatedMarginLines: [],
   qualityScore: 100,
 };

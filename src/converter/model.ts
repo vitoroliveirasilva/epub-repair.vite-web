@@ -3,6 +3,7 @@ import type { ValidationReport } from '../epub';
 export type ConversionProfile = 'book' | 'academic' | 'visual';
 export type OutputLayout = 'auto' | 'reflowable' | 'fixed';
 export type ConversionLayout = Exclude<OutputLayout, 'auto'>;
+export type PdfPageKind = 'cover' | 'text' | 'scanned' | 'visual' | 'blank';
 
 export interface ConverterOptions {
   profile: ConversionProfile;
@@ -46,6 +47,8 @@ export interface PdfPageAnalysis {
   ocrConfidence?: number | undefined;
   columnCount: number;
   imageCount: number;
+  kind: PdfPageKind;
+  preserveAsImage: boolean;
   previewDataUrl?: string | undefined;
 }
 
@@ -78,6 +81,8 @@ export interface PdfAnalysisResult {
   nativeTextPages: number;
   ocrPages: number;
   scannedPages: number;
+  visualPages: number;
+  blankPages: number;
   repeatedMarginLines: string[];
   qualityScore: number;
 }
