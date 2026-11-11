@@ -213,6 +213,7 @@ function renderSettings(state: ConverterState, rerender: () => void): HTMLElemen
     state.result = undefined;
   });
   const description = textInput('Descrição', state.metadata.description, 'Descrição editorial opcional');
+  description.classList.add('converter-field-wide');
   description.addEventListener('input', () => {
     state.metadata.description = description.value;
     state.result = undefined;
@@ -245,14 +246,26 @@ function renderSettings(state: ConverterState, rerender: () => void): HTMLElemen
     state.options.language = language.value as ConverterState['options']['language'];
     state.result = undefined;
   });
+  const activeAdjustments = [
+    state.options.enableOcr,
+    state.options.removeRepeatedMargins,
+    state.options.removePageNumbers,
+    state.options.dehyphenate,
+    state.options.normalizeTypography,
+  ].filter(Boolean).length;
+  const updateOption = (key: keyof ConverterState['options'], value: boolean): void => {
+    Reflect.set(state.options, key, value);
+    state.result = undefined;
+    rerender();
+  };
   const options = el('div', {
     className: 'converter-checkbox-grid',
     children: [
-      optionCheckbox('Usar OCR quando faltar texto', 'Reconhecimento local em português e inglês', state.options.enableOcr, (value) => { state.options.enableOcr = value; }),
-      optionCheckbox('Remover cabeçalhos e rodapés repetidos', 'Compara padrões recorrentes entre páginas', state.options.removeRepeatedMargins, (value) => { state.options.removeRepeatedMargins = value; }),
-      optionCheckbox('Remover números de página', 'Somente quando isolados nas margens', state.options.removePageNumbers, (value) => { state.options.removePageNumbers = value; }),
-      optionCheckbox('Reconstruir palavras hifenizadas', 'Une quebras artificiais entre linhas', state.options.dehyphenate, (value) => { state.options.dehyphenate = value; }),
-      optionCheckbox('Normalizar tipografia', 'Ajusta espaços, reticências e pontuação', state.options.normalizeTypography, (value) => { state.options.normalizeTypography = value; }),
+      optionCheckbox('Usar OCR quando faltar texto', 'Reconhecimento local em português e inglês', state.options.enableOcr, (value) => updateOption('enableOcr', value)),
+      optionCheckbox('Remover cabeçalhos e rodapés repetidos', 'Compara padrões recorrentes entre páginas', state.options.removeRepeatedMargins, (value) => updateOption('removeRepeatedMargins', value)),
+      optionCheckbox('Remover números de página', 'Somente quando isolados nas margens', state.options.removePageNumbers, (value) => updateOption('removePageNumbers', value)),
+      optionCheckbox('Reconstruir palavras hifenizadas', 'Une quebras artificiais entre linhas', state.options.dehyphenate, (value) => updateOption('dehyphenate', value)),
+      optionCheckbox('Normalizar tipografia', 'Ajusta espaços, reticências e pontuação', state.options.normalizeTypography, (value) => updateOption('normalizeTypography', value)),
     ],
   });
   const analyzeButton = button(
@@ -273,11 +286,27 @@ function renderSettings(state: ConverterState, rerender: () => void): HTMLElemen
         el('h2', { text: 'Defina como reconstruir o livro' }),
         el('p', { className: 'muted', text: 'O modo automático escolhe texto ajustável quando a estrutura é confiável e layout fixo quando preservar a página é mais seguro.' }),
       ] }),
-      el('div', {
-        className: 'converter-form-grid',
-        children: [title, author, publisher, publicationDate, isbn, translator, description, profile, output, language],
-      }),
-      options,
+      el('div', { className: 'converter-form-sections', children: [
+        formSection('Dados da obra', 'Identificação principal usada pelos leitores e pelo arquivo EPUB.', [
+          title, author, description,
+        ]),
+        formSection('Publicação', 'Informações editoriais detectadas no PDF e ajustáveis antes da conversão.', [
+          publisher, publicationDate, isbn, translator,
+        ]),
+        formSection('Formato de saída', 'Perfil, layout e idioma que orientam a reconstrução.', [
+          profile, output, language,
+        ]),
+      ] }),
+      el('div', { className: 'converter-options-section', children: [
+        el('div', { className: 'converter-subheading', children: [
+          el('div', { children: [
+            el('h3', { text: 'Tratamento automático' }),
+            el('p', { className: 'muted', text: 'Ajustes seguros aplicados durante a leitura e reconstrução do PDF.' }),
+          ] }),
+          el('span', { text: `${activeAdjustments} de 5 ativos` }),
+        ] }),
+        options,
+      ] }),
       el('div', { className: 'converter-actions', children: [analyzeButton, convertButton] }),
     ],
   });
@@ -462,7 +491,7 @@ function renderQualitySidebar(state: ConverterState): HTMLElement {
   return el('aside', {
     className: 'converter-sidebar',
     children: [
-      el('section', { className: 'panel', children: [
+      el('section', { className: 'panel converter-quality-card', children: [
         el('p', { className: 'eyebrow', text: 'Qualidade' }),
         el('h2', { text: state.analysis ? `${state.analysis.qualityScore}/100` : 'Aguardando PDF' }),
         el('p', { className: 'muted', text: state.analysis
@@ -798,6 +827,16 @@ function textInput(label: string, value: string, placeholder: string): HTMLLabel
     set: (next: string) => { input.value = next; },
   });
   return labelNode as HTMLLabelElement & { value: string };
+}
+
+function formSection(title: string, detail: string, fields: HTMLElement[]): HTMLElement {
+  return el('section', { className: 'converter-form-section', children: [
+    el('div', { className: 'converter-form-section-heading', children: [
+      el('h3', { text: title }),
+      el('p', { className: 'muted', text: detail }),
+    ] }),
+    el('div', { className: 'converter-form-grid', children: fields }),
+  ] });
 }
 
 function selectInput(label: string, value: string, options: string[][]): HTMLLabelElement & { value: string } {
