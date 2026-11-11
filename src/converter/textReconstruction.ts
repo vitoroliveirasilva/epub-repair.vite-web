@@ -61,7 +61,7 @@ export function reconstructDocument(
     if (page.usedOcr && (page.ocrConfidence ?? 0) < 78) {
       warnings.push({
         code: 'PDF_OCR_LOW_CONFIDENCE',
-        title: 'OCR com confiança reduzida',
+        title: 'Texto da imagem reconhecido com confiança reduzida',
         detail: 'Confira nomes próprios, pontuação e caracteres desta página antes de baixar o EPUB.',
         pageNumber: page.pageNumber,
         severity: 'warning',
