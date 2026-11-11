@@ -62,9 +62,12 @@ try {
   await page.getByText(/Análise concluída:/).waitFor({ timeout: 30000 });
   assert.equal(await page.getByLabel('Título', { exact: true }).inputValue(), 'Livro de teste');
   assert.equal(await page.getByLabel('Autor', { exact: true }).inputValue(), 'EPUB Repair');
+  await page.getByRole('button', { name: 'Gerar EPUB validado' }).click();
+  await page.getByRole('heading', { name: 'Conversão concluída e validada' })
+    .waitFor({ timeout: 30000 });
   const [download] = await Promise.all([
     page.waitForEvent('download', { timeout: 30000 }),
-    page.getByRole('button', { name: 'Gerar EPUB validado' }).click(),
+    page.getByRole('button', { name: 'Baixar EPUB convertido' }).click(),
   ]);
   const path = await download.path();
   assert.ok(path);
