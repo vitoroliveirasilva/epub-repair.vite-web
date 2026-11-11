@@ -18,6 +18,7 @@ function render(root: HTMLElement, state: ConverterState, rerender: () => void):
   root.replaceChildren(
     renderHeader(),
     renderHero(),
+    renderWorkflowRail(state),
     el('main', {
       className: 'converter-layout',
       attrs: { id: 'converter-workspace' },
@@ -26,12 +27,11 @@ function render(root: HTMLElement, state: ConverterState, rerender: () => void):
           className: 'converter-main',
           children: [
             renderUploader(state, rerender),
-            renderSettings(state, rerender),
             renderProgress(state, rerender),
-            state.analysis ? renderOverview(state) : renderConverterEmptyState(),
-            state.analysis ? renderComparison(state, rerender) : undefined,
-            state.analysis ? renderSectionEditor(state, rerender) : undefined,
             state.result ? renderResult(state) : undefined,
+            state.analysis ? renderOverview(state) : !state.file ? renderConverterEmptyState() : undefined,
+            state.analysis && !state.busy ? renderSettings(state, rerender) : undefined,
+            state.analysis && !state.busy ? renderAdvancedReview(state, rerender) : undefined,
           ],
         }),
         renderQualitySidebar(state),
@@ -40,6 +40,48 @@ function render(root: HTMLElement, state: ConverterState, rerender: () => void):
     renderHowItWorks(),
     renderFooter(),
   );
+}
+
+function renderWorkflowRail(state: ConverterState): HTMLElement {
+  const generating = state.busy && /montando|renderizando|compactando|acabamento|validando/iu.test(state.progress);
+  const current = state.result
+    ? 4
+    : generating
+      ? 4
+      : state.analysis
+        ? 3
+        : state.file
+          ? 2
+          : 1;
+  const steps = [
+    ['Selecionar PDF', 'Escolha o documento'],
+    ['Processar', 'Texto, OCR e estrutura'],
+    ['Revisar', 'Confira e ajuste'],
+    ['Gerar e baixar', 'EPUB validado'],
+  ];
+  return el('nav', {
+    className: 'converter-workflow',
+    attrs: { 'aria-label': 'Etapas da conversão' },
+    children: [el('ol', { children: steps.map(([title, detail], index) => {
+      const number = index + 1;
+      const status = number < current || (state.result && number === current)
+        ? 'complete'
+        : number === current
+          ? 'active'
+          : 'pending';
+      return el('li', {
+        className: `converter-workflow-step converter-workflow-${status}`,
+        attrs: status === 'active' ? { 'aria-current': 'step' } : {},
+        children: [
+          el('span', { className: 'converter-workflow-number', text: status === 'complete' ? '✓' : String(number) }),
+          el('span', { className: 'converter-workflow-copy', children: [
+            el('strong', { text: title ?? '' }),
+            el('small', { text: detail ?? '' }),
+          ] }),
+        ],
+      });
+    }) })],
+  });
 }
 
 function renderHeader(): HTMLElement {
@@ -134,19 +176,23 @@ function renderUploader(state: ConverterState, rerender: () => void): HTMLElemen
     if (file) void loadAndAnalyze(file, state, rerender);
   });
   const dropzone = el('label', {
-    className: 'converter-dropzone',
+    className: `converter-dropzone ${state.file ? 'converter-dropzone-loaded' : ''} ${state.busy ? 'converter-dropzone-busy' : ''}`,
     attrs: { for: 'pdf-file-input' },
     children: [
       el('div', { className: 'converter-drop-icon', attrs: { 'aria-hidden': 'true' }, text: 'PDF' }),
       el('div', { children: [
-        el('strong', { text: state.file ? state.file.name : 'Escolha ou arraste um PDF' }),
+        state.file ? el('span', { className: 'converter-file-badge', text: state.busy ? 'Processando agora' : 'PDF carregado' }) : undefined,
+        el('strong', { className: 'converter-file-name', text: state.file ? state.file.name : 'Escolha ou arraste um PDF' }),
         el('p', {
           className: 'muted',
           text: state.file
             ? `${formatBytes(state.file.size)} · processado somente neste navegador`
             : 'PDFs de até 250 MB com texto, páginas digitalizadas ou conteúdo misto',
         }),
-        el('span', { className: 'btn btn-primary', text: state.file ? 'Escolher outro PDF' : 'Selecionar PDF' }),
+        el('span', {
+          className: `btn ${state.file ? 'btn-ghost' : 'btn-primary'}`,
+          text: state.busy ? 'Processando arquivo…' : state.file ? 'Trocar PDF' : 'Selecionar PDF',
+        }),
       ] }),
       input,
     ],
@@ -173,7 +219,7 @@ function renderUploader(state: ConverterState, rerender: () => void): HTMLElemen
     children: [
       el('div', { className: 'section-heading', children: [
         el('p', { className: 'eyebrow', text: '1. Documento' }),
-        el('h2', { text: 'Carregue o PDF' }),
+        el('h2', { text: state.file ? 'Documento selecionado' : 'Carregue o PDF' }),
         el('p', { className: 'muted', text: 'O arquivo permanece no dispositivo durante análise, OCR, prévia e geração do EPUB.' }),
       ] }),
       dropzone,
@@ -269,12 +315,12 @@ function renderSettings(state: ConverterState, rerender: () => void): HTMLElemen
     ],
   });
   const analyzeButton = button(
-    state.analysis ? 'Analisar novamente com estas opções' : 'Analisar PDF',
+    'Reanalisar com estes ajustes',
     'btn btn-secondary',
     () => { if (state.file) void analyzeCurrent(state, rerender); },
   );
   analyzeButton.disabled = !state.file || state.busy;
-  const convertButton = button('Gerar EPUB validado', 'btn btn-primary', () => {
+  const convertButton = button('Gerar meu EPUB', 'btn btn-primary btn-large', () => {
     void convertCurrent(state, rerender);
   });
   convertButton.disabled = !state.analysis || state.busy;
@@ -282,9 +328,9 @@ function renderSettings(state: ConverterState, rerender: () => void): HTMLElemen
     className: 'panel converter-settings',
     children: [
       el('div', { className: 'section-heading', children: [
-        el('p', { className: 'eyebrow', text: '2. Preparação editorial' }),
-        el('h2', { text: 'Defina como reconstruir o livro' }),
-        el('p', { className: 'muted', text: 'O modo automático escolhe texto ajustável quando a estrutura é confiável e layout fixo quando preservar a página é mais seguro.' }),
+        el('p', { className: 'eyebrow', text: '3. Revisão e ajustes' }),
+        el('h2', { text: 'Confira antes de gerar' }),
+        el('p', { className: 'muted', text: 'Os dados abaixo já foram preenchidos quando encontrados. Ajuste somente o que precisar e gere o EPUB.' }),
       ] }),
       el('div', { className: 'converter-form-sections', children: [
         formSection('Dados da obra', 'Identificação principal usada pelos leitores e pelo arquivo EPUB.', [
@@ -307,27 +353,69 @@ function renderSettings(state: ConverterState, rerender: () => void): HTMLElemen
         ] }),
         options,
       ] }),
-      el('div', { className: 'converter-actions', children: [analyzeButton, convertButton] }),
+      el('div', { className: 'converter-actions', children: [
+        el('div', { className: 'converter-action-copy', children: [
+          el('strong', { text: 'Pronto para converter' }),
+          el('small', { text: 'O EPUB será reparado e validado antes do download.' }),
+        ] }),
+        analyzeButton,
+        convertButton,
+      ] }),
     ],
   });
 }
 
 function renderProgress(state: ConverterState, rerender: () => void): HTMLElement | undefined {
+  if (state.result && !state.busy) return undefined;
   if (!state.busy && !state.message && !state.error) return undefined;
   const cancel = button('Cancelar', 'btn btn-ghost btn-small', () => state.controller?.abort());
   cancel.disabled = !state.busy;
+  const phaseIndex = progressPhaseIndex(state.progress);
+  const fallbackProgress = [12, 32, 58, 78, 94][phaseIndex] ?? 8;
+  const progressValue = state.progressValue ?? fallbackProgress;
+  if (state.busy) {
+    return el('section', {
+      className: 'panel converter-processing-card',
+      attrs: { role: 'status', 'aria-live': 'polite', 'aria-busy': 'true' },
+      children: [
+        el('div', { className: 'converter-processing-heading', children: [
+          el('span', { className: 'converter-spinner', attrs: { 'aria-hidden': 'true' } }),
+          el('div', { children: [
+            el('p', { className: 'eyebrow', text: 'Processamento local em andamento' }),
+            el('h2', { text: state.progress || 'Preparando documento' }),
+            el('p', { className: 'muted', text: progressDetail(state.progress) }),
+          ] }),
+          cancel,
+        ] }),
+        el('div', { className: 'converter-progress-track', children: [
+          el('span', { attrs: { style: `width: ${Math.max(4, Math.min(100, progressValue))}%` } }),
+        ] }),
+        el('div', { className: 'converter-progress-meta', children: [
+          el('span', { text: state.progressValue !== undefined ? `${state.progressValue}% concluído` : 'Trabalhando nesta etapa' }),
+          el('span', { text: 'Nenhum arquivo é enviado para servidor' }),
+        ] }),
+        el('ol', { className: 'converter-processing-steps', children: [
+          'Abrir PDF', 'Extrair conteúdo', 'Reconstruir leitura', 'Montar EPUB', 'Validar resultado',
+        ].map((label, index) => el('li', {
+          className: index < phaseIndex ? 'complete' : index === phaseIndex ? 'active' : '',
+          children: [el('span', { text: index < phaseIndex ? '✓' : String(index + 1) }), el('small', { text: label })],
+        })) }),
+      ],
+    });
+  }
   return el('section', {
-    className: `panel converter-status ${state.error ? 'converter-status-error' : ''}`,
+    className: `panel converter-status ${state.error ? 'converter-status-error' : 'converter-status-success'}`,
     attrs: { role: state.error ? 'alert' : 'status', 'aria-live': 'polite' },
     children: [
+      el('span', { className: 'converter-status-icon', text: state.error ? '!' : '✓' }),
       el('div', { children: [
-        el('strong', { text: state.error ? 'Não foi possível concluir' : state.busy ? state.progress : 'Concluído' }),
-        state.progressValue !== undefined
-          ? el('progress', { attrs: { max: '100', value: String(state.progressValue) } })
-          : undefined,
+        el('strong', { text: state.error ? 'Não foi possível concluir' : 'Análise concluída' }),
         state.error ? el('p', { text: state.error }) : state.message ? el('p', { className: 'muted', text: state.message }) : undefined,
       ] }),
-      state.busy ? cancel : button('Dispensar', 'btn btn-ghost btn-small', () => {
+      state.error && state.file ? button('Tentar novamente', 'btn btn-secondary btn-small', () => {
+        void analyzeCurrent(state, rerender);
+      }) : undefined,
+      button('Dispensar', 'btn btn-ghost btn-small', () => {
         state.message = undefined;
         state.error = undefined;
         rerender();
@@ -336,14 +424,34 @@ function renderProgress(state: ConverterState, rerender: () => void): HTMLElemen
   });
 }
 
+function progressPhaseIndex(progress: string): number {
+  if (/validando|acabamento|revalid/iu.test(progress)) return 4;
+  if (/montando|renderizando|compactando|epub/iu.test(progress)) return 3;
+  if (/reconstruindo/iu.test(progress)) return 2;
+  if (/analisando|ocr|extraindo/iu.test(progress)) return 1;
+  return 0;
+}
+
+function progressDetail(progress: string): string {
+  const index = progressPhaseIndex(progress);
+  return [
+    'Abrindo o documento e conferindo se o PDF pode ser processado com segurança.',
+    'Lendo páginas, textos, imagens, colunas e conteúdo que possa exigir OCR.',
+    'Refazendo parágrafos, capítulos e a ordem de leitura do documento.',
+    'Criando os arquivos internos, o índice e o pacote final do EPUB.',
+    'Aplicando o acabamento automático e verificando a compatibilidade do resultado.',
+  ][index] ?? 'Processando o documento localmente.';
+}
+
 function renderOverview(state: ConverterState): HTMLElement {
   const analysis = state.analysis!;
   return el('section', {
     className: 'panel converter-overview',
     children: [
       el('div', { className: 'section-heading', children: [
-        el('p', { className: 'eyebrow', text: 'Diagnóstico' }),
-        el('h2', { text: 'Estrutura encontrada no PDF' }),
+        el('p', { className: 'eyebrow', text: '2. Diagnóstico concluído' }),
+        el('h2', { text: 'O PDF foi processado com sucesso' }),
+        el('p', { className: 'muted', text: 'Confira o resumo abaixo. Você ainda poderá comparar e editar o conteúdo antes de gerar.' }),
       ] }),
       el('div', { className: 'converter-metrics', children: [
         metric(String(analysis.qualityScore), 'Confiança'),
@@ -379,7 +487,7 @@ function renderComparison(state: ConverterState, rerender: () => void): HTMLElem
     className: 'panel converter-comparison',
     children: [
       el('div', { className: 'section-heading', children: [
-        el('p', { className: 'eyebrow', text: '3. Conferência' }),
+        el('p', { className: 'eyebrow', text: 'Revisão visual opcional' }),
         el('h2', { text: 'Compare original e reconstrução' }),
         el('p', { className: 'muted', text: 'A prévia ajuda a identificar perda de ordem, OCR ruim, capítulos incorretos ou elementos que pedem layout visual.' }),
       ] }),
@@ -472,7 +580,7 @@ function renderSectionEditor(state: ConverterState, rerender: () => void): HTMLE
     className: 'panel converter-editor',
     children: [
       el('div', { className: 'section-heading', children: [
-        el('p', { className: 'eyebrow', text: '4. Revisão editorial' }),
+        el('p', { className: 'eyebrow', text: 'Edição avançada opcional' }),
         el('h2', { text: 'Ajuste a estrutura antes de gerar' }),
         el('p', { className: 'muted', text: 'Linhas iniciadas por “# ” viram título principal; “## ” vira subtítulo. Blocos separados por linha vazia viram parágrafos.' }),
       ] }),
@@ -482,6 +590,26 @@ function renderSectionEditor(state: ConverterState, rerender: () => void): HTMLE
         className: 'converter-editor-actions',
         children: [previous, next, split, add, moveUp, moveDown, merge, remove],
       }),
+    ],
+  });
+}
+
+function renderAdvancedReview(state: ConverterState, rerender: () => void): HTMLElement {
+  return el('details', {
+    className: 'converter-advanced-review',
+    children: [
+      el('summary', { children: [
+        el('span', { className: 'converter-advanced-icon', text: 'Aa' }),
+        el('span', { className: 'converter-advanced-copy', children: [
+          el('strong', { text: 'Comparar e editar o conteúdo' }),
+          el('small', { text: 'Opcional · use somente para conferir páginas, capítulos ou texto reconstruído' }),
+        ] }),
+        el('span', { className: 'converter-advanced-action', text: 'Abrir revisão avançada' }),
+      ] }),
+      el('div', { className: 'converter-advanced-content', children: [
+        renderComparison(state, rerender),
+        renderSectionEditor(state, rerender),
+      ] }),
     ],
   });
 }
@@ -540,13 +668,27 @@ function renderResult(state: ConverterState): HTMLElement {
   const download = button('Baixar EPUB convertido', 'btn btn-primary btn-large', () => {
     downloadBlob(result.blob, result.fileName);
   });
+  const another = button('Converter outro PDF', 'btn btn-ghost', () => {
+    document.querySelector<HTMLInputElement>('#pdf-file-input')?.click();
+  });
   return el('section', {
     className: 'panel converter-result',
+    attrs: { role: 'status', 'aria-live': 'polite' },
     children: [
-      el('div', { children: [
-        el('p', { className: 'eyebrow', text: 'EPUB pronto' }),
-        el('h2', { text: 'Conversão concluída e validada' }),
-        el('p', { className: 'muted', text: `${result.fileName} · ${formatBytes(result.bytes.length)} · ${result.layout === 'reflowable' ? 'texto ajustável' : 'layout visual'}` }),
+      el('div', { className: 'converter-result-heading', children: [
+        el('span', { className: 'converter-result-check', text: '✓' }),
+        el('div', { children: [
+          el('p', { className: 'eyebrow', text: 'Conversão finalizada' }),
+          el('h2', { text: 'Seu EPUB está pronto para baixar' }),
+          el('p', { className: 'muted', text: 'O arquivo foi gerado, passou pelo reparo automático e foi revalidado com sucesso.' }),
+        ] }),
+      ] }),
+      el('div', { className: 'converter-result-file', children: [
+        el('span', { text: 'EPUB' }),
+        el('div', { children: [
+          el('strong', { text: result.fileName }),
+          el('small', { text: `${formatBytes(result.bytes.length)} · ${result.layout === 'reflowable' ? 'Texto ajustável' : 'Layout visual'}` }),
+        ] }),
       ] }),
       el('div', { className: 'converter-result-scores', children: [
         metric(String(result.validation.stats.structureScore), 'Estrutura'),
@@ -554,7 +696,7 @@ function renderResult(state: ConverterState): HTMLElement {
         metric(String(result.validation.stats.errorCount), 'Erros'),
         metric(String(result.validation.stats.warningCount), 'Avisos'),
       ] }),
-      download,
+      el('div', { className: 'converter-result-actions', children: [download, another] }),
     ],
   });
 }
@@ -659,6 +801,9 @@ async function analyzeCurrent(state: ConverterState, rerender: () => void): Prom
     state.result = undefined;
     state.message = `Análise concluída: ${analysis.pageCount} página(s), ${analysis.sections.length} seção(ões) e confiança ${analysis.qualityScore}/100.`;
   });
+  if (state.analysis && !state.error) {
+    requestAnimationFrame(() => document.querySelector('.converter-overview')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
 }
 
 async function convertCurrent(state: ConverterState, rerender: () => void): Promise<void> {
@@ -687,6 +832,9 @@ async function convertCurrent(state: ConverterState, rerender: () => void): Prom
     state.result = result;
     state.message = 'EPUB gerado, revalidado e pronto para baixar.';
   });
+  if (state.result && !state.error) {
+    requestAnimationFrame(() => document.querySelector('.converter-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
 }
 
 async function ensurePagePreview(state: ConverterState, rerender: () => void): Promise<void> {
@@ -717,6 +865,7 @@ async function runTask(
   state.error = undefined;
   state.message = undefined;
   rerender();
+  requestAnimationFrame(() => document.querySelector('.converter-processing-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
   try {
     await task(controller.signal);
   } catch (error) {

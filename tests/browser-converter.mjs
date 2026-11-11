@@ -66,8 +66,8 @@ try {
   await page.getByLabel('Ano ou data de publicação', { exact: true }).fill('2026');
   await page.getByLabel('ISBN', { exact: true }).fill('9788501000002');
   await page.getByLabel('Tradutor', { exact: true }).fill('Tradutora de teste');
-  await page.getByRole('button', { name: 'Gerar EPUB validado' }).click();
-  await page.getByRole('heading', { name: 'Conversão concluída e validada' })
+  await page.getByRole('button', { name: 'Gerar meu EPUB' }).click();
+  await page.getByRole('heading', { name: 'Seu EPUB está pronto para baixar' })
     .waitFor({ timeout: 30000 });
   const [download] = await Promise.all([
     page.waitForEvent('download', { timeout: 30000 }),
