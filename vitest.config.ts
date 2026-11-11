@@ -64,6 +64,7 @@ opfRepairRegression99
 orphanActiveContent99
 orphanAndBinaryRegression99
 packageSemantics99
+pdfConverterEpub
 performanceBudget99
 post99-coverNavigation
 post99-hardening
