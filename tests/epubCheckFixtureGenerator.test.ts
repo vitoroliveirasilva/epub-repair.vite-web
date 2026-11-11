@@ -272,6 +272,13 @@ describe('Fixture sintética de conformidade oficial', () => {
       pageCount: 2,
       title: 'Fixture do conversor',
       author: 'EPUB Repair',
+      metadata: {
+        publisher: '',
+        publicationDate: '',
+        isbn: '',
+        translator: '',
+        description: '',
+      },
       pages: [
         {
           pageNumber: 1,

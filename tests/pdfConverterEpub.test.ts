@@ -20,6 +20,13 @@ const analysis: PdfAnalysisResult = {
   pageCount: 1,
   title: 'Obra de teste',
   author: 'Autora',
+  metadata: {
+    publisher: 'Editora de teste',
+    publicationDate: '2026',
+    isbn: '9788501000002',
+    translator: 'Tradutora de teste',
+    description: 'Descrição editorial de teste.',
+  },
   pages: [{
     pageNumber: 1,
     width: 600,
@@ -66,8 +73,13 @@ describe('geração de EPUB pelo conversor', () => {
     const opf = await zip.file('OEBPS/content.opf')?.async('text');
     const nav = await zip.file('OEBPS/nav.xhtml')?.async('text');
     const chapter = await zip.file('OEBPS/Text/section-001.xhtml')?.async('text');
+    const css = await zip.file('OEBPS/Styles/book.css')?.async('text');
     expect(mimetype).toBe('application/epub+zip');
     expect(opf).toContain('properties="nav"');
+    expect(opf).toContain('urn:isbn:9788501000002');
+    expect(opf).toContain('<dc:publisher>Editora de teste</dc:publisher>');
+    expect(opf).toContain('marc:relators">trl</meta>');
+    expect(css).not.toContain('background: #fff');
     expect(nav).toContain('Capítulo 1');
     expect(chapter).toContain('Conteúdo preservado.');
     expect(result.validation.stats.fatalCount).toBe(0);

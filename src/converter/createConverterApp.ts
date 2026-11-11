@@ -183,9 +183,40 @@ function renderUploader(state: ConverterState, rerender: () => void): HTMLElemen
 
 function renderSettings(state: ConverterState, rerender: () => void): HTMLElement {
   const title = textInput('Título', state.title, 'Título da obra');
-  title.addEventListener('input', () => { state.title = title.value; });
+  title.addEventListener('input', () => {
+    state.title = title.value;
+    state.result = undefined;
+  });
   const author = textInput('Autor', state.author, 'Nome do autor');
-  author.addEventListener('input', () => { state.author = author.value; });
+  author.addEventListener('input', () => {
+    state.author = author.value;
+    state.result = undefined;
+  });
+  const publisher = textInput('Editora', state.metadata.publisher, 'Nome da editora');
+  publisher.addEventListener('input', () => {
+    state.metadata.publisher = publisher.value;
+    state.result = undefined;
+  });
+  const publicationDate = textInput('Ano ou data de publicação', state.metadata.publicationDate, 'Ex.: 2025');
+  publicationDate.addEventListener('input', () => {
+    state.metadata.publicationDate = publicationDate.value;
+    state.result = undefined;
+  });
+  const isbn = textInput('ISBN', state.metadata.isbn, 'ISBN-10 ou ISBN-13');
+  isbn.addEventListener('input', () => {
+    state.metadata.isbn = isbn.value;
+    state.result = undefined;
+  });
+  const translator = textInput('Tradutor', state.metadata.translator, 'Nome do tradutor');
+  translator.addEventListener('input', () => {
+    state.metadata.translator = translator.value;
+    state.result = undefined;
+  });
+  const description = textInput('Descrição', state.metadata.description, 'Descrição editorial opcional');
+  description.addEventListener('input', () => {
+    state.metadata.description = description.value;
+    state.result = undefined;
+  });
   const profile = selectInput('Perfil do documento', state.options.profile, [
     ['book', 'Livro ou romance'],
     ['academic', 'Acadêmico ou documental'],
@@ -242,7 +273,10 @@ function renderSettings(state: ConverterState, rerender: () => void): HTMLElemen
         el('h2', { text: 'Defina como reconstruir o livro' }),
         el('p', { className: 'muted', text: 'O modo automático escolhe texto ajustável quando a estrutura é confiável e layout fixo quando preservar a página é mais seguro.' }),
       ] }),
-      el('div', { className: 'converter-form-grid', children: [title, author, profile, output, language] }),
+      el('div', {
+        className: 'converter-form-grid',
+        children: [title, author, publisher, publicationDate, isbn, translator, description, profile, output, language],
+      }),
       options,
       el('div', { className: 'converter-actions', children: [analyzeButton, convertButton] }),
     ],
@@ -555,6 +589,13 @@ async function loadAndAnalyze(file: File, state: ConverterState, rerender: () =>
   state.result = undefined;
   state.title = '';
   state.author = '';
+  state.metadata = {
+    publisher: '',
+    publicationDate: '',
+    isbn: '',
+    translator: '',
+    description: '',
+  };
   state.selectedPage = 1;
   state.selectedSection = 0;
   await analyzeCurrent(state, rerender);
@@ -581,6 +622,9 @@ async function analyzeCurrent(state: ConverterState, rerender: () => void): Prom
     state.sections = analysis.sections.map((section) => ({ ...section, sourcePages: [...section.sourcePages] }));
     if (!state.title.trim()) state.title = analysis.title;
     if (!state.author.trim()) state.author = analysis.author;
+    for (const key of Object.keys(state.metadata) as Array<keyof typeof state.metadata>) {
+      if (!state.metadata[key].trim()) state.metadata[key] = analysis.metadata[key];
+    }
     state.selectedPage = 1;
     state.selectedSection = 0;
     state.result = undefined;
@@ -600,6 +644,7 @@ async function convertCurrent(state: ConverterState, rerender: () => void): Prom
       sections: state.sections,
       title: state.title,
       author: state.author,
+      metadata: state.metadata,
       options: state.options,
       signal,
       onProgress: (phase, completed, total) => {

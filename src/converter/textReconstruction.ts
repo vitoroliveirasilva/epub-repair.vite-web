@@ -20,7 +20,7 @@ interface Block {
 }
 
 const PAGE_NUMBER = /^(?:p[aá]g(?:ina)?\.?\s*)?(?:\d{1,4}|[ivxlcdm]{1,10})(?:\s*(?:de|\/|of)\s*\d{1,4})?$/iu;
-const CHAPTER_HEADING = /^(?:(?:cap[ií]tulo|chapter|parte|part|livro|book)\s+[\dIVXLCDM]+\b|pr[oó]logo\b|prologue\b|ep[ií]logo\b|epilogue\b|introdu[cç][aã]o\b|introduction\b|conclus[aã]o\b|conclusion\b)/iu;
+const CHAPTER_HEADING = /^(?:(?:cap[ií]tulo|chapter|parte|part|livro|book)\s+[\dIVXLCDM]+\b|(?:pr[oó]logo|prologue|ep[ií]logo|epilogue|introdu[cç][aã]o|introduction|conclus[aã]o|conclusion|agradecimentos?|acknowledg(?:e)?ments?|dedicat[oó]ria|dedication|posf[aá]cio|afterword|sobre\s+(?:a|o)\s+autor(?:a)?|about\s+the\s+author|cr[eé]ditos?|bibliografia|notas?)\s*)$/iu;
 const SENTENCE_END = /[.!?…:;”’»)]$/u;
 const STRONG_SENTENCE_END = /[.!?…][”’»)]?$/u;
 const LOWERCASE_START = /^\p{Ll}/u;
@@ -139,6 +139,12 @@ function linesToBlocks(
   if (lines.length === 0) return [];
   const sizes = lines.map((line) => line.fontSize).filter((size) => size > 0).sort((a, b) => a - b);
   const median = sizes[Math.floor(sizes.length / 2)] ?? 12;
+  const bodyLeftCandidates = lines
+    .filter((line) => line.width > page.width * 0.35 && line.x < page.width * 0.35)
+    .map((line) => line.x)
+    .sort((a, b) => a - b);
+  const bodyLeft = bodyLeftCandidates[Math.floor(bodyLeftCandidates.length * 0.15)]
+    ?? Math.min(...lines.map((line) => line.x));
   const blocks: Block[] = [];
   let paragraph = '';
   let previous: PdfLine | undefined;
@@ -155,7 +161,8 @@ function linesToBlocks(
     const short = text.length <= 140;
     const large = line.fontSize >= median * 1.24;
     const headingPattern = CHAPTER_HEADING.test(text);
-    const heading = short && (headingPattern || large || looksLikeStandaloneHeading(text, line, page));
+    const standaloneHeading = looksLikeStandaloneHeading(text, line, page);
+    const heading = short && (headingPattern || large || standaloneHeading);
     const footnote = line.fontSize <= median * 0.78 && line.y < page.height * 0.32;
 
     if (heading) {
@@ -165,7 +172,8 @@ function linesToBlocks(
         kind: 'heading',
         text,
         sourcePages: [page.pageNumber],
-        level: headingPattern || line.fontSize >= median * 1.55 ? 1 : 2,
+        level: headingPattern || (standaloneHeading && line.fontSize >= median * 1.55 &&
+          text.trim().split(/\s+/u).length >= 2) ? 1 : 2,
       });
       previous = line;
       continue;
@@ -184,7 +192,7 @@ function linesToBlocks(
 
     const verticalGap = previous ? previous.y - line.y : 0;
     const paragraphGap = previous && verticalGap > Math.max(previous.fontSize, line.fontSize) * 2.05;
-    const indented = previous && line.x - previous.x > median * 1.4;
+    const indented = previous && line.x < page.width * 0.4 && line.x - bodyLeft > median * 0.68;
     if (paragraph && (paragraphGap || (indented && SENTENCE_END.test(paragraph)))) flush();
     paragraph = joinLine(paragraph, text, options.dehyphenate);
     previous = line;
@@ -204,8 +212,10 @@ function looksLikeStandaloneHeading(text: string, line: PdfLine, page: PdfPageAn
 
 function joinLine(previous: string, next: string, dehyphenate: boolean): string {
   if (!previous) return next;
-  if (dehyphenate && /\p{L}-$/u.test(previous) && LOWERCASE_START.test(next)) {
-    return previous.slice(0, -1) + next;
+  if (dehyphenate && /\p{L}-$/u.test(previous) && /^\p{L}/u.test(next)) {
+    const prefix = previous.match(/([\p{L}]+)-$/u)?.[1]?.toLocaleLowerCase() ?? '';
+    const keepsHyphen = /^(?:vice|ex|rec[eé]m|pr[eé]|p[oó]s|sem|al[eé]m|aqu[eé]m)$/u.test(prefix) || /^\p{Lu}/u.test(next);
+    return keepsHyphen ? previous + next : previous.slice(0, -1) + next;
   }
   return previous + ' ' + next;
 }
@@ -234,15 +244,16 @@ function splitIntoSections(blocks: Block[], documentTitle: string): EditableSect
   const sections: EditableSection[] = [];
   let title = documentTitle || 'Conteúdo';
   let current: Block[] = [];
+  const firstMajorHeading = blocks.findIndex((block) => block.kind === 'heading' && block.level === 1);
 
-  const flush = (): void => {
+  const flush = (sectionTitle?: string): void => {
     if (current.length === 0) return;
     const sourcePages = [...new Set(current.flatMap((block) => block.sourcePages))];
     const html = current.map(blockToHtml).join('\n');
     const plainText = current.map((block) => block.text).join('\n\n');
     sections.push({
       id: `section-${String(sections.length + 1).padStart(3, '0')}`,
-      title: title || `Seção ${sections.length + 1}`,
+      title: sectionTitle || title || `Seção ${sections.length + 1}`,
       html,
       plainText,
       sourcePages,
@@ -250,7 +261,17 @@ function splitIntoSections(blocks: Block[], documentTitle: string): EditableSect
     current = [];
   };
 
-  for (const block of blocks) {
+  for (const [index, block] of blocks.entries()) {
+    const previousPage = current.at(-1)?.sourcePages.at(-1);
+    const blockPage = block.sourcePages[0];
+    if (index <= firstMajorHeading && current.length > 0 && previousPage !== blockPage) {
+      flush(frontMatterTitle(current, documentTitle, sections.length));
+      title = `Seção editorial ${sections.length + 1}`;
+    }
+    if (block.kind === 'heading' && block.level === 2 &&
+      normalizeComparable(block.text) === normalizeComparable(documentTitle)) {
+      block.level = 1;
+    }
     if (block.kind === 'heading' && block.level === 1 && current.length > 0) {
       flush();
       title = block.text;
@@ -271,6 +292,18 @@ function splitIntoSections(blocks: Block[], documentTitle: string): EditableSect
     });
   }
   return sections;
+}
+
+function frontMatterTitle(blocks: Block[], documentTitle: string, sectionIndex: number): string {
+  const text = blocks.map((block) => block.text).join(' ').toLocaleLowerCase();
+  if (/isbn|copyright|todos os direitos|cataloga[cç][aã]o/u.test(text)) return 'Créditos editoriais';
+  if (/editora|www\.|https?:|@/u.test(text)) return 'Editora';
+  if (text.length < 650 && sectionIndex > 0) return 'Dedicatória';
+  return sectionIndex === 0 ? documentTitle : `Seção editorial ${sectionIndex + 1}`;
+}
+
+function normalizeComparable(value: string): string {
+  return value.normalize('NFKD').replace(/[\u0300-\u036f]/gu, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim().toLocaleLowerCase();
 }
 
 function blockToHtml(block: Block): string {

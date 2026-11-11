@@ -8,6 +8,7 @@ import type {
   PdfLine,
   PdfPageAnalysis,
   PdfTextItem,
+  PublicationMetadata,
 } from './model';
 import { detectColumnCount, reconstructDocument } from './textReconstruction';
 
@@ -88,6 +89,10 @@ export async function analyzePdf(input: AnalyzePdfOptions): Promise<PdfAnalysisR
     const fallbackTitle = input.fileName.replace(/\.pdf$/iu, '').trim() || 'Documento convertido';
     const title = metadataString(metadata?.info, 'Title') || fallbackTitle;
     const author = metadataString(metadata?.info, 'Author');
+    const publicationMetadata = inferPublicationMetadata(
+      pages.slice(0, 15).map((page) => page.text).join('\n'),
+      metadata?.info,
+    );
     const reconstructed = reconstructDocument(pages, input.options, title);
     const nativeTextPages = pages.filter((page) => page.kind === 'text').length;
     const ocrPages = pages.filter((page) => page.usedOcr).length;
@@ -105,6 +110,7 @@ export async function analyzePdf(input: AnalyzePdfOptions): Promise<PdfAnalysisR
       pageCount: document.numPages,
       title,
       author,
+      metadata: publicationMetadata,
       pages,
       sections: reconstructed.sections,
       warnings,
@@ -129,6 +135,75 @@ export async function analyzePdf(input: AnalyzePdfOptions): Promise<PdfAnalysisR
     await ocrWorker?.terminate().catch(() => undefined);
     await document?.destroy();
   }
+}
+
+export function inferPublicationMetadata(
+  text: string,
+  info?: object,
+): PublicationMetadata {
+  const normalized = text.replace(/\r/gu, '');
+  const rawIsbn = normalized.match(/\bISBN(?:-1[03])?\s*:?[\s\u00a0]*((?:97[89][\s-]*)?[\dXx](?:[\dXx\s-]{8,20})[\dXx])\b/u)?.[1] ?? '';
+  const isbn = rawIsbn.replace(/[^\dXx]/gu, '').toUpperCase();
+  const translator = firstCapture(normalized, [
+    /tradu[cç][aã]o\s+de\s+(.+?)(?=\s+\d+[ªº]?\s+edi[cç][aã]o|\s+EDITORA\b|\n)/iu,
+    /;\s*tradu[cç][aã]o\s+(.+?)(?=\.\s*-\s*\d|\n)/iu,
+    /translated\s+by\s+(.+?)(?=\n|\s+\d{4}\b)/iu,
+  ]);
+  const publisher = inferPublisher(normalized);
+  const publicationDate = normalized.match(/(?:copyright|©)\s*(?:©\s*)?(19\d{2}|20\d{2})/iu)?.[1]
+    ?? metadataYear(info)
+    ?? '';
+  const description = metadataString(info, 'Subject');
+  return {
+    publisher,
+    publicationDate,
+    isbn: isbn.length === 10 || isbn.length === 13 ? isbn : '',
+    translator: cleanMetadataValue(translator),
+    description,
+  };
+}
+
+function inferPublisher(text: string): string {
+  const rights = text.match(/(?:adquiridos|publicados?)\s+(?:pela|por)\s+((?:EDITORA\s+)?[\p{L}\d&'’.-]+(?:\s+[\p{L}\d&'’.-]+){0,5}?)(?=\.\s+(?:Rua|Avenida)|,\s+que\b|\n)/iu)?.[1];
+  if (rights) return formatPublisher(rights);
+  const line = text.split('\n').find((candidate) => /\bEDITORA\s+/u.test(candidate));
+  if (!line) return '';
+  const after = line.slice(line.search(/\bEDITORA\s+/u) + 'EDITORA '.length);
+  const stopWords = new Set(['RIO', 'SÃO', 'SAO', 'RUA', 'AVENIDA', 'LTDA', 'LTDA.', 'S.A.', 'SA']);
+  const tokens: string[] = [];
+  for (const token of after.split(/\s+/u)) {
+    const cleaned = token.replace(/^[^\p{L}\d]+|[^\p{L}\d.&'-]+$/gu, '');
+    if (!cleaned || stopWords.has(cleaned.toLocaleUpperCase()) || /^\d{4}$/u.test(cleaned)) break;
+    tokens.push(cleaned);
+    if (tokens.length === 4) break;
+  }
+  return tokens.length > 0 ? formatPublisher(`Editora ${tokens.join(' ')}`) : '';
+}
+
+function formatPublisher(value: string): string {
+  const cleaned = cleanMetadataValue(value)
+    .replace(/\s+(?:LTDA\.?|S\.?A\.?)$/iu, '')
+    .trim();
+  if (!cleaned || cleaned !== cleaned.toLocaleUpperCase()) return cleaned;
+  return cleaned.toLocaleLowerCase().replace(/(^|[\s'-])\p{L}/gu,
+    (letter) => letter.toLocaleUpperCase());
+}
+
+function firstCapture(value: string, patterns: RegExp[]): string {
+  for (const pattern of patterns) {
+    const captured = value.match(pattern)?.[1];
+    if (captured) return captured;
+  }
+  return '';
+}
+
+function cleanMetadataValue(value: string): string {
+  return value.replace(/\s+/gu, ' ').replace(/[.;,:-]+$/gu, '').trim().slice(0, 160);
+}
+
+function metadataYear(info: object | undefined): string | undefined {
+  const value = metadataString(info, 'CreationDate');
+  return value.match(/(?:19|20)\d{2}/u)?.[0];
 }
 
 export async function renderPdfPages(

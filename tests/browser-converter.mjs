@@ -62,6 +62,10 @@ try {
   await page.getByText(/Análise concluída:/).waitFor({ timeout: 30000 });
   assert.equal(await page.getByLabel('Título', { exact: true }).inputValue(), 'Livro de teste');
   assert.equal(await page.getByLabel('Autor', { exact: true }).inputValue(), 'EPUB Repair');
+  await page.getByLabel('Editora', { exact: true }).fill('Editora de teste');
+  await page.getByLabel('Ano ou data de publicação', { exact: true }).fill('2026');
+  await page.getByLabel('ISBN', { exact: true }).fill('9788501000002');
+  await page.getByLabel('Tradutor', { exact: true }).fill('Tradutora de teste');
   await page.getByRole('button', { name: 'Gerar EPUB validado' }).click();
   await page.getByRole('heading', { name: 'Conversão concluída e validada' })
     .waitFor({ timeout: 30000 });
@@ -76,6 +80,9 @@ try {
   const nav = await zip.file('OEBPS/nav.xhtml')?.async('text');
   const chapter = await zip.file('OEBPS/Text/section-001.xhtml')?.async('text');
   assert.match(opf ?? '', /Livro de teste/u);
+  assert.match(opf ?? '', /urn:isbn:9788501000002/u);
+  assert.match(opf ?? '', /<dc:publisher>Editora de teste<\/dc:publisher>/u);
+  assert.match(opf ?? '', /marc:relators">trl<\/meta>/u);
   assert.match(nav ?? '', /CAPITULO 1/u);
   assert.match(chapter ?? '', /conversao completa de PDF para EPUB/u);
   assert.deepEqual(errors, []);

@@ -12,6 +12,7 @@ import type {
   EditableSection,
   PdfAnalysisResult,
   PdfPageAnalysis,
+  PublicationMetadata,
 } from './model';
 import { renderPdfPages } from './pdfEngine';
 
@@ -21,6 +22,7 @@ interface BuildEpubInput {
   sections: EditableSection[];
   title: string;
   author: string;
+  metadata?: PublicationMetadata | undefined;
   options: ConverterOptions;
   signal?: AbortSignal | undefined;
   onProgress?: ((phase: string, completed?: number, total?: number) => void) | undefined;
@@ -33,7 +35,11 @@ interface ReflowableSection extends EditableSection {
 export async function buildEpubFromPdf(input: BuildEpubInput): Promise<ConversionResult> {
   throwIfAborted(input.signal);
   const layout = resolveLayout(input.options.outputLayout, input.analysis.suggestedLayout);
-  const identifier = `urn:uuid:${crypto.randomUUID()}`;
+  const metadata = input.metadata ?? input.analysis.metadata;
+  const normalizedIsbn = validIsbn(metadata.isbn);
+  const identifier = normalizedIsbn
+    ? `urn:isbn:${normalizedIsbn}`
+    : `urn:uuid:${crypto.randomUUID()}`;
   const modified = new Date().toISOString().replace(/\.\d{3}Z$/u, 'Z');
   const title = input.title.trim() || input.analysis.title || 'Documento convertido';
   const author = input.author.trim();
@@ -43,9 +49,9 @@ export async function buildEpubFromPdf(input: BuildEpubInput): Promise<Conversio
   input.onProgress?.('Montando estrutura EPUB');
 
   if (layout === 'fixed') {
-    await addFixedLayout(zip, input, title, author, identifier, modified);
+    await addFixedLayout(zip, input, title, author, metadata, identifier, modified);
   } else {
-    addReflowableLayout(zip, input, title, author, identifier, modified);
+    addReflowableLayout(zip, input, title, author, metadata, identifier, modified);
   }
 
   throwIfAborted(input.signal);
@@ -101,6 +107,7 @@ function addReflowableLayout(
   input: BuildEpubInput,
   title: string,
   author: string,
+  metadata: PublicationMetadata,
   identifier: string,
   modified: string,
 ): void {
@@ -134,6 +141,7 @@ function addReflowableLayout(
   zip.file('OEBPS/content.opf', reflowableOpf({
     title,
     author,
+    metadata,
     language: input.options.language,
     identifier,
     modified,
@@ -176,6 +184,7 @@ async function addFixedLayout(
   input: BuildEpubInput,
   title: string,
   author: string,
+  metadata: PublicationMetadata,
   identifier: string,
   modified: string,
 ): Promise<void> {
@@ -207,6 +216,7 @@ async function addFixedLayout(
   zip.file('OEBPS/content.opf', fixedOpf({
     title,
     author,
+    metadata,
     language: input.options.language,
     identifier,
     modified,
@@ -217,6 +227,7 @@ async function addFixedLayout(
 function reflowableOpf(input: {
   title: string;
   author: string;
+  metadata: PublicationMetadata;
   language: string;
   identifier: string;
   modified: string;
@@ -235,8 +246,9 @@ function reflowableOpf(input: {
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:identifier id="book-id">${escapeXml(input.identifier)}</dc:identifier>
     <dc:title>${escapeXml(input.title)}</dc:title>
-    ${input.author ? `<dc:creator>${escapeXml(input.author)}</dc:creator>` : ''}
+    ${input.author ? `<dc:creator id="creator">${escapeXml(input.author)}</dc:creator>\n    <meta refines="#creator" property="role" scheme="marc:relators">aut</meta>` : ''}
     <dc:language>${escapeXml(input.language)}</dc:language>
+    ${publicationMetadataXml(input.metadata)}
     <meta property="dcterms:modified">${input.modified}</meta>
     ${input.hasCover ? '<meta name="cover" content="cover-image"/>' : ''}
   </metadata>
@@ -257,6 +269,7 @@ function reflowableOpf(input: {
 function fixedOpf(input: {
   title: string;
   author: string;
+  metadata: PublicationMetadata;
   language: string;
   identifier: string;
   modified: string;
@@ -278,8 +291,9 @@ function fixedOpf(input: {
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:identifier id="book-id">${escapeXml(input.identifier)}</dc:identifier>
     <dc:title>${escapeXml(input.title)}</dc:title>
-    ${input.author ? `<dc:creator>${escapeXml(input.author)}</dc:creator>` : ''}
+    ${input.author ? `<dc:creator id="creator">${escapeXml(input.author)}</dc:creator>\n    <meta refines="#creator" property="role" scheme="marc:relators">aut</meta>` : ''}
     <dc:language>${escapeXml(input.language)}</dc:language>
+    ${publicationMetadataXml(input.metadata)}
     <meta property="dcterms:modified">${input.modified}</meta>
     <meta property="rendition:layout">pre-paginated</meta>
     <meta property="rendition:orientation">auto</meta>
@@ -384,7 +398,7 @@ function containerXml(): string {
 }
 
 function reflowableCss(): string {
-  return `html { color: #181818; background: #fff; }
+  return `html { -webkit-text-size-adjust: 100%; }
 body { margin: 5%; font-family: Georgia, serif; line-height: 1.55; }
 main { max-width: 44rem; margin: 0 auto; }
 h1 { margin: 2.8em 0 1.4em; font-size: 1.75em; text-align: center; page-break-before: always; }
@@ -398,6 +412,39 @@ h1 + p, h2 + p, aside + p { text-indent: 0; }
 .visual-page { margin: 1.5em auto; break-before: page; text-align: center; }
 .visual-page img { display: block; width: auto; max-width: 100%; max-height: 90vh; margin: auto; }
 .visual-page figcaption { margin-top: .5em; font-size: .8em; font-style: italic; text-indent: 0; }`;
+}
+
+function publicationMetadataXml(metadata: PublicationMetadata): string {
+  const entries: string[] = [];
+  if (metadata.publisher.trim()) {
+    entries.push(`<dc:publisher>${escapeXml(metadata.publisher.trim())}</dc:publisher>`);
+  }
+  if (metadata.publicationDate.trim()) {
+    entries.push(`<dc:date>${escapeXml(metadata.publicationDate.trim())}</dc:date>`);
+  }
+  if (metadata.translator.trim()) {
+    entries.push(`<dc:contributor id="translator">${escapeXml(metadata.translator.trim())}</dc:contributor>`);
+    entries.push('<meta refines="#translator" property="role" scheme="marc:relators">trl</meta>');
+  }
+  if (metadata.description.trim()) {
+    entries.push(`<dc:description>${escapeXml(metadata.description.trim())}</dc:description>`);
+  }
+  return entries.join('\n    ');
+}
+
+function validIsbn(value: string): string | undefined {
+  const normalized = value.replace(/[^\dXx]/gu, '').toUpperCase();
+  if (/^\d{13}$/u.test(normalized)) {
+    const sum = [...normalized.slice(0, 12)].reduce((total, digit, index) =>
+      total + Number(digit) * (index % 2 === 0 ? 1 : 3), 0);
+    return (10 - (sum % 10)) % 10 === Number(normalized[12]) ? normalized : undefined;
+  }
+  if (/^\d{9}[\dX]$/u.test(normalized)) {
+    const sum = [...normalized].reduce((total, digit, index) =>
+      total + (digit === 'X' ? 10 : Number(digit)) * (10 - index), 0);
+    return sum % 11 === 0 ? normalized : undefined;
+  }
+  return undefined;
 }
 
 function fixedCss(): string {

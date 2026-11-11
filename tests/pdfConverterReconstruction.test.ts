@@ -79,4 +79,43 @@ describe('reconstrução editorial de PDF', () => {
     );
     expect(result.sections[0]?.sourcePages).toEqual([1, 2]);
   });
+
+  it('reconstrói parágrafos iniciados por recuo editorial menor que uma linha de texto', () => {
+    const result = reconstructDocument([
+      page(1, [
+        line('CAPÍTULO 1', 720, 210, 180, 22),
+        line('O primeiro parágrafo começa recuado e termina aqui.', 670, 77, 430, 15),
+        line('Esta linha ainda pertence ao primeiro parágrafo.', 648, 60, 447, 15),
+        line('O segundo parágrafo também começa recuado.', 616, 77, 430, 15),
+        line('E continua normalmente nesta linha.', 594, 60, 447, 15),
+        line('O terceiro parágrafo encerra a amostra.', 562, 77, 430, 15),
+      ]),
+    ], options, 'Livro');
+    const paragraphs = result.sections[0]?.html.match(/<p>/gu) ?? [];
+    expect(paragraphs).toHaveLength(3);
+    expect(result.sections[0]?.plainText).toContain(
+      'O primeiro parágrafo começa recuado e termina aqui. Esta linha ainda pertence ao primeiro parágrafo.',
+    );
+  });
+
+  it('separa agradecimentos do epílogo como seção editorial própria', () => {
+    const result = reconstructDocument([
+      page(1, [line('EPÍLOGO', 700, 230, 140, 22), line('O desfecho termina aqui.', 650)]),
+      page(2, [line('AGRADECIMENTOS', 700, 190, 220, 20), line('A autora agradece aos leitores.', 650)]),
+    ], options, 'Livro');
+    expect(result.sections.map((section) => section.title)).toEqual(['EPÍLOGO', 'AGRADECIMENTOS']);
+    expect(result.sections[1]?.plainText).not.toContain('O desfecho termina aqui.');
+  });
+
+  it('separa e nomeia a dedicatória antes da primeira parte', () => {
+    const result = reconstructDocument([
+      page(1, [line('Copyright 2026. Todos os direitos reservados.', 650)]),
+      page(2, [line('À minha família, com carinho.', 650)]),
+      page(3, [line('PARTE I', 700, 230, 140, 22), line('O livro começa aqui.', 650)]),
+    ], options, 'Livro');
+    expect(result.sections.map((section) => section.title)).toEqual([
+      'Créditos editoriais', 'Dedicatória', 'PARTE I',
+    ]);
+    expect(result.sections[1]?.plainText).toBe('À minha família, com carinho.');
+  });
 });

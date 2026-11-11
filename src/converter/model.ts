@@ -16,6 +16,14 @@ export interface ConverterOptions {
   normalizeTypography: boolean;
 }
 
+export interface PublicationMetadata {
+  publisher: string;
+  publicationDate: string;
+  isbn: string;
+  translator: string;
+  description: string;
+}
+
 export interface PdfTextItem {
   text: string;
   x: number;
@@ -74,6 +82,7 @@ export interface PdfAnalysisResult {
   pageCount: number;
   title: string;
   author: string;
+  metadata: PublicationMetadata;
   pages: PdfPageAnalysis[];
   sections: EditableSection[];
   warnings: ConversionWarning[];
@@ -104,6 +113,7 @@ export interface ConverterState {
   result?: ConversionResult | undefined;
   title: string;
   author: string;
+  metadata: PublicationMetadata;
   options: ConverterOptions;
   busy: boolean;
   progress: string;
@@ -120,6 +130,13 @@ export function createInitialConverterState(): ConverterState {
     sections: [],
     title: '',
     author: '',
+    metadata: {
+      publisher: '',
+      publicationDate: '',
+      isbn: '',
+      translator: '',
+      description: '',
+    },
     options: {
       profile: 'book',
       outputLayout: 'auto',
