@@ -2,7 +2,7 @@ name: Browser compatibility smoke (Chromium, Firefox, WebKit)
 
 on:
   push:
-    branches: [prod]
+    branches: [prod, dev]
     paths:
       - 'src/**'
       - 'tests/browser-smoke.mjs'
@@ -44,7 +44,7 @@ concurrency:
 jobs:
   browser:
 
-    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    if: (github.event_name != 'pull_request' || !github.event.pull_request.draft) && (github.event_name != 'push' || github.ref != 'refs/heads/dev' || contains(github.event.head_commit.message, '[browser]'))
     name: Browser smoke / ${{ matrix.browser }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
