@@ -6,8 +6,8 @@
 
 | Dimensão | Estado verificado |
 | --- | --- |
-| Release oficial mais recente | [v2.5.0](https://github.com/vitoroliveirasilva/epub-repair.vite-web/releases/tag/v2.5.0), publicada em 11/11/2026 UTC |
-| Versão do código | `2.5.0` em `package.json`; novos merges não implicam incremento automático |
+| Nova release | [v3.0.0](https://github.com/vitoroliveirasilva/epub-repair.vite-web/releases/tag/v3.0.0), publicada automaticamente após CI aprovada na `prod` |
+| Versão do código | `3.0.0` em `package.json` e `package-lock.json` |
 | Produção | `prod`, publicada em https://epubrepair.netlify.app/ |
 | Desenvolvimento | `dev`, com commits diretos e PRs para `prod` |
 | Última revisão considerada | PR [#54](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pull/54), footer padronizado em 12/11/2026 |
@@ -15,7 +15,7 @@
 | Dependências principais | JSZip 3, PDF.js 5, Tesseract.js 7 e pacotes de idioma português/inglês |
 | Backend/banco | Não existentes neste projeto; processamento de EPUB/PDF local no navegador |
 
-A release `v2.5.0` documenta o motor EPUB no momento em que a tag foi criada. Depois da tag, as PRs #43–#54 acrescentaram o conversor PDF → EPUB e melhorias de fidelidade, UX e navegação. Não usar o nome de uma release antiga para afirmar que ela contém mudanças de commits posteriores.
+A release `v2.5.0` documenta o motor EPUB na data de sua tag. A `v3.0.0` consolida as PRs #43–#54 posteriores, com o conversor PDF → EPUB e melhorias de fidelidade, UX e navegação. A automação publica a tag somente após CI aprovada no commit atual de produção.
 
 ## Recursos entregues e seus limites
 

@@ -1,6 +1,6 @@
 # Deploy, publicação e operação
 
-**Referência:** configuração de 12/11/2026. A release oficial mais recente verificada é `v2.5.0`; mudanças posteriores já estão em `prod`, sem necessidade de uma tag nova para cada PR.
+**Referência:** configuração de 12/11/2026. A versão `v3.0.0` consolida as alterações após `v2.5.0`. A nova tag é publicada pelo workflow após CI bem-sucedida em `prod`, sem exigir uma tag nova a cada PR.
 
 ## Ambientes
 
@@ -70,7 +70,7 @@ Não assumir que um PR com “mergeable: true” passou todos os checks; conferi
 - consulta se a tag da mesma versão já possui release e não republica se existir;
 - usa `.github/release-notes/vX.Y.Z.md` quando disponível.
 
-**Conseqüência:** merges subsequentes mantendo `2.5.0` podem atualizar o site sem gerar outra GitHub Release. O conteúdo de uma release datada é histórico; o HEAD de produção pode ser mais recente. Só incrementar versão se essa for uma decisão explícita de publicação versionada.
+**Consequência:** merges subsequentes mantendo `3.0.0` podem atualizar o site sem gerar outra GitHub Release. O conteúdo de uma release datada é histórico; o HEAD de produção pode ser mais recente. Só incrementar versão se essa for uma decisão explícita de publicação versionada.
 
 ## Verificação pós-deploy
 

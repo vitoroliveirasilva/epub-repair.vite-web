@@ -2,7 +2,7 @@
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/0a6d6315-875c-4375-a73f-87859903eb27/deploy-status)](https://app.netlify.com/projects/epubrepair/deploys)
 [![CI](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/workflows/ci.yml/badge.svg?branch=prod)](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/release-v2.5.0-blue)](https://github.com/vitoroliveirasilva/epub-repair.vite-web/releases/tag/v2.5.0)
+[![Version](https://img.shields.io/badge/release-v3.0.0-blue)](https://github.com/vitoroliveirasilva/epub-repair.vite-web/releases/tag/v3.0.0)
 ![Vite](https://img.shields.io/badge/Vite-8.x-646CFF)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.x-3178C6)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -11,7 +11,7 @@ Aplicação estática, em português, para **reparar arquivos EPUB** e **convert
 
 **Site:** https://epubrepair.netlify.app/ · **Reparar EPUB:** `/` · **Converter PDF:** `/converter`
 
-> **Estado de referência: 12/11/2026.** A última release versionada confirmada é a `v2.5.0`. A branch `prod` já recebeu melhorias posteriores, inclusive o conversor PDF e a navegação móvel. Portanto, **versão publicada** e **conjunto de mudanças no HEAD** não são equivalentes. Consulte [o estado atual](docs/ESTADO_ATUAL.md), [o histórico](CHANGELOG.md) e o [pipeline de publicação](docs/DEPLOY_OPERACAO.md).
+> **Versão 3.0.0 (12/11/2026).** Consolida as melhorias após `v2.5.0`, incluindo conversão PDF → EPUB, OCR, navegação móvel e processamento. A tag `v3.0.0` é publicada automaticamente após aprovação da CI no commit atual da `prod`. Consulte [o estado atual](docs/ESTADO_ATUAL.md), [o histórico](CHANGELOG.md) e o [pipeline de publicação](docs/DEPLOY_OPERACAO.md).
 
 ## Funcionalidades
 
