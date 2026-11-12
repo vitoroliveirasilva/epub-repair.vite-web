@@ -108,7 +108,7 @@ export async function readBookPreview(
     const entry = loaded.files.get(item.resolvedPath);
     if (!entry || entry.bytes.byteLength > 4_000_000) continue;
     const raw = DECODER.decode(entry.bytes);
-    let plain = '';
+    let plain: string;
     let title = item.href.split('/').pop() || 'Seção sem título';
     try {
       const doc = parseXml(raw);

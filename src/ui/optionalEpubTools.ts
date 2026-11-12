@@ -272,7 +272,7 @@ function renderBatch(state: AppState, s: Session, rerender: () => void, enqueue:
             status.push(`${file.name}: recusado por problemas fatais`);
             continue;
           }
-          let output: Blob = new Blob([bytes.slice().buffer as ArrayBuffer],
+          let output: Blob = new Blob([bytes.slice().buffer],
             { type: 'application/epub+zip' });
           let name = file.name;
           if (canRepairReport(report)) {
