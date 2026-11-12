@@ -54,6 +54,16 @@ try {
   const response = await page.goto('http://127.0.0.1:5173/converter', { waitUntil: 'networkidle' });
   assert.equal(response?.status(), 200);
   await page.getByRole('heading', { name: /Transforme PDF em EPUB/ }).waitFor();
+  const footerLinks = page.locator('.app-footer .footer-links a');
+  assert.deepEqual(await footerLinks.allTextContents(), [
+    'Desenvolvedor', 'Projeto no GitHub', 'Reparar EPUB', 'Converter PDF',
+  ]);
+  assert.deepEqual(await footerLinks.evaluateAll((links) => links.map((link) => link.getAttribute('href'))), [
+    'https://github.com/vitoroliveirasilva',
+    'https://github.com/vitoroliveirasilva/epub-repair.vite-web',
+    '/',
+    '/converter',
+  ]);
   await page.setViewportSize({ width: 390, height: 844 });
   const mobileMenu = page.locator('.mobile-navigation');
   assert.equal(await mobileMenu.isVisible(), true);

@@ -1089,9 +1089,11 @@ function renderFooter(): HTMLElement {
   return el('footer', { className: 'footer app-footer', children: [
     el('div', { className: 'footer-main', children: [
       el('a', { className: 'footer-brand', attrs: { href: '/' }, children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })] }),
-      el('nav', { className: 'footer-links', children: [
-        el('a', { text: 'Reparar EPUB', attrs: { href: '/' } }),
+      el('nav', { className: 'footer-links', attrs: { 'aria-label': 'Links de navegação e projeto' }, children: [
+        el('a', { text: 'Desenvolvedor', attrs: { href: 'https://github.com/vitoroliveirasilva', target: '_blank', rel: 'noreferrer noopener' } }),
         el('a', { text: 'Projeto no GitHub', attrs: { href: 'https://github.com/vitoroliveirasilva/epub-repair.vite-web', target: '_blank', rel: 'noreferrer noopener' } }),
+        el('a', { text: 'Reparar EPUB', attrs: { href: '/' } }),
+        el('a', { text: 'Converter PDF', attrs: { href: '/converter' } }),
       ] }),
     ] }),
     el('div', { className: 'footer-bottom', children: [

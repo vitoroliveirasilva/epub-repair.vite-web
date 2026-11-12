@@ -887,7 +887,7 @@ video {
 
 .footer-main {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(16rem, 24rem);
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 36rem);
   gap: clamp(1.25rem, 4vw, 2.5rem);
   align-items: center;
 }
