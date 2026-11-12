@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { groupItemsIntoLines } from '../src/converter/pdfEngine';
 import { detectColumnCount, reconstructDocument } from '../src/converter/textReconstruction';
 import type { ConverterOptions, PdfLine, PdfPageAnalysis } from '../src/converter/model';
 
@@ -169,6 +170,45 @@ describe('reconstrução editorial de PDF', () => {
     const sizes = [...(result.sections[0]?.html.matchAll(/<p>(.*?)<\/p>/gsu) ?? [])]
       .map((match) => match[1]!.split(/\s+/u).length);
     expect(Math.max(...sizes)).toBeLessThanOrEqual(180);
+  });
+
+
+  it('recupera o espaço após palavra funcional quando o PDF alterna fonte no início da próxima palavra', () => {
+    const result = groupItemsIntoLines([
+      { text: 'Pensamento, um', x: 100, y: 600, width: 100, height: 16,
+        fontSize: 15, fontName: 'corpo', hasEol: false },
+      { text: 'E', x: 200, y: 600, width: 10, height: 16,
+        fontSize: 15, fontName: 'negrito', hasEol: false },
+      { text: 'vento ou um', x: 210, y: 600, width: 78, height: 16,
+        fontSize: 15, fontName: 'corpo', hasEol: false },
+      { text: 'S', x: 288, y: 600, width: 9, height: 16,
+        fontSize: 15, fontName: 'negrito', hasEol: false },
+      { text: 'entimento.', x: 297, y: 600, width: 75, height: 16,
+        fontSize: 15, fontName: 'corpo', hasEol: false },
+    ]);
+    expect(result.map((entry) => entry.text)).toEqual(['Pensamento, um Evento ou um Sentimento.']);
+  });
+
+  it('não separa uma palavra composta quando a mudança de fonte é interna', () => {
+    const result = groupItemsIntoLines([
+      { text: 'e', x: 100, y: 600, width: 7, height: 16,
+        fontSize: 15, fontName: 'corpo', hasEol: false },
+      { text: 'Book', x: 107, y: 600, width: 40, height: 16,
+        fontSize: 15, fontName: 'negrito', hasEol: false },
+    ]);
+    expect(result[0]?.text).toBe('eBook');
+  });
+
+  it('mantém os códigos de catalogação como texto, não como títulos', () => {
+    const result = reconstructDocument([page(1, [
+      line('CIP-BRASIL. CATALOGAÇÃO NA PUBLICAÇÃO', 720, 100, 400, 14),
+      line('CDD: 616.852606', 660, 230, 150, 19),
+      line('CDU: 616.33-008.4', 580, 230, 160, 19),
+      line('Os direitos desta edição são reservados à editora.', 530, 60, 480, 12),
+    ])], options, 'Livro');
+    expect(result.sections[0]?.html).not.toMatch(/<h[12]>(?:CDD|CDU)/u);
+    expect(result.sections[0]?.plainText).toContain('CDD: 616.852606');
+    expect(result.sections[0]?.plainText).toContain('CDU: 616.33-008.4');
   });
 
   it('remove sumário técnico e lista de páginas anexados ao final do PDF', () => {

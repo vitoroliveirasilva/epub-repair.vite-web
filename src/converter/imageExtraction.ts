@@ -18,8 +18,11 @@ function bound(matrix: Matrix, width: number, height: number): PdfImageRegion | 
   const y = Math.max(0, Math.min(...yy));
   const w = Math.min(width, Math.max(...xx))-x;
   const h = Math.min(height, Math.max(...yy))-y;
-  if (w < Math.max(28,width*0.08) || h < Math.max(20,height*0.025) ||
-    w*h < width*height*0.008) return undefined;
+  const regularImage = w >= Math.max(28,width*0.08) && h >= Math.max(20,height*0.025) &&
+    w*h >= width*height*0.008;
+  const compactDiagram = w >= Math.max(70,width*0.11) && h >= Math.max(18,height*0.022) &&
+    w*h >= width*height*0.003;
+  if (!regularImage && !compactDiagram) return undefined;
   return { x, y, width:w, height:h };
 }
 function overlap(a: PdfImageRegion, b: PdfImageRegion): number {

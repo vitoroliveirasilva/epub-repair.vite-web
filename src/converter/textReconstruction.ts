@@ -29,6 +29,7 @@ const LETTER = /\p{L}/u;
 const CHAPTER_NUMBER = /^\s*(\d{1,3})[.)]?(?:\s+|$)/u;
 const EDITORIAL_HEADING = /^(?:sum[aá]rio|contents|pref[aá]cio(?:\s+.+)?|foreword|apêndice|appendix|[ií]ndice(?:\s+remissivo)?|index)$/iu;
 const SENTENCE_LIKE = /(?:[,;:]|\b(?:que|de|da|do|das|dos|para|por|com|como|e|ou|the|of|to|and|with)\s*)$/iu;
+const CATALOG_ENTRY = /^(?:CDD|CDU|ISBN(?:-1[03])?|ISSN|DOI)\s*[:.\-]?\s*[\dXx./-]+(?:\s.*)?$/iu;
 
 export function reconstructDocument(
   pages: PdfPageAnalysis[],
@@ -297,9 +298,9 @@ function linesToBlocks(
     const knownHeading = isKnownHeading(text, tocHeadings);
     const editorialHeading = EDITORIAL_HEADING.test(text) && (!tocPage || /^(?:sum[aá]rio|contents)$/iu.test(text));
     const subheading = looksLikeSubheading(text, line, lines[index - 1], lines[index + 1], page, median);
-    const heading = tocPage
+    const heading = !CATALOG_ENTRY.test(text) && (tocPage
       ? /^(?:sum[aá]rio|contents)$/iu.test(text)
-      : short && (headingPattern || knownHeading || editorialHeading || standaloneHeading || subheading);
+      : short && (headingPattern || knownHeading || editorialHeading || standaloneHeading || subheading));
     const footnote = line.fontSize <= median * 0.78 && line.y < page.height * 0.32;
 
     if (heading) {

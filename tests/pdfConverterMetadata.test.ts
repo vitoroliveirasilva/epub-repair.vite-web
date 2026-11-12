@@ -44,4 +44,14 @@ Editora Hogrefe CETEPP
       translator: 'Dr. Thomas Haunold',
     });
   });
+  it('não consome a numeração da linha seguinte ao ISBN do PDF de 349 páginas', () => {
+    const text = [
+      'ISBN 978-65-990257-3-0',
+      '1. Terapia comportamental dialética. 2. Distúrbios do apetite.',
+      'CDD: 616.852606',
+    ].join('\n');
+    expect(inferPublicationMetadata(text).isbn).toBe('9786599025730');
+    expect(inferPublicationMetadata('ISBN: 978-65-990257-3-0\nImpresso no Brasil').isbn)
+      .toBe('9786599025730');
+  });
 });
