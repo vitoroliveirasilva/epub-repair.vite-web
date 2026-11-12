@@ -17,80 +17,127 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
           { label: 'Relatório', href: '#app-workspace', current: false },
         ]),
   ];
-  const menu = el('details', {
-    className: 'mobile-navigation',
+  const openButton = el('button', {
+    className: 'mobile-navigation-trigger',
+    attrs: {
+      type: 'button',
+      'aria-label': 'Abrir menu de navegação',
+      'aria-haspopup': 'dialog',
+      'aria-expanded': 'false',
+    },
     children: [
-      el('summary', {
-        className: 'mobile-navigation-trigger',
-        attrs: { 'aria-label': 'Menu de navegação' },
-        children: [
-          el('span', {
-            className: 'mobile-navigation-glyph',
-            attrs: { 'aria-hidden': 'true' },
-            children: [el('i'), el('i'), el('i')],
-          }),
-          el('span', { className: 'mobile-navigation-label', text: 'Menu' }),
-        ],
+      el('span', {
+        className: 'mobile-navigation-glyph',
+        attrs: { 'aria-hidden': 'true' },
+        children: [el('i'), el('i'), el('i')],
       }),
-      el('nav', {
-        className: 'mobile-navigation-panel',
-        attrs: { 'aria-label': 'Navegação no celular' },
+      el('span', { className: 'mobile-navigation-label', text: 'Menu' }),
+    ],
+  });
+
+  const closeButton = el('button', {
+    className: 'mobile-navigation-close',
+    attrs: { type: 'button', 'aria-label': 'Fechar menu de navegação' },
+    children: [
+      el('span', { text: 'Fechar' }),
+      el('span', { className: 'mobile-navigation-close-icon', text: '×', attrs: { 'aria-hidden': 'true' } }),
+    ],
+  });
+
+  const dialog = el('dialog', {
+    className: 'mobile-navigation-dialog',
+    attrs: { 'aria-label': 'Menu de navegação' },
+    children: [
+      el('div', {
+        className: 'mobile-navigation-drawer',
         children: [
           el('div', {
-            className: 'mobile-navigation-panel-heading',
+            className: 'mobile-navigation-topbar',
             children: [
-              el('strong', { text: 'Navegação' }),
-              el('small', { text: 'Escolha para onde ir' }),
+              el('div', {
+                className: 'mobile-navigation-brand',
+                children: [
+                  el('strong', { text: 'EPUB Repair' }),
+                  el('small', { text: 'Navegação' }),
+                ],
+              }),
+              closeButton,
             ],
           }),
-          el('div', {
-            className: 'mobile-navigation-group mobile-navigation-group-primary',
+          el('nav', {
+            className: 'mobile-navigation-panel',
+            attrs: { 'aria-label': 'Navegação no celular' },
             children: [
-              el('span', { className: 'mobile-navigation-group-label', text: 'Ferramentas' }),
-              ...links.slice(0, 2).map(({ label, href, current }) =>
-                el('a', {
-                  className: current
-                    ? 'mobile-navigation-link mobile-navigation-link-primary mobile-navigation-link-active'
-                    : 'mobile-navigation-link mobile-navigation-link-primary',
-                  attrs: { href, ...(current ? { 'aria-current': 'page' } : {}) },
-                  children: [
-                    el('span', { className: 'mobile-navigation-link-text', text: label }),
-                    current
-                      ? el('span', { className: 'mobile-navigation-current', text: 'Atual' })
-                      : el('span', { className: 'mobile-navigation-link-arrow', attrs: { 'aria-hidden': 'true' }, text: '›' }),
-                  ],
-                })),
-            ],
-          }),
-          el('div', {
-            className: 'mobile-navigation-group mobile-navigation-group-sections',
-            children: [
-              el('span', { className: 'mobile-navigation-group-label', text: 'Nesta página' }),
-              ...links.slice(2).map(({ label, href }) =>
-                el('a', {
-                  className: 'mobile-navigation-link mobile-navigation-link-secondary',
-                  attrs: { href },
-                  children: [
-                    el('span', { className: 'mobile-navigation-link-text', text: label }),
-                    el('span', { className: 'mobile-navigation-link-arrow', attrs: { 'aria-hidden': 'true' }, text: '›' }),
-                  ],
-                })),
+              el('div', {
+                className: 'mobile-navigation-panel-heading',
+                children: [
+                  el('strong', { text: 'Para onde vamos?' }),
+                  el('small', { text: 'Acesse as ferramentas e as seções do site' }),
+                ],
+              }),
+              el('div', {
+                className: 'mobile-navigation-group mobile-navigation-group-primary',
+                children: [
+                  el('span', { className: 'mobile-navigation-group-label', text: 'Ferramentas' }),
+                  ...links.slice(0, 2).map(({ label, href, current }) =>
+                    el('a', {
+                      className: current
+                        ? 'mobile-navigation-link mobile-navigation-link-primary mobile-navigation-link-active'
+                        : 'mobile-navigation-link mobile-navigation-link-primary',
+                      attrs: { href, ...(current ? { 'aria-current': 'page' } : {}) },
+                      children: [
+                        el('span', { className: 'mobile-navigation-link-text', text: label }),
+                        current
+                          ? el('span', { className: 'mobile-navigation-current', text: 'Atual' })
+                          : el('span', { className: 'mobile-navigation-link-arrow', attrs: { 'aria-hidden': 'true' }, text: '›' }),
+                      ],
+                    })),
+                ],
+              }),
+              el('div', {
+                className: 'mobile-navigation-group mobile-navigation-group-sections',
+                children: [
+                  el('span', { className: 'mobile-navigation-group-label', text: 'Nesta página' }),
+                  ...links.slice(2).map(({ label, href }) =>
+                    el('a', {
+                      className: 'mobile-navigation-link mobile-navigation-link-secondary',
+                      attrs: { href },
+                      children: [
+                        el('span', { className: 'mobile-navigation-link-text', text: label }),
+                        el('span', { className: 'mobile-navigation-link-arrow', attrs: { 'aria-hidden': 'true' }, text: '›' }),
+                      ],
+                    })),
+                ],
+              }),
             ],
           }),
         ],
       }),
     ],
   });
-  menu.addEventListener('click', (event) => {
+
+  const menu = el('div', {
+    className: 'mobile-navigation',
+    children: [openButton, dialog],
+  });
+
+  openButton.addEventListener('click', () => {
+    if (dialog.open) return;
+    dialog.showModal();
+    openButton.setAttribute('aria-expanded', 'true');
+    closeButton.focus();
+  });
+
+  closeButton.addEventListener('click', () => dialog.close());
+  dialog.addEventListener('close', () => {
+    openButton.setAttribute('aria-expanded', 'false');
+    if (openButton.isConnected) openButton.focus();
+  });
+  dialog.addEventListener('click', (event) => {
     if (event.target instanceof Element && event.target.closest('.mobile-navigation-panel a')) {
-      menu.open = false;
+      dialog.close();
     }
   });
-  menu.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && menu.open) {
-      menu.open = false;
-      menu.querySelector<HTMLElement>('summary')?.focus();
-    }
-  });
+
   return menu;
 }
