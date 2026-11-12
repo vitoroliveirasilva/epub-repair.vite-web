@@ -36,7 +36,7 @@ async function epubWithMedia(): Promise<Uint8Array> {
   zip.file('OEBPS/Text/a.xhtml', `<?xml version="1.0"?>
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head><title>Início</title></head><body><h1>Início</h1>
-      <p>Primeiro parágrafo com <strong>ênfase</strong>.</p>
+      <p>Primeiro parágrafo com <strong>ênfase</strong>.<script>segredo-embutido</script></p>
       <figure><img src="../Images/pixel.png" alt="Imagem interna"/></figure>
       <img src="https://example.com/track.png" alt="Imagem remota"/>
       <script>segredo-do-script</script>
@@ -67,6 +67,7 @@ describe('Leitura EPUB segura e diferenças por capítulo', () => {
     expect(images).toHaveLength(1);
     expect(images[0]?.imageDataUrl).toMatch(/^data:image\/png;base64,/u);
     expect(JSON.stringify(book)).not.toContain('segredo-do-script');
+    expect(JSON.stringify(book)).not.toContain('segredo-embutido');
     expect(JSON.stringify(book)).not.toContain('https://example.com');
   });
 

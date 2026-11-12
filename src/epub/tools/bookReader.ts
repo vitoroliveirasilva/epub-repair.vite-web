@@ -112,6 +112,9 @@ function blocksFromXhtml(
 ): { title: string; blocks: BookBlock[]; text: string } {
   const xml = parseXml(normalizeNamedEntities(source));
   const body = findFirstByLocalName(xml, 'body') ?? xml.documentElement;
+  for (const element of Array.from(body.getElementsByTagName('*'))) {
+    if (DISALLOWED.has(element.localName.toLowerCase())) element.remove();
+  }
   const title = findFirstByLocalName(body, 'h1')?.textContent?.trim() ||
     findFirstByLocalName(body, 'h2')?.textContent?.trim() ||
     findFirstByLocalName(xml, 'title')?.textContent?.trim() || '';

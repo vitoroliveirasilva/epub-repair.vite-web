@@ -181,3 +181,7 @@
   background: var(--color-surface-2);
 }
 .optional-comparison-summary p { margin: 0.2rem 0 0; }
+
+.optional-tool-content > p,
+.optional-reader-body,
+.optional-review-item { overflow-wrap: anywhere; }

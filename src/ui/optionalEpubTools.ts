@@ -1,9 +1,7 @@
-import JSZip from 'jszip';
 import type { AppState, ProcessingProgress } from '../app/state';
-import { canRepairReport, DEFAULT_REPAIR_OPTIONS, type ValidationReport } from '../epub';
-import { repairEpub } from '../epub/repair/repairEpub';
-import { inspectEpub } from '../epub/validation/validateEpub';
+import type { ValidationReport } from '../epub';
 import { MAX_FILE_SIZE_BYTES } from '../epub/utils/constants';
+import { processEpubBatch } from '../epub/tools/batchProcessor';
 import { button, downloadBlob, el, formatBytes } from './dom';
 import {
   buildKindleChecks, readBookMetadata, readBookPreview, writeBookMetadata,
@@ -294,51 +292,12 @@ function renderBatch(state: AppState, s: Session, rerender: () => void, enqueue:
   const start = toolButton('Validar e reparar lote', s.batchFiles.length > 0 && !state.busy, () => {
     const files = [...s.batchFiles];
     enqueue('Processar lote EPUB', async ({ signal, onProgress }) => {
-      const zip = new JSZip();
-      const used = new Set<string>();
-      const status: string[] = [];
-      for (const [index, file] of files.entries()) {
-        if (signal.aborted) throw new DOMException('Lote cancelado.', 'AbortError');
-        onProgress({ phase: `Lote: ${index + 1} de ${files.length} — ${file.name}`,
-          completed: index, total: files.length });
-        try {
-          const bytes = new Uint8Array(await file.arrayBuffer());
-          const report = await inspectEpub(file.name, bytes);
-          if (!report.validZip || report.stats.fatalCount) {
-            status.push(`${file.name}: recusado por problemas fatais`);
-            continue;
-          }
-          let output: Blob = new Blob([bytes.slice().buffer],
-            { type: 'application/epub+zip' });
-          let name = file.name;
-          if (canRepairReport(report)) {
-            const result = await repairEpub(file.name, bytes, DEFAULT_REPAIR_OPTIONS,
-              'repair', undefined, signal);
-            if (result.changed && result.blob) {
-              output = result.blob;
-              name = result.fileName;
-            }
-          }
-          const safeName = name.replace(/[^a-z0-9_.() -]/giu, '_').slice(0, 120);
-          let filename = safeName;
-          let duplicate = 1;
-          while (used.has(filename)) filename = `${duplicate++}-${safeName}`;
-          used.add(filename);
-          zip.file(filename, output);
-          status.push(`${file.name}: ${name === file.name ? 'validado' : 'reparado'}`);
-        } catch (error) {
-          if (signal.aborted) throw new DOMException('Lote cancelado.', 'AbortError');
-          status.push(`${file.name}: falhou — ${error instanceof Error ? error.message : 'erro desconhecido'}`);
-        }
-      }
-      if (signal.aborted) throw new DOMException('Lote cancelado.', 'AbortError');
-      zip.file('resultado-lote.txt', status.join('\n'));
-      const result = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE',
-        compressionOptions: { level: 4 } });
-      if (signal.aborted) throw new DOMException('Lote cancelado.', 'AbortError');
-      s.batchZip = result;
-      s.batchStatus = status;
-      s.message = 'Lote concluído; confira os resultados individuais antes de baixar.';
+      const processed = await processEpubBatch(files, signal, (phase, completed, total) =>
+        onProgress({ phase, completed, total }));
+      s.batchZip = processed.zip;
+      s.batchStatus = processed.entries.map((entry) =>
+        entry.source + ': ' + entry.status + ' (' + entry.detail + ')');
+      s.message = 'Lote concluído. Confira o resultado de cada livro e baixe o ZIP.';
     });
   });
   return el('div', { className: 'optional-tool-content', children: [
