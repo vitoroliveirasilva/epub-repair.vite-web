@@ -601,7 +601,7 @@ function renderSectionEditor(state: ConverterState, rerender: () => void): HTMLE
 }
 
 function renderAdvancedReview(state: ConverterState, rerender: () => void): HTMLElement {
-  return el('details', {
+  const details = el('details', {
     className: 'converter-advanced-review',
     children: [
       el('summary', { children: [
@@ -618,6 +618,11 @@ function renderAdvancedReview(state: ConverterState, rerender: () => void): HTML
       ] }),
     ],
   });
+  details.open = state.advancedReviewOpen;
+  details.addEventListener('toggle', () => {
+    if (details.isConnected) state.advancedReviewOpen = details.open;
+  });
+  return details;
 }
 
 function renderQualitySidebar(state: ConverterState): HTMLElement {
@@ -775,6 +780,7 @@ async function loadAndAnalyze(file: File, state: ConverterState, rerender: () =>
   };
   state.selectedPage = 1;
   state.selectedSection = 0;
+  state.advancedReviewOpen = false;
   await analyzeCurrent(state, rerender);
 }
 

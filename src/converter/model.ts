@@ -133,6 +133,7 @@ export interface ConverterState {
   error?: string | undefined;
   selectedPage: number;
   selectedSection: number;
+  advancedReviewOpen: boolean;
   controller?: AbortController | undefined;
 }
 
@@ -162,5 +163,6 @@ export function createInitialConverterState(): ConverterState {
     progress: '',
     selectedPage: 1,
     selectedSection: 0,
+    advancedReviewOpen: false,
   };
 }

@@ -855,24 +855,51 @@
   font-size: 1.45rem;
 }
 
-.converter-warning-panel {
-  max-height: 38rem;
-  overflow: auto;
+.converter-sidebar .converter-warning-panel {
+  min-width: 0;
+  max-width: 100%;
+  max-height: none;
+  height: auto;
+  overflow: visible;
 }
 
 .converter-warning {
-  padding: 0.8rem 0;
+  display: flow-root;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.9rem 0;
   border-bottom: 1px solid var(--color-border);
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .converter-warning:last-child {
   border-bottom: 0;
 }
 
+.converter-warning strong,
 .converter-warning p,
 .converter-warning small {
-  margin: 0.2rem 0 0;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.55;
+  hyphens: auto;
+}
+
+.converter-warning p,
+.converter-warning small {
+  margin: 0.35rem 0 0;
   color: var(--color-text-muted);
+}
+
+.converter-warning-panel > h3 {
+  overflow-wrap: anywhere;
 }
 
 .converter-warning-warning strong {
