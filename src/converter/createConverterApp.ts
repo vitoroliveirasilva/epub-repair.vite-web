@@ -687,7 +687,6 @@ function renderResult(state: ConverterState): HTMLElement {
     attrs: { role: 'status', 'aria-live': 'polite' },
     children: [
       el('div', { className: 'converter-result-heading', children: [
-        el('span', { className: 'converter-result-check', text: '✓' }),
         el('div', { children: [
           el('p', { className: 'eyebrow', text: 'Conversão finalizada' }),
           el('h2', { text: 'Seu EPUB está pronto para baixar' }),
@@ -787,7 +786,7 @@ async function loadAndAnalyze(file: File, state: ConverterState, rerender: () =>
 async function analyzeCurrent(state: ConverterState, rerender: () => void): Promise<void> {
   if (!state.file || !state.bytes) return;
   await runTask(state, rerender, async (signal) => {
-    const renderProgress = createProgressRenderer(rerender);
+    const renderProgress = createProgressRenderer(state, rerender);
     state.progress = 'Abrindo PDF localmente';
     state.progressValue = 0;
     const analysis = await analyzePdf({
@@ -821,7 +820,7 @@ async function analyzeCurrent(state: ConverterState, rerender: () => void): Prom
 async function convertCurrent(state: ConverterState, rerender: () => void): Promise<void> {
   if (!state.analysis || !state.bytes) return;
   await runTask(state, rerender, async (signal) => {
-    const renderProgress = createProgressRenderer(rerender);
+    const renderProgress = createProgressRenderer(state, rerender);
     state.progress = 'Preparando EPUB';
     state.progressValue = undefined;
     const result = await buildEpubFromPdf({
@@ -939,14 +938,38 @@ function mergeWithPrevious(state: ConverterState, index: number): void {
   state.result = undefined;
 }
 
-function createProgressRenderer(rerender: () => void): () => void {
+function createProgressRenderer(state: ConverterState, rerender: () => void): () => void {
   let scheduled = false;
   return () => {
     if (scheduled) return;
     scheduled = true;
     requestAnimationFrame(() => {
       scheduled = false;
-      rerender();
+      const card = document.querySelector<HTMLElement>('.converter-processing-card');
+      if (!card || !state.busy) {
+        rerender();
+        return;
+      }
+      const phaseIndex = progressPhaseIndex(state.progress);
+      const fallbackProgress = [12, 32, 58, 78, 94][phaseIndex] ?? 8;
+      const percentage = state.progressValue ?? fallbackProgress;
+      const heading = card.querySelector<HTMLElement>('.converter-processing-heading h2');
+      const description = card.querySelector<HTMLElement>('.converter-processing-heading .muted');
+      const bar = card.querySelector<HTMLElement>('.converter-progress-track > span');
+      const counter = card.querySelector<HTMLElement>('.converter-progress-meta > span:first-child');
+      if (heading) heading.textContent = state.progress || 'Preparando documento';
+      if (description) description.textContent = progressDetail(state.progress);
+      if (bar) bar.style.width = `${Math.max(4, Math.min(100, percentage))}%`;
+      if (counter) counter.textContent = state.progressValue !== undefined
+        ? `${state.progressValue}% concluído`
+        : 'Trabalhando nesta etapa';
+      for (const [index, step] of Array.from(
+        card.querySelectorAll<HTMLElement>('.converter-processing-steps > li'),
+      ).entries()) {
+        step.className = index < phaseIndex ? 'complete' : index === phaseIndex ? 'active' : '';
+        const number = step.querySelector<HTMLElement>(':scope > span');
+        if (number) number.textContent = index < phaseIndex ? '✓' : String(index + 1);
+      }
     });
   };
 }
