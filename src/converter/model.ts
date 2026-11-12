@@ -134,6 +134,7 @@ export interface ConverterState {
   selectedPage: number;
   selectedSection: number;
   advancedReviewOpen: boolean;
+  assistedReviewOpen: boolean;
   controller?: AbortController | undefined;
 }
 
@@ -164,5 +165,6 @@ export function createInitialConverterState(): ConverterState {
     selectedPage: 1,
     selectedSection: 0,
     advancedReviewOpen: false,
+    assistedReviewOpen: false,
   };
 }

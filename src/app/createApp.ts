@@ -20,6 +20,7 @@ import { renderRepairSummary } from '../ui/components/RepairSummary';
 import { renderUploader } from '../ui/components/Uploader';
 import { button, downloadBlob, el } from '../ui/dom';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
+import { renderOptionalEpubTools } from '../ui/optionalEpubTools';
 import { abortProcessingError } from './zipWorkerClient';
 import { SerialTaskQueue } from './taskQueue';
 
@@ -166,6 +167,7 @@ function render(
                   rerender();
                 })
               : undefined,
+            renderOptionalEpubTools(state, rerender, enqueue),
           ],
         }),
         renderOptionsPanel(state, rerender),

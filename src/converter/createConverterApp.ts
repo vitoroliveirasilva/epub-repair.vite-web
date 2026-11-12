@@ -4,6 +4,7 @@ import type { ConverterState, EditableSection, PdfAnalysisResult } from './model
 import { analyzePdf, renderPdfPagePreview } from './pdfEngine';
 import { button, downloadBlob, el, formatBytes } from '../ui/dom';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
+import { analyzeReview, normalizeRepeatedSpaces } from './reviewSuggestions';
 
 const THEME_STORAGE_KEY = 'epub-repair-theme';
 const MAX_PDF_SIZE = 250 * 1024 * 1024;
@@ -32,6 +33,7 @@ function render(root: HTMLElement, state: ConverterState, rerender: () => void):
             state.result ? renderResult(state) : undefined,
             state.analysis ? renderOverview(state) : !state.file ? renderConverterEmptyState() : undefined,
             state.analysis && !state.busy ? renderSettings(state, rerender) : undefined,
+            state.analysis && !state.busy ? renderReviewAssist(state, rerender) : undefined,
             state.analysis && !state.busy ? renderAdvancedReview(state, rerender) : undefined,
           ],
         }),
@@ -627,6 +629,60 @@ function renderAdvancedReview(state: ConverterState, rerender: () => void): HTML
   return details;
 }
 
+function renderReviewAssist(state: ConverterState, rerender: () => void): HTMLElement {
+  const findings = state.analysis ? analyzeReview(state.analysis, state.sections) : [];
+  const details = el('details', { className: 'converter-advanced-review optional-pdf-review', children: [
+    el('summary', { children: [
+      el('span', { className: 'converter-advanced-icon', text: 'Aa' }),
+      el('span', { className: 'converter-advanced-copy', children: [
+        el('strong', { text: 'Revisão assistida de PDF' }),
+        el('small', { text: 'Opcional · ' + findings.length + ' ponto(s) para conferir; nada é alterado sozinho' }),
+      ] }),
+      el('span', { className: 'converter-advanced-action', text: 'Ver sugestões' }),
+    ] }),
+    el('div', { className: 'optional-review-list', children: [
+      el('p', { className: 'muted', text: 'Sinais heurísticos de texto digitalizado, colunas, hifenização e espaços. Não são conclusões de inteligência artificial nem substituem revisão editorial.' }),
+      findings.length ? undefined : el('p', { text: 'Nenhum sinal adicional encontrado nesta verificação.' }),
+      ...findings.map((finding) => {
+        const navigate = button('Conferir no editor', 'btn btn-ghost btn-small', () => {
+          if (finding.page) state.selectedPage = finding.page;
+          if (finding.sectionIndex !== undefined) state.selectedSection = finding.sectionIndex;
+          state.advancedReviewOpen = true;
+          rerender();
+          requestAnimationFrame(() => document.querySelector('.converter-comparison')?.scrollIntoView({
+            behavior: 'smooth', block: 'start',
+          }));
+        });
+        const normalize = finding.canNormalizeSpaces && finding.sectionIndex !== undefined
+          ? button('Normalizar espaços desta seção', 'btn btn-secondary btn-small', () => {
+              if (!window.confirm('Substituir sequências de três ou mais espaços por um único espaço nesta seção?')) return;
+              const section = state.sections[finding.sectionIndex!];
+              if (!section) return;
+              const updated = normalizeRepeatedSpaces(section.plainText);
+              section.plainText = updated;
+              section.html = plainTextToHtml(updated);
+              state.result = undefined;
+              rerender();
+            })
+          : undefined;
+        return el('article', { className: 'optional-review-item', children: [
+          el('strong', { text: finding.title }),
+          el('p', { className: 'muted', text: finding.reason }),
+          el('small', { text: finding.page
+            ? 'Página ' + finding.page
+            : 'Seção ' + ((finding.sectionIndex ?? 0) + 1) }),
+          el('div', { className: 'optional-review-actions', children: [navigate, normalize] }),
+        ] });
+      }),
+    ] }),
+  ] });
+  details.open = state.assistedReviewOpen;
+  details.addEventListener('toggle', () => {
+    if (details.isConnected) state.assistedReviewOpen = details.open;
+  });
+  return details;
+}
+
 function renderQualitySidebar(state: ConverterState): HTMLElement {
   const warnings = state.analysis?.warnings ?? [];
   return el('aside', {
@@ -782,6 +838,7 @@ async function loadAndAnalyze(file: File, state: ConverterState, rerender: () =>
   state.selectedPage = 1;
   state.selectedSection = 0;
   state.advancedReviewOpen = false;
+  state.assistedReviewOpen = false;
   await analyzeCurrent(state, rerender);
 }
 
