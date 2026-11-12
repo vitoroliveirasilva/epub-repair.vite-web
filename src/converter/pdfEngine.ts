@@ -422,7 +422,7 @@ async function analyzePage(
   const kind = classifyPage(pageNumber, nativeCharacters, imageCount);
   const preserveAsImage = kind === 'cover' || kind === 'scanned' || kind === 'visual';
   const regions = kind === 'text' && imageCount > 0
-    ? locateEmbeddedImageRegions(operatorList.fnArray, operatorList.argsArray, ops, viewport)
+    ? locateEmbeddedImageRegions(operatorList.fnArray, operatorList.argsArray as unknown[][], ops, viewport)
     : [];
   const figures: NonNullable<PdfPageAnalysis['figures']> = [];
   let previewDataUrl: string | undefined;
