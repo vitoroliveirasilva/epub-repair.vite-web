@@ -249,7 +249,7 @@ export async function writeBookMetadata(
   if (!changed) throw new Error('Nenhuma alteração foi informada.');
   if (isEpub3) {
     updateMeta(metadata, doc, 'property', 'dcterms:modified',
-      new Date().toISOString().replace(/\\.\\d{3}Z$/u, 'Z'));
+      new Date().toISOString().slice(0, 19) + 'Z');
   }
   if (signal?.aborted) throw new DOMException('Edição cancelada.', 'AbortError');
   const edited = serializeXmlPreservingDeclaration(doc, original);
