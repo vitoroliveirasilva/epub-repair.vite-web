@@ -5,6 +5,7 @@ import './styles/mobile.css';
 import './styles/layout-polish.css';
 import './styles/converter.css';
 import './styles/reportLayoutFixes.css';
+import './styles/mobileNavigation.css';
 
 const root = document.querySelector<HTMLElement>('#app');
 

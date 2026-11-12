@@ -54,6 +54,17 @@ try {
   const response = await page.goto('http://127.0.0.1:5173/converter', { waitUntil: 'networkidle' });
   assert.equal(response?.status(), 200);
   await page.getByRole('heading', { name: /Transforme PDF em EPUB/ }).waitFor();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileMenu = page.locator('.mobile-navigation');
+  assert.equal(await mobileMenu.isVisible(), true);
+  await mobileMenu.locator('summary').click();
+  assert.equal(await mobileMenu.evaluate((node) => node.open), true);
+  assert.equal(await mobileMenu.locator('a[href="/"]').count(), 1,
+    'Conversor deve oferecer navegação para reparar EPUB');
+  assert.equal(await mobileMenu.locator('a[aria-current="page"]').getAttribute('href'), '/converter');
+  await page.keyboard.press('Escape');
+  assert.equal(await mobileMenu.evaluate((node) => node.open), false);
+  await page.setViewportSize({ width: 1365, height: 900 });
   await page.evaluate(() => {
     const seen = new WeakSet();
     window.__converterSpinnerMounts = 0;

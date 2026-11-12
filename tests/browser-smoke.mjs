@@ -165,6 +165,22 @@ async function scenario(browser, mobile) {
     const response = await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' });
     assert.equal(response?.status(), 200);
     await page.getByRole('heading', { name: /Conserte arquivos EPUB/ }).waitFor();
+    const mobileMenu = page.locator('.mobile-navigation');
+    if (mobile) {
+      assert.equal(await mobileMenu.isVisible(), true,
+        'O menu de navegação deve estar disponível no celular');
+      await mobileMenu.locator('summary').click();
+      assert.equal(await mobileMenu.evaluate((node) => node.open), true);
+      assert.equal(await mobileMenu.locator('a[href="/converter"]').count(), 1,
+        'Menu móvel deve permitir acessar a conversão de PDF');
+      assert.equal(await mobileMenu.locator('a[aria-current="page"]').getAttribute('href'), '/');
+      await page.keyboard.press('Escape');
+      assert.equal(await mobileMenu.evaluate((node) => node.open), false,
+        'Tecla Escape deve fechar o menu móvel');
+    } else {
+      assert.equal(await mobileMenu.isVisible(), false,
+        'O menu móvel não deve substituir a navegação desktop');
+    }
     await page.getByRole('button', { name: 'Alternar tema claro e escuro' }).click();
     assert.ok(await page.locator('html[data-theme="dark"]').count() +
       await page.locator('html[data-theme="light"]').count() > 0);

@@ -19,6 +19,7 @@ import { renderOptionsPanel } from '../ui/components/OptionsPanel';
 import { renderRepairSummary } from '../ui/components/RepairSummary';
 import { renderUploader } from '../ui/components/Uploader';
 import { button, downloadBlob, el } from '../ui/dom';
+import { renderMobileNavigation } from '../ui/mobileNavigation';
 import { abortProcessingError } from './zipWorkerClient';
 import { SerialTaskQueue } from './taskQueue';
 
@@ -315,6 +316,7 @@ function renderAppHeader(): HTMLElement {
           el('a', { text: 'Relatório', attrs: { href: '#app-workspace' } }),
         ],
       }),
+      renderMobileNavigation('repair'),
       el('div', {
         className: 'header-actions',
         children: [

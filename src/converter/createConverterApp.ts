@@ -3,6 +3,7 @@ import { createInitialConverterState } from './model';
 import type { ConverterState, EditableSection, PdfAnalysisResult } from './model';
 import { analyzePdf, renderPdfPagePreview } from './pdfEngine';
 import { button, downloadBlob, el, formatBytes } from '../ui/dom';
+import { renderMobileNavigation } from '../ui/mobileNavigation';
 
 const THEME_STORAGE_KEY = 'epub-repair-theme';
 const MAX_PDF_SIZE = 250 * 1024 * 1024;
@@ -103,6 +104,7 @@ function renderHeader(): HTMLElement {
           el('a', { text: 'Privacidade', attrs: { href: '#converter-privacy' } }),
         ],
       }),
+      renderMobileNavigation('converter'),
       el('div', {
         className: 'header-actions',
         children: [renderThemeToggle(), el('a', {
