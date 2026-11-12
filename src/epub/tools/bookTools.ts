@@ -5,6 +5,7 @@ import { assertNoNewCriticalIssues } from '../repair/repairSafety';
 import { parsePackageDocument } from '../validation/opfParser';
 import { inspectEpub } from '../validation/validateEpub';
 import { findFirstByLocalName, parseXml, serializeXmlPreservingDeclaration } from '../utils/xmlUtils';
+import { readRichBookPreview, type BookBlock } from './bookReader';
 
 const DC = 'http://purl.org/dc/elements/1.1/';
 const OPF = 'http://www.idpf.org/2007/opf';
@@ -15,6 +16,7 @@ export interface BookSection {
   title: string;
   text: string;
   truncated: boolean;
+  blocks?: BookBlock[] | undefined;
 }
 export interface BookPreview {
   title: string;
@@ -68,20 +70,51 @@ function findMeta(parent: Element, name: string, attr: 'name' | 'property'): Ele
     child.getAttribute(attr) === name);
 }
 
+function primaryIdentifier(doc: Document, metadata: Element): Element | undefined {
+  const primaryId = findFirstByLocalName(doc, 'package')?.getAttribute('unique-identifier');
+  const identifiers = Array.from(metadata.children).filter((node) => node.localName === 'identifier');
+  return identifiers.find((node) => node.getAttribute('id') === primaryId) ?? identifiers[0];
+}
+
+function setPrimaryIdentifier(doc: Document, metadata: Element, value: string): void {
+  let identifier = primaryIdentifier(doc, metadata);
+  if (!identifier) {
+    identifier = doc.createElementNS(DC, 'dc:identifier');
+    metadata.appendChild(identifier);
+  }
+  if (!identifier.getAttribute('id')) {
+    let uid = 'epub-repair-uid';
+    let index = 1;
+    while (Array.from(doc.querySelectorAll('[id]')).some((node) => node.id === uid)) {
+      uid = 'epub-repair-uid-' + index++;
+    }
+    identifier.setAttribute('id', uid);
+  }
+  findFirstByLocalName(doc, 'package')?.setAttribute('unique-identifier',
+    identifier.getAttribute('id') ?? 'epub-repair-uid');
+  identifier.textContent = value;
+}
+
 export function metadataFromLoaded(loaded: LoadedEpub): BookMetadata {
-  const { metadata } = getMetadataNode(loaded);
+  const { doc, metadata } = getMetadataNode(loaded);
+  const seriesNode = findMeta(metadata, 'belongs-to-collection', 'property');
+  const positions = Array.from(metadata.children).filter((node) =>
+    node.localName === 'meta' && node.getAttribute('property') === 'group-position');
+  const selectedPosition = seriesNode?.id
+    ? positions.find((node) => node.getAttribute('refines') === '#' + seriesNode.id)
+    : positions[0];
   return {
     title: valueOf(metadata, 'title'),
     creator: valueOf(metadata, 'creator'),
     language: valueOf(metadata, 'language'),
-    identifier: valueOf(metadata, 'identifier'),
+    identifier: primaryIdentifier(doc, metadata)?.textContent?.trim() ?? '',
     publisher: valueOf(metadata, 'publisher'),
     date: valueOf(metadata, 'date'),
     description: valueOf(metadata, 'description'),
     subject: valueOf(metadata, 'subject'),
-    series: findMeta(metadata, 'belongs-to-collection', 'property')?.textContent?.trim() ??
+    series: seriesNode?.textContent?.trim() ??
       findMeta(metadata, 'calibre:series', 'name')?.getAttribute('content') ?? '',
-    seriesIndex: findMeta(metadata, 'group-position', 'property')?.textContent?.trim() ??
+    seriesIndex: selectedPosition?.textContent?.trim() ??
       findMeta(metadata, 'calibre:series_index', 'name')?.getAttribute('content') ?? '',
   };
 }
@@ -94,66 +127,7 @@ export async function readBookMetadata(fileName: string, bytes: Uint8Array, sign
 export async function readBookPreview(
   fileName: string, bytes: Uint8Array, signal?: AbortSignal,
 ): Promise<BookPreview> {
-  const loaded = await loadEpub(fileName, bytes, undefined, signal);
-  assertValid(loaded);
-  const pkg = parsePackageDocument(loaded).packageInfo;
-  if (!pkg) throw new Error('Este EPUB não possui um spine válido para leitura.');
-  const supported = pkg.spine.map((entry) => entry.manifestItem)
-    .filter((item) => item && item.exists &&
-      (item.mediaType === 'application/xhtml+xml' || item.mediaType === 'text/html'));
-  const sections: BookSection[] = [];
-  for (const item of supported.slice(0, 80)) {
-    if (signal?.aborted) throw new DOMException('Leitura cancelada.', 'AbortError');
-    if (!item) continue;
-    const entry = loaded.files.get(item.resolvedPath);
-    if (!entry || entry.bytes.byteLength > 4_000_000) continue;
-    const raw = DECODER.decode(entry.bytes);
-    let plain: string;
-    let title = item.href.split('/').pop() || 'Seção sem título';
-    try {
-      const doc = parseXml(raw);
-      const body = findFirstByLocalName(doc, 'body') ?? doc.documentElement;
-      const excluded = new Set(['script', 'style', 'iframe', 'object', 'embed', 'noscript', 'svg', 'form']);
-      for (const node of Array.from(body.getElementsByTagName('*'))) {
-        if (excluded.has(node.localName.toLowerCase())) node.remove();
-      }
-      const blockNames = new Set(['h1', 'h2', 'h3', 'h4', 'p', 'li', 'blockquote', 'pre', 'figcaption']);
-      const blocks = Array.from(body.getElementsByTagName('*'))
-        .filter((node) => blockNames.has(node.localName.toLowerCase()))
-        .filter((node) => !node.parentElement?.closest('p,li,blockquote,pre'))
-        .map((node) => node.textContent?.replace(/\s+/gu, ' ').trim() ?? '')
-        .filter(Boolean);
-      plain = blocks.length ? blocks.join('\n\n') : (body.textContent ?? '').replace(/\s+/gu, ' ').trim();
-      title = findFirstByLocalName(body, 'h1')?.textContent?.trim() ||
-        findFirstByLocalName(body, 'h2')?.textContent?.trim() ||
-        findFirstByLocalName(doc, 'title')?.textContent?.trim() || title;
-    } catch {
-      const fallbackTitle = raw.match(/<h[1-3]\b[^>]*>([\s\S]*?)<\/h[1-3]>/iu)?.[1];
-      if (fallbackTitle) {
-        title = fallbackTitle.replace(/<[^>]*>/gu, '').replace(/&nbsp;/giu, ' ').trim() || title;
-      }
-      plain = raw.replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu, ' ')
-        .replace(/<style\b[^>]*>[\s\S]*?<\/style>/giu, ' ')
-        .replace(/<[^>]*>/gu, ' ')
-        .replace(/&nbsp;/giu, ' ')
-        .replace(/&amp;/giu, '&')
-        .replace(/\s+/gu, ' ').trim();
-    }
-    sections.push({
-      path: item.resolvedPath,
-      title: title.slice(0, 140),
-      text: plain.slice(0, 120_000),
-      truncated: plain.length > 120_000,
-    });
-  }
-  const fixedLayout = loaded.files.get(pkg.opfPath)?.bytes &&
-    /rendition:layout[^>]*pre-paginated|pre-paginated/iu.test(DECODER.decode(loaded.files.get(pkg.opfPath)!.bytes));
-  return {
-    title: pkg.metadata.title || fileName,
-    sections,
-    omitted: Math.max(0, supported.length - sections.length),
-    fixedLayout: Boolean(fixedLayout),
-  };
+  return readRichBookPreview(fileName, bytes, signal);
 }
 
 function updateDc(metadata: Element, doc: Document, name: string, value: string): void {
@@ -204,6 +178,8 @@ export async function writeBookMetadata(
     'title', 'creator', 'language', 'identifier', 'publisher', 'date', 'description', 'subject',
   ];
   let changed = false;
+  let oldIdentifier = '';
+  let newIdentifier = '';
   for (const field of fields) {
     const raw = changes[field];
     if (raw === undefined) continue;
@@ -215,8 +191,17 @@ export async function writeBookMetadata(
     if (field === 'language' && !/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/iu.test(value)) {
       throw new Error('Idioma inválido. Use pt-BR, en ou outro código BCP 47.');
     }
-    if (value !== valueOf(metadata, field)) {
-      updateDc(metadata, doc, field, value);
+    const previous = field === 'identifier'
+      ? primaryIdentifier(doc, metadata)?.textContent?.trim() ?? ''
+      : valueOf(metadata, field);
+    if (value !== previous) {
+      if (field === 'identifier') {
+        oldIdentifier = previous;
+        newIdentifier = value;
+        setPrimaryIdentifier(doc, metadata, value);
+      } else {
+        updateDc(metadata, doc, field, value);
+      }
       changed = true;
     }
   }
@@ -224,13 +209,22 @@ export async function writeBookMetadata(
   const isEpub3 = version.startsWith('3');
   if (changes.series?.trim()) {
     if (changes.series.length > 300) throw new Error('Nome de série muito extenso.');
-    updateMeta(metadata, doc, isEpub3 ? 'property' : 'name',
-      isEpub3 ? 'belongs-to-collection' : 'calibre:series', changes.series.trim());
-    changed = true;
+    const originalSeries = isEpub3
+      ? findMeta(metadata, 'belongs-to-collection', 'property')?.textContent?.trim() ?? ''
+      : findMeta(metadata, 'calibre:series', 'name')?.getAttribute('content') ?? '';
+    if (originalSeries !== changes.series.trim()) {
+      updateMeta(metadata, doc, isEpub3 ? 'property' : 'name',
+        isEpub3 ? 'belongs-to-collection' : 'calibre:series', changes.series.trim());
+      changed = true;
+    }
   }
   if (changes.seriesIndex?.trim()) {
     const value = changes.seriesIndex.trim();
     if (!/^\d{1,4}(?:\.\d{1,3})?$/u.test(value)) throw new Error('Posição na série inválida.');
+    const originalIndex = isEpub3
+      ? findMeta(metadata, 'group-position', 'property')?.textContent?.trim() ?? ''
+      : findMeta(metadata, 'calibre:series_index', 'name')?.getAttribute('content') ?? '';
+    if (originalIndex !== value) {
     if (isEpub3) {
       const series = findMeta(metadata, 'belongs-to-collection', 'property');
       if (!series?.textContent?.trim()) {
@@ -249,13 +243,34 @@ export async function writeBookMetadata(
     } else {
       updateMeta(metadata, doc, 'name', 'calibre:series_index', value);
     }
-    changed = true;
+      changed = true;
+    }
   }
   if (!changed) throw new Error('Nenhuma alteração foi informada.');
+  if (isEpub3) {
+    updateMeta(metadata, doc, 'property', 'dcterms:modified',
+      new Date().toISOString().replace(/\\.\\d{3}Z$/u, 'Z'));
+  }
   if (signal?.aborted) throw new DOMException('Edição cancelada.', 'AbortError');
   const edited = serializeXmlPreservingDeclaration(doc, original);
   const files = new Map(Array.from(loaded.files, ([name, entry]) => [name, entry.bytes]));
   files.set(path, new TextEncoder().encode(edited));
+  if (newIdentifier) {
+    const packageInfo = parsePackageDocument(loaded).packageInfo;
+    const ncxPath = packageInfo?.ncxItem?.resolvedPath;
+    const ncxEntry = ncxPath ? loaded.files.get(ncxPath) : undefined;
+    if (ncxEntry && ncxPath) {
+      const originalNcx = DECODER.decode(ncxEntry.bytes);
+      const ncx = parseXml(originalNcx);
+      const uid = Array.from(ncx.getElementsByTagName('*')).find((node) =>
+        node.localName === 'meta' && node.getAttribute('name') === 'dtb:uid');
+      if (uid?.getAttribute('content') === oldIdentifier) {
+        uid.setAttribute('content', newIdentifier);
+        files.set(ncxPath, new TextEncoder().encode(
+          serializeXmlPreservingDeclaration(ncx, originalNcx)));
+      }
+    }
+  }
   const blob = await rebuildEpubZip(files);
   if (signal?.aborted) throw new DOMException('Edição cancelada.', 'AbortError');
   const outputName = fileName.replace(/\.epub$/iu, '') + '-metadados.epub';

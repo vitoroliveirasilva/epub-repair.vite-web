@@ -132,3 +132,52 @@
 @media (prefers-reduced-motion: reduce) {
   .optional-tools * { scroll-behavior: auto; }
 }
+
+.optional-reader-figure {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  margin: 1rem auto;
+  max-width: 100%;
+}
+.optional-reader-figure img {
+  display: block;
+  max-width: min(100%, 42rem);
+  max-height: 22rem;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+}
+.optional-reader-figure figcaption,
+.optional-reader-caption {
+  font-size: 0.85em;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+.optional-reader-heading {
+  font-family: var(--font-serif);
+  font-size: 1.18em;
+  line-height: 1.35;
+  margin: 1.5em 0 0.75em;
+}
+.optional-reader-body blockquote {
+  margin: 1.2rem 0;
+  padding: 0.5rem 1rem;
+  border-inline-start: 3px solid var(--color-accent);
+  font-style: italic;
+  background: var(--color-surface);
+}
+.optional-reader-list-item {
+  padding-inline-start: 0.85rem;
+}
+.optional-reader-verse {
+  white-space: pre-wrap !important;
+  font-family: var(--font-serif);
+}
+.optional-comparison-summary {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+.optional-comparison-summary p { margin: 0.2rem 0 0; }

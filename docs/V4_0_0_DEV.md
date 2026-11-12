@@ -14,17 +14,17 @@
 
 | Recurso | Experiência disponível | Limites atuais |
 | --- | --- | --- |
-| Pré-visualizador EPUB | Leitura textual por seção/spine e ajuste de tamanho da fonte, sob demanda | Não é leitor de layout fiel: CSS original, mídia, imagens, notas interativas e fixed-layout não são renderizados |
-| Comparação antes/depois | Painéis textuais paralelos por seção, para comparar original e arquivo reparado ou cópia com metadados | Associações por índice do spine; não há diff semântico alinhado, comparação tipográfica nem visual de imagens |
+| Pré-visualizador EPUB | Leitura por seção/spine com capítulos, parágrafos, listas, citações e imagens internas rasterizadas (PNG/JPEG/GIF/WebP), com ajuste da fonte | Não executa HTML/CSS, scripts ou links externos. A apresentação não reproduz a tipografia, links interativos, notas avançadas ou fixed-layout do leitor real. Há limites de imagens e memória |
+| Comparação antes/depois | Painéis de capítulos e imagens internas lado a lado, alinhados pelo caminho no spine, com indicação de texto alterado e seções novas/removidas | A contagem de palavras usa prefixo/sufixo, não diff editorial completo. Caminhos alterados usam título/posição apenas como aproximação; não compara CSS, fontes e paginação |
 | Revisor inteligente de PDF | Sugestões heurísticas de OCR de baixa confiança, colunas, fallback visual, caracteres estranhos, espaços e hifenização; navegação para revisão; normalização manual de espaços com confirmação | Não há modelo de IA, classificação universal de erros nem correções sem aprovação |
 | Processamento em lote | Seleção explícita de até seis EPUBs/80 MB, diagnóstico e reparo conservador sequencial, ZIP de resultados e relatório TXT | Lotes grandes, pausa/resume e preservação integral de hierarquia complexa não são suportados |
-| Editor de metadados | Edição sob demanda de título, autor principal, idioma, identificador, editora, data, descrição, assunto e dados de série; geração de cópia separada | Metadados avançados de múltiplos autores, funções, refinamentos de coleção e demais identificadores exigem revisão; EPUB assinado é bloqueado |
+| Editor de metadados | Edição sob demanda de título, autor principal, idioma, identificador principal correto, editora, data, descrição, assunto e série; evita regravação sem alterações e preserva identificadores secundários | Metadados de autores múltiplos, funções e refinamentos complexos exigem revisão; EPUB assinado é bloqueado. A alteração de identificador sincroniza UID do NCX quando correspondente |
 | Preparar para Kindle | Checklist de estrutura, capa, navegação, tamanho e alertas; link para o Send to Kindle oficial | Verificação indicativa, não valida comportamento real de Send to Kindle, dispositivo ou conversor Amazon |
 
 ## Critérios para considerar v4.0.0 pronta para lançamento
 
 1. CI de `dev` aprovada em Node 22, incluindo typecheck, lint, Vitest, build e auditoria.
-2. Testes de regressão por feature com EPUB 2/3, referências inválidas, XML adversarial, livros grandes, mobile e acessibilidade.
+2. Testes de regressão por feature com EPUB 2/3, referências inválidas, XML adversarial, livros grandes, mobile e acessibilidade. A suíte sintética de leitor/mídia/metadados é uma primeira camada, não substitui a homologação.
 3. Comparação visual com amostras autorizadas, incluindo EPUB reparado e livro com ilustrações.
 4. Comportamento reflowable/fixed-layout explicitamente separado do modo texto, sem apresentar a prévia simplificada como visualização fiel.
 5. Confirmar preservação de metadados OPF/NCX/NAV e ausência de problemas introduzidos pela edição.

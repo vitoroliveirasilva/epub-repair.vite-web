@@ -7,8 +7,9 @@ import { MAX_FILE_SIZE_BYTES } from '../epub/utils/constants';
 import { button, downloadBlob, el, formatBytes } from './dom';
 import {
   buildKindleChecks, readBookMetadata, readBookPreview, writeBookMetadata,
-  type BookMetadata, type BookPreview,
+  type BookMetadata, type BookPreview, type BookSection,
 } from '../epub/tools/bookTools';
+import { compareBookPreviews, comparisonSummary, type BookDifference } from '../epub/tools/bookComparison';
 
 type ExtraTab = 'preview' | 'compare' | 'metadata' | 'kindle' | 'batch';
 type Queue = (
@@ -23,6 +24,7 @@ interface Session {
   preview?: BookPreview | undefined;
   sourcePreview?: BookPreview | undefined;
   editedPreview?: BookPreview | undefined;
+  comparison?: BookDifference[] | undefined;
   meta?: BookMetadata | undefined;
   export?: { blob: Blob; name: string; bytes: Uint8Array; report: ValidationReport } | undefined;
   batchFiles: File[];
@@ -52,6 +54,7 @@ function sessionFor(state: AppState): Session {
     current.preview = undefined;
     current.sourcePreview = undefined;
     current.editedPreview = undefined;
+    current.comparison = undefined;
     current.meta = undefined;
     current.export = undefined;
     current.chapter = 0;
@@ -83,15 +86,35 @@ function sectionChooser(
   return select;
 }
 
-function readerCard(section: { title: string; text: string; truncated?: boolean },
-  fontSize: number, label: string): HTMLElement {
+function readerCard(section: BookSection, fontSize: number, label: string): HTMLElement {
   const content = el('div', { className: 'optional-reader-body' });
   content.style.fontSize = fontSize + 'px';
   content.append(el('h4', { text: section.title }));
-  for (const part of section.text.split(/\n\n+/u).slice(0, 500)) {
-    content.append(el('p', { text: part }));
+  if (section.blocks?.length) {
+    for (const block of section.blocks) {
+      if (block.kind === 'image') {
+        if (block.imageDataUrl) {
+          content.append(el('figure', { className: 'optional-reader-figure', children: [
+            el('img', { attrs: {
+              src: block.imageDataUrl, alt: block.text || 'Ilustração do livro', loading: 'lazy',
+              decoding: 'async',
+            } }),
+            block.text ? el('figcaption', { text: block.text }) : undefined,
+          ] }));
+        }
+        continue;
+      }
+      const className = 'optional-reader-' + block.kind;
+      if (block.kind === 'heading') content.append(el('h5', { className, text: block.text }));
+      else if (block.kind === 'quotation') content.append(el('blockquote', { className, text: block.text }));
+      else content.append(el('p', { className, text: block.kind === 'list-item' ? '• ' + block.text : block.text }));
+    }
+  } else {
+    for (const part of section.text.split(/\\n\\n+/u).slice(0, 500)) {
+      content.append(el('p', { text: part }));
+    }
   }
-  if (section.truncated) content.append(paragraph('Trecho reduzido para preservar a memória do navegador.'));
+  if (section.truncated) content.append(paragraph('Prévia reduzida para evitar sobrecarga de memória.'));
   return el('article', { className: 'optional-reader-card', children: [
     el('strong', { text: label }), content,
   ] });
@@ -105,7 +128,7 @@ function renderPreview(state: AppState, s: Session, rerender: () => void, enqueu
       s.preview = await readBookPreview(payload.file.name, payload.bytes, signal);
       s.chapter = 0;
       s.message = s.preview.sections.length
-        ? 'Prévia de texto pronta. Nenhuma mídia, script ou estilo do livro foi executado.'
+        ? 'Prévia de leitura pronta. Imagens internas compatíveis são mostradas sem executar scripts ou recursos externos.'
         : 'Nenhum texto compatível foi recuperado para pré-visualização.';
     });
   });
@@ -121,7 +144,7 @@ function renderPreview(state: AppState, s: Session, rerender: () => void, enqueu
   });
   const chapter = view?.sections[s.chapter] ?? view?.sections[0];
   return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Leitura de texto segura, sem scripts ou recursos externos do EPUB. Layout fixo, ilustrações e estilos complexos não são reproduzidos nesta prévia.'),
+    paragraph('Prévia segura de capítulos, parágrafos, títulos e imagens internas compatíveis. Estilos originais, fontes e layout fixo ainda podem diferir do leitor real. Scripts e recursos remotos não são carregados.'),
     control,
     view ? paragraph(`${view.sections.length} seção(ões) carregada(s)${view.omitted ? `, ${view.omitted} omitida(s)` : ''}.${view.fixedLayout ? ' Este livro usa layout fixo.' : ''}`) : undefined,
     view?.sections.length ? el('div', { className: 'optional-reader-controls', children: [
@@ -139,34 +162,47 @@ function renderCompare(state: AppState, s: Session, rerender: () => void, enqueu
   const run = toolButton('Comparar versões', hasChanged && !state.busy, () => {
     if (!source || !current) return;
     enqueue('Comparar EPUB original e atual', async ({ signal }) => {
-      s.sourcePreview = await readBookPreview(source.fileName, source.bytes, signal);
-      const after = s.export
+      const before = await readBookPreview(source.fileName, source.bytes, signal);
+      const target = s.export
         ? { name: s.export.name, bytes: s.export.bytes }
         : { name: current.file.name, bytes: current.bytes };
-      s.editedPreview = await readBookPreview(after.name, after.bytes, signal);
+      const after = await readBookPreview(target.name, target.bytes, signal);
+      if (signal.aborted) throw new DOMException('Comparação cancelada.', 'AbortError');
+      s.sourcePreview = before;
+      s.editedPreview = after;
+      s.comparison = compareBookPreviews(before, after);
       s.compareChapter = 0;
-      s.message = 'Comparação textual pronta, sem alterar os arquivos.';
+      s.message = 'Comparação pronta: ' + comparisonSummary(s.comparison);
     });
   });
-  const before = s.sourcePreview?.sections ?? [];
-  const after = s.editedPreview?.sections ?? [];
-  const chapterList = after.length ? after : before;
-  const selected = Math.min(s.compareChapter, Math.max(0, chapterList.length - 1));
-  const originalSection = before[selected];
-  const newSection = after[selected];
-  const status = originalSection && newSection &&
-    originalSection.text === newSection.text ? 'Texto igual' : 'Texto diferente ou capítulo movido';
+  const rows = s.comparison ?? [];
+  const selected = rows[Math.min(s.compareChapter, Math.max(rows.length - 1, 0))];
+  const status: Record<BookDifference['status'], string> = {
+    same: 'Texto e imagens carregadas sem mudanças detectadas',
+    'text-changed': 'Diferença de texto detectada',
+    'images-changed': 'Imagens internas diferentes',
+    added: 'Seção adicionada',
+    removed: 'Seção removida',
+  };
   return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Compare o texto original e a cópia reparada ou editada. A comparação visual é simplificada; não representa diferenças de CSS, paginação e imagens.'),
+    paragraph('Comparação de texto, capítulos e imagens internas carregadas. Não é uma certificação de fidelidade tipográfica, CSS ou paginação. Se caminhos mudarem, o alinhamento exige conferência.'),
     run,
     !hasChanged ? paragraph('Depois de reparar ou editar metadados, a comparação ficará disponível aqui.') : undefined,
-    chapterList.length ? sectionChooser(chapterList, selected, (n) => { s.compareChapter = n; rerender(); }) : undefined,
-    chapterList.length ? el('strong', { text: status }) : undefined,
-    chapterList.length ? el('div', { className: 'optional-compare-grid', children: [
-      readerCard(originalSection ?? { title: 'Não encontrado', text: 'Sem seção equivalente no índice.' },
-        s.fontSize, 'Original'),
-      readerCard(newSection ?? { title: 'Não encontrado', text: 'Sem seção equivalente no índice.' },
-        s.fontSize, 'Atual'),
+    rows.length ? paragraph(comparisonSummary(rows)) : undefined,
+    rows.length ? sectionChooser(rows.map((row) => ({ title: row.label })), s.compareChapter,
+      (index) => { s.compareChapter = index; rerender(); }) : undefined,
+    selected ? el('div', { className: 'optional-comparison-summary', children: [
+      el('strong', { text: status[selected.status] }),
+      paragraph(`${selected.addedWords} palavra(s) incluída(s) no trecho alterado; ${selected.removedWords} removida(s).`),
+      selected.approximate
+        ? paragraph('O caminho deste capítulo mudou. Correspondência aproximada pelo título e posição.')
+        : undefined,
+    ] }) : undefined,
+    selected ? el('div', { className: 'optional-compare-grid', children: [
+      readerCard(selected.before ?? { path: '', title: 'Seção ausente',
+        text: 'Este capítulo não existe nesta versão.', truncated: false }, s.fontSize, 'Original'),
+      readerCard(selected.after ?? { path: '', title: 'Seção ausente',
+        text: 'Este capítulo não existe nesta versão.', truncated: false }, s.fontSize, 'Atual'),
     ] }) : undefined,
   ] });
 }

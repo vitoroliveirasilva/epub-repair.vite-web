@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 const jsdomFiles = `
 optionalToolsV4
+bookReaderV4
 accessibilitySemantics99
 activeStructuralFalsePositive99
 adversarialHtml
