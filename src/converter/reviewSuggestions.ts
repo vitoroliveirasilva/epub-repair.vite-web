@@ -140,7 +140,6 @@ export function normalizeHtmlTextSpaces(html: string): string {
   let textStart = 0;
   let tagStart = 0;
   let quote = '';
-  let rawTag = '';
   let skipDepth = 0;
   for (let i = 0; i < html.length; i += 1) {
     const char = html[i]!;
