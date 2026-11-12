@@ -1,4 +1,5 @@
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import { locateEmbeddedImageRegions, type PdfImageRegion } from './imageExtraction';
 import type { PDFDocumentProxy, PDFPageProxy, TextItem } from 'pdfjs-dist/types/src/display/api';
 import type {
   ConversionLayout,
@@ -148,9 +149,24 @@ export async function analyzePdf(input: AnalyzePdfOptions): Promise<PdfAnalysisR
     const scannedPages = pages.filter((page) => page.kind === 'scanned').length;
     const visualPages = pages.filter((page) => page.kind === 'visual').length;
     const blankPages = pages.filter((page) => page.kind === 'blank').length;
+    const preservedFigures = pages.reduce((sum, page) => sum + (page.figures?.length ?? 0), 0);
+    const unpreservedGraphicPages = pages.filter((page) =>
+      page.kind === 'text' && page.imageCount > 0 && !page.figures?.length).length;
     const warnings = [
       ...baseWarnings(pages, input.options, imageTextReadingUnavailable),
       ...reconstructed.warnings,
+      ...(preservedFigures > 0 ? [{
+        code: 'PDF_INLINE_FIGURES_PRESERVED',
+        title: 'Ilustrações preservadas',
+        detail: `${preservedFigures} ilustração(ões), quadro(s) ou formulário(s) incorporado(s) no texto ajustável.`,
+        severity: 'info' as const,
+      }] : []),
+      ...(unpreservedGraphicPages > 0 ? [{
+        code: 'PDF_GRAPHICS_NEED_REVIEW',
+        title: 'Alguns elementos gráficos precisam de conferência',
+        detail: `${unpreservedGraphicPages} página(s) com elementos gráficos pequenos ou não extraíveis automaticamente. Confira a prévia e use o layout visual se necessário.`,
+        severity: 'warning' as const,
+      }] : []),
     ];
     const suggestedLayout = suggestLayout(pages, input.options, warnings);
     return {
@@ -405,11 +421,28 @@ async function analyzePage(
   const nativeCharacters = text.replace(/\s/gu, '').length;
   const kind = classifyPage(pageNumber, nativeCharacters, imageCount);
   const preserveAsImage = kind === 'cover' || kind === 'scanned' || kind === 'visual';
+  const regions = kind === 'text' && imageCount > 0
+    ? locateEmbeddedImageRegions(operatorList.fnArray, operatorList.argsArray, ops, viewport)
+    : [];
+  const figures: NonNullable<PdfPageAnalysis['figures']> = [];
   let previewDataUrl: string | undefined;
-  if (createPreview || preserveAsImage) {
-    const rendered = await renderPageToCanvas(page, kind === 'cover' ? 1.65 : 1.15);
-    previewDataUrl = rendered.canvas.toDataURL('image/jpeg', kind === 'cover' ? 0.9 : 0.84);
-    releaseCanvas(rendered.canvas);
+  if (createPreview || preserveAsImage || regions.length > 0) {
+    const scale = regions.length > 0 ? Math.min(1.9, 1700 / Math.max(viewport.width, viewport.height))
+      : kind === 'cover' ? 1.65 : 1.15;
+    const rendered = await renderPageToCanvas(page, scale);
+    try {
+      if (createPreview || preserveAsImage) {
+        previewDataUrl = rendered.canvas.toDataURL('image/jpeg', kind === 'cover' ? 0.9 : 0.84);
+      }
+      for (const [index, region] of regions.entries()) {
+        figures.push({
+          id: `figure-${String(pageNumber).padStart(4, '0')}-${String(index + 1).padStart(2, '0')}`,
+          pageNumber, ...region, dataUrl: cropPdfImage(rendered.canvas, region, scale),
+        });
+      }
+    } finally {
+      releaseCanvas(rendered.canvas);
+    }
   }
   return {
     pageNumber,
@@ -423,6 +456,7 @@ async function analyzePage(
     imageCount,
     kind,
     preserveAsImage,
+    ...(figures.length ? { figures } : {}),
     ...(previewDataUrl ? { previewDataUrl } : {}),
   };
 }
@@ -463,6 +497,23 @@ function groupItemsIntoLines(items: PdfTextItem[]): PdfLine[] {
       fontName: first.fontName,
     };
   }).filter((line) => line.text.length > 0);
+}
+
+function cropPdfImage(canvas: HTMLCanvasElement, region: PdfImageRegion, scale: number): string {
+  const padding = Math.ceil(2 * scale);
+  const left = Math.max(0, Math.floor(region.x * scale) - padding);
+  const top = Math.max(0, Math.floor(region.y * scale) - padding);
+  const width = Math.min(canvas.width - left, Math.ceil(region.width * scale) + padding * 2);
+  const height = Math.min(canvas.height - top, Math.ceil(region.height * scale) + padding * 2);
+  const crop = document.createElement('canvas');
+  crop.width = Math.max(1, width);
+  crop.height = Math.max(1, height);
+  const context = crop.getContext('2d', { alpha: false });
+  if (!context) throw new Error('Não foi possível preservar uma ilustração do PDF.');
+  context.drawImage(canvas, left, top, crop.width, crop.height, 0, 0, crop.width, crop.height);
+  const result = crop.toDataURL('image/jpeg', 0.91);
+  releaseCanvas(crop);
+  return result;
 }
 
 async function renderPageToCanvas(

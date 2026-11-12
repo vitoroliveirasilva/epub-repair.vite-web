@@ -44,6 +44,16 @@ export interface PdfLine {
   fontName: string;
 }
 
+export interface PdfEmbeddedFigure {
+  id: string;
+  pageNumber: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  dataUrl: string;
+}
+
 export interface PdfPageAnalysis {
   pageNumber: number;
   width: number;
@@ -57,6 +67,7 @@ export interface PdfPageAnalysis {
   imageCount: number;
   kind: PdfPageKind;
   preserveAsImage: boolean;
+  figures?: PdfEmbeddedFigure[] | undefined;
   previewDataUrl?: string | undefined;
 }
 

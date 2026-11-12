@@ -1173,3 +1173,8 @@
     animation-duration: 1.8s;
   }
 }
+
+.converter-preview-content .pdf-inline-figure { margin: 1.25rem auto; text-align: center; }
+.converter-preview-content .pdf-inline-figure img {
+  display: block; max-width: 100%; width: auto; height: auto; max-height: 65vh; margin: 0 auto;
+}

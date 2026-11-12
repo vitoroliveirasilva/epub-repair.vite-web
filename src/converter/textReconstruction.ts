@@ -13,7 +13,8 @@ interface ReconstructedDocument {
 }
 
 interface Block {
-  kind: 'heading' | 'paragraph' | 'footnote';
+  kind: 'heading' | 'paragraph' | 'footnote' | 'figure';
+  figureId?: string | undefined;
   text: string;
   sourcePages: number[];
   level?: 1 | 2 | undefined;
@@ -262,6 +263,8 @@ function linesToBlocks(
   const blocks: Block[] = [];
   let paragraph = '';
   let previous: PdfLine | undefined;
+  const figures = [...(page.figures ?? [])].sort((a, b) => a.y - b.y || a.x - b.x);
+  let figureIndex = 0;
 
   const flush = (): void => {
     const text = normalizeTypography(normalizeSpaces(paragraph), options.normalizeTypography);
@@ -269,7 +272,22 @@ function linesToBlocks(
     paragraph = '';
   };
 
+  const includeFiguresBefore = (top: number): void => {
+    while (figureIndex < figures.length && figures[figureIndex]!.y <= top) {
+      flush();
+      const figure = figures[figureIndex]!;
+      blocks.push({
+        kind: 'figure',
+        text: `[[figura:${figure.id}]]`,
+        figureId: figure.id,
+        sourcePages: [page.pageNumber],
+      });
+      figureIndex += 1;
+    }
+  };
+
   for (const [index, line] of lines.entries()) {
+    includeFiguresBefore(page.height - line.y);
     let text = normalizeSpaces(line.text);
     if (!text) continue;
     const short = text.length <= 140;
@@ -319,6 +337,7 @@ function linesToBlocks(
     paragraph = joinLine(paragraph, text, options.dehyphenate);
     previous = line;
   }
+  includeFiguresBefore(Number.POSITIVE_INFINITY);
   flush();
   return blocks;
 }
@@ -540,6 +559,10 @@ function normalizeComparable(value: string): string {
 
 function blockToHtml(block: Block): string {
   const text = escapeXml(block.text);
+  if (block.kind === 'figure' && block.figureId) {
+    const page = block.sourcePages[0] ?? 1;
+    return `<figure class="pdf-inline-figure"><img src="../Images/${block.figureId}.jpg" alt="Ilustração, quadro ou formulário da página ${page} do PDF"/></figure>`;
+  }
   if (block.kind === 'heading') return `<h${block.level ?? 2}>${text}</h${block.level ?? 2}>`;
   if (block.kind === 'footnote') return `<aside class="footnote"><p>${text}</p></aside>`;
   return `<p>${text}</p>`;
