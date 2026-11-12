@@ -987,20 +987,6 @@
   margin-bottom: 0.35rem;
 }
 
-.converter-result-check {
-  display: grid;
-  flex: 0 0 4rem;
-  width: 4rem;
-  height: 4rem;
-  place-items: center;
-  border-radius: 50%;
-  color: white;
-  background: var(--color-success);
-  box-shadow: 0 0 0 0.55rem color-mix(in srgb, var(--color-success) 13%, transparent);
-  font-size: 1.8rem;
-  font-weight: 900;
-}
-
 .converter-result-file {
   display: flex;
   gap: 0.9rem;
@@ -1169,11 +1155,6 @@
   .converter-result-actions {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .converter-result-check {
-    width: 3.2rem;
-    height: 3.2rem;
   }
 
   .converter-result-actions .btn {
