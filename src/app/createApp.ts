@@ -504,15 +504,16 @@ function renderFooter(): HTMLElement {
           }),
           el('nav', {
             className: 'footer-links',
-            attrs: { 'aria-label': 'Link do projeto e do desenvolvedor' },
+            attrs: { 'aria-label': 'Links de navegação e projeto' },
             children: [
+              renderFooterLink('Desenvolvedor', 'https://github.com/vitoroliveirasilva', true),
               renderFooterLink(
                 'Projeto no GitHub',
                 'https://github.com/vitoroliveirasilva/epub-repair.vite-web',
                 true,
               ),
+              renderFooterLink('Reparar EPUB', '/', false),
               renderFooterLink('Converter PDF', '/converter', false),
-              renderFooterLink('Desenvolvedor', 'https://github.com/vitoroliveirasilva', true),
             ],
           }),
         ],

@@ -165,6 +165,21 @@ async function scenario(browser, mobile) {
     const response = await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' });
     assert.equal(response?.status(), 200);
     await page.getByRole('heading', { name: /Conserte arquivos EPUB/ }).waitFor();
+    const footerLinks = page.locator('.app-footer .footer-links a');
+    assert.deepEqual(await footerLinks.allTextContents(), [
+      'Desenvolvedor', 'Projeto no GitHub', 'Reparar EPUB', 'Converter PDF',
+    ]);
+    assert.deepEqual(await footerLinks.evaluateAll((links) => links.map((link) => link.getAttribute('href'))), [
+      'https://github.com/vitoroliveirasilva',
+      'https://github.com/vitoroliveirasilva/epub-repair.vite-web',
+      '/',
+      '/converter',
+    ]);
+    assert.equal(await footerLinks.count(), 4);
+    assert.equal(await footerLinks.first().getAttribute('target'), '_blank');
+    assert.equal(await footerLinks.nth(1).getAttribute('target'), '_blank');
+    assert.equal(await footerLinks.nth(2).getAttribute('target'), null);
+    assert.equal(await footerLinks.nth(3).getAttribute('target'), null);
     const mobileMenu = page.locator('.mobile-navigation');
     if (mobile) {
       assert.equal(await mobileMenu.isVisible(), true,
