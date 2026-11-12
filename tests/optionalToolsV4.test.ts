@@ -60,7 +60,7 @@ describe('v4 ferramentas opt-in', () => {
     expect(findings.some((item) => item.code === 'LOW_OCR_CONFIDENCE')).toBe(true);
     expect(findings.some((item) => item.code === 'MULTI_COLUMN')).toBe(true);
     expect(findings.some((item) => item.code === 'SPACING')).toBe(true);
-    expect(sections[0].plainText).toBe('palavra   quebrada');
-    expect(normalizeRepeatedSpaces(sections[0].plainText)).toBe('palavra quebrada');
+    expect(sections[0]?.plainText).toBe('palavra   quebrada');
+    expect(normalizeRepeatedSpaces(sections[0]?.plainText ?? '')).toBe('palavra quebrada');
   });
 });
