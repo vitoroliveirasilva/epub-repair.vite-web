@@ -8,6 +8,7 @@ import {
   type BookMetadata, type BookPreview, type BookSection,
 } from '../epub/tools/bookTools';
 import { compareBookPreviews, comparisonSummary, type BookDifference } from '../epub/tools/bookComparison';
+import { compareWords, type WordDiffSegment } from '../epub/tools/bookWordDiff';
 
 type ExtraTab = 'preview' | 'compare' | 'metadata' | 'kindle' | 'batch';
 type Queue = (
@@ -153,6 +154,46 @@ function renderPreview(state: AppState, s: Session, rerender: () => void, enqueu
   ] });
 }
 
+function renderDiffColumn(label: string, fragments: WordDiffSegment[]): HTMLElement {
+  const excerpt = el('p', { className: 'optional-diff-excerpt' });
+  for (const fragment of fragments) {
+    const name = fragment.kind === 'same' ? 'optional-diff-same'
+      : fragment.kind === 'added' ? 'optional-diff-added' : 'optional-diff-removed';
+    excerpt.append(el('span', { className: name, text: fragment.text + ' ' }));
+  }
+  return el('article', { className: 'optional-diff-column', children: [
+    el('strong', { text: label }), excerpt,
+  ] });
+}
+
+function renderWordDiff(row: BookDifference): HTMLElement | undefined {
+  const before = row.before;
+  const after = row.after;
+  if (row.status !== 'text-changed' || !before || !after) return undefined;
+  const details = el('details', { className: 'optional-diff-details', children: [
+    el('summary', { text: 'Ver palavras inseridas e removidas' }),
+  ] });
+  let prepared = false;
+  details.addEventListener('toggle', () => {
+    if (!details.isConnected || !details.open || prepared) return;
+    prepared = true;
+    const difference = compareWords(before.text, after.text);
+    details.append(el('div', { className: 'optional-diff-inside', children: [
+      paragraph(difference.truncated
+        ? 'Amostra limitada para proteger a memória do navegador. As contagens abaixo incluem apenas a parte exibida.'
+        : 'Diferenças destacadas no trecho alterado. Contexto idêntico pode ser abreviado.'),
+      paragraph((difference.truncated ? 'Pelo menos ' : '') +
+        difference.addedWords + ' palavra(s) incluída(s) e ' +
+        difference.removedWords + ' removida(s) nesta amostra.'),
+      el('div', { className: 'optional-diff-grid', children: [
+        renderDiffColumn('Antes', difference.before),
+        renderDiffColumn('Depois', difference.after),
+      ] }),
+    ] }));
+  });
+  return details;
+}
+
 function renderCompare(state: AppState, s: Session, rerender: () => void, enqueue: Queue): HTMLElement {
   const source = state.originalSource;
   const current = state.payload;
@@ -202,11 +243,14 @@ function renderCompare(state: AppState, s: Session, rerender: () => void, enqueu
       readerCard(selected.after ?? { path: '', title: 'Seção ausente',
         text: 'Este capítulo não existe nesta versão.', truncated: false }, s.fontSize, 'Atual'),
     ] }) : undefined,
+    selected ? renderWordDiff(selected) : undefined,
   ] });
 }
 
 const FIELDS: Array<[keyof BookMetadata, string]> = [
-  ['title', 'Título'], ['creator', 'Autor principal'], ['language', 'Idioma (pt-BR)'],
+  ['title', 'Título'], ['creator', 'Autor principal'],
+  ['additionalCreators', 'Outros autores e colaboradores (um por linha)'],
+  ['language', 'Idioma (pt-BR)'],
   ['identifier', 'Identificador principal'], ['publisher', 'Editora'], ['date', 'Data de publicação'],
   ['description', 'Descrição'], ['subject', 'Assunto'], ['series', 'Série'],
   ['seriesIndex', 'Volume da série'],
@@ -223,8 +267,14 @@ function renderMetadata(state: AppState, s: Session, enqueue: Queue): HTMLElemen
   });
   const fields = new Map<keyof BookMetadata, HTMLInputElement | HTMLTextAreaElement>();
   const inputs = s.meta ? FIELDS.map(([key, title]) => {
-    const input = key === 'description'
-      ? el('textarea', { attrs: { rows: '3', maxlength: '6000' }, text: s.meta?.[key] ?? '' })
+    const input = key === 'description' || key === 'additionalCreators'
+      ? el('textarea', { attrs: {
+          rows: key === 'description' ? '3' : '4',
+          maxlength: key === 'description' ? '6000' : '3000',
+          'aria-description': key === 'additionalCreators'
+            ? 'Um nome por linha. Os vínculos editoriais existentes são preservados.'
+            : 'Texto de descrição editorial',
+        }, text: s.meta?.[key] ?? '' })
       : el('input', { attrs: { type: 'text', value: s.meta?.[key] ?? '',
         maxlength: '300', autocomplete: 'off' } });
     fields.set(key, input);
@@ -235,18 +285,27 @@ function renderMetadata(state: AppState, s: Session, enqueue: Queue): HTMLElemen
     if (!payload) return;
     const changes: Partial<BookMetadata> = {};
     for (const [key, input] of fields) changes[key] = input.value;
-    if (!window.confirm('Criar uma nova cópia com os metadados informados? O EPUB atual não será substituído.')) return;
+    const oldCredits = s.meta?.additionalCreators.split(/\\r?\\n/u).filter(Boolean).length ?? 0;
+    const newCredits = changes.additionalCreators?.trim()
+      ? changes.additionalCreators.split(/\\r?\\n/u).filter((name) => name.trim()).length
+      : oldCredits;
+    const removal = newCredits < oldCredits;
+    const question = removal
+      ? 'Você está removendo crédito(s) adicionais. Atributos editoriais vinculados impedirão remoções perigosas. Gerar nova cópia?'
+      : 'Criar uma nova cópia com os metadados informados? O EPUB atual não será substituído.';
+    if (!window.confirm(question)) return;
     enqueue('Atualizar metadados EPUB', async ({ signal }) => {
       const result = await writeBookMetadata(payload.file.name, payload.bytes, changes, signal);
       s.export = { blob: result.blob, name: result.fileName,
         bytes: result.bytes, report: result.report };
       s.sourcePreview = undefined;
       s.editedPreview = undefined;
+      s.comparison = undefined;
       s.message = 'Nova cópia com metadados pronta para baixar. O arquivo de origem foi preservado.';
     });
   });
   return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Edite somente quando precisar. Não apagamos informações existentes ao deixar um campo vazio. Assinaturas digitais impedem a edição para evitar invalidá-las.'),
+    paragraph('Edite somente quando precisar. Campos vazios preservam os dados existentes. Outros autores podem ser separados por linha; atributos e funções existentes são preservados. EPUBs assinados não podem ser editados.'),
     load,
     s.meta ? el('div', { className: 'optional-metadata-grid', children: inputs }) : undefined,
     s.meta ? save : undefined,

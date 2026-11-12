@@ -54,12 +54,18 @@ function wordCounts(before: string, after: string): { addedWords: number; remove
 export function compareBookPreviews(before: BookPreview, after: BookPreview): BookDifference[] {
   const used = new Set<number>();
   const rows: BookDifference[] = [];
-  for (const [position, section] of after.sections.entries()) {
+  for (const section of after.sections) {
     const exact = before.sections.findIndex((candidate, index) =>
       !used.has(index) && candidate.path === section.path);
-    const fallback = before.sections.findIndex((candidate, index) =>
-      !used.has(index) && index === position &&
-      candidate.title.toLocaleLowerCase() === section.title.toLocaleLowerCase());
+    const normalizedTitle = section.title.trim().toLocaleLowerCase();
+    const sameTitleInOriginal = before.sections
+      .map((candidate, index) => ({ candidate, index }))
+      .filter(({ candidate, index }) => !used.has(index) &&
+        candidate.title.trim().toLocaleLowerCase() === normalizedTitle);
+    const sameTitleInRevised = after.sections.filter((candidate) =>
+      candidate.title.trim().toLocaleLowerCase() === normalizedTitle);
+    const fallback = normalizedTitle && sameTitleInOriginal.length === 1 &&
+      sameTitleInRevised.length === 1 ? sameTitleInOriginal[0]!.index : -1;
     const matched = exact >= 0 ? exact : fallback;
     if (matched >= 0) used.add(matched);
     rows.push(comparePair(matched >= 0 ? before.sections[matched] : undefined,

@@ -15,19 +15,19 @@
 | Recurso | Experiência disponível | Limites atuais |
 | --- | --- | --- |
 | Pré-visualizador EPUB | Leitura por seção/spine com capítulos, parágrafos, listas, citações e imagens internas rasterizadas (PNG/JPEG/GIF/WebP), com ajuste da fonte | Não executa HTML/CSS, scripts ou links externos. A apresentação não reproduz a tipografia, links interativos, notas avançadas ou fixed-layout do leitor real. Há limites de imagens e memória |
-| Comparação antes/depois | Painéis de capítulos e imagens internas lado a lado, alinhados pelo caminho no spine, com indicação de texto alterado e seções novas/removidas | A contagem de palavras usa prefixo/sufixo, não diff editorial completo. Caminhos alterados usam título/posição apenas como aproximação; não compara CSS, fontes e paginação |
+| Comparação antes/depois | Painéis de capítulos/imagens lado a lado, alinhamento pelo caminho do spine ou título único, indicação de seções novas/removidas e destaque opcional de palavras inseridas/removidas por LCS limitado | Trechos longos têm amostragem explicitamente sinalizada. Não compara CSS, fontes nem paginação. Títulos duplicados não são alinhados por aproximação |
 | Revisor inteligente de PDF | Sugestões heurísticas de OCR de baixa confiança, colunas, fallback visual, caracteres estranhos, espaços e hifenização; navegação para revisão; normalização manual de espaços com confirmação | Não há modelo de IA, classificação universal de erros nem correções sem aprovação |
 | Processamento em lote | Até seis EPUBs/80 MB, processamento sequencial isolado por arquivo, nomes únicos independentemente de maiúsculas/minúsculas, ZIP e relatório TXT por arquivo, cancelamento antes de publicar | Lotes maiores, pausa/resume e validação em celulares físicos ainda não são suportados; documentos com erros podem ser recusados individualmente |
-| Editor de metadados | Edição sob demanda de título, autor principal, idioma, identificador principal correto, editora, data, descrição, assunto e série; evita regravação sem alterações e preserva identificadores secundários | Metadados de autores múltiplos, funções e refinamentos complexos exigem revisão; EPUB assinado é bloqueado. A alteração de identificador sincroniza UID do NCX quando correspondente |
+| Editor de metadados | Edição opcional de título, autor principal, outros créditos (até 12 linhas), idioma, identificador principal, editora, data, descrição, assunto e série. Mantém IDs, funções e refinamentos existentes, preserva identificadores secundários e sincroniza UID do NCX quando aplicável | Edição de funções MARC, múltiplos identificadores, refinamentos complexos e exclusão de crédito refinado continuam bloqueadas/pendentes. Campos vazios preservam informações; EPUB assinado é bloqueado |
 | Preparar para Kindle | Checklist de estrutura, capa, navegação, tamanho e alertas; link para o Send to Kindle oficial | Verificação indicativa, não valida comportamento real de Send to Kindle, dispositivo ou conversor Amazon |
 
 ## Critérios para considerar v4.0.0 pronta para lançamento
 
 1. CI de `dev` aprovada em Node 22, incluindo typecheck, lint, Vitest, build e auditoria.
 2. Testes de regressão por feature com EPUB 2/3, referências inválidas, XML adversarial, livros grandes, mobile e acessibilidade. A suíte sintética de leitor/mídia/metadados é uma primeira camada, não substitui a homologação.
-3. Comparação visual com amostras autorizadas, incluindo EPUB reparado e livro com ilustrações.
+3. Comparação visual com amostras autorizadas, incluindo EPUB reparado e livro com ilustrações. O diff de palavras atualmente é opcional, limitado por quantidade de termos e não substitui comparação tipográfica.
 4. Comportamento reflowable/fixed-layout explicitamente separado do modo texto, sem apresentar a prévia simplificada como visualização fiel.
-5. Confirmar preservação de metadados OPF/NCX/NAV e ausência de problemas introduzidos pela edição.
+5. Confirmar preservação de metadados OPF/NCX/NAV e ausência de problemas introduzidos pela edição, incluindo autoria múltipla com refinamentos no EPUB 2/3.
 6. Medir memória, tempo, cancelamento e progressão da fila em lote em aparelhos modestos.
 7. Conferência manual da revisão PDF, incluindo falsos positivos e valores de OCR.
 8. Somente após aprovação explícita do responsável, abrir PR `dev` → `prod`, executar checks exigidos, efetuar merge e publicar `v4.0.0` pelo workflow existente.

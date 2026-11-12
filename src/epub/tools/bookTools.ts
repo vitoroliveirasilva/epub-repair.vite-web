@@ -6,6 +6,7 @@ import { parsePackageDocument } from '../validation/opfParser';
 import { inspectEpub } from '../validation/validateEpub';
 import { findFirstByLocalName, parseXml, serializeXmlPreservingDeclaration } from '../utils/xmlUtils';
 import { readRichBookPreview, type BookBlock } from './bookReader';
+import { additionalCreators, updateAdditionalCreators } from './metadataContributors';
 
 const DC = 'http://purl.org/dc/elements/1.1/';
 const OPF = 'http://www.idpf.org/2007/opf';
@@ -27,6 +28,7 @@ export interface BookPreview {
 export interface BookMetadata {
   title: string;
   creator: string;
+  additionalCreators: string;
   language: string;
   identifier: string;
   publisher: string;
@@ -106,6 +108,7 @@ export function metadataFromLoaded(loaded: LoadedEpub): BookMetadata {
   return {
     title: valueOf(metadata, 'title'),
     creator: valueOf(metadata, 'creator'),
+    additionalCreators: additionalCreators(metadata),
     language: valueOf(metadata, 'language'),
     identifier: primaryIdentifier(doc, metadata)?.textContent?.trim() ?? '',
     publisher: valueOf(metadata, 'publisher'),
@@ -174,7 +177,7 @@ export async function writeBookMetadata(
   const before = await inspectEpub(fileName, bytes);
   if (before.stats.fatalCount > 0) throw new Error('Corrija os problemas fatais antes de editar metadados.');
   const { path, doc, metadata, original } = getMetadataNode(loaded);
-  const fields: Array<Exclude<MetadataField, 'series' | 'seriesIndex'>> = [
+  const fields: Array<Exclude<MetadataField, 'series' | 'seriesIndex' | 'additionalCreators'>> = [
     'title', 'creator', 'language', 'identifier', 'publisher', 'date', 'description', 'subject',
   ];
   let changed = false;
@@ -246,6 +249,8 @@ export async function writeBookMetadata(
       changed = true;
     }
   }
+  if (changes.additionalCreators !== undefined &&
+    updateAdditionalCreators(doc, metadata, changes.additionalCreators)) changed = true;
   if (!changed) throw new Error('Nenhuma alteração foi informada.');
   if (isEpub3) {
     updateMeta(metadata, doc, 'property', 'dcterms:modified',

@@ -3,6 +3,7 @@ import JSZip from 'jszip';
 import { readBookPreview, readBookMetadata, writeBookMetadata, type BookPreview } from '../src/epub/tools/bookTools';
 import { compareBookPreviews, comparisonSummary } from '../src/epub/tools/bookComparison';
 import { loadEpub } from '../src/epub/reader/loadEpub';
+import { additionalCreators, updateAdditionalCreators } from '../src/epub/tools/metadataContributors';
 
 const pixel = Uint8Array.from(Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==', 'base64'));
@@ -20,7 +21,11 @@ async function epubWithMedia(): Promise<Uint8Array> {
         <dc:title>Livro de teste</dc:title>
         <dc:identifier id="secondary">ISBN-AUXILIAR</dc:identifier>
         <dc:identifier id="main">urn:uuid:11223344-1122-4122-8122-112233445566</dc:identifier>
-        <dc:creator>Autora</dc:creator><dc:language>pt-BR</dc:language>
+        <dc:creator>Autora</dc:creator>
+        <dc:creator id="credit-b">Coautora</dc:creator>
+        <dc:creator id="credit-c">Revisora</dc:creator>
+        <meta property="role" refines="#credit-c" scheme="marc:relators">edt</meta>
+        <dc:language>pt-BR</dc:language>
         <meta property="dcterms:modified">2026-01-01T00:00:00Z</meta>
         <meta property="belongs-to-collection" id="series">Coleção A</meta>
         <meta property="group-position" refines="#series">2</meta>
@@ -84,6 +89,23 @@ describe('Leitura EPUB segura e diferenças por capítulo', () => {
     expect(comparisonSummary(diffs)).toContain('1 alterada');
   });
 
+  it('reconhece caminhos renomeados pelo título único, sem casar títulos duplicados', () => {
+    const mk = (path: string, title: string, text: string) => ({
+      path, title, text, truncated: false,
+    });
+    const before: BookPreview = { title: 'Livro', fixedLayout: false, omitted: 0,
+      sections: [mk('antigo/intro.xhtml', 'Introdução', 'Original'),
+        mk('old/a.xhtml', 'Texto', 'A'), mk('old/b.xhtml', 'Texto', 'B')] };
+    const after: BookPreview = { title: 'Livro', fixedLayout: false, omitted: 0,
+      sections: [mk('novo/intro.xhtml', 'Introdução', 'Original'),
+        mk('new/a.xhtml', 'Texto', 'A')] };
+    const rows = compareBookPreviews(before, after);
+    expect(rows[0]?.status).toBe('same');
+    expect(rows[0]?.approximate).toBe(true);
+    expect(rows.filter((row) => row.status === 'added').length).toBe(1);
+    expect(rows.filter((row) => row.status === 'removed').length).toBe(2);
+  });
+
   it('identifica seções removidas sem parear por posição incorreta', () => {
     const before: BookPreview = { title: 'Teste', fixedLayout: false, omitted: 0,
       sections: [{ path: 'a', title: 'A', text: 'Texto A', truncated: false },
@@ -109,6 +131,54 @@ describe('Editor de metadados não destrutivo', () => {
     expect(opf).toContain('55223344-1122-4122-8122-112233445566');
     expect(ncx).toContain('55223344-1122-4122-8122-112233445566');
     expect(new TextDecoder().decode(bytes)).not.toContain('Obra editada');
+  });
+
+  it('adiciona autores sem destruir os créditos e funções anteriores', async () => {
+    const bytes = await epubWithMedia();
+    const metadata = await readBookMetadata('obra.epub', bytes);
+    expect(metadata.creator).toBe('Autora');
+    expect(metadata.additionalCreators).toBe('Coautora\nRevisora');
+    const result = await writeBookMetadata('obra.epub', bytes, {
+      additionalCreators: 'Coautora\nRevisora\nTerceira autora',
+    });
+    const loaded = await loadEpub(result.fileName, result.bytes);
+    const opf = new TextDecoder().decode(loaded.files.get('OEBPS/content.opf')!.bytes);
+    expect(opf).toContain('refines="#credit-c"');
+    expect(opf).toContain('credit-c');
+    expect(opf).toContain('Terceira autora');
+    expect(opf.split('<dc:creator').length - 1).toBe(4);
+    expect((await readBookMetadata(result.fileName, result.bytes)).additionalCreators)
+      .toContain('Terceira autora');
+  });
+
+  it('bloqueia exclusão de colaborador com refinamento editorial e preserva dados vazios', async () => {
+    const bytes = await epubWithMedia();
+    await expect(writeBookMetadata('obra.epub', bytes, {
+      additionalCreators: 'Coautora',
+    })).rejects.toThrow('função editorial vinculada');
+    const edited = await writeBookMetadata('obra.epub', bytes, {
+      title: 'Título diferente', additionalCreators: '',
+    });
+    const metadata = await readBookMetadata(edited.fileName, edited.bytes);
+    expect(metadata.additionalCreators).toBe('Coautora\nRevisora');
+  });
+
+  it('preserva a função opf:role em créditos secundários EPUB 2', () => {
+    const xml = new DOMParser().parseFromString(
+      '<package xmlns:dc="http://purl.org/dc/elements/1.1/" ' +
+      'xmlns:opf="http://www.idpf.org/2007/opf">' +
+      '<metadata><dc:creator opf:role="aut">Principal</dc:creator>' +
+      '<dc:creator opf:role="edt">Revisora</dc:creator></metadata></package>',
+      'application/xml',
+    );
+    const metadata = xml.querySelector('metadata')!;
+    expect(additionalCreators(metadata)).toBe('Revisora');
+    expect(updateAdditionalCreators(xml, metadata, ['Revisora', 'Coautora'].join('\n')))
+      .toBe(true);
+    const creators = Array.from(metadata.children).filter((node) => node.localName === 'creator');
+    expect(creators).toHaveLength(3);
+    expect(creators[1]?.getAttributeNS('http://www.idpf.org/2007/opf', 'role')).toBe('edt');
+    expect(creators[2]?.textContent).toBe('Coautora');
   });
 
   it('não gera uma cópia quando valores preenchidos permanecem inalterados', async () => {
