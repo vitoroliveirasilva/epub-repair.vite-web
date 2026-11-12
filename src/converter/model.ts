@@ -107,12 +107,18 @@ export interface PdfAnalysisResult {
   qualityScore: number;
 }
 
+export interface ConvertedContentIntegrity {
+  sectionsChecked: number;
+  imageReferencesChecked: number;
+}
+
 export interface ConversionResult {
   fileName: string;
   blob: Blob;
   bytes: Uint8Array;
   layout: ConversionLayout;
   validation: ValidationReport;
+  integrity?: ConvertedContentIntegrity | undefined;
   warnings: ConversionWarning[];
 }
 

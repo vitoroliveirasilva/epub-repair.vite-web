@@ -772,6 +772,11 @@ function renderResult(state: ConverterState): HTMLElement {
           el('p', { className: 'eyebrow', text: 'Conversão finalizada' }),
           el('h2', { text: 'Seu EPUB está pronto para baixar' }),
           el('p', { className: 'muted', text: 'O arquivo foi gerado, passou pelo reparo automático e foi revalidado com sucesso.' }),
+          result.integrity ? el('p', { className: 'muted',
+            text: 'Integridade do EPUB conferida: ' +
+              result.integrity.sectionsChecked + ' seção(ões) e ' +
+              result.integrity.imageReferencesChecked + ' referência(s) de imagem preservadas. ' +
+              'Esta verificação compara o conteúdo editado com o arquivo final; não garante equivalência com a diagramação do PDF.' }) : undefined,
         ] }),
       ] }),
       el('div', { className: 'converter-result-file', children: [

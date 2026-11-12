@@ -2,6 +2,8 @@
 
 ## v4.0.0 — desenvolvimento na dev (não lançada, 12/11/2026)
 
+- Valida a integridade do EPUB final contra o conteúdo editado: capítulos no spine, texto e imagens no XHTML e no manifesto. Impede download quando houver perda objetiva e mostra verificação no resultado.
+- Preserva alterações manuais nas páginas visuais, inclusive após edição simples que remove marcadores; o revisor PDF avisa quando a cobertura textual por página fica suspeitamente baixa.
 - Impede exclusão de capítulos numerados por falso cabeçalho recorrente, protege figuras em páginas sem texto após filtros e separa fragmentos curtos distantes na mesma altura.
 - Corrige a leitura de PDFs em duas colunas com linhas na mesma altura, reorganiza títulos que atravessam a página e intercala ilustrações conforme a coluna. O revisor aponta grades tabulares que merecem conferência.
 - Revisor PDF ordena alertas por prioridade, exibe evidências e impede que a normalização de espaços destrua imagens ou formatação HTML.

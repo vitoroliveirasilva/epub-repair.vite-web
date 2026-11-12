@@ -43,6 +43,43 @@ function hasLikelyTableGrid(page: PdfAnalysisResult['pages'][number]): boolean {
   }).length >= 3;
 }
 
+function normalizedContent(value: string): string {
+  return value.normalize('NFKD').replace(/\p{M}/gu, '')
+    .toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+}
+
+function sectionContentByPage(sections: EditableSection[]): Map<number, string> {
+  const result = new Map<number, string>();
+  for (const section of sections) {
+    const content = normalizedContent(section.plainText);
+    for (const page of section.sourcePages) {
+      result.set(page, (result.get(page) ?? '') + content);
+    }
+  }
+  return result;
+}
+
+function likelyMissingLines(
+  page: PdfAnalysisResult['pages'][number], convertedText: string,
+): string | undefined {
+  if (page.preserveAsImage || page.kind !== 'text' || !convertedText ||
+    page.lines.length < 6) return undefined;
+  const candidates = page.lines.filter((line) =>
+    line.text.trim().length >= 32 && !line.text.trimEnd().endsWith('-') &&
+    line.y >= page.height * 0.12 && line.y <= page.height * 0.88).slice(0, 100);
+  if (candidates.length < 6) return undefined;
+  const stride = Math.max(1, Math.ceil(candidates.length / 12));
+  const sampled = candidates.filter((_, index) => index % stride === 0);
+  const missing = sampled.filter((line) => {
+    const comparable = normalizedContent(line.text);
+    return comparable.length >= 25 && !convertedText.includes(comparable);
+  });
+  if (missing.length >= 5 && missing.length >= sampled.length * 0.65) {
+    return missing[0]?.text;
+  }
+  return undefined;
+}
+
 function relatedSection(sections: EditableSection[], pageNumber: number): number | undefined {
   const match = sections.findIndex((section) => section.sourcePages?.includes(pageNumber));
   return match >= 0 ? match : undefined;
@@ -65,9 +102,20 @@ export function analyzeReview(
   analysis: PdfAnalysisResult, sections: EditableSection[],
 ): ReviewFinding[] {
   const findings: ReviewFinding[] = [];
+  const byPage = sectionContentByPage(sections);
   for (const page of analysis.pages) {
     const sectionIndex = relatedSection(sections, page.pageNumber);
     const sourceExcerpt = snippet(page.text || '');
+    const missingLine = likelyMissingLines(page, byPage.get(page.pageNumber) ?? '');
+    if (missingLine) {
+      findings.push(finding(
+        'POSSIBLE_TEXT_LOSS', 'Possível conteúdo ausente após reconstrução',
+        'Várias linhas do PDF não foram encontradas no texto editável desta página. ' +
+          'Isso pode ocorrer após reordenação, edição manual ou reconstrução incompleta. ' +
+          'Confira o trecho no PDF antes de baixar o EPUB.',
+        'high', page.pageNumber, sectionIndex, snippet(missingLine),
+      ));
+    }
     if (page.usedOcr && page.ocrConfidence !== undefined &&
       Number.isFinite(page.ocrConfidence) && page.ocrConfidence < 75) {
       const confidence = Math.max(0, Math.min(100, page.ocrConfidence));

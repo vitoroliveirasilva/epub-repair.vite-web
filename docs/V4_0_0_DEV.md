@@ -72,3 +72,15 @@ Manter documentação histórica e notas v3 intactas. Não rodar suites pesadas 
 - Quando uma página fica sem linhas textuais após o filtro de numeração, ilustrações recuperadas continuam sendo incluídas na reconstrução, e seus recursos entram no XHTML e no manifesto do EPUB.
 - Cinco casos novos de regressão cobrem fragmentos curtos lado a lado, capítulos numerados, margens alternadas, páginas com apenas imagem após filtro e uma verificação EPUB final por ZIP, pacote e validação.
 - São correções conservadoras e não constituem equivalência visual com o PDF: preservar o layout de tabelas complexas continua exigindo conferência manual ou layout fixo.
+
+## Auditoria de integridade pós-conversão (reflowable)
+
+- Após gerar e aplicar o acabamento automático, uma segunda verificação abre o EPUB final e confere a quantidade e a ordem de capítulos no spine, entradas no manifesto, XHTML válido e a permanência do texto presente no HTML editado.
+- O texto é comparado ignorando diferenças de espaços e compatibilização Unicode; a auditoria evita falsos bloqueios por reflow, mas não é uma comparação de layout, estilo ou fidelidade com todo o conteúdo do PDF original.
+- O verificador exige que cada imagem presente no HTML de entrada continue referenciada e que cada figura/página visual incorporada tenha imagem disponível e declarada no manifesto. Se encontrar perda objetiva, o EPUB não é disponibilizado e o erro é mostrado ao usuário.
+- Páginas visuais que têm texto editado não recuperam nem sobrescrevem automaticamente o texto original reconhecido no PDF. Isso também vale para edição pelo campo de texto simples, que pode remover os marcadores de página.
+- Se a página visual estiver sem marcador e seu texto ainda estiver no capítulo, a transcrição não é duplicada. Se não houver texto editado ou transcrição, a figura preservada recebe descrição alternativa.
+- Quando uma página textual apresenta várias linhas relevantes e quase nenhuma está no texto editável, o revisor sugere uma conferência manual. É uma heurística: reordenação, limpeza e edições deliberadas podem justificar diferenças. Não há bloqueio automático nesse caso.
+- O resultado de um EPUB de texto ajustável informa quantas seções e referências de imagem passaram pela auditoria interna. Para layout fixo a auditoria textual não se aplica; prevalecem a validação estrutural e a renderização por página.
+- A implementação inclui regressões para perda de caracteres, imagens ausentes, capítulo retirado do spine, textos editados e visualizações preservadas, além de teste de cancelamento.
+- **Limite importante:** o processo verifica a integridade entre o conteúdo editado e o EPUB final, não garante extração perfeita do PDF. Homologação com obras reais e EPUBCheck permanecem pendentes.

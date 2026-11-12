@@ -9,6 +9,7 @@ metadataDraftV4
 reviewKindleV4
 pdfColumnFidelityV4
 pdfContentSafetyV4
+pdfOutputIntegrityV4
 accessibilitySemantics99
 activeStructuralFalsePositive99
 adversarialHtml

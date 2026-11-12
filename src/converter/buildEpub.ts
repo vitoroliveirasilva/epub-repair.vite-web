@@ -15,6 +15,7 @@ import type {
   PublicationMetadata,
 } from './model';
 import { renderPdfPages } from './pdfEngine';
+import { assertConvertedContentIntegrity } from './contentIntegrity';
 
 interface BuildEpubInput {
   sourceBytes: Uint8Array;
@@ -30,6 +31,7 @@ interface BuildEpubInput {
 
 interface ReflowableSection extends EditableSection {
   visualPages: PdfPageAnalysis[];
+  editedBody: boolean;
 }
 
 export async function buildEpubFromPdf(input: BuildEpubInput): Promise<ConversionResult> {
@@ -47,11 +49,13 @@ export async function buildEpubFromPdf(input: BuildEpubInput): Promise<Conversio
   zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
   zip.file('META-INF/container.xml', containerXml());
   input.onProgress?.('Montando estrutura EPUB');
+  const reflowableSections = layout === 'reflowable' ? prepareReflowableSections(input) : undefined;
 
   if (layout === 'fixed') {
     await addFixedLayout(zip, input, title, author, metadata, identifier, modified);
   } else {
-    addReflowableLayout(zip, input, title, author, metadata, identifier, modified);
+    addReflowableLayout(zip, input, title, author, metadata, identifier, modified,
+      reflowableSections!);
   }
 
   throwIfAborted(input.signal);
@@ -91,6 +95,11 @@ export async function buildEpubFromPdf(input: BuildEpubInput): Promise<Conversio
   if (validation.stats.fatalCount > 0 || validation.stats.errorCount > 0) {
     throw new Error('O acabamento automático ainda encontrou erros no EPUB gerado. Revise o PDF antes de tentar novamente.');
   }
+  throwIfAborted(input.signal);
+  if (reflowableSections) input.onProgress?.('Conferindo texto, capítulos e imagens do EPUB');
+  const integrity = reflowableSections
+    ? await assertConvertedContentIntegrity(finalBytes, reflowableSections, input.signal)
+    : undefined;
   const blob = new Blob([finalBytes], { type: 'application/epub+zip' });
   return {
     fileName,
@@ -98,6 +107,7 @@ export async function buildEpubFromPdf(input: BuildEpubInput): Promise<Conversio
     bytes: finalBytes,
     layout,
     validation,
+    ...(integrity ? { integrity } : {}),
     warnings: input.analysis.warnings,
   };
 }
@@ -110,8 +120,8 @@ function addReflowableLayout(
   metadata: PublicationMetadata,
   identifier: string,
   modified: string,
+  sections: ReflowableSection[],
 ): void {
-  const sections = prepareReflowableSections(input);
   const firstPage = input.analysis.pages[0];
   const cover = firstPage && (firstPage.kind === 'cover' || firstPage.imageCount > 0)
     ? dataUrlToBytes(firstPage.previewDataUrl)
@@ -129,7 +139,9 @@ function addReflowableLayout(
     .filter((page, index, pages) => pages.findIndex((candidate) => candidate.pageNumber === page.pageNumber) === index);
   for (const page of visualPages) {
     const bytes = dataUrlToBytes(page.previewDataUrl);
-    if (bytes) zip.file(`OEBPS/Images/visual-page-${String(page.pageNumber).padStart(4, '0')}.jpg`, bytes);
+    if (!bytes) throw new Error(
+      `Não foi possível preservar a página visual ${page.pageNumber}.`);
+    zip.file(`OEBPS/Images/visual-page-${String(page.pageNumber).padStart(4, '0')}.jpg`, bytes);
   }
   zip.file('OEBPS/Styles/book.css', reflowableCss());
   if (cover) zip.file('OEBPS/Text/cover.xhtml', coverXhtml(title, input.options.language));
@@ -162,10 +174,12 @@ function addReflowableLayout(
 
 function prepareReflowableSections(input: BuildEpubInput): ReflowableSection[] {
   const source = input.sections.length > 0 ? input.sections : input.analysis.sections;
+  const originals = new Map(input.analysis.sections.map((section) => [section.id, section]));
   const sections: ReflowableSection[] = source.map((section) => ({
     ...section,
     sourcePages: [...section.sourcePages],
     visualPages: [],
+    editedBody: originals.get(section.id)?.html !== section.html,
   }));
   const visualPages = input.analysis.pages.filter((page) =>
     page.pageNumber > 1 && page.preserveAsImage && Boolean(page.previewDataUrl));
@@ -182,6 +196,7 @@ function prepareReflowableSections(input: BuildEpubInput): ReflowableSection[] {
       html: page.text ? `<p>${escapeXml(page.text)}</p>` : '',
       sourcePages: [page.pageNumber],
       visualPages: [page],
+      editedBody: false,
     });
   }
   return sections.sort((a, b) =>
@@ -346,41 +361,64 @@ function fixedOpf(input: {
 }
 
 function sectionXhtml(section: ReflowableSection, bookTitle: string, language: string): string {
-  const content = integrateVisualPages(section.html, section.visualPages);
+  const content = integrateVisualPages(section.html, section.visualPages, section.editedBody);
   return xhtml(language, section.title || bookTitle,
     `<main epub:type="bodymatter">${content}</main>`, '../Styles/book.css');
 }
 
-function integrateVisualPages(html: string, pages: PdfPageAnalysis[]): string {
+function visualMarkupText(html: string): string {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return (doc.body.textContent ?? '').replace(/\s+/gu, ' ').trim();
+}
+
+function integrateVisualPages(
+  html: string, pages: PdfPageAnalysis[], editedBody: boolean,
+): string {
   let output = html;
   for (const page of [...pages].sort((left, right) => left.pageNumber - right.pageNumber)) {
-    const figure = visualPageFigure(page);
-    const exact = new RegExp(`(<span id="page-${page.pageNumber}"[^>]*><\\/span>)([\\s\\S]*?)(?=<span id="page-\\d+"|$)`, 'u');
+    const exact = new RegExp(
+      '(<span id="page-' + page.pageNumber +
+      '"[^>]*><\\/span>)([\\s\\S]*?)(?=<span id="page-\\d+"|$)', 'u');
     if (exact.test(output)) {
-      output = output.replace(exact, `$1\n${figure}\n`);
+      output = output.replace(exact, (_match, marker: string, existing: string) => {
+        const alreadyText = visualMarkupText(existing).length > 0;
+        return marker + '\n' + visualPageFigure(page, false, alreadyText) +
+          '\n' + existing;
+      });
       continue;
     }
+    const hasTranscript = page.text.trim().length > 0;
+    const existingText = visualMarkupText(output);
+    const normalizedPage = page.text.replace(/\s+/gu, ' ').trim();
+    const alreadyText = hasTranscript && existingText.includes(normalizedPage);
+    const figure = visualPageFigure(page, !alreadyText && !editedBody, alreadyText);
     const markers = [...output.matchAll(/<span id="page-(\d+)"[^>]*><\/span>/gu)];
     const next = markers.find((marker) => Number(marker[1]) > page.pageNumber);
     if (next?.index !== undefined) {
-      output = `${output.slice(0, next.index)}${figure}\n${output.slice(next.index)}`;
+      output = output.slice(0, next.index) + figure + '\n' + output.slice(next.index);
     } else {
-      output = `${output}\n${figure}`;
+      output += '\n' + figure;
     }
   }
   return output;
 }
 
-function visualPageFigure(page: PdfPageAnalysis): string {
+function visualPageFigure(
+  page: PdfPageAnalysis, includeTranscript: boolean, existingText: boolean,
+): string {
   const number = String(page.pageNumber).padStart(4, '0');
-  const hasTranscript = page.text.trim().length > 0;
-  const imageAttributes = hasTranscript
+  const hasTranscript = includeTranscript && page.text.trim().length > 0;
+  const decorative = hasTranscript || existingText;
+  const imageAttributes = decorative
     ? 'alt="" role="presentation"'
-    : `alt="Página visual ${page.pageNumber} preservada do PDF"`;
+    : 'alt="Página visual ' + page.pageNumber + ' preservada do PDF"';
   const transcript = hasTranscript
-    ? `<div class="visual-transcript">${escapeXml(page.text).split(/\n+/u).filter(Boolean).map((line) => `<p>${line}</p>`).join('')}</div>`
+    ? '<div class="visual-transcript">' + escapeXml(page.text).split(/\n+/u)
+      .filter(Boolean).map((line) => '<p>' + line + '</p>').join('') + '</div>'
     : '';
-  return `<figure class="visual-page"><img src="../Images/visual-page-${number}.jpg" ${imageAttributes}/><figcaption>Conteúdo visual preservado da página ${page.pageNumber}</figcaption>${transcript}</figure>`;
+  return '<figure class="visual-page"><img src="../Images/visual-page-' +
+    number + '.jpg" ' + imageAttributes + '/><figcaption>Conteúdo visual preservado da página ' +
+    page.pageNumber + '</figcaption>' + transcript + '</figure>';
 }
 
 function coverXhtml(title: string, language: string): string {
@@ -518,8 +556,14 @@ function dataUrlToBytes(dataUrl: string | undefined): Uint8Array | undefined {
   if (!dataUrl) return undefined;
   const comma = dataUrl.indexOf(',');
   if (comma < 0) return undefined;
-  const binary = atob(dataUrl.slice(comma + 1));
-  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  try {
+    const binary = atob(dataUrl.slice(comma + 1));
+    return binary.length
+      ? Uint8Array.from(binary, (character) => character.charCodeAt(0))
+      : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function resolveLayout(requested: ConverterOptions['outputLayout'], suggested: ConversionLayout): ConversionLayout {
