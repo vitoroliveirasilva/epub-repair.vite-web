@@ -9,7 +9,7 @@
 - A API pública de rulesets continua listando **Protect prod** em 12/11/2026. Essa consulta não permite afirmar que todos os controles administrativos/legacy protection sejam visíveis ou imutáveis.
 - A lista de branches consultada em 12/11/2026 contém **apenas `dev` e `prod`**. Dependabot pode criar branches temporárias futuras, dependendo da configuração e das regras de segurança.
 - As PRs #43–#54 foram integradas em `prod`; em 12/11/2026 não havia PRs abertas no resultado consultado.
-- A tag mais recente confirmada é `v2.5.0`. A produção recebeu commits posteriores sem gerar outra release versionada.
+- A última tag antes desta atualização era `v2.5.0`; a `v3.0.0` consolida os commits posteriores e é publicada automaticamente após CI de produção.
 
 ## Fluxo recomendado
 

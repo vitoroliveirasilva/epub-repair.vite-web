@@ -1,13 +1,10 @@
 # Histórico de mudanças do EPUB Repair
 
-> **Nota de leitura (12/11/2026):** este arquivo separa as releases versionadas das alterações
-> já publicadas em `prod` após a última tag. A versão do pacote continua `2.5.0`,
-> mas o código da produção já contém PRs posteriores. As entradas antigas abaixo
-> foram preservadas como **registro histórico**, inclusive frases escritas antes de
-> versões que já foram publicadas. Estado operacional atual:
-> [ESTADO_ATUAL.md](docs/ESTADO_ATUAL.md).
+> **Nota de leitura (12/11/2026):** a versão `3.0.0` reúne melhorias posteriores à `v2.5.0`. A publicação da tag depende da CI aprovada na `prod`. Entradas anteriores são preservadas como **registro histórico**, inclusive frases escritas antes de versões já publicadas. Estado operacional: [ESTADO_ATUAL.md](docs/ESTADO_ATUAL.md).
 
-## Alterações de produção após v2.5.0 (11–12/11/2026, sem nova tag)
+## v3.0.0 (12/11/2026)
+
+Versão major que consolida as melhorias posteriores à `v2.5.0`, especialmente o novo conversor PDF → EPUB. [Notas detalhadas](.github/release-notes/v3.0.0.md). A tag é gerada automaticamente após aprovação da CI na `prod`.
 
 - **Conversor PDF → EPUB** publicado na rota `/converter` ([PR #43](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pull/43)), com PDF.js, OCR local Tesseract.js, reconstrução de texto, edição editorial, formato reflowable/fixed e validação final pelo motor EPUB.
 - **Confiabilidade de extração**: fluxo OCR com timeout/fallback, preservação de ilustrações, quadros e formulários, correção de espaços entre trechos de fontes diferentes e de metadados ISBN/CDD/CDU ([PRs #44–#47](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pulls?q=is%3Apr+is%3Amerged+base%3Aprod)).
@@ -16,10 +13,7 @@
 - **Navegação móvel**: menu lateral com modal de tela inteira, links EPUB/PDF, tecla Escape, foco e animação respeitando movimento reduzido ([PRs #51–#53](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pull/53)).
 - **Footer**: quatro links fixos nas duas rotas (Desenvolvedor, Projeto no GitHub, Reparar EPUB e Converter PDF) ([PR #54](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pull/54)).
 
-Essas alterações **não criaram automaticamente** uma release `v2.6.0`:
-o workflow de release reaproveita a versão do `package.json` e não republica a
-mesma tag. Compatibilidade visual de PDFs diversos e homologação em aparelhos
-físicos continuam sujeitas a testes específicos.
+A versão `3.0.0` mantém coerência entre `package.json` e `package-lock.json`, com notas próprias e publicação após CI. Compatibilidade visual de PDFs diversos e homologação em aparelhos físicos continuam sujeitas a testes específicos.
 
 ## v2.5.0 (release publicada em 11/11/2026 UTC)
 

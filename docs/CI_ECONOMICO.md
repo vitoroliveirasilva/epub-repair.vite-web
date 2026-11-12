@@ -42,4 +42,4 @@ A auditoria consultada identificou **Protect prod** exigindo apenas os contextos
 
 ## Histórico
 
-As instruções antigas para uma PR *candidata v2.4.0* e para a PR #32 referiam-se a novembro de 2026 **antes da promoção**, não são fluxo pendente em 12/11. A última release confirmada é `v2.5.0`, e a publicação pode conter mudanças pós-release. Consulte [Política de branches](BRANCH_POLICY.md), [Deploy](DEPLOY_OPERACAO.md), [Histórico](../CHANGELOG.md).
+As instruções antigas para uma PR *candidata v2.4.0* e para a PR #32 referiam-se a novembro de 2026 **antes da promoção**, não são fluxo pendente em 12/11. A `v2.5.0` foi a última release anterior à preparação da `v3.0.0`; o código de produção pode conter mudanças pós-release. Consulte [Política de branches](BRANCH_POLICY.md), [Deploy](DEPLOY_OPERACAO.md), [Histórico](../CHANGELOG.md).
