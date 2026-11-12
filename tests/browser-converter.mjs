@@ -62,6 +62,21 @@ try {
   assert.equal(await mobileMenu.locator('a[href="/"]').count(), 1,
     'Conversor deve oferecer navegação para reparar EPUB');
   assert.equal(await mobileMenu.locator('a[aria-current="page"]').getAttribute('href'), '/converter');
+  assert.equal(await mobileMenu.locator('.mobile-navigation-group').count(), 2);
+  assert.equal(await mobileMenu.locator('.mobile-navigation-current').textContent(), 'Atual');
+  await page.waitForTimeout(320);
+  for (const width of [320, 390, 760]) {
+    await page.setViewportSize({ width, height: 844 });
+    const bounds = await mobileMenu.locator('.mobile-navigation-panel').evaluate((panel) => {
+      const rect = panel.getBoundingClientRect();
+      return { left: rect.left, right: rect.right, scroll: panel.scrollWidth,
+        inner: panel.clientWidth };
+    });
+    assert.ok(bounds.left >= -1 && bounds.right <= width + 1,
+      'Navegação do conversor deve caber em ' + width + 'px');
+    assert.ok(bounds.scroll <= bounds.inner + 2,
+      'Navegação do conversor não pode ter rolagem horizontal');
+  }
   await page.keyboard.press('Escape');
   assert.equal(await mobileMenu.evaluate((node) => node.open), false);
   await page.setViewportSize({ width: 1365, height: 900 });

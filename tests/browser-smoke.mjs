@@ -174,6 +174,32 @@ async function scenario(browser, mobile) {
       assert.equal(await mobileMenu.locator('a[href="/converter"]').count(), 1,
         'Menu móvel deve permitir acessar a conversão de PDF');
       assert.equal(await mobileMenu.locator('a[aria-current="page"]').getAttribute('href'), '/');
+      assert.equal(await mobileMenu.locator('.mobile-navigation-group').count(), 2);
+      assert.equal(await mobileMenu.locator('.mobile-navigation-current').textContent(), 'Atual');
+      await page.waitForTimeout(320);
+      for (const width of [320, 360, 390, 430, 560, 760]) {
+        await page.setViewportSize({ width, height: 760 });
+        const metrics = await mobileMenu.evaluate((menu) => {
+          const panel = menu.querySelector('.mobile-navigation-panel');
+          const links = Array.from(menu.querySelectorAll('.mobile-navigation-link'));
+          const rect = panel.getBoundingClientRect();
+          return {
+            left: rect.left, right: rect.right,
+            width: rect.width, viewport: window.innerWidth,
+            scrollWidth: panel.scrollWidth, clientWidth: panel.clientWidth,
+            linkHeights: links.map((link) => link.getBoundingClientRect().height),
+            panelVisible: getComputedStyle(panel).display !== 'none',
+          };
+        });
+        assert.equal(metrics.panelVisible, true, 'Menu expandido não pode estar oculto');
+        assert.ok(metrics.left >= -1 && metrics.right <= width + 1,
+          'Menu expandido ultrapassa viewport ' + width + 'px: ' + JSON.stringify(metrics));
+        assert.ok(metrics.scrollWidth <= metrics.clientWidth + 2,
+          'Menu expandido contém rolagem horizontal em ' + width + 'px');
+        assert.ok(metrics.linkHeights.every((height) => height >= 44),
+          'Itens de navegação muito pequenos em ' + width + 'px');
+      }
+      await page.setViewportSize({ width: 390, height: 844 });
       await page.keyboard.press('Escape');
       assert.equal(await mobileMenu.evaluate((node) => node.open), false,
         'Tecla Escape deve fechar o menu móvel');

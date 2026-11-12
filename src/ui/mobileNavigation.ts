@@ -35,12 +35,49 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
       el('nav', {
         className: 'mobile-navigation-panel',
         attrs: { 'aria-label': 'Navegação no celular' },
-        children: links.map(({ label, href, current }) =>
-          el('a', {
-            className: current ? 'mobile-navigation-link mobile-navigation-link-active' : 'mobile-navigation-link',
-            text: label,
-            attrs: { href, ...(current ? { 'aria-current': 'page' } : {}) },
-          })),
+        children: [
+          el('div', {
+            className: 'mobile-navigation-panel-heading',
+            children: [
+              el('strong', { text: 'Navegação' }),
+              el('small', { text: 'Escolha para onde ir' }),
+            ],
+          }),
+          el('div', {
+            className: 'mobile-navigation-group mobile-navigation-group-primary',
+            children: [
+              el('span', { className: 'mobile-navigation-group-label', text: 'Ferramentas' }),
+              ...links.slice(0, 2).map(({ label, href, current }) =>
+                el('a', {
+                  className: current
+                    ? 'mobile-navigation-link mobile-navigation-link-primary mobile-navigation-link-active'
+                    : 'mobile-navigation-link mobile-navigation-link-primary',
+                  attrs: { href, ...(current ? { 'aria-current': 'page' } : {}) },
+                  children: [
+                    el('span', { className: 'mobile-navigation-link-text', text: label }),
+                    current
+                      ? el('span', { className: 'mobile-navigation-current', text: 'Atual' })
+                      : el('span', { className: 'mobile-navigation-link-arrow', attrs: { 'aria-hidden': 'true' }, text: '›' }),
+                  ],
+                })),
+            ],
+          }),
+          el('div', {
+            className: 'mobile-navigation-group mobile-navigation-group-sections',
+            children: [
+              el('span', { className: 'mobile-navigation-group-label', text: 'Nesta página' }),
+              ...links.slice(2).map(({ label, href }) =>
+                el('a', {
+                  className: 'mobile-navigation-link mobile-navigation-link-secondary',
+                  attrs: { href },
+                  children: [
+                    el('span', { className: 'mobile-navigation-link-text', text: label }),
+                    el('span', { className: 'mobile-navigation-link-arrow', attrs: { 'aria-hidden': 'true' }, text: '›' }),
+                  ],
+                })),
+            ],
+          }),
+        ],
       }),
     ],
   });
