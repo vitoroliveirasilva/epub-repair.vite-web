@@ -210,7 +210,7 @@ async function scenario(browser, mobile) {
       await page.keyboard.press('Escape');
       assert.equal(await drawer.evaluate((node) => node.open), false,
         'Tecla Escape deve fechar o menu lateral');
-      assert.equal(await mobileMenu.locator('.mobile-navigation-trigger').getAttribute('aria-expanded'), 'false');
+      await mobileMenu.locator('.mobile-navigation-trigger[aria-expanded="false"]').waitFor();
       await mobileMenu.locator('.mobile-navigation-trigger').click();
       await mobileMenu.locator('.mobile-navigation-close').click();
       assert.equal(await drawer.evaluate((node) => node.open), false,
