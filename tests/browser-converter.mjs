@@ -57,28 +57,34 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   const mobileMenu = page.locator('.mobile-navigation');
   assert.equal(await mobileMenu.isVisible(), true);
-  await mobileMenu.locator('summary').click();
-  assert.equal(await mobileMenu.evaluate((node) => node.open), true);
+  await mobileMenu.locator('.mobile-navigation-trigger').click();
+  const drawer = mobileMenu.locator('.mobile-navigation-dialog');
+  assert.equal(await drawer.evaluate((node) => node.open), true);
   assert.equal(await mobileMenu.locator('a[href="/"]').count(), 1,
     'Conversor deve oferecer navegação para reparar EPUB');
   assert.equal(await mobileMenu.locator('a[aria-current="page"]').getAttribute('href'), '/converter');
   assert.equal(await mobileMenu.locator('.mobile-navigation-group').count(), 2);
   assert.equal(await mobileMenu.locator('.mobile-navigation-current').textContent(), 'Atual');
-  await page.waitForTimeout(320);
+  await page.waitForTimeout(350);
   for (const width of [320, 390, 760]) {
     await page.setViewportSize({ width, height: 844 });
-    const bounds = await mobileMenu.locator('.mobile-navigation-panel').evaluate((panel) => {
-      const rect = panel.getBoundingClientRect();
-      return { left: rect.left, right: rect.right, scroll: panel.scrollWidth,
-        inner: panel.clientWidth };
+    const bounds = await drawer.evaluate((dialog) => {
+      const rect = dialog.getBoundingClientRect();
+      const panel = dialog.querySelector('.mobile-navigation-panel');
+      return { left: rect.left, right: rect.right, width: rect.width, height: rect.height,
+        viewportHeight: window.innerHeight, modal: dialog.matches(':modal'),
+        scroll: panel.scrollWidth, inner: panel.clientWidth };
     });
-    assert.ok(bounds.left >= -1 && bounds.right <= width + 1,
-      'Navegação do conversor deve caber em ' + width + 'px');
+    assert.equal(bounds.modal, true);
+    assert.ok(bounds.left >= -1 && bounds.right <= width + 1 &&
+      Math.abs(bounds.width - width) <= 2 &&
+      Math.abs(bounds.height - bounds.viewportHeight) <= 2,
+      'Navegação deve ocupar a tela inteira em ' + width + 'px');
     assert.ok(bounds.scroll <= bounds.inner + 2,
       'Navegação do conversor não pode ter rolagem horizontal');
   }
   await page.keyboard.press('Escape');
-  assert.equal(await mobileMenu.evaluate((node) => node.open), false);
+  assert.equal(await drawer.evaluate((node) => node.open), false);
   await page.setViewportSize({ width: 1365, height: 900 });
   await page.evaluate(() => {
     const seen = new WeakSet();

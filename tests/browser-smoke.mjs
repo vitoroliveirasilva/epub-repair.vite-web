@@ -169,40 +169,52 @@ async function scenario(browser, mobile) {
     if (mobile) {
       assert.equal(await mobileMenu.isVisible(), true,
         'O menu de navegação deve estar disponível no celular');
-      await mobileMenu.locator('summary').click();
-      assert.equal(await mobileMenu.evaluate((node) => node.open), true);
+      await mobileMenu.locator('.mobile-navigation-trigger').click();
+      const drawer = mobileMenu.locator('.mobile-navigation-dialog');
+      assert.equal(await drawer.evaluate((node) => node.open), true);
+      assert.equal(await mobileMenu.locator('.mobile-navigation-trigger').getAttribute('aria-expanded'), 'true');
       assert.equal(await mobileMenu.locator('a[href="/converter"]').count(), 1,
         'Menu móvel deve permitir acessar a conversão de PDF');
       assert.equal(await mobileMenu.locator('a[aria-current="page"]').getAttribute('href'), '/');
       assert.equal(await mobileMenu.locator('.mobile-navigation-group').count(), 2);
       assert.equal(await mobileMenu.locator('.mobile-navigation-current').textContent(), 'Atual');
-      await page.waitForTimeout(320);
+      await page.waitForTimeout(350);
       for (const width of [320, 360, 390, 430, 560, 760]) {
         await page.setViewportSize({ width, height: 760 });
         const metrics = await mobileMenu.evaluate((menu) => {
+          const dialog = menu.querySelector('.mobile-navigation-dialog');
           const panel = menu.querySelector('.mobile-navigation-panel');
           const links = Array.from(menu.querySelectorAll('.mobile-navigation-link'));
-          const rect = panel.getBoundingClientRect();
+          const rect = dialog.getBoundingClientRect();
           return {
             left: rect.left, right: rect.right,
-            width: rect.width, viewport: window.innerWidth,
+            width: rect.width, height: rect.height, viewport: window.innerWidth,
+            viewportHeight: window.innerHeight,
             scrollWidth: panel.scrollWidth, clientWidth: panel.clientWidth,
             linkHeights: links.map((link) => link.getBoundingClientRect().height),
-            panelVisible: getComputedStyle(panel).display !== 'none',
+            modal: dialog.matches(':modal'),
+            scrollLocked: getComputedStyle(document.documentElement).overflow === 'hidden',
           };
         });
-        assert.equal(metrics.panelVisible, true, 'Menu expandido não pode estar oculto');
-        assert.ok(metrics.left >= -1 && metrics.right <= width + 1,
-          'Menu expandido ultrapassa viewport ' + width + 'px: ' + JSON.stringify(metrics));
+        assert.equal(metrics.modal, true, 'Navegação lateral deve ser um modal real');
+        assert.ok(metrics.left >= -1 && metrics.right <= width + 1 &&
+          Math.abs(metrics.width - width) <= 2 && Math.abs(metrics.height - metrics.viewportHeight) <= 2,
+          'Menu deve ocupar toda a tela em ' + width + 'px: ' + JSON.stringify(metrics));
+        assert.equal(metrics.scrollLocked, true, 'Página de fundo não deve rolar com menu aberto');
         assert.ok(metrics.scrollWidth <= metrics.clientWidth + 2,
-          'Menu expandido contém rolagem horizontal em ' + width + 'px');
+          'Menu contém rolagem horizontal em ' + width + 'px');
         assert.ok(metrics.linkHeights.every((height) => height >= 44),
-          'Itens de navegação muito pequenos em ' + width + 'px');
+          'Itens muito pequenos em ' + width + 'px');
       }
       await page.setViewportSize({ width: 390, height: 844 });
       await page.keyboard.press('Escape');
-      assert.equal(await mobileMenu.evaluate((node) => node.open), false,
-        'Tecla Escape deve fechar o menu móvel');
+      assert.equal(await drawer.evaluate((node) => node.open), false,
+        'Tecla Escape deve fechar o menu lateral');
+      assert.equal(await mobileMenu.locator('.mobile-navigation-trigger').getAttribute('aria-expanded'), 'false');
+      await mobileMenu.locator('.mobile-navigation-trigger').click();
+      await mobileMenu.locator('.mobile-navigation-close').click();
+      assert.equal(await drawer.evaluate((node) => node.open), false,
+        'Botão Fechar deve recolher o menu lateral');
     } else {
       assert.equal(await mobileMenu.isVisible(), false,
         'O menu móvel não deve substituir a navegação desktop');
