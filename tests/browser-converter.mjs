@@ -62,6 +62,76 @@ try {
   await page.getByText(/Análise concluída:/).waitFor({ timeout: 30000 });
   assert.equal(await page.getByLabel('Título', { exact: true }).inputValue(), 'Livro de teste');
   assert.equal(await page.getByLabel('Autor', { exact: true }).inputValue(), 'EPUB Repair');
+  const review = page.locator('.converter-advanced-review');
+  await review.locator('summary').click();
+  assert.equal(await review.evaluate((el) => el.open), true, 'Revisão avançada deve abrir');
+  await page.getByRole('button', { name: 'Adicionar seção depois' }).click();
+  assert.equal(await review.evaluate((el) => el.open), true,
+    'Revisão avançada deve permanecer aberta ao adicionar capítulo');
+  await page.getByLabel('Seção reconstruída').selectOption('0');
+  assert.equal(await review.evaluate((el) => el.open), true,
+    'Revisão avançada deve permanecer aberta ao trocar capítulo');
+  await page.getByRole('button', { name: 'Próxima seção' }).click();
+  assert.equal(await review.evaluate((el) => el.open), true,
+    'Revisão avançada deve permanecer aberta ao usar navegação de capítulos');
+  await page.getByLabel('Página original').selectOption('1');
+  assert.equal(await review.evaluate((el) => el.open), true,
+    'Revisão avançada deve permanecer aberta ao trocar página');
+  await page.getByRole('button', { name: 'Remover seção vazia' }).click();
+  assert.equal(await review.evaluate((el) => el.open), true,
+    'Revisão avançada deve permanecer aberta após remover capítulo');
+  await review.locator('summary').click();
+  assert.equal(await review.evaluate((el) => el.open), false);
+  await review.locator('summary').click();
+  assert.equal(await review.evaluate((el) => el.open), true);
+
+  await page.evaluate(() => {
+    const warningPanel = document.querySelector('.converter-warning-panel');
+    if (!warningPanel) throw new Error('Card Pontos para conferir não encontrado');
+    const longWord = 'CAPITULO_SEM_ESPACOS_OU_QUEBRAS_'.repeat(35);
+    for (let index = 0; index < 18; index += 1) {
+      const article = document.createElement('article');
+      article.className = 'converter-warning converter-warning-warning';
+      const strong = document.createElement('strong');
+      strong.textContent = 'Ponto para conferir ' + (index + 1);
+      const paragraph = document.createElement('p');
+      paragraph.textContent = 'Conteúdo do aviso extenso que precisa continuar legível: ' + longWord;
+      const small = document.createElement('small');
+      small.textContent = 'Página ' + (index + 1);
+      article.append(strong, paragraph, small);
+      warningPanel.append(article);
+    }
+  });
+  for (const width of [320, 360, 390, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    const measured = await page.locator('.converter-warning-panel').evaluate((panel) => {
+      const warnings = Array.from(panel.querySelectorAll('.converter-warning'));
+      const elements = [panel, ...warnings, ...warnings.flatMap((warning) =>
+        Array.from(warning.querySelectorAll('strong, p, small')))];
+      const bad = elements.filter((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.left < -1 || rect.right > window.innerWidth + 1 ||
+          element.scrollWidth > element.clientWidth + 2;
+      }).map((element) => ({
+        tag: element.tagName,
+        className: element.className,
+        width: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+      }));
+      const style = getComputedStyle(panel);
+      const last = warnings.at(-1);
+      return {
+        maxHeight: style.maxHeight,
+        overflowY: style.overflowY,
+        lastVisible: last ? last.getBoundingClientRect().bottom <= panel.getBoundingClientRect().bottom + 2 : false,
+        bad,
+      };
+    });
+    assert.deepEqual(measured.bad, [], 'Card de avisos ultrapassa a largura em ' + width + 'px');
+    assert.equal(measured.maxHeight, 'none', 'Card de avisos não pode ter altura máxima fixa');
+    assert.equal(measured.lastVisible, true, 'Último aviso precisa estar dentro do card, sem corte');
+  }
+  await page.setViewportSize({ width: 1365, height: 900 });
   await page.getByLabel('Editora', { exact: true }).fill('Editora de teste');
   await page.getByLabel('Ano ou data de publicação', { exact: true }).fill('2026');
   await page.getByLabel('ISBN', { exact: true }).fill('9788501000002');
