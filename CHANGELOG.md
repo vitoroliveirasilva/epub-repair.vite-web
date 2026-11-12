@@ -2,6 +2,8 @@
 
 ## v4.0.0 — desenvolvimento na dev (não lançada, 12/11/2026)
 
+- Prévia preserva ênfases e elementos tipográficos básicos sem injetar HTML do EPUB; oferece anterior/próximo.
+- Edição de metadados mantém rascunhos entre as ferramentas, valida campos alterados e permite descartar edições sem substituir o arquivo original.
 - Novo painel recolhido de ferramentas opcionais para EPUB: prévia textual, comparação lado a lado, metadados, checklist Send to Kindle e lote sequencial com limite de memória.
 - Revisão PDF assistida por heurísticas de OCR, coluna, texto visual e formatação, com intervenção explícita do usuário.
 - Produção e release oficial mantidas em `v3.0.0` até autorização de merge. Escopo e limitações registradas em [V4_0_0_DEV.md](docs/V4_0_0_DEV.md).

@@ -9,6 +9,8 @@ import {
 } from '../epub/tools/bookTools';
 import { compareBookPreviews, comparisonSummary, type BookDifference } from '../epub/tools/bookComparison';
 import { compareWords, type WordDiffSegment } from '../epub/tools/bookWordDiff';
+import type { InlineRun } from '../epub/tools/readerInline';
+import { metadataChanges, metadataChangeCount } from '../epub/tools/metadataDraft';
 
 type ExtraTab = 'preview' | 'compare' | 'metadata' | 'kindle' | 'batch';
 type Queue = (
@@ -25,6 +27,7 @@ interface Session {
   editedPreview?: BookPreview | undefined;
   comparison?: BookDifference[] | undefined;
   meta?: BookMetadata | undefined;
+  metadataDraft?: BookMetadata | undefined;
   export?: { blob: Blob; name: string; bytes: Uint8Array; report: ValidationReport } | undefined;
   batchFiles: File[];
   batchZip?: Blob | undefined;
@@ -55,6 +58,7 @@ function sessionFor(state: AppState): Session {
     current.editedPreview = undefined;
     current.comparison = undefined;
     current.meta = undefined;
+    current.metadataDraft = undefined;
     current.export = undefined;
     current.chapter = 0;
     current.compareChapter = 0;
@@ -85,6 +89,18 @@ function sectionChooser(
   return select;
 }
 
+function renderInlineRun(run: InlineRun): Node {
+  let node: Node = document.createTextNode(run.text);
+  for (const mark of [...run.marks].reverse()) {
+    const tag: 'strong' | 'em' | 'code' | 'sup' | 'sub' =
+      mark === 'emphasis' ? 'em' : mark;
+    const wrapper = el(tag);
+    wrapper.append(node);
+    node = wrapper;
+  }
+  return node;
+}
+
 function readerCard(section: BookSection, fontSize: number, label: string): HTMLElement {
   const content = el('div', { className: 'optional-reader-body' });
   content.style.fontSize = fontSize + 'px';
@@ -103,10 +119,18 @@ function readerCard(section: BookSection, fontSize: number, label: string): HTML
         }
         continue;
       }
-      const className = 'optional-reader-' + block.kind;
-      if (block.kind === 'heading') content.append(el('h5', { className, text: block.text }));
-      else if (block.kind === 'quotation') content.append(el('blockquote', { className, text: block.text }));
-      else content.append(el('p', { className, text: block.kind === 'list-item' ? '• ' + block.text : block.text }));
+      const className = 'optional-reader-' + block.kind +
+        (block.kind === 'heading' ? ' optional-reader-heading-level-' + (block.level ?? 2) : '');
+      const element = block.kind === 'heading' ? el('h5', { className })
+        : block.kind === 'quotation' ? el('blockquote', { className })
+          : el('p', { className });
+      if (block.kind === 'list-item') element.append('• ');
+      if (block.runs?.length) {
+        for (const run of block.runs) element.append(renderInlineRun(run));
+      } else {
+        element.append(block.text);
+      }
+      content.append(element);
     }
   } else {
     for (const part of section.text.split(/\\n\\n+/u).slice(0, 500)) {
@@ -138,7 +162,8 @@ function renderPreview(state: AppState, s: Session, rerender: () => void, enqueu
   });
   scale.addEventListener('input', () => {
     s.fontSize = Number(scale.value);
-    const node = document.querySelector<HTMLElement>('.optional-reader-body');
+    const node = scale.closest('.optional-tool-content')
+      ?.querySelector<HTMLElement>('.optional-reader-body');
     if (node) node.style.fontSize = s.fontSize + 'px';
   });
   const chapter = view?.sections[s.chapter] ?? view?.sections[0];
@@ -147,7 +172,11 @@ function renderPreview(state: AppState, s: Session, rerender: () => void, enqueu
     control,
     view ? paragraph(`${view.sections.length} seção(ões) carregada(s)${view.omitted ? `, ${view.omitted} omitida(s)` : ''}.${view.fixedLayout ? ' Este livro usa layout fixo.' : ''}`) : undefined,
     view?.sections.length ? el('div', { className: 'optional-reader-controls', children: [
+      toolButton('Anterior', s.chapter > 0, () => { s.chapter -= 1; rerender(); }),
       sectionChooser(view.sections, s.chapter, (n) => { s.chapter = n; rerender(); }),
+      toolButton('Próximo', s.chapter < view.sections.length - 1, () => {
+        s.chapter += 1; rerender();
+      }),
       el('label', { children: [el('span', { text: 'Fonte' }), scale] }),
     ] }) : undefined,
     chapter ? readerCard(chapter, s.fontSize, 'Prévia do capítulo') : undefined,
@@ -256,62 +285,102 @@ const FIELDS: Array<[keyof BookMetadata, string]> = [
   ['seriesIndex', 'Volume da série'],
 ];
 
-function renderMetadata(state: AppState, s: Session, enqueue: Queue): HTMLElement {
+function renderMetadata(state: AppState, s: Session, rerender: () => void, enqueue: Queue): HTMLElement {
+  const original = s.meta;
+  const draft = s.metadataDraft;
+  const changedCount = original && draft ? metadataChangeCount(original, draft) : 0;
   const load = toolButton('Carregar metadados', Boolean(state.payload) && !state.busy, () => {
     const payload = state.payload;
     if (!payload) return;
+    if (s.meta && s.metadataDraft && metadataChangeCount(s.meta, s.metadataDraft) > 0 &&
+      !window.confirm('Você tem alterações não salvas. Descartá-las e reler os metadados?')) return;
     enqueue('Ler metadados EPUB', async ({ signal }) => {
-      s.meta = await readBookMetadata(payload.file.name, payload.bytes, signal);
-      s.message = 'Metadados carregados. Campos vazios não serão removidos ou alterados.';
+      const loaded = await readBookMetadata(payload.file.name, payload.bytes, signal);
+      if (signal.aborted) throw new DOMException('Leitura cancelada.', 'AbortError');
+      s.meta = loaded;
+      s.metadataDraft = { ...loaded };
+      s.export = undefined;
+      s.message = 'Metadados carregados. Campos vazios preservam os dados originais.';
     });
   });
-  const fields = new Map<keyof BookMetadata, HTMLInputElement | HTMLTextAreaElement>();
-  const inputs = s.meta ? FIELDS.map(([key, title]) => {
+  const changedLabel = el('p', {
+    className: 'muted optional-meta-changes',
+    text: changedCount ? changedCount + ' campo(s) alterado(s) para a nova cópia.' :
+      'Nenhuma alteração pendente.',
+    attrs: { role: 'status' },
+  });
+  const inputs = original && draft ? FIELDS.map(([key, title]) => {
     const input = key === 'description' || key === 'additionalCreators'
       ? el('textarea', { attrs: {
-          rows: key === 'description' ? '3' : '4',
-          maxlength: key === 'description' ? '6000' : '3000',
-          'aria-description': key === 'additionalCreators'
-            ? 'Um nome por linha. Os vínculos editoriais existentes são preservados.'
-            : 'Texto de descrição editorial',
-        }, text: s.meta?.[key] ?? '' })
-      : el('input', { attrs: { type: 'text', value: s.meta?.[key] ?? '',
+        rows: key === 'description' ? '3' : '4',
+        maxlength: key === 'description' ? '6000' : '3000',
+        'aria-description': key === 'additionalCreators'
+          ? 'Um nome por linha. Os vínculos editoriais existentes são preservados.'
+          : 'Texto de descrição editorial',
+      }, text: draft[key] })
+      : el('input', { attrs: { type: 'text', value: draft[key],
         maxlength: '300', autocomplete: 'off' } });
-    fields.set(key, input);
+    input.addEventListener('input', () => {
+      const activeDraft = s.metadataDraft;
+      const activeOriginal = s.meta;
+      if (!activeDraft || !activeOriginal) return;
+      activeDraft[key] = input.value;
+      s.export = undefined;
+      const count = metadataChangeCount(activeOriginal, activeDraft);
+      changedLabel.textContent = count
+        ? count + ' campo(s) alterado(s) para a nova cópia.'
+        : 'Nenhuma alteração pendente.';
+      save.disabled = !count || state.busy;
+      const wrapper = input.closest('.optional-tool-content');
+      wrapper?.querySelector('.optional-meta-export')?.remove();
+      wrapper?.querySelector('.optional-meta-validation')?.remove();
+    });
     return el('label', { className: 'converter-field', children: [el('span', { text: title }), input] });
   }) : [];
-  const save = toolButton('Gerar EPUB com metadados', Boolean(s.meta) && !state.busy, () => {
+  const save = toolButton('Gerar EPUB com metadados', changedCount > 0 && !state.busy, () => {
     const payload = state.payload;
-    if (!payload) return;
-    const changes: Partial<BookMetadata> = {};
-    for (const [key, input] of fields) changes[key] = input.value;
-    const oldCredits = s.meta?.additionalCreators.split(/\\r?\\n/u).filter(Boolean).length ?? 0;
-    const newCredits = changes.additionalCreators?.trim()
-      ? changes.additionalCreators.split(/\\r?\\n/u).filter((name) => name.trim()).length
-      : oldCredits;
-    const removal = newCredits < oldCredits;
-    const question = removal
-      ? 'Você está removendo crédito(s) adicionais. Atributos editoriais vinculados impedirão remoções perigosas. Gerar nova cópia?'
-      : 'Criar uma nova cópia com os metadados informados? O EPUB atual não será substituído.';
+    if (!payload || !s.meta || !s.metadataDraft) return;
+    const changes = metadataChanges(s.meta, s.metadataDraft);
+    if (!Object.keys(changes).length) return;
+    const previousCredits = s.meta.additionalCreators.split(/\\r?\\n/u).filter(Boolean).length;
+    const nextCredits = changes.additionalCreators
+      ? changes.additionalCreators.split(/\\r?\\n/u).filter(Boolean).length
+      : previousCredits;
+    const removing = nextCredits < previousCredits;
+    const question = removing
+      ? 'Você está removendo crédito(s) adicionais. Vínculos editoriais impedirão exclusões perigosas. Gerar uma cópia?'
+      : 'Gerar uma cópia separada com os metadados alterados, preservando o arquivo original?';
     if (!window.confirm(question)) return;
     enqueue('Atualizar metadados EPUB', async ({ signal }) => {
       const result = await writeBookMetadata(payload.file.name, payload.bytes, changes, signal);
+      if (signal.aborted) throw new DOMException('Edição cancelada.', 'AbortError');
       s.export = { blob: result.blob, name: result.fileName,
         bytes: result.bytes, report: result.report };
       s.sourcePreview = undefined;
       s.editedPreview = undefined;
       s.comparison = undefined;
-      s.message = 'Nova cópia com metadados pronta para baixar. O arquivo de origem foi preservado.';
+      s.message = 'Nova cópia validada. O EPUB original foi preservado.';
     });
   });
+  const reset = toolButton('Descartar alterações', changedCount > 0 && !state.busy, () => {
+    if (!s.meta || !window.confirm('Descartar as alterações não salvas nos metadados?')) return;
+    s.metadataDraft = { ...s.meta };
+    s.export = undefined;
+    s.message = 'Alterações descartadas. Os valores originais foram restaurados.';
+    rerender();
+  });
   return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Edite somente quando precisar. Campos vazios preservam os dados existentes. Outros autores podem ser separados por linha; atributos e funções existentes são preservados. EPUBs assinados não podem ser editados.'),
+    paragraph('Edite apenas o necessário. Campos vazios não apagam valores existentes; os outros autores são separados por linha. Vínculos editoriais são preservados e EPUBs assinados não podem ser editados.'),
     load,
-    s.meta ? el('div', { className: 'optional-metadata-grid', children: inputs }) : undefined,
-    s.meta ? save : undefined,
-    s.export ? button('Baixar EPUB com metadados', 'btn btn-primary btn-small', () =>
-      downloadBlob(s.export!.blob, s.export!.name)) : undefined,
-    s.export ? paragraph(`Cópia validada: ${s.export.report.stats.errorCount} erro(s) e ${s.export.report.stats.warningCount} aviso(s).`) : undefined,
+    original && draft ? el('div', { className: 'optional-metadata-grid', children: inputs }) : undefined,
+    original && draft ? changedLabel : undefined,
+    original && draft ? el('div', { className: 'optional-metadata-actions', children: [
+      save, reset,
+    ] }) : undefined,
+    s.export ? button('Baixar EPUB com metadados', 'btn btn-primary btn-small optional-meta-export',
+      () => downloadBlob(s.export!.blob, s.export!.name)) : undefined,
+    s.export ? el('p', { className: 'muted optional-meta-validation',
+      text: `Cópia validada: ${s.export.report.stats.errorCount} erro(s) e ${s.export.report.stats.warningCount} aviso(s).` }) : undefined,
   ] });
 }
 
@@ -391,7 +460,7 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
         }) }),
       s.tab === 'preview' ? renderPreview(state, s, rerender, enqueue) : undefined,
       s.tab === 'compare' ? renderCompare(state, s, rerender, enqueue) : undefined,
-      s.tab === 'metadata' ? renderMetadata(state, s, enqueue) : undefined,
+      s.tab === 'metadata' ? renderMetadata(state, s, rerender, enqueue) : undefined,
       s.tab === 'kindle' ? renderKindle(state) : undefined,
       s.tab === 'batch' ? renderBatch(state, s, rerender, enqueue) : undefined,
       s.message ? el('p', { className: 'muted', attrs: { role: 'status' }, text: s.message }) : undefined,

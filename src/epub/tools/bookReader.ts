@@ -4,12 +4,15 @@ import { parsePackageDocument } from '../validation/opfParser';
 import { resolveReference } from '../utils/pathUtils';
 import { findFirstByLocalName, parseXml } from '../utils/xmlUtils';
 import type { LoadedEpub } from '../model/epubTypes';
+import { inlineRunsOf, type InlineRun } from './readerInline';
 
 export interface BookBlock {
   kind: 'heading' | 'paragraph' | 'quotation' | 'list-item' | 'verse' | 'caption' | 'image';
   text: string;
   imageDataUrl?: string | undefined;
   imagePath?: string | undefined;
+  runs?: InlineRun[] | undefined;
+  level?: number | undefined;
 }
 
 const IMAGE_TYPES = new Map([
@@ -136,12 +139,14 @@ function blocksFromXhtml(
     if (!['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li',
       'blockquote', 'pre', 'figcaption'].includes(tag)) continue;
     if (isNestedTextBlock(node, body)) continue;
-    const text = textClean(node.textContent ?? '');
+    const runs = inlineRunsOf(node);
+    const text = textClean(runs.map((run) => run.text).join(''));
     if (!text) continue;
     const kind: BookBlock['kind'] = tag.startsWith('h') ? 'heading'
       : tag === 'li' ? 'list-item' : tag === 'blockquote' ? 'quotation'
         : tag === 'pre' ? 'verse' : tag === 'figcaption' ? 'caption' : 'paragraph';
-    blocks.push({ kind, text: text.slice(0, 20000) });
+    blocks.push({ kind, text: text.slice(0, 20000), runs,
+      ...(kind === 'heading' ? { level: Number(tag.slice(1)) } : {}) });
   }
   const text = blocks.filter((item) => item.kind !== 'image').map((block) => block.text)
     .join('\n\n') || textClean(body.textContent ?? '');
