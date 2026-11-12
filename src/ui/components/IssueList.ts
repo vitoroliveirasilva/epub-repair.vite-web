@@ -39,6 +39,14 @@ export function renderIssueList(
     }),
   );
 
+  const manualCount = report.issues.filter((issue) =>
+    !isOptionalOptimizationIssue(issue) &&
+    !isRequiredRepairableIssue(issue) &&
+    issue.severity !== 'success').length;
+  if (manualCount > 0) {
+    wrapper.append(renderManualReviewNotice(manualCount));
+  }
+
   if (report.issues.length === 0) {
     wrapper.append(
       el('p', {
@@ -76,6 +84,20 @@ export function renderIssueList(
   }
 
   return wrapper;
+}
+
+function renderManualReviewNotice(count: number): HTMLElement {
+  return el('aside', {
+    className: 'manual-review-notice',
+    attrs: { 'aria-label': 'Itens para conferência manual' },
+    children: [
+      el('span', { className: 'manual-review-notice-icon', text: '!', attrs: { 'aria-hidden': 'true' } }),
+      el('div', { className: 'manual-review-notice-copy', children: [
+        el('strong', { text: `Conferência manual · ${count} ${count === 1 ? 'item' : 'itens'}` }),
+        el('p', { text: 'Estes pontos não têm uma correção automática segura. Confira os detalhes e os arquivos no relatório técnico antes de usar o EPUB.' }),
+      ] }),
+    ],
+  });
 }
 
 function renderModeToggle(
@@ -177,10 +199,10 @@ function simpleIssueFooter(issue: Issue): string {
 
 function renderIssue(issue: Issue): HTMLElement {
   const repairBadgeText = isOptionalOptimizationIssue(issue)
-    ? 'opcional'
+    ? 'Opcional'
     : isRequiredRepairableIssue(issue)
-      ? 'corrigível'
-      : 'manual';
+      ? 'Corrigível'
+      : 'Conferência manual';
 
   return el('article', {
     className: `issue issue-${issue.severity}`,
@@ -191,7 +213,7 @@ function renderIssue(issue: Issue): HTMLElement {
           el('strong', { text: issue.title }),
           el('span', {
             className:
-              repairBadgeText === 'manual' ? 'badge badge-manual' : 'badge badge-repairable',
+              repairBadgeText === 'Conferência manual' ? 'badge badge-manual' : 'badge badge-repairable',
             text: repairBadgeText,
           }),
         ],
@@ -207,7 +229,7 @@ function renderIssue(issue: Issue): HTMLElement {
           issue.file ? el('code', { text: issue.file }) : undefined,
         ],
       }),
-      el('p', { text: issue.detail }),
+      el('p', { className: 'issue-description', text: issue.detail }),
       issue.context
         ? el('small', { className: 'muted issue-context', text: issue.context })
         : undefined,

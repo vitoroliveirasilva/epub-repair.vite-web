@@ -8,6 +8,7 @@ export function renderStatusMessage(message?: string, error?: string): HTMLEleme
     children: [
       el('span', { className: 'status-icon', attrs: { 'aria-hidden': 'true' } }),
       el('div', {
+        className: 'status-panel-copy',
         children: [
           el('strong', { text: error ? 'Não foi possível concluir' : 'Concluído com sucesso' }),
           el('p', { text: error ?? message ?? '' }),
