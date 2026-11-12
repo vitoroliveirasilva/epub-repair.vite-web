@@ -1,5 +1,8 @@
 # Testes com leitor Calibre (E-090)
 
+> **Escopo em 12/11/2026:** as evidências abaixo são testes históricos de EPUB gerado/reparado em Calibre e Kindle Previewer. Elas não certificam a fidelidade de **todos** os PDFs convertidos pela rota nova `/converter`, nem um Kindle físico. Para conversão PDF, acrescentar inspeção textual e visual do EPUB final no leitor-alvo. Consulte [Conversor](CONVERSOR_PDF_EPUB.md) e [Qualidade](QUALIDADE_TESTES.md).
+
+
 O workflow `.github/workflows/calibre-reader.yml` usa o aplicativo
 **Calibre CLI real instalado no runner Ubuntu**, não um simulador de
 EPUBCheck. A etapa produz EPUBs sintéticos *efetivamente reparados* pelo

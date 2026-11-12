@@ -1,5 +1,8 @@
 # Safari/iOS nativo no Xcode Simulator: resultado é simulação, não iPhone físico
 
+> **Atualização 12/11/2026:** este documento é sobre a automação Safari no **iOS Simulator**, não sobre iPhone físico. O menu móvel e o conversor PDF existem em produção, mas a suíte aqui descrita não comprova download/abertura do EPUB convertido nesses dispositivos. E-082 exige evidência de hardware real. Ver [Homologação física](HOMOLOGACAO_MOBILE_REAL.md).
+
+
 `.github/workflows/ios-simulator.yml` instala Appium 3.8.0 e
 XCUITest 12.22.0 no runner macOS, inicializa um iPhone Simulator
 via Xcode, abre o **Safari nativo do SO iOS** e navega para o bundle

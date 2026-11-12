@@ -1,5 +1,8 @@
 # Teste limitado de desempenho e memória
 
+> **Interpretação em 12/11/2026:** os valores e runs abaixo são evidências de laboratório para **EPUB**, principalmente Chromium/Linux, no momento da medição. O conversor PDF introduz leitura de páginas, renderização e OCR por Tesseract.js, que podem ter perfis de CPU/memória distintos. **Não extrapolar budgets de ZIP de 250 MiB para conversão PDF nem para celulares reais**; ver [Conversor](CONVERSOR_PDF_EPUB.md), [Qualidade](QUALIDADE_TESTES.md) e [Homologação física](HOMOLOGACAO_MOBILE_REAL.md).
+
+
 A regressão `tests/performanceBudget99.test.ts` constrói um EPUB 3 sintético
 com um recurso binário determinístico de 2 MiB e executa leitura e reparo
 completos no Node.js 20 e 22 (CI).

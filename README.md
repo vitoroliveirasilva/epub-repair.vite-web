@@ -1,270 +1,133 @@
-# epub-repair.vite-web
+# EPUB Repair
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/0a6d6315-875c-4375-a73f-87859903eb27/deploy-status)](https://app.netlify.com/projects/epubrepair/deploys)
 [![CI](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/workflows/ci.yml/badge.svg?branch=prod)](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-2.5.0-blue)
-![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?logo=vite&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-6.x-3178C6?logo=typescript&logoColor=white)
-![Vitest](https://img.shields.io/badge/tests-Vitest-6E9F18?logo=vitest&logoColor=white)
-![ESLint](https://img.shields.io/badge/lint-ESLint-4B32C3?logo=eslint&logoColor=white)
-![Client-side](https://img.shields.io/badge/processing-client--side-brightgreen)
-![No backend](https://img.shields.io/badge/backend-none-lightgrey)
-![Privacy](https://img.shields.io/badge/privacy-local--first-success)
-![Static Site](https://img.shields.io/badge/deploy-static--site-orange)
+[![Version](https://img.shields.io/badge/release-v2.5.0-blue)](https://github.com/vitoroliveirasilva/epub-repair.vite-web/releases/tag/v2.5.0)
+![Vite](https://img.shields.io/badge/Vite-8.x-646CFF)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.x-3178C6)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-Ferramenta **front-end estática** para validar, reparar, trocar capa e reempacotar arquivos `.epub` diretamente no navegador, com o objetivo de aumentar a compatibilidade com fluxos de envio/upload para Kindle e outros e-readers.
+Aplicação estática, em português, para **reparar arquivos EPUB** e **converter PDF em EPUB** no navegador. Os documentos selecionados são processados localmente, sem backend de upload, banco de dados ou serviço remoto de conversão.
 
-O projeto não possui backend, banco de dados nem integração com APIs externas.  Sendo assim, o EPUB é carregado, analisado, alterado e baixado localmente no navegador do usuário.
+**Site:** https://epubrepair.netlify.app/ · **Reparar EPUB:** `/` · **Converter PDF:** `/converter`
 
-Consulte as [limitações de processamento e cancelamento](docs/WORKER_PROCESSING.md) e a [política de branches](docs/BRANCH_POLICY.md).
+> **Estado de referência: 12/11/2026.** A última release versionada confirmada é a `v2.5.0`. A branch `prod` já recebeu melhorias posteriores, inclusive o conversor PDF e a navegação móvel. Portanto, **versão publicada** e **conjunto de mudanças no HEAD** não são equivalentes. Consulte [o estado atual](docs/ESTADO_ATUAL.md), [o histórico](CHANGELOG.md) e o [pipeline de publicação](docs/DEPLOY_OPERACAO.md).
+
+## Funcionalidades
+
+| Ferramenta | O que faz | Limites |
+| --- | --- | --- |
+| **Reparar EPUB** (`/`) | Valida ZIP/OCF, OPF, manifest, spine, NAV/NCX, XHTML, CSS, referências e imagens. Oferece correções conservadoras, troca de capa e relatórios. | Um EPUB válido sintaticamente não é garantia de apresentação idêntica em todos os leitores. Ações ambíguas exigem revisão manual. |
+| **Converter PDF** (`/converter`) | Lê texto e imagens, identifica páginas digitais/escaneadas, aplica OCR local quando configurado, reconstrói seções, permite revisar o conteúdo e gera EPUB ajustável ou de layout visual. | Não há conversão perfeita para toda diagramação. Tabelas, fórmulas, OCR, leitura em colunas e imagens pequenas podem exigir revisão editorial. |
+
+### Reparar EPUB
+
+1. Escolha um arquivo `.epub` e execute **Verificar**.
+2. Consulte o relatório simples ou o técnico, com códigos e localização das ocorrências.
+3. Revise a distinção entre correções automáticas, otimizações opcionais e pontos de conferência manual.
+4. Execute o reparo técnico ou troque a capa, se necessário; avalie o resultado revalidado.
+5. Baixe a nova cópia e, quando pertinente, exporte o relatório TXT/JSON.
+
+O reparador diferencia operações **obrigatórias** de **opcionais**, não inventa idioma nem ordem editorial sem evidência e evita gerar um novo EPUB quando nada precisa ser corrigido. A troca de capa é separada do reparo. O resultado pode conter avisos ou itens que exigem análise humana.
+
+### Converter PDF em EPUB
+
+1. Abra `/converter` e selecione um PDF de até **250 MB**, sem senha.
+2. Aguarde a classificação das páginas, a captura de ilustrações e, quando necessário, a leitura local de páginas digitalizadas.
+3. Confira título, autor, editora, ano/data, ISBN, tradutor, idioma, perfil e formato.
+4. Se desejar, expanda **Comparar e editar o conteúdo** para comparar páginas, revisar texto e ajustar a divisão de seções. O painel permanece aberto entre mudanças de página/capítulo.
+5. Escolha **Gerar meu EPUB**. A saída é validada e passa por acabamento estrutural antes do download.
+
+Perfis disponíveis: **Livro ou romance**, **Acadêmico ou documental** e **Visual ou diagramado**. Formatos: **automático**, **texto ajustável (reflowable)** e **layout visual fixo (fixed-layout)**. Entre os ajustes opcionais estão OCR, remoção de cabeçalhos/rodapés repetidos, números de página, hifenização artificial e normalização tipográfica.
+
+O OCR utiliza arquivos de idioma português/inglês empacotados no próprio site, sem serviço externo de OCR. Interrupções e limites de tempo podem levar a avisos e à preservação visual de páginas, em vez de texto recuperado. **A confiança exibida é uma heurística**, não uma medida certificada de equivalência com o PDF.
+
+Documentação detalhada: [Conversor PDF → EPUB](docs/CONVERSOR_PDF_EPUB.md).
 
 ## Privacidade e segurança
 
-* O arquivo EPUB **não é enviado para servidor**
-* Todo processamento acontece no navegador
-* O app pode ser hospedado como front-end estático
-* Toda correção ou troca de capa gera uma nova cópia para download
-* O modo Kindle Safe neutraliza scripts, handlers inline, `javascript:`, `iframe`, `embed`, `object` e caminhos internos suspeitos, preservando URLs HTTPS e fontes externas legítimas por padrão
-* A leitura dos ZIPs aplica limites a quantidades de entradas, tamanhos descompactados e taxa de compressão; EPUBs que ultrapassem os limites são rejeitados para evitar esgotamento de memória
-* A limpeza de conteúdo ativo utiliza também o parser estrutural do navegador e interrompe reparos que exijam analisar XHTML malformado
-* Capas novas precisam ter assinatura JPEG/PNG válida e dimensões compatíveis
-* Mesmo após essas proteções, a ferramenta não é antivírus nem prova que todo EPUB recebido é seguro; não execute conteúdo extraído de fontes não confiáveis
-* Caminhos internos do ZIP são normalizados e entradas com path traversal, caminhos absolutos ou colisões são sinalizadas
-* A troca de capa é uma operação explícita e separada do reparo técnico, evitando alterações desnecessárias no EPUB
-* Quando não há reparo obrigatório nem alteração solicitada pelo usuário, o app não gera um EPUB "corrigido" artificialmente nem lista ações que não aconteceram
+- Os arquivos escolhidos permanecem no navegador. Não há endpoint de upload nem backend de processamento no projeto.
+- A distribuição do site, as dependências e a hospedagem continuam sujeitos às políticas normais da web; **processamento local não significa navegação totalmente offline**.
+- Entradas ZIP/EPUB são inspecionadas com limites e verificações de estrutura. Recursos potencialmente ativos podem ser sinalizados ou neutralizados conforme a operação e o consentimento.
+- Scripts do site, Workers e recursos OCR são entregues pela mesma origem. A política HTTP de produção está em `netlify.toml`.
+- O sistema **não é antivírus**, não remove DRM, não desbloqueia PDFs protegidos e não substitui revisão de direitos autorais ou segurança de arquivos desconhecidos.
 
-## Principais funcionalidades
+Consulte [Segurança e limites](docs/SEGURANCA_E_LIMITES.md) e [CSP/Netlify](docs/CSP_NETLIFY.md).
 
-* Validação local de EPUB
-* Extração ZIP via Web Worker de mesma origem quando disponível, com progresso por arquivo e cancelamento
-* Progresso real de recompactação, sem inventar porcentagens para a validação XML
-* Reparo técnico seguro para problemas estruturais e de compatibilidade
-* Separação entre **reparos obrigatórios** e **otimizações opcionais**
-* Troca ou adição de capa com imagem enviada pelo usuário
-* Revalidação automática depois de reparos ou troca de capa
-* Relatório simples e relatório técnico
-* Exportação de relatório em TXT e JSON
-* Prévia local da capa detectada quando a imagem é pequena e segura para exibição
-* Modo conservador para reduzir alterações em conteúdo interno
+## Executar localmente
 
-## O que a validação verifica
-
-* Estrutura ZIP/OCF
-* `mimetype` na raiz com conteúdo exato, primeira entrada e sem compressão quando possível
-* `META-INF/container.xml`
-* Localização do OPF
-* Metadados básicos: título, idioma e identificador
-* Datas OPF em formato frágil
-* Versão antiga do pacote OPF
-* Manifest, media types, duplicidades e recursos ausentes
-* Spine e `itemref` inválido
-* Imagem de capa declarada, ausente ou apenas detectada como candidata
-* `nav.xhtml` em EPUB 3
-* `toc.ncx` em EPUB 2 ou quando declarado
-* `playOrder` duplicado ou fora de ordem; destinos de navegação inexistentes continuam sendo identificados sem exigir que cada item do spine apareça no índice
-* Referências em HTML/XHTML: imagens, links, `srcset`, `poster`, `data`, `xlink:href` e `kindle:embed:*`
-* XHTML com `&nbsp;`, `lang/xml:lang` vazio ou ausente e meta `Content-Type` suspeita
-* Referências em CSS: `url(...)` e `@import`
-* JPEG progressivo
-* Recursos órfãos relevantes
-* Arquivos de sistema desnecessários
-* Sinais de criptografia, DRM ou metadados avançados
-
-Os problemas são classificados como `fatal`, `error`, `warning` ou `info`, com código, arquivo afetado, explicação e indicação de reparo automático quando aplicável.
-
-## Reparos obrigatórios e otimizações opcionais
-
-A interface separa correções em dois grupos para evitar confusão:
-
-* **Reparos obrigatórios** são problemas reais que podem afetar a estrutura, segurança, leitura, empacotamento ou compatibilidade básica do EPUB
-* **Otimizações opcionais** são melhorias de compatibilidade que não impedem o uso do arquivo como JPEG progressivo em imagens
-
-Quando o EPUB não possui reparos obrigatórios, o app informa que ele está pronto para uso. Caso existam apenas otimizações opcionais, elas são exibidas separadamente sem tratar o arquivo como quebrado.
-
-## O que o reparo técnico corrige
-
-* Reempacota o EPUB com `mimetype` primeiro, sem compressão e com conteúdo exato
-* Reconstrói `META-INF/container.xml` quando necessário
-* Preserva o OPF e corrige apenas o necessário
-* Completa metadados básicos faltantes sem apagar os existentes
-* Aponta idioma ausente ou inválido para revisão manual, sem inventar pt-BR, e normaliza datas OPF frágeis
-* Atualiza `package version="1.0"` para uma base EPUB 2 mais segura quando aplicável
-* Declara a imagem de capa quando há uma candidata segura no manifest
-* Corrige ids duplicados/ausentes no manifest
-* Corrige media types quando a extensão indica o tipo correto
-* Remove do manifest itens claramente inexistentes, inválidos ou duplicados
-* Adiciona ao manifest recursos relevantes existentes que estavam órfãos
-* Remove `itemref` inválido do spine, mas não inventa ordem editorial quando não há referência confiável
-* Preserva `nav.xhtml` e `toc.ncx` válidos
-* Cria `nav.xhtml` apenas quando EPUB 3 precisa e ele está ausente
-* Cria `toc.ncx` para EPUB 2 ou quando ele está declarado e ausente
-* Normaliza `playOrder` quando necessário, sem acrescentar automaticamente itens do spine ao NCX
-* Preserva links e fontes externas legítimas por padrão; a remoção de referências externas continua disponível como opção explícita
-* Transforma `kindle:embed:*` em marcador textual seguro
-* Substitui imagens ausentes por marcador visível, como `[Imagem indisponível: nome-imagem]`
-* Remove scripts, handlers inline, `javascript:`, iframes, embeds e objects no modo seguro
-* Neutraliza referências CSS perigosas ou quebradas sem eliminar fontes HTTPS, `@import` remoto permitido ou fontes embutidas em `data:font`
-* Normaliza `&nbsp;`, `lang/xml:lang` e meta `Content-Type` em XHTML no modo completo
-* Tenta converter JPEG progressivo para baseline quando o navegador permite
-* Revalida o EPUB depois do reparo e mostra o resultado final
-
-O arquivo gerado preserva o nome original e adiciona apenas o sufixo mínimo `-k`. Ou seja, `Livro.epub` se torna `Livro-k.epub`.
-
-## Troca ou adição de capa
-
-A troca de capa é uma operação separada do reparo técnico. Dessa forma, ela permite a substituição ou adição da capa oficial do EPUB sem rodar correções desnecessárias.
-
-A funcionalidade:
-
-* aceita imagens JPG, JPEG ou PNG;
-* mostra prévia da imagem selecionada;
-* localiza o OPF a partir de `META-INF/container.xml`;
-* detecta a capa atual por `meta name="cover"`, `properties="cover-image"`, referência de `guide` ou candidatos seguros;
-* substitui a capa existente quando possível, preservando o caminho interno;
-* adiciona uma nova capa quando o EPUB não possui capa oficial segura;
-* atualiza o manifest e o media type da imagem;
-* registra a capa em EPUB 3 com `properties="cover-image"`;
-* mantém compatibilidade EPUB 2 com `meta name="cover"`;
-* revalida o EPUB depois da troca;
-* mostra um resumo específico da operação de capa.
-
-Quando a capa é alterada, o app mostra o EPUB final como pronto para download e informa separadamente se restou alguma otimização opcional de compatibilidade.
-
-## Comportamento quando nada precisa ser corrigido
-
-Se o EPUB já estiver em bom estado e não houver reparo obrigatório:
-
-* o botão de reparo técnico é bloqueado ou exibido como **Sem reparo obrigatório**;
-* o app não gera uma cópia corrigida sem motivo;
-* o relatório não lista ações falsas;
-* a troca de capa continua disponível, porque é uma alteração intencional do usuário;
-* otimizações opcionais continuam visíveis, mas não são tratadas como erro.
-
-Esse comportamento evita que o usuário baixe um arquivo aparentemente "corrigido" quando nenhuma correção técnica real de fato foi aplicada.
-
-## Experiência de uso
-
-* Fluxo guiado: verificar, corrigir ou trocar capa e baixar
-* Mensagens específicas para EPUB com reparos obrigatórios, EPUB pronto para uso e EPUB com otimizações opcionais
-* Prévia visual da capa atual e da nova capa selecionada
-* Relatório simples para leitura rápida
-* Relatório técnico recolhido para investigação de códigos e arquivos afetados
-* Exportação de relatório em TXT e JSON
-* Scores separados para estrutura EPUB, compatibilidade Kindle e segurança
-* Resumo de alterações reais após reparo técnico
-* Resumo específico após troca de capa
-* Modo conservador para reduzir alterações em conteúdo interno
-
-## Limitações
-
-* Não remove DRM
-* Não descriptografa conteúdo
-* Não recria imagens, fontes ou capítulos que não existem no arquivo original
-* Não garante aceitação universal em todos os fluxos do Kindle
-* Não substitui o EPUBCheck oficial, pois a proposta é a correção de problemas comuns e o aumento de compatibilidade prática
-* EPUBs extremamente corrompidos ou sem OPF válido podem exigir correção manual
-* A conversão de JPEG progressivo para baseline depende do suporte do navegador
-* A troca de capa não altera direitos autorais nem valida a procedência da imagem escolhida pelo usuário
-
-## Verificação antivírus local opcional
-
-Se houver ClamAV (`clamscan`) instalado e atualizado na sua máquina,
-é possível executar `npm run scan:av -- "meu-livro.epub"` **fora do navegador**.
-Nenhum arquivo é transmitido para servidor. Consulte
-[segurança e limites](docs/SEGURANCA_E_LIMITES.md#inspeção-antivírus-opcional)
-para interpretar os códigos de retorno e limitações. A ferramenta web
-não possui scanner integrado e esse comando não certifica ausência de malware.
-
-## Como rodar localmente
+Requisitos: **Node.js 20 ou superior**, npm e navegador moderno.
 
 ```bash
 npm ci
 npm run dev
 ```
 
-Acesse a URL exibida pelo Vite, normalmente disponível em `http://localhost:5173`.
-
-## Build de produção
-
-```bash
-npm run build
-```
-
-O build final é gerado em `dist/`.
-
-Para testar o build localmente:
-
-```bash
-npm run preview
-```
-
-## Qualidade
+Acesse `http://localhost:5173/` para EPUB ou `http://localhost:5173/converter` para PDF.
 
 ```bash
 npm run typecheck
 npm run lint
 npm test
 npm run build
+npm run preview
 ```
 
-O repositório possui GitHub Actions para executar automaticamente o mesmo portão de qualidade em pushes e pull requests para `prod`.
+O build Vite gera `dist/` e inclui os recursos necessários ao OCR local. Não edite arquivos de `dist/` manualmente. O comando `npm run scan:av` é um fluxo opcional separado, não uma garantia de detecção de malware.
 
-Também há fixtures EPUB sintéticas em testes para preservar cenários críticos de compatibilidade como OPF legado, capa não declarada, NCX problemático, XHTML frágil, JPEG progressivo, ausência de reparos obrigatórios e troca de capa.
+## Qualidade e publicação
 
-Os testes adversariais cobrem ZIPs adulterados (incluindo CRC32, offsets, arquivos compactados com expansão suspeita e path traversal), XML com entidades personalizadas, XHTML e SVG com conteúdo ativo. O CI executa `npm audit --audit-level=moderate` para impedir regressões conhecidas nas dependências de desenvolvimento e produção. Nenhum conjunto de testes substitui uma revisão de segurança de arquivos não confiáveis.
+- Testes Vitest em Node e jsdom cobrem motor EPUB, conversão PDF e interfaces.
+- PR pronta para `prod` executa verificações em Node 20/22, EPUBCheck 5.4.0 e matrizes adicionais quando os caminhos e eventos dos workflows correspondem.
+- A matriz Playwright usa **Chromium, Firefox e WebKit**; simular uma tela de celular **não equivale** a homologar Safari iOS ou Android físicos.
+- A implementação tem testes de preservação editorial, segurança, regressão, Workers e desempenho dentro de orçamentos definidos.
+- **CI verde não certifica qualquer EPUB ou PDF do usuário.** Os itens históricos E-082 e E-089 continuam sem evidência conclusiva em hardware físico na documentação existente.
 
-## Estrutura de diretórios
+Fluxo de trabalho: desenvolvimento em `dev`, revisão por PR `dev` → `prod`, checks do HEAD candidato, merge controlado e verificação do deploy Netlify. O workflow de release utiliza o número do `package.json` e **não cria uma release nova a cada merge**.
 
-```txt
-.
-├─ .github/
-│  ├─ dependabot.yml
-│  └─ workflows/
-│     └─ ci.yml
-├─ public/
-├─ src/
-│  ├─ app/                 # Estado, ações e fluxo principal da aplicação
-│  ├─ epub/
-│  │  ├─ model/            # Tipos de EPUB, OPF, issues, reparo e troca de capa
-│  │  ├─ reader/           # Leitura ZIP/EPUB e inspeção do diretório central
-│  │  ├─ validation/       # Validadores de OCF, OPF, navegação, HTML, CSS e compatibilidade
-│  │  ├─ repair/           # Reparos técnicos e reempacotamento do EPUB
-│  │  ├─ sanitize/         # Sanitização segura de HTML/XHTML e CSS
-│  │  └─ utils/            # Caminhos, XML, media types, relatório e nomes
-│  ├─ ui/                  # Componentes, mensagens, relatórios e helpers de interface
-│  └─ styles/              # CSS principal, UX do relatório e responsividade
-├─ tests/
-│  ├─ helpers/             # Fixtures sintéticas reutilizáveis
-│  └─ *.test.ts            # Testes unitários das funções críticas
-├─ index.html
-├─ vite.config.ts
-├─ vitest.config.ts
-├─ tsconfig.json
-└─ eslint.config.js
+Leia [Qualidade e testes](docs/QUALIDADE_TESTES.md), [CI econômica](docs/CI_ECONOMICO.md), [Política de branches](docs/BRANCH_POLICY.md) e [Deploy e operação](docs/DEPLOY_OPERACAO.md).
+
+## Organização do código
+
+```text
+src/
+  app/                Fluxo de validação, reparo, capa, fila e Workers
+  converter/          Leitura PDF, OCR, reconstrução, revisão e criação EPUB
+  epub/
+    reader/           Entrada e inspeção ZIP
+    validation/       Regras de validação EPUB
+    repair/           Correções e reempacotamento
+    sanitize/         Sanitização e referências
+    cover/            Operações de capa
+    utils/            Utilitários e relatórios
+  ui/                 Componentes e navegação
+  styles/             Estilos gerais, responsivos e específicos
+tests/                Vitest, browser smoke e corpus sintético/W3C
+scripts/              Checagens auxiliares, licenças e políticas
+.github/workflows/    CI, browsers, cobertura, segurança, release e emuladores
+docs/                 Guias operacionais e evidências históricas
 ```
-### Navegação e fontes externas
 
-Referências passivas `http://` e `https://` (incluindo fontes externas via `@font-face` e `@import`) são preservadas e não reduzem o score de segurança. Fontes `data:font/*;base64` também são mantidas. Isso não garante que um leitor offline consiga carregar recursos externos: preserve as fontes no pacote quando precisar de funcionamento offline.
+A rota `/converter` e a rota `/` são selecionadas em `src/main.ts` e carregadas sob demanda. O site usa um único `index.html` e fallback SPA na Netlify.
 
-O índice (`toc.ncx` no EPUB 2 ou `nav.xhtml` no EPUB 3) descreve a navegação editorial, não uma enumeração obrigatória de todos os arquivos do `spine`. O validador ainda identifica destinos quebrados, NCX inválido e `playOrder` inconsistente, mas não insere automaticamente apêndices e páginas auxiliares no índice.
+## Índice da documentação
 
-## Auditoria de conformidade e segurança
+Consulte o [índice documental completo, com distinção entre guias vigentes e registros históricos](docs/INDICE.md).
 
-A `dev` executa a **CI rápida** (Node 22, TypeScript, lint, testes, build e
-auditoria npm). O **EPUBCheck 5.4.0 oficial**, Node 20/22, Calibre,
-navegadores Chromium/Firefox/WebKit, cobertura e prévia HTTPS são
-verificados na **homologação de uma PR pronta para `prod`** (conforme
-gatilhos e filtros dos workflows). A PR de candidata permanece em
-rascunho até o início explícito da homologação, economizando minutos
-de CI. O EPUBCheck usa uma distribuição W3C fixada por SHA-256.
-Nenhuma destas verificações certifica qualquer EPUB arbitrário nem
-substitui testes em aparelhos físicos.
+**Documentos de consulta atual:**
 
-- [Política econômica de CI e homologação](docs/CI_ECONOMICO.md)
-- [Plano de homologação da candidata v2.4.0](docs/RELEASE_2_4_0_CANDIDATA.md)
+- [Estado atual e escopo](docs/ESTADO_ATUAL.md)
+- [Arquitetura e fluxo de dados](docs/ARQUITETURA.md)
+- [Manual e especificação do conversor PDF](docs/CONVERSOR_PDF_EPUB.md)
+- [Guia de desenvolvimento](docs/GUIA_DESENVOLVIMENTO.md)
+- [Qualidade, testes e limites da evidência](docs/QUALIDADE_TESTES.md)
+- [Deploy, CI e operação](docs/DEPLOY_OPERACAO.md)
+- [Segurança, privacidade e limites](docs/SEGURANCA_E_LIMITES.md)
+- [Matriz de compatibilidade EPUB](docs/MATRIZ_COMPATIBILIDADE.md)
+- [Homologação em dispositivos físicos](docs/HOMOLOGACAO_MOBILE_REAL.md)
 
-- [Modelo de ameaças, privacidade e limites](docs/SEGURANCA_E_LIMITES.md)
-- [Matriz de formatos EPUB e validações](docs/MATRIZ_COMPATIBILIDADE.md)
-- [Decisões técnicas da auditoria](docs/DECISOES_AUDITORIA.md)
-- [Andamento dos 99 itens](docs/AUDITORIA_99_PROGRESSO.md)
-- [Changelog de desenvolvimento e correções](CHANGELOG.md)
+**Histórico e registros de auditoria:** [Auditoria original de 99 itens](docs/AUDITORIA_99_BASE.md), [progresso histórico](docs/AUDITORIA_99_PROGRESSO.md), [auditorias complementares](docs/AUDITORIA_POST99.md), [decisões](docs/DECISOES_AUDITORIA.md), [CHANGELOG](CHANGELOG.md) e [notas das releases](.github/release-notes/). Esses arquivos preservam evidências e estados da data de cada execução; **não devem ser interpretados como fotografia automática da produção atual**.
+
+## Licença
+
+MIT. Veja [LICENSE](LICENSE).

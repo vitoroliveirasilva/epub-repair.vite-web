@@ -1,6 +1,41 @@
 # Histórico de mudanças do EPUB Repair
 
-## v2.4.0 (candidata, **não publicada**)
+> **Nota de leitura (12/11/2026):** este arquivo separa as releases versionadas das alterações
+> já publicadas em `prod` após a última tag. A versão do pacote continua `2.5.0`,
+> mas o código da produção já contém PRs posteriores. As entradas antigas abaixo
+> foram preservadas como **registro histórico**, inclusive frases escritas antes de
+> versões que já foram publicadas. Estado operacional atual:
+> [ESTADO_ATUAL.md](docs/ESTADO_ATUAL.md).
+
+## Alterações de produção após v2.5.0 (11–12/11/2026, sem nova tag)
+
+- **Conversor PDF → EPUB** publicado na rota `/converter` ([PR #43](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pull/43)), com PDF.js, OCR local Tesseract.js, reconstrução de texto, edição editorial, formato reflowable/fixed e validação final pelo motor EPUB.
+- **Confiabilidade de extração**: fluxo OCR com timeout/fallback, preservação de ilustrações, quadros e formulários, correção de espaços entre trechos de fontes diferentes e de metadados ISBN/CDD/CDU ([PRs #44–#47](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pulls?q=is%3Apr+is%3Amerged+base%3Aprod)).
+- **UX de reparo e conversão**: cartões de conferência manual/erros responsivos, avisos do conversor com altura livre e revisão avançada que não fecha ao mudar de seção ([PRs #48–#50](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pulls?q=is%3Apr+is%3Amerged+base%3Aprod)).
+- **Progresso e resultado**: spinner contínuo sem ser remontado por página, remoção do ícone de verificado no título da conversão concluída ([PR #51](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pull/51)).
+- **Navegação móvel**: menu lateral com modal de tela inteira, links EPUB/PDF, tecla Escape, foco e animação respeitando movimento reduzido ([PRs #51–#53](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pull/53)).
+- **Footer**: quatro links fixos nas duas rotas (Desenvolvedor, Projeto no GitHub, Reparar EPUB e Converter PDF) ([PR #54](https://github.com/vitoroliveirasilva/epub-repair.vite-web/pull/54)).
+
+Essas alterações **não criaram automaticamente** uma release `v2.6.0`:
+o workflow de release reaproveita a versão do `package.json` e não republica a
+mesma tag. Compatibilidade visual de PDFs diversos e homologação em aparelhos
+físicos continuam sujeitas a testes específicos.
+
+## v2.5.0 (release publicada em 11/11/2026 UTC)
+
+- Recuperação conservadora de divisões editoriais internas em EPUB 2;
+  capítulos em XHTML compartilhado e NCX incompleto podem ser identificados
+  com heurísticas e ressalvas de revisão editorial.
+- Navegação reconstruída sem subdivisões artificiais, preservando estrutura
+  existente, ordem do spine e recursos não gerados pelo app.
+- Ajustes de inferência de epígrafes e capítulos com indicação informativa,
+  sem transformar uma hipótese editorial em certeza.
+- Vite 8.3.6, validações estáticas e suíte de regressão na candidata.
+
+Registro oficial: [release v2.5.0](https://github.com/vitoroliveirasilva/epub-repair.vite-web/releases/tag/v2.5.0).
+A tag representa o código da release, não as alterações posteriores listadas acima.
+
+## v2.4.0 (histórico da candidata de novembro de 2026; posteriormente promovida)
 
 - Limpeza de comentários de implementação, configurações e testes, preservando
   diretivas executáveis (shebang), conteúdo literal e licenças. Testes que

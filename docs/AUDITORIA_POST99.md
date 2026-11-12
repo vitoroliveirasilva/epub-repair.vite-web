@@ -1,5 +1,8 @@
 # Auditoria complementar pós-99: correções e homologação
 
+> **Registro histórico de auditorias de 2026, não status atual de produção.** As menções a `prod` v2.2.0, à candidata v2.4.0 e aos gatilhos da CI descrevem estados anteriores às publicações posteriores. O workflow vigente é o YAML do HEAD; veja [Estado atual](ESTADO_ATUAL.md), [CI econômica](CI_ECONOMICO.md) e [Índice documental](INDICE.md). Resultados e datas anteriores foram preservados.
+
+
 **Branch:** dev (produção v2.2.0 preservada)
 
 ## E-100 — troca de capa com formato diferente

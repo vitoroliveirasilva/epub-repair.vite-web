@@ -1,5 +1,8 @@
 # Android 15 Chrome: automação real do SO em emulador, não hardware
 
+> **Atualização 12/11/2026:** a automação AVD abaixo valida o fluxo do **reparador EPUB** em emulador. A rota nova `/converter` e a navegação móvel receberam smoke em Chromium/Firefox/WebKit desktop com viewport móvel, mas não há aqui evidência de conversão PDF + OCR em hardware Android físico. Não marcar E-089 como concluído apenas por emulação. Ver [Homologação física](HOMOLOGACAO_MOBILE_REAL.md).
+
+
 O workflow `.github/workflows/android-emulator.yml` inicializa uma
 imagem Android **15 / API 35, Google Play Store, Pixel 7** no runner
 Linux com KVM, usa o **Chrome realmente instalado na imagem**,

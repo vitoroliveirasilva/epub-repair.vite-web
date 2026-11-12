@@ -1,5 +1,8 @@
 # Candidata EPUB Repair v2.4.0: checklist de homologação e promoção
 
+> **Arquivo histórico da preparação da v2.4.0.** A frase “NÃO MERGEAR” abaixo era uma condição de candidata **naquela etapa**, não um bloqueio do repositório atual. A v2.4.0 foi promovida posteriormente e a release mais recente confirmada é `v2.5.0`. Para fluxos atuais: [Deploy e operação](DEPLOY_OPERACAO.md), [CI econômica](CI_ECONOMICO.md).
+
+
 **Estado inicial:** preparada em `dev`, **não homologada / NÃO MERGEAR**.
 Produção atual: `v2.3.0`. Branch de release: `dev`.
 O número de versão em `package.json` e nos dois campos de raiz de
