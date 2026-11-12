@@ -23,9 +23,13 @@ function checkCanceled(signal?: AbortSignal): void {
 }
 
 function safeName(value: string): string {
-  const base = value.replace(/[\\/\u0000-\u001f\u007f:*?"<>|]/gu, '_')
-    .replace(/^\.+/u, '_').replace(/[. ]+$/u, '').slice(0, 120).trim();
-  return base && !/^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/iu.test(base)
+  const forbidden = new Set(['\\\\', '/', ':', '*', '?', '"', '<', '>', '|']);
+  const clean = Array.from(value).map((character) => {
+    const code = character.charCodeAt(0);
+    return code < 32 || code === 127 || forbidden.has(character) ? '_' : character;
+  }).join('');
+  const base = clean.replace(/^\\.+/u, '_').replace(/[. ]+$/u, '').slice(0, 120).trim();
+  return base && !/^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\\.|$)/iu.test(base)
     ? base : 'arquivo.epub';
 }
 
