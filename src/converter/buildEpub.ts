@@ -117,6 +117,14 @@ function addReflowableLayout(
     ? dataUrlToBytes(firstPage.previewDataUrl)
     : undefined;
   if (cover) zip.file('OEBPS/Images/cover.jpg', cover);
+  const embeddedFigures = input.analysis.pages.flatMap((page) => page.figures ?? [])
+    .filter((figure) => sections.some((section) =>
+      section.html.includes(`../Images/${figure.id}.jpg`)));
+  for (const figure of embeddedFigures) {
+    const bytes = dataUrlToBytes(figure.dataUrl);
+    if (!bytes) throw new Error(`Não foi possível preservar a ilustração ${figure.id}.`);
+    zip.file(`OEBPS/Images/${figure.id}.jpg`, bytes);
+  }
   const visualPages = sections.flatMap((section) => section.visualPages)
     .filter((page, index, pages) => pages.findIndex((candidate) => candidate.pageNumber === page.pageNumber) === index);
   for (const page of visualPages) {
@@ -148,6 +156,7 @@ function addReflowableLayout(
     sections,
     hasCover: Boolean(cover),
     visualPages,
+    embeddedFigures,
   }));
 }
 
@@ -254,11 +263,14 @@ function reflowableOpf(input: {
   sections: EditableSection[];
   hasCover: boolean;
   visualPages: PdfPageAnalysis[];
+  embeddedFigures: NonNullable<PdfPageAnalysis['figures']>;
 }): string {
   const manifestSections = input.sections.map((_, index) =>
     `<item id="section-${index + 1}" href="Text/section-${String(index + 1).padStart(3, '0')}.xhtml" media-type="application/xhtml+xml"/>`).join('\n    ');
   const spineSections = input.sections.map((_, index) =>
     `<itemref idref="section-${index + 1}"/>`).join('\n    ');
+  const inlineImages = input.embeddedFigures.map((figure) =>
+    `<item id="${figure.id}" href="Images/${figure.id}.jpg" media-type="image/jpeg"/>`).join('\n    ');
   const visualImages = input.visualPages.map((page) =>
     `<item id="visual-page-${page.pageNumber}" href="Images/visual-page-${String(page.pageNumber).padStart(4, '0')}.jpg" media-type="image/jpeg"/>`).join('\n    ');
   return xml(`
@@ -277,6 +289,7 @@ function reflowableOpf(input: {
     <item id="css" href="Styles/book.css" media-type="text/css"/>
     ${input.hasCover ? '<item id="cover-image" href="Images/cover.jpg" media-type="image/jpeg" properties="cover-image"/>\n    <item id="cover-page" href="Text/cover.xhtml" media-type="application/xhtml+xml"/>' : ''}
     ${visualImages}
+    ${inlineImages}
     ${manifestSections}
   </manifest>
   <spine>
@@ -452,6 +465,8 @@ h1 + p, h2 + p, aside + p { text-indent: 0; }
 .footnote p { text-indent: 0; }
 .cover { display: grid; min-height: 90vh; place-items: center; }
 .cover img { display: block; width: auto; max-width: 100%; max-height: 90vh; margin: auto; }
+.pdf-inline-figure { margin: 1.25em auto; text-align: center; text-indent: 0; break-inside: avoid; page-break-inside: avoid; }
+.pdf-inline-figure img { display: block; max-width: 100%; max-height: 90vh; width: auto; height: auto; margin: auto; }
 .visual-page { margin: 1.5em auto; break-before: page; text-align: center; }
 .visual-page img { display: block; width: auto; max-width: 100%; max-height: 90vh; margin: auto; }
 .visual-page figcaption { margin-top: .5em; font-size: .8em; font-style: italic; text-indent: 0; }

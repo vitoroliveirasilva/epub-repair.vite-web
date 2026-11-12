@@ -65,6 +65,7 @@ orphanActiveContent99
 orphanAndBinaryRegression99
 packageSemantics99
 pdfConverterEpub
+pdfEmbeddedImages
 performanceBudget99
 post99-coverNavigation
 post99-hardening

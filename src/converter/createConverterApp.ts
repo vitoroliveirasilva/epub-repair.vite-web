@@ -1,6 +1,6 @@
 import { buildEpubFromPdf } from './buildEpub';
 import { createInitialConverterState } from './model';
-import type { ConverterState, EditableSection } from './model';
+import type { ConverterState, EditableSection, PdfAnalysisResult } from './model';
 import { analyzePdf, renderPdfPagePreview } from './pdfEngine';
 import { button, downloadBlob, el, formatBytes } from '../ui/dom';
 
@@ -462,6 +462,7 @@ function renderOverview(state: ConverterState): HTMLElement {
         metric(String(analysis.qualityScore), 'Confiança'),
         metric(String(analysis.pageCount), 'Páginas'),
         metric(String(analysis.sections.length), 'Seções'),
+        metric(String(analysis.pages.reduce((total, page) => total + (page.figures?.length ?? 0), 0)), 'Ilustrações'),
         metric(String(analysis.nativeTextPages), 'Com texto'),
         metric(String(analysis.ocrPages), 'Texto recuperado de imagem'),
         metric(String(analysis.visualPages), 'Visuais'),
@@ -506,7 +507,7 @@ function renderComparison(state: ConverterState, rerender: () => void): HTMLElem
         ] }),
         el('article', { className: 'converter-preview-card converter-epub-preview', children: [
           el('strong', { text: `EPUB · ${section?.title ?? 'Conteúdo'}` }),
-          renderSafePreview(section?.html ?? '<p>Sem conteúdo reconstruído.</p>'),
+          renderSafePreview(section?.html ?? '<p>Sem conteúdo reconstruído.</p>', state.analysis),
         ] }),
       ] }),
     ],
@@ -587,7 +588,7 @@ function renderSectionEditor(state: ConverterState, rerender: () => void): HTMLE
       el('div', { className: 'section-heading', children: [
         el('p', { className: 'eyebrow', text: 'Edição avançada opcional' }),
         el('h2', { text: 'Ajuste a estrutura antes de gerar' }),
-        el('p', { className: 'muted', text: 'Linhas iniciadas por “# ” viram título principal; “## ” vira subtítulo. Blocos separados por linha vazia viram parágrafos.' }),
+        el('p', { className: 'muted', text: 'Linhas iniciadas por “# ” viram título principal; “## ” vira subtítulo. Preserve os marcadores [[figura:...]] para manter as ilustrações.' }),
       ] }),
       title,
       el('label', { className: 'converter-field', children: [el('span', { text: 'Conteúdo da seção' }), text] }),
@@ -952,17 +953,33 @@ function plainTextToHtml(value: string): string {
   return value.split(/\n{2,}/u).map((block) => {
     const normalized = block.replace(/\s*\n\s*/gu, ' ').trim();
     if (!normalized) return '';
+    const image = normalized.match(/^\[\[figura:(figure-\d{4}-\d{2})\]\]$/u);
+    if (image) return `<figure class="pdf-inline-figure"><img src="../Images/${image[1]}.jpg" alt="Ilustração do documento original"/></figure>`;
     if (normalized.startsWith('# ')) return `<h1>${escapeXml(normalized.slice(2).trim())}</h1>`;
     if (normalized.startsWith('## ')) return `<h2>${escapeXml(normalized.slice(3).trim())}</h2>`;
     return `<p>${escapeXml(normalized)}</p>`;
   }).filter(Boolean).join('\n');
 }
 
-function renderSafePreview(html: string): HTMLElement {
+function renderSafePreview(html: string, analysis?: PdfAnalysisResult): HTMLElement {
   const wrapper = el('div', { className: 'converter-preview-content' });
   const parsed = new DOMParser().parseFromString(`<main>${html}</main>`, 'text/html');
   const main = parsed.querySelector('main');
   for (const node of Array.from(main?.children ?? [])) {
+    if (node.tagName === 'FIGURE') {
+      const source = node.querySelector('img')?.getAttribute('src') ?? '';
+      const id = source.match(/(figure-\d{4}-\d{2})\.jpg$/u)?.[1];
+      const figure = id && analysis?.pages.flatMap((page) => page.figures ?? [])
+        .find((candidate) => candidate.id === id);
+      if (figure) {
+        wrapper.append(el('figure', { className: 'pdf-inline-figure', children: [
+          el('img', { attrs: { src: figure.dataUrl, alt: 'Ilustração preservada do PDF' } }),
+        ] }));
+      } else {
+        wrapper.append(el('p', { text: 'Ilustração preservada no EPUB' }));
+      }
+      continue;
+    }
     if (!['H1', 'H2', 'P', 'ASIDE'].includes(node.tagName)) continue;
     const tag = node.tagName === 'H1' ? 'h1' : node.tagName === 'H2' ? 'h2' : 'p';
     wrapper.append(el(tag, { text: node.textContent ?? '' }));
