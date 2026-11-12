@@ -216,7 +216,7 @@ export function inferPublicationMetadata(
   info?: object,
 ): PublicationMetadata {
   const normalized = text.replace(/\r/gu, '');
-  const rawIsbn = normalized.match(/\bISBN(?:-1[03])?\s*:?[\s\u00a0]*((?:97[89][\s-]*)?[\dXx](?:[\dXx\s-]{8,20})[\dXx])\b/u)?.[1] ?? '';
+  const rawIsbn = normalized.match(/\bISBN(?:-1[03])?[ \t]*:?[ \t\u00a0]*((?:97[89][ \t-]*)?[\dXx](?:[\dXx \t\u00a0-]{8,20})[\dXx])\b/u)?.[1] ?? '';
   const isbn = rawIsbn.replace(/[^\dXx]/gu, '').toUpperCase();
   const translator = firstCapture(normalized, [
     /(?:^|\n)\s*tradu[cç][aã]o\s*:\s*(.+?)(?=\n)/iu,
@@ -461,7 +461,7 @@ async function analyzePage(
   };
 }
 
-function groupItemsIntoLines(items: PdfTextItem[]): PdfLine[] {
+export function groupItemsIntoLines(items: PdfTextItem[]): PdfLine[] {
   const sorted = [...items].sort((a, b) => {
     const vertical = b.y - a.y;
     return Math.abs(vertical) > Math.max(a.fontSize, b.fontSize) * 0.38 ? vertical : a.x - b.x;
@@ -481,9 +481,16 @@ function groupItemsIntoLines(items: PdfTextItem[]): PdfLine[] {
     const ordered = line.items.sort((a, b) => a.x - b.x);
     let text = '';
     let right = 0;
-    for (const item of ordered) {
+    for (const [index, item] of ordered.entries()) {
       const gap = item.x - right;
-      if (text && gap > Math.max(1.6, item.fontSize * 0.18)) text += ' ';
+      const previous = ordered[index - 1];
+      const potentialMissingSpace = previous &&
+        previous.fontName !== item.fontName &&
+        gap >= -Math.max(0.6, item.fontSize * 0.05) &&
+        !/\s$/u.test(text) &&
+        /\b(?:um|uma|o|a|os|as|de|do|da|dos|das|no|na|nos|nas|ao|aos|ou)$/iu.test(text) &&
+        /^\p{Lu}/u.test(item.text);
+      if (text && (gap > Math.max(1.6, item.fontSize * 0.18) || potentialMissingSpace)) text += ' ';
       text += item.text;
       right = Math.max(right, item.x + item.width);
     }

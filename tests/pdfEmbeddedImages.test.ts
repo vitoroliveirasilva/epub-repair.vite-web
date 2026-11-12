@@ -26,6 +26,20 @@ describe('imagens incorporadas no PDF', () => {
     expect(regions[0]?.y).toBeCloseTo(202.5, 1);
   });
 
+
+  it('inclui figuras compactas legíveis, mas não recupera ícones muito pequenos', () => {
+    const regions = locateEmbeddedImageRegions(
+      [1, 3, 4, 2, 1, 3, 4, 2, 1, 3, 4, 2],
+      [[], [122, 0, 0, 22, 98, 310], ['figura manuscrita'], [],
+        [], [84, 0, 0, 21, 451, 436], ['logo'], [],
+        [], [12, 0, 0, 12, 200, 120], ['ícone'], []],
+      { save: 1, restore: 2, transform: 3, paintImageXObject: 4 },
+      { width: 612, height: 792, transform: [1, 0, 0, -1, 0, 792] },
+    );
+    expect(regions).toHaveLength(2);
+    expect(regions.map((region) => Math.round(region.width)).sort((a, b) => a - b)).toEqual([84, 122]);
+  });
+
   it('insere figura entre dois trechos e inclui a imagem no manifest do EPUB', async () => {
     const page: PdfPageAnalysis = {
       pageNumber: 1, width: 612, height: 792, nativeCharacters: 48,
@@ -46,7 +60,7 @@ describe('imagens incorporadas no PDF', () => {
     const analysis: PdfAnalysisResult = {
       fileName: 'livro.pdf', fileSize: 100, pageCount: 1,
       title: 'Livro teste', author: 'Autora',
-      metadata: { publisher: '', publicationDate: '', isbn: '', translator: '', description: '' },
+      metadata: { publisher: '', publicationDate: '', isbn: '9786599025730', translator: '', description: '' },
       pages: [page], sections: reconstructed.sections, warnings: [], suggestedLayout: 'reflowable',
       nativeTextPages: 1, ocrPages: 0, scannedPages: 0, visualPages: 0,
       blankPages: 0, repeatedMarginLines: [], qualityScore: 100,
@@ -58,6 +72,7 @@ describe('imagens incorporadas no PDF', () => {
     const zip = await JSZip.loadAsync(converted.bytes);
     expect(zip.file('OEBPS/Images/figure-0001-01.jpg')).not.toBeNull();
     expect(await zip.file('OEBPS/content.opf')!.async('string')).toContain('href="Images/figure-0001-01.jpg"');
+    expect(await zip.file('OEBPS/content.opf')!.async('string')).toContain('urn:isbn:9786599025730');
     expect(await zip.file('OEBPS/Text/section-001.xhtml')!.async('string')).toContain('src="../Images/figure-0001-01.jpg"');
     expect(converted.validation.stats.errorCount).toBe(0);
     expect(converted.validation.stats.fatalCount).toBe(0);
