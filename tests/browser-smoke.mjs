@@ -45,6 +45,112 @@ async function syntheticEpub() {
   }));
 }
 
+async function mobileReviewLayoutSmoke(page) {
+  await page.evaluate(async () => {
+    const [{ renderIssueList }, { renderRepairSummary }] = await Promise.all([
+      import('/src/ui/components/IssueList.ts'),
+      import('/src/ui/components/RepairSummary.ts'),
+    ]);
+    const file = 'OPS/Text/' + 'capitulo-com-um-nome-bastante-extenso/'.repeat(7) + 'conteudo.xhtml';
+    const report = {
+      fileName: 'livro-de-teste.epub',
+      validZip: true,
+      issues: [
+        {
+          id: 'manual', code: 'CONTENT_MISSING_RESOURCE', severity: 'error', repairable: false,
+          title: 'Um recurso importante não foi encontrado dentro do EPUB',
+          detail: 'Esta ocorrência exige que você confira o arquivo de origem e os vínculos internos.',
+          context: 'O caminho é muito longo e precisa ser legível sem provocar rolagem horizontal.',
+          file,
+        },
+        {
+          id: 'warning', code: 'PACKAGE_DECLARED_SCRIPT', severity: 'warning', repairable: false,
+          title: 'Conteúdo interativo precisa ser conferido manualmente',
+          detail: 'Verifique se o comportamento editorial original continua funcionando.',
+          file,
+        },
+        {
+          id: 'repair', code: 'MIME_MISSING', severity: 'warning', repairable: true,
+          title: 'Arquivo de identificação pode ser reconstruído automaticamente',
+          detail: 'O reparo automático pode tentar resolver esse problema.',
+          file: 'mimetype',
+        },
+      ],
+      stats: {
+        kindleScore: 77, fatalCount: 0, errorCount: 1, warningCount: 2,
+        infoCount: 0, repairableCount: 1,
+      },
+    };
+    const host = document.createElement('div');
+    host.className = 'mobile-report-visual-test';
+    host.style.minWidth = '0';
+    host.dataset.mobileReportVisualTest = 'true';
+    const workspace = document.querySelector('.workspace');
+    if (!workspace) throw new Error('Área principal do EPUB não encontrada');
+    workspace.append(host);
+    const simple = renderIssueList(report, 'simple', () => undefined);
+    const technical = renderIssueList(report, 'technical', () => undefined);
+    const result = renderRepairSummary({
+      before: report, after: report, fileName: 'livro.epub',
+      changed: true, operation: 'repair', warnings: [],
+      actions: [{ type: 'skipped', title: 'Ação manual',
+        detail: 'Referência suspeita requer conferência.', file }],
+    });
+    host.append(simple, technical, result);
+    for (const details of host.querySelectorAll('details')) details.open = true;
+    if (!simple.querySelector('.manual-review-cta')) {
+      throw new Error('Botão da conferência manual não renderizado');
+    }
+    if (!simple.querySelector('.simple-issue-location code')) {
+      throw new Error('Local da ocorrência não renderizado no modo simples');
+    }
+  });
+  for (const width of [320, 360, 390, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const fontSize of [16, 20]) {
+      const violations = await page.evaluate((size) => {
+        document.documentElement.style.fontSize = size + 'px';
+        const selector = [
+          '.mobile-report-visual-test .issues-panel',
+          '.mobile-report-visual-test .repair-summary',
+          '.mobile-report-visual-test .manual-review-notice',
+          '.mobile-report-visual-test .simple-issue',
+          '.mobile-report-visual-test .issue',
+          '.mobile-report-visual-test .issue-group > summary',
+          '.mobile-report-visual-test .simple-issue-location code',
+          '.mobile-report-visual-test .issue-meta code',
+          '.mobile-report-visual-test .repair-pending-item',
+          '.mobile-report-visual-test .manual-review-cta',
+        ].join(',');
+        return Array.from(document.querySelectorAll(selector)).flatMap((node) => {
+          const rect = node.getBoundingClientRect();
+          const right = window.innerWidth;
+          if (rect.width === 0 || rect.height === 0) return [];
+          if (rect.left < -2 || rect.right > right + 2 ||
+              node.scrollWidth > node.clientWidth + 3) {
+            return [{
+              node: node.className || node.tagName,
+              left: Math.round(rect.left), right: Math.round(rect.right),
+              viewport: right,
+              scrollWidth: node.scrollWidth,
+              clientWidth: node.clientWidth,
+            }];
+          }
+          return [];
+        });
+      }, fontSize);
+      assert.deepEqual(violations, [],
+        'Layout do relatório sai da tela em ' + width + 'px com fonte ' + fontSize + 'px');
+    }
+  }
+  await page.evaluate(() => {
+    document.documentElement.style.removeProperty('font-size');
+    document.querySelector('.mobile-report-visual-test')?.remove();
+  });
+  console.log('PASS report mobile visual layout browser=' + selected +
+    ' widths=320,360,390,430 font-size=16,20');
+}
+
 async function scenario(browser, mobile) {
   const context = await browser.newContext({
     viewport: mobile ? { width: 390, height: 844 } : { width: 1365, height: 768 },
@@ -84,6 +190,7 @@ async function scenario(browser, mobile) {
       json.click(),
     ]);
     assert.match(download.suggestedFilename(), /\.json$/);
+    if (mobile && selected === 'chromium') await mobileReviewLayoutSmoke(page);
     assert.deepEqual(unhandled, [], 'Unhandled browser errors: ' + unhandled.join('; '));
     console.log('PASS browser=' + selected + ' mobile=' + mobile +
       ' report=' + download.suggestedFilename());

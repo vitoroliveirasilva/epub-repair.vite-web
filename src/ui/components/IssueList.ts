@@ -44,7 +44,7 @@ export function renderIssueList(
     !isRequiredRepairableIssue(issue) &&
     issue.severity !== 'success').length;
   if (manualCount > 0) {
-    wrapper.append(renderManualReviewNotice(manualCount));
+    wrapper.append(renderManualReviewNotice(manualCount, mode, onModeChange));
   }
 
   if (report.issues.length === 0) {
@@ -86,7 +86,17 @@ export function renderIssueList(
   return wrapper;
 }
 
-function renderManualReviewNotice(count: number): HTMLElement {
+function renderManualReviewNotice(
+  count: number,
+  mode: ReportViewMode,
+  onModeChange: (mode: ReportViewMode) => void,
+): HTMLElement {
+  const reviewButton = el('button', {
+    className: 'btn btn-secondary manual-review-cta',
+    text: 'Ver detalhes para conferir',
+    attrs: { type: 'button' },
+  });
+  reviewButton.addEventListener('click', () => onModeChange('technical'));
   return el('aside', {
     className: 'manual-review-notice',
     attrs: { 'aria-label': 'Itens para conferência manual' },
@@ -94,7 +104,10 @@ function renderManualReviewNotice(count: number): HTMLElement {
       el('span', { className: 'manual-review-notice-icon', text: '!', attrs: { 'aria-hidden': 'true' } }),
       el('div', { className: 'manual-review-notice-copy', children: [
         el('strong', { text: `Conferência manual · ${count} ${count === 1 ? 'item' : 'itens'}` }),
-        el('p', { text: 'Estes pontos não têm uma correção automática segura. Confira os detalhes e os arquivos no relatório técnico antes de usar o EPUB.' }),
+        el('p', { text: 'Estes pontos precisam de revisão humana. A ferramenta não modifica o conteúdo quando não há uma correção segura.' }),
+        mode === 'simple'
+          ? el('div', { className: 'manual-review-notice-actions', children: [reviewButton] })
+          : undefined,
       ] }),
     ],
   });
@@ -170,19 +183,33 @@ function simpleSummary(report: ValidationReport): string {
 
 function renderSimpleIssue(issue: Issue): HTMLElement {
   const explanation = explainIssue(issue);
+  const manual = !isOptionalOptimizationIssue(issue) && !isRequiredRepairableIssue(issue);
   return el('article', {
     className: `simple-issue simple-issue-${issue.severity}`,
     children: [
       el('div', {
-        className: 'simple-issue-heading',
+        className: 'simple-issue-labels',
         children: [
-          el('span', { className: `severity-dot severity-dot-${issue.severity}` }),
-          el('strong', { text: explanation.title }),
+          el('span', { className: `badge badge-${issue.severity}`, text: severityLabel(issue.severity) }),
+          el('span', {
+            className: manual ? 'badge badge-manual' : 'badge badge-repairable',
+            text: manual ? 'Conferência manual' : isOptionalOptimizationIssue(issue) ? 'Opcional' : 'Corrigível',
+          }),
         ],
       }),
-      el('p', { text: explanation.message }),
+      el('div', {
+        className: 'simple-issue-heading',
+        children: [el('strong', { text: explanation.title })],
+      }),
+      el('p', { className: 'simple-issue-description', text: explanation.message }),
+      issue.file
+        ? el('div', { className: 'simple-issue-location', children: [
+            el('small', { text: 'Arquivo afetado' }),
+            el('code', { text: issue.file }),
+          ] })
+        : undefined,
       el('small', {
-        className: 'muted',
+        className: 'muted simple-issue-footer',
         text: simpleIssueFooter(issue),
       }),
     ],
@@ -210,7 +237,7 @@ function renderIssue(issue: Issue): HTMLElement {
       el('div', {
         className: 'issue-title-row',
         children: [
-          el('strong', { text: issue.title }),
+          el('strong', { className: 'issue-title', text: issue.title }),
           el('span', {
             className:
               repairBadgeText === 'Conferência manual' ? 'badge badge-manual' : 'badge badge-repairable',
@@ -225,8 +252,8 @@ function renderIssue(issue: Issue): HTMLElement {
             className: `badge badge-${issue.severity}`,
             text: severityLabel(issue.severity),
           }),
-          el('code', { text: issue.code }),
-          issue.file ? el('code', { text: issue.file }) : undefined,
+          el('code', { className: 'issue-code', text: issue.code }),
+          issue.file ? el('code', { className: 'issue-file-code', text: issue.file }) : undefined,
         ],
       }),
       el('p', { className: 'issue-description', text: issue.detail }),

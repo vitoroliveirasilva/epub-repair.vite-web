@@ -31,6 +31,12 @@ describe('layout do relatório de erros e conferência manual', () => {
     expect(simple.querySelector('.manual-review-notice')?.textContent)
       .toContain('Conferência manual · 1 item');
     expect(simple.querySelectorAll('.simple-issue')).toHaveLength(2);
+    expect(simple.querySelectorAll('.simple-issue-labels')).toHaveLength(2);
+    expect(simple.querySelector('.simple-issue-location code')?.textContent).toBe(longPath);
+    let requestedTechnical = false;
+    const interactive = renderIssueList(report, 'simple', () => { requestedTechnical = true; });
+    (interactive.querySelector('.manual-review-cta') as HTMLButtonElement).click();
+    expect(requestedTechnical).toBe(true);
 
     const technical = renderIssueList(report, 'technical', () => undefined);
     expect(technical.querySelector('.manual-review-notice')).not.toBeNull();
@@ -53,6 +59,7 @@ describe('layout do relatório de erros e conferência manual', () => {
     } as RepairResult;
     const output = renderRepairSummary(result);
     const pending = output.querySelector('.repair-pending-issues');
+    expect(pending?.hasAttribute('open')).toBe(true);
     expect(pending?.querySelector('.repair-pending-heading strong')?.textContent)
       .toBe('Conferência manual necessária');
     expect(pending?.textContent).toContain('Pendências restantes: 2 · ações não aplicadas: 1');
@@ -99,5 +106,10 @@ describe('layout do relatório de erros e conferência manual', () => {
     expect(css).toContain('.issues-panel .issue-meta code');
     expect(css).toContain('@media (max-width: 640px)');
     expect(css).toContain('@media (max-width: 420px)');
+    expect(css).toContain('.manual-review-cta');
+    expect(css).toContain('.issues-panel .simple-issue-labels');
+    expect(css).toContain('.issues-panel .simple-issue-location code');
+    const deploy = readFileSync('netlify.toml', 'utf8');
+    expect(deploy).toMatch(/Cache-Control = "no-cache, max-age=0, must-revalidate"/u);
   });
 });
