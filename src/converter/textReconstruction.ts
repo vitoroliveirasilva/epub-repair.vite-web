@@ -29,7 +29,7 @@ const LETTER = /\p{L}/u;
 const CHAPTER_NUMBER = /^\s*(\d{1,3})[.)]?(?:\s+|$)/u;
 const EDITORIAL_HEADING = /^(?:sum[aá]rio|contents|pref[aá]cio(?:\s+.+)?|foreword|apêndice|appendix|[ií]ndice(?:\s+remissivo)?|index)$/iu;
 const SENTENCE_LIKE = /(?:[,;:]|\b(?:que|de|da|do|das|dos|para|por|com|como|e|ou|the|of|to|and|with)\s*)$/iu;
-const CATALOG_ENTRY = /^(?:CDD|CDU|ISBN(?:-1[03])?|ISSN|DOI)\s*[:.\-]?\s*[\dXx./-]+(?:\s.*)?$/iu;
+const CATALOG_ENTRY = /^(?:CDD|CDU|ISBN(?:-1[03])?|ISSN|DOI)\s*[:.-]?\s*[\dXx./-]+(?:\s.*)?$/iu;
 
 export function reconstructDocument(
   pages: PdfPageAnalysis[],
