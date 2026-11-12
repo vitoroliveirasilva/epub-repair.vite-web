@@ -4,7 +4,7 @@ import type { ConverterState, EditableSection, PdfAnalysisResult } from './model
 import { analyzePdf, renderPdfPagePreview } from './pdfEngine';
 import { button, downloadBlob, el, formatBytes } from '../ui/dom';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
-import { analyzeReview, normalizeRepeatedSpaces } from './reviewSuggestions';
+import { analyzeReview, normalizeSectionSpaces, type ReviewFinding } from './reviewSuggestions';
 
 const THEME_STORAGE_KEY = 'epub-repair-theme';
 const MAX_PDF_SIZE = 250 * 1024 * 1024;
@@ -631,49 +631,72 @@ function renderAdvancedReview(state: ConverterState, rerender: () => void): HTML
 
 function renderReviewAssist(state: ConverterState, rerender: () => void): HTMLElement {
   const findings = state.analysis ? analyzeReview(state.analysis, state.sections) : [];
+  const highCount = findings.filter((finding) => finding.priority === 'high').length;
+  const mediumCount = findings.filter((finding) => finding.priority === 'medium').length;
+  const priorityNames: Record<ReviewFinding['priority'], string> = {
+    high: 'Prioridade alta', medium: 'Revisar', low: 'Conferir se necessário',
+  };
+  const renderFinding = (finding: ReviewFinding): HTMLElement => {
+    const canNavigate = finding.page !== undefined || finding.sectionIndex !== undefined;
+    const navigate = button('Conferir no editor', 'btn btn-ghost btn-small', () => {
+      if (finding.page !== undefined) state.selectedPage = finding.page;
+      if (finding.sectionIndex !== undefined) state.selectedSection = finding.sectionIndex;
+      state.advancedReviewOpen = true;
+      rerender();
+      requestAnimationFrame(() => document.querySelector('.converter-comparison')?.scrollIntoView({
+        behavior: 'smooth', block: 'start',
+      }));
+    });
+    navigate.disabled = !canNavigate;
+    const normalize = finding.canNormalizeSpaces && finding.sectionIndex !== undefined
+      ? button('Normalizar espaços desta seção', 'btn btn-secondary btn-small', () => {
+          if (!window.confirm('Normalizar sequências de três ou mais espaços no texto desta seção, preservando o HTML, as imagens e a formatação?')) return;
+          const index = finding.sectionIndex!;
+          const section = state.sections[index];
+          if (!section) return;
+          state.sections[index] = normalizeSectionSpaces(section);
+          state.result = undefined;
+          rerender();
+        })
+      : undefined;
+    const origin = [
+      priorityNames[finding.priority],
+      ...(finding.page !== undefined ? ['Página ' + finding.page] : []),
+      ...(finding.sectionIndex !== undefined ? ['Seção ' + (finding.sectionIndex + 1)] : []),
+    ].join(' · ');
+    return el('article', { className: 'optional-review-item', children: [
+      el('strong', { text: finding.title }),
+      el('small', { className: 'optional-review-origin', text: origin }),
+      el('p', { className: 'muted', text: finding.reason }),
+      finding.evidence ? el('p', { className: 'optional-review-evidence',
+        text: 'Trecho de referência: ' + finding.evidence }) : undefined,
+      el('div', { className: 'optional-review-actions', children: [navigate, normalize] }),
+    ] });
+  };
+  const additional = findings.slice(6);
   const details = el('details', { className: 'converter-advanced-review optional-pdf-review', children: [
     el('summary', { children: [
       el('span', { className: 'converter-advanced-icon', text: 'Aa' }),
       el('span', { className: 'converter-advanced-copy', children: [
         el('strong', { text: 'Revisão assistida de PDF' }),
-        el('small', { text: 'Opcional · ' + findings.length + ' ponto(s) para conferir; nada é alterado sozinho' }),
+        el('small', { text: 'Opcional · ' + findings.length +
+          ' ponto(s); ' + highCount + ' prioritário(s). Nenhuma mudança automática.' }),
       ] }),
       el('span', { className: 'converter-advanced-action', text: 'Ver sugestões' }),
     ] }),
     el('div', { className: 'optional-review-list', children: [
-      el('p', { className: 'muted', text: 'Sinais heurísticos de texto digitalizado, colunas, hifenização e espaços. Não são conclusões de inteligência artificial nem substituem revisão editorial.' }),
-      findings.length ? undefined : el('p', { text: 'Nenhum sinal adicional encontrado nesta verificação.' }),
-      ...findings.map((finding) => {
-        const navigate = button('Conferir no editor', 'btn btn-ghost btn-small', () => {
-          if (finding.page) state.selectedPage = finding.page;
-          if (finding.sectionIndex !== undefined) state.selectedSection = finding.sectionIndex;
-          state.advancedReviewOpen = true;
-          rerender();
-          requestAnimationFrame(() => document.querySelector('.converter-comparison')?.scrollIntoView({
-            behavior: 'smooth', block: 'start',
-          }));
-        });
-        const normalize = finding.canNormalizeSpaces && finding.sectionIndex !== undefined
-          ? button('Normalizar espaços desta seção', 'btn btn-secondary btn-small', () => {
-              if (!window.confirm('Substituir sequências de três ou mais espaços por um único espaço nesta seção?')) return;
-              const section = state.sections[finding.sectionIndex!];
-              if (!section) return;
-              const updated = normalizeRepeatedSpaces(section.plainText);
-              section.plainText = updated;
-              section.html = plainTextToHtml(updated);
-              state.result = undefined;
-              rerender();
-            })
-          : undefined;
-        return el('article', { className: 'optional-review-item', children: [
-          el('strong', { text: finding.title }),
-          el('p', { className: 'muted', text: finding.reason }),
-          el('small', { text: finding.page
-            ? 'Página ' + finding.page
-            : 'Seção ' + ((finding.sectionIndex ?? 0) + 1) }),
-          el('div', { className: 'optional-review-actions', children: [navigate, normalize] }),
-        ] });
-      }),
+      el('p', { className: 'muted',
+        text: 'Alertas heurísticos, não diagnósticos definitivos. Confira primeiro os pontos de maior prioridade. A revisão não altera o PDF original.' }),
+      findings.length
+        ? el('p', { className: 'muted', text: highCount + ' prioridade(s) alta(s) · ' +
+          mediumCount + ' revisão(ões) recomendada(s) · ' +
+          (findings.length - highCount - mediumCount) + ' conferência(s) opcional(is).' })
+        : el('p', { text: 'Nenhum sinal adicional encontrado nesta verificação.' }),
+      ...findings.slice(0, 6).map(renderFinding),
+      additional.length ? el('details', { className: 'optional-review-more', children: [
+        el('summary', { text: 'Mostrar outros ' + additional.length + ' ponto(s) para conferir' }),
+        ...additional.map(renderFinding),
+      ] }) : undefined,
     ] }),
   ] });
   details.open = state.assistedReviewOpen;

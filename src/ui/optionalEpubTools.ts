@@ -4,7 +4,7 @@ import { MAX_FILE_SIZE_BYTES } from '../epub/utils/constants';
 import { processEpubBatch } from '../epub/tools/batchProcessor';
 import { button, downloadBlob, el, formatBytes } from './dom';
 import {
-  buildKindleChecks, readBookMetadata, readBookPreview, writeBookMetadata,
+  buildKindleChecks, summarizeKindleChecks, readBookMetadata, readBookPreview, writeBookMetadata,
   type BookMetadata, type BookPreview, type BookSection,
 } from '../epub/tools/bookTools';
 import { compareBookPreviews, comparisonSummary, type BookDifference } from '../epub/tools/bookComparison';
@@ -387,11 +387,29 @@ function renderMetadata(state: AppState, s: Session, rerender: () => void, enque
 function renderKindle(state: AppState): HTMLElement {
   const report = state.report;
   const checks = report ? buildKindleChecks(report) : [];
+  const summary = summarizeKindleChecks(checks);
+  const statusNames = {
+    ready: 'Verificado',
+    review: 'Precisa de conferência',
+    blocked: 'Bloqueio detectado',
+  };
+  const result = report ? el('div', { className: 'optional-kindle-summary', children: [
+    el('strong', { text: summary.blocked
+      ? summary.blocked + ' bloqueio(s) detectado(s) na verificação'
+      : summary.review
+        ? summary.review + ' ponto(s) para revisar antes de enviar'
+        : 'Nenhum problema detectado nas verificações disponíveis' }),
+    paragraph(summary.ready + ' item(ns) verificado(s) · ' + summary.review +
+      ' ponto(s) para revisar · ' + summary.blocked + ' bloqueio(s).'),
+  ] }) : paragraph('Valide o EPUB primeiro para receber recomendações sobre capa, navegação, metadados, arquivos ausentes e recursos externos.');
   return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Conferência orientativa para o Send to Kindle. Não garante aprovação ou aparência idêntica no dispositivo. Nenhum arquivo é enviado automaticamente.'),
+    paragraph('Checklist local e orientativo para envio ao Kindle. Não garante que a Amazon aceite o EPUB nem que a aparência seja idêntica no dispositivo. Nenhum arquivo é enviado automaticamente.'),
+    result,
     ...checks.map((check) => el('div', { className: 'optional-check', children: [
-      el('strong', { text: (check.ok ? '✓ ' : '! ') + check.label }),
+      el('strong', { text: check.label + ' · ' + statusNames[check.status] }),
       el('p', { className: 'muted', text: check.detail }),
+      !check.ok ? el('p', { className: 'optional-kindle-action', text: 'O que fazer: ' + check.action })
+        : undefined,
     ] })),
     el('a', { className: 'btn btn-secondary btn-small', text: 'Abrir Send to Kindle oficial',
       attrs: { href: 'https://www.amazon.com/sendtokindle', target: '_blank', rel: 'noopener noreferrer' } }),

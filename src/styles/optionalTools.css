@@ -297,3 +297,49 @@
   .optional-reader-controls .btn-small { flex: 1 1 auto; }
   .optional-metadata-actions button { flex: 1 1 100%; }
 }
+
+.optional-review-origin {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+.optional-review-evidence {
+  max-width: 100%;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+.optional-review-more {
+  display: grid;
+  width: 100%;
+  gap: 0.7rem;
+}
+.optional-review-more > summary {
+  display: list-item;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  font-weight: 600;
+}
+.optional-review-more[open] > .optional-review-item {
+  margin: 0.65rem 0;
+}
+.optional-review-more > summary:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+.optional-kindle-summary {
+  display: grid;
+  width: 100%;
+  gap: 0.45rem;
+  padding: 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.optional-kindle-summary p { margin: 0; }
+.optional-kindle-action {
+  margin: 0.35rem 0 0;
+  overflow-wrap: anywhere;
+}

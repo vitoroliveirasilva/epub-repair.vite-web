@@ -2,6 +2,8 @@
 
 ## v4.0.0 — desenvolvimento na dev (não lançada, 12/11/2026)
 
+- Revisor PDF ordena alertas por prioridade, exibe evidências e impede que a normalização de espaços destrua imagens ou formatação HTML.
+- Kindle oferece checklist de oito categorias com orientações específicas e distinção entre bloqueios e conferências.
 - Prévia preserva ênfases e elementos tipográficos básicos sem injetar HTML do EPUB; oferece anterior/próximo.
 - Edição de metadados mantém rascunhos entre as ferramentas, valida campos alterados e permite descartar edições sem substituir o arquivo original.
 - Novo painel recolhido de ferramentas opcionais para EPUB: prévia textual, comparação lado a lado, metadados, checklist Send to Kindle e lote sequencial com limite de memória.

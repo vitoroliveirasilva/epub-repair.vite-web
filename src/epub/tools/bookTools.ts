@@ -285,23 +285,104 @@ export async function writeBookMetadata(
   return { fileName: outputName, blob, bytes: outputBytes, report };
 }
 
-export interface KindleCheck { label: string; ok: boolean; detail: string }
+export type KindleStatus = 'ready' | 'review' | 'blocked';
+export interface KindleCheck {
+  label: string;
+  ok: boolean;
+  status: KindleStatus;
+  detail: string;
+  action: string;
+}
+export interface KindleReadiness {
+  status: KindleStatus;
+  ready: number;
+  review: number;
+  blocked: number;
+}
+
+export function summarizeKindleChecks(checks: KindleCheck[]): KindleReadiness {
+  const blocked = checks.filter((check) => check.status === 'blocked').length;
+  const review = checks.filter((check) => check.status === 'review').length;
+  const ready = checks.filter((check) => check.status === 'ready').length;
+  return { status: blocked ? 'blocked' : review ? 'review' : 'ready',
+    ready, review, blocked };
+}
+
 export function buildKindleChecks(report: ValidationReport): KindleCheck[] {
-  const relevant = report.issues.filter((issue) =>
-    issue.severity === 'fatal' || issue.severity === 'error' || issue.severity === 'warning');
-  const nav = relevant.filter((issue) => /NAV_|NCX_|SPINE_/u.test(issue.code));
-  const image = relevant.filter((issue) => /COVER_|IMAGE_/u.test(issue.code));
-  return [
-    { label: 'Estrutura válida', ok: report.validZip && report.stats.fatalCount === 0 &&
-      report.stats.errorCount === 0, detail: 'Problemas fatais e erros estruturais precisam de revisão.' },
-    { label: 'Capa reconhecida', ok: Boolean(report.cover?.exists) && image.length === 0,
-      detail: 'Confirme a capa e possíveis avisos de imagem.' },
-    { label: 'Navegação', ok: Boolean(report.packageInfo?.spine.length) && nav.length === 0,
-      detail: 'Confira o sumário, a ordem dos capítulos e a navegação.' },
-    { label: 'Tamanho para envio web', ok: report.fileSize <= 200 * 1024 * 1024,
-      detail: 'O envio pela web aceita arquivos de até 200 MB.' },
-    { label: 'Alertas residuais', ok: relevant.length === 0,
-      detail: relevant.length ? relevant.length + ' aviso(s)/erro(s) requerem avaliação.' :
-        'Nenhum alerta de severidade elevada encontrado nesta verificação.' },
-  ];
+  const issue = report.issues.filter((item) =>
+    item.severity === 'fatal' || item.severity === 'error' || item.severity === 'warning');
+  const packageInfo = report.packageInfo;
+  const hasFatal = !report.validZip || report.stats.fatalCount > 0;
+  const hasErrors = report.stats.errorCount > 0;
+  const navIssues = issue.filter((item) => /^(?:NAV_|NCX_|SPINE_|TOC_)/u.test(item.code));
+  const imageIssues = issue.filter((item) => /^(?:COVER_|IMAGE_)/u.test(item.code));
+  const metadataIssues = issue.filter((item) => /^(?:OPF_(?:TITLE|LANGUAGE|IDENTIFIER|UNIQUE)|METADATA_)/u.test(item.code));
+  const activeIssues = issue.filter((item) =>
+    /(?:ACTIVE|SCRIPT|REMOTE|EXTERNAL|SECURITY|ENCRYPT|DRM)/iu.test(item.code));
+  const metadata = packageInfo?.metadata;
+  const title = Boolean(metadata?.title?.trim());
+  const language = Boolean(metadata?.language?.trim());
+  const identifier = Boolean(metadata?.identifier?.trim());
+  const missing = [!title ? 'título' : '', !language ? 'idioma' : '',
+    !identifier ? 'identificador' : ''].filter(Boolean);
+  const nav = packageInfo?.version.startsWith('3')
+    ? packageInfo.navItem : packageInfo?.ncxItem ?? packageInfo?.navItem;
+  const navigationReady = Boolean(nav?.exists && nav.pathSafe &&
+    packageInfo?.spine.length && navIssues.length === 0);
+  const remote = packageInfo?.manifest.filter((item) =>
+    item.remote || /^https?:\/\//iu.test(item.href)) ?? [];
+  const missingResources = packageInfo?.manifest.filter((item) =>
+    !item.exists && !item.remote) ?? [];
+  const hasCover = Boolean(report.cover?.exists);
+  const coverDeclared = Boolean(report.cover?.declared);
+  const coverReady = hasCover && coverDeclared && imageIssues.length === 0;
+  const checks: KindleCheck[] = [];
+  const push = (label: string, status: KindleStatus, detail: string, action: string): void => {
+    checks.push({ label, status, ok: status === 'ready', detail, action });
+  };
+  push('Estrutura válida',
+    hasFatal ? 'blocked' : hasErrors ? 'review' : 'ready',
+    hasFatal ? 'O EPUB possui problema fatal ou ZIP inválido.' :
+      hasErrors ? report.stats.errorCount + ' erro(s) estrutural(is) identificado(s).' :
+        'Nenhum erro estrutural de gravidade alta detectado.',
+    'Valide e repare o arquivo antes de enviá-lo.');
+  push('Metadados essenciais',
+    !title || !language || !identifier || metadataIssues.length ? 'review' : 'ready',
+    missing.length ? 'Faltam: ' + missing.join(', ') + '.' :
+      metadataIssues.length ? metadataIssues.length + ' alerta(s) nos metadados.' :
+        'Título, idioma e identificador presentes.',
+    'Use o editor de metadados para preencher as informações ausentes.');
+  push('Capa reconhecida', coverReady ? 'ready' : 'review',
+    !hasCover ? 'Nenhuma imagem de capa reconhecida.' :
+      !coverDeclared ? 'Imagem identificada, mas sem declaração explícita como capa.' :
+        imageIssues.length ? imageIssues.length + ' alerta(s) relacionados à imagem da capa.' :
+          'Capa encontrada e declarada.',
+    'Confira a capa no relatório; se necessário, substitua ou repare a declaração.');
+  push('Navegação', navigationReady ? 'ready' : 'review',
+    !packageInfo?.spine.length ? 'Não há capítulos de leitura no spine.' :
+      !nav?.exists ? 'Sumário de navegação ausente ou inválido para a versão do EPUB.' :
+        navIssues.length ? navIssues.length + ' alerta(s) no sumário ou spine.' :
+          'Sumário de navegação e ordem de leitura identificados.',
+    'Confira a ordem dos capítulos e a navegação no relatório EPUB.');
+  push('Recursos e dependências',
+    missingResources.length ? 'review' : 'ready',
+    missingResources.length ? missingResources.length + ' recurso(s) do manifesto não encontrado(s).' :
+      'Referências locais do manifesto presentes.',
+    'Corrija imagens, estilos ou recursos ausentes antes do envio.');
+  push('Conteúdo externo ou ativo',
+    activeIssues.length || remote.length ? 'review' : 'ready',
+    remote.length ? remote.length + ' recurso(s) remoto(s) referenciado(s).' :
+      activeIssues.length ? activeIssues.length + ' alerta(s) de conteúdo ativo/segurança.' :
+        'Nenhum alerta relevante de conteúdo remoto ou ativo detectado.',
+    'Prefira conteúdos autossuficientes; revise dependências externas e scripts.');
+  const fileSizeOk = report.fileSize <= 200 * 1024 * 1024;
+  push('Tamanho para envio web', fileSizeOk ? 'ready' : 'blocked',
+    fileSizeOk ? 'O arquivo está abaixo do limite de referência de 200 MB.' :
+      'O arquivo ultrapassa o limite de referência de 200 MB.',
+    'Consulte o limite atualizado do Send to Kindle e reduza o arquivo se necessário.');
+  push('Alertas residuais', issue.length ? 'review' : 'ready',
+    issue.length ? issue.length + ' alerta(s)/erro(s) exigem avaliação.' :
+      'Nenhum alerta de severidade elevada encontrado.',
+    'Revise os avisos no relatório técnico, mesmo se os demais itens estiverem adequados.');
+  return checks;
 }
