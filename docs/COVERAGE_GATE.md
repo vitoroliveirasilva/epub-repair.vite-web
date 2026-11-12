@@ -1,30 +1,35 @@
-# Cobertura instrumentada de módulos EPUB críticos (E-095)
+# Cobertura instrumentada de módulos críticos (E-095)
 
-O workflow `.github/workflows/coverage.yml` roda em cada alteração de código/testes
-da `dev` e em PRs para `dev`/`prod`. Ele executa Vitest com provider V8
-**fixado na mesma versão do Vitest 4.1.12 instalada pelo lockfile**, instalado no runner isoladamente
-do lockfile principal.
+**Estado atual em 12/11/2026:** cobertura automatizada em `.github/workflows/coverage.yml` para cinco módulos específicos do motor EPUB. **Não** é um percentual global do projeto nem mede o conversor PDF por completo.
 
-Cinco arquivos críticos têm limiares mínimos individuais, configurados em
-`vitest.config.ts`: **88% de linhas, 85% de statements, 70% de branches,
-82% de funções**. Os valores foram elevados após medição da CI
-[42142342105](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42142342105):
-a menor cobertura entre módulos foi 90,41% de linhas, 74,73% de branches
-e 85,71% de funções. Aumentar os thresholds com novos testes.
+## Gatilhos corretos
 
-Arquivos monitorados: `pathUtils`, `rawZipInspector`, `validateNavigation`,
-`sanitizeActiveContent` e `preservationAudit`. O workflow falha se
-qualquer módulo monitorado cair abaixo do limite e publica as métricas
-no resumo do job e no artifact `epub-critical-coverage` por 14 dias.
+O workflow roda em **push `prod`**, **PR não draft para `prod`** com `paths` relevantes e **`workflow_dispatch`**. O YAML atual **não** executa o gate automaticamente em todo push `dev` ou PR para `dev`.
 
-**Limitações:** é cobertura de fluxo instrumentado, não prova de ausência
-de vulnerabilidades, desempenho ou funcionamento em e-readers. Os demais
-módulos da aplicação não fazem parte deste gate inicial. A publicação em
-produção continua condicionada a testes independentes e revisão de diff.
+O runner instala o app por `npm ci` e prepara `@vitest/coverage-v8@4.1.12` em harness separado para gerar o relatório V8. Consulte o workflow antes de mudar a versão do Vitest.
 
-## Evidência posterior ao endurecimento do gate
+## Limiares em `vitest.config.ts`
 
-O workflow aprovado [42143349561](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42143349561)
-confirma os thresholds elevados de cobertura com a versão V8 alinhada ao lockfile.
-Após testes adversariais adicionais, o gate permaneceu aprovado em
-[42144065795](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42144065795).
+| Métrica | Limiar individual |
+| --- | ---: |
+| Linhas | 88% |
+| Statements | 85% |
+| Branches | 70% |
+| Funções | 82% |
+
+Com `perFile: true`, cada módulo abaixo precisa satisfazer os limiares:
+
+- `src/epub/utils/pathUtils.ts`
+- `src/epub/reader/rawZipInspector.ts`
+- `src/epub/validation/validateNavigation.ts`
+- `src/epub/sanitize/sanitizeActiveContent.ts`
+- `src/epub/repair/preservationAudit.ts`
+
+A saída `coverage/coverage-summary.json` é processada por `scripts/report-coverage.mjs` e, quando disponível, publicada como artifact `epub-critical-coverage` por até **14 dias**.
+
+## Evidência histórica
+
+- [CI 42142342105](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42142342105): medição inicial que orientou elevação dos limiares.
+- [CI 42143349561](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42143349561) e [42144065795](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/runs/42144065795): confirmações daquela fase.
+
+Percentuais históricos de um commit não substituem o resultado do HEAD de uma PR nova. Cobertura alta não certifica segurança, fidelidade editorial ou compatibilidade Kindle/Apple Books. Veja [Qualidade e testes](QUALIDADE_TESTES.md).

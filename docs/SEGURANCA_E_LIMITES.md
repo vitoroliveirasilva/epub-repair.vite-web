@@ -1,5 +1,8 @@
 # Segurança, privacidade e limites do EPUB Repair
 
+> **Escopo ampliado em 12/11/2026:** além da validação/reparação EPUB, a aplicação possui `/converter`, que aceita PDF até 250 MB e usa PDF.js/Tesseract.js localmente. PDFs protegidos por senha/DRM não são desbloqueados. OCR pode falhar ou atingir timeouts; não confundir texto reconhecido com conteúdo validado editorialmente. Os assets `/ocr` são entregues pela mesma origem. O site não é antivírus, e scores internos não certificam ausência de código malicioso. Veja [Arquitetura](ARQUITETURA.md), [Conversor](CONVERSOR_PDF_EPUB.md) e [Deploy/CSP](DEPLOY_OPERACAO.md).
+
+
 ## Objetivo
 
 A aplicação valida e repara estruturas de EPUB **localmente no navegador**. O usuário escolhe

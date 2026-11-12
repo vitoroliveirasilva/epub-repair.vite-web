@@ -1,6 +1,8 @@
 # Processamento assíncrono e limites do Worker
 
-## Fluxo disponível na branch `dev`
+> **Estado em 12/11/2026:** o comportamento descrito está publicado em `prod`, não somente em `dev`. Os Workers de leitura/compactação ZIP usam `worker-src 'self'` na configuração atual. O conversor PDF usa seu próprio fluxo PDF.js/OCR; ver [Arquitetura](ARQUITETURA.md) e [Conversor](CONVERSOR_PDF_EPUB.md). As medições históricas abaixo continuam válidas apenas para seus ambientes de teste.
+
+## Fluxo do reparador EPUB (disponível em produção)
 
 1. O navegador mantém o arquivo original e as opções de reparo em estado local.
 2. A extração ZIP roda em um **Web Worker de mesma origem** quando o navegador
@@ -84,9 +86,7 @@ não foi homologada.
 - `tests/browser-resource-budget.mjs`: comportamento real até 250 MiB
   no Chromium com heartbeat e RSS de processos.
 
-Workers novos no navegador usam `worker-src 'self'`. A `dev` está
-configurada assim, mas a `prod` ainda tem `worker-src 'none'`, condizente
-com sua versão antiga: **não publicar código novo sem revisar junto a CSP**.
+A `prod` usa `worker-src 'self'` em `netlify.toml` desde as promoções posteriores às auditorias de 06/11. Sempre conferir o header HTTPS publicado ao alterar a CSP ou os Workers. A descrição anterior de `worker-src 'none'` referia-se à produção histórica v2.2.0, não à versão atual.
 
 **E-032/E-080 fechados no escopo de execução automatizada da aplicação;
 mobile físico, Netlify publicado e leitores Kindle permanecem como

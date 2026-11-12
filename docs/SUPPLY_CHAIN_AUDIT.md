@@ -1,5 +1,7 @@
 # Auditoria da cadeia de suprimentos (E-099)
 
+> **Atualização 12/11/2026:** os workflows de supply chain e de auditoria já estão na branch padrão `prod`. A antiga condição “entrará em vigor somente após promoção para prod” foi satisfeita. Disponibilidade de agendamento e sucesso de uma execução são coisas diferentes: confira o histórico real em GitHub Actions antes de afirmar que o scanner executou. Ver [CI econômica](CI_ECONOMICO.md) e [Deploy](DEPLOY_OPERACAO.md).
+
 Este repositório possui duas defesas independentes para dependências JavaScript:
 
 1. CI e `npm audit` + atualização automática Dependabot semanal.
@@ -24,9 +26,7 @@ comprova ausência de falhas inéditas.
 **Ativação da periodicidade:** a branch padrão é **`prod`**, e GitHub Actions
 executa cron **somente se o workflow estiver na branch padrão**. Na `dev` a
 verificação é executada por push e PR, e também pode ser disparada por
-`workflow_dispatch`. A agenda semanal de segunda-feira às 11:15 UTC
-entrará em vigor **somente após promoção aprovada para `prod`**.
-Não criar merge automático nem alterar produção para ativar cron.
+`workflow_dispatch`. O agendamento semanal de segunda-feira às 11:15 UTC está configurado no workflow da branch padrão `prod`. Não é necessário promover um workflow antigo para disponibilizar essa configuração. A execução efetiva de cada cron depende da plataforma GitHub Actions e deve ser confirmada no histórico.
 
 Não incluir SBOMs (com informações detalhadas sobre versões) no
 próprio código-fonte; os artefatos controlados ficam nas Actions.

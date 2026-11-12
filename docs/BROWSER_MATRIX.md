@@ -1,5 +1,8 @@
 # Matriz automatizada de browsers (E-089/E-082)
 
+> **Atualização 12/11/2026:** a matriz automatizada também cobre a rota PDF → EPUB (`tests/browser-converter.mjs`), menu móvel lateral em tela inteira (`dialog`), footer com quatro links, progresso contínuo e revisão avançada. O workflow `browser-matrix.yml` executa a matriz em PR pronta para `prod`, push `prod` e em push `dev` apenas com o marcador/filtros previstos, além de execução manual. WebKit Linux continua **não sendo Safari em iPhone físico**. Consulte [Qualidade e testes](QUALIDADE_TESTES.md) e [Estado atual](ESTADO_ATUAL.md).
+
+
 O workflow `.github/workflows/browser-matrix.yml` inicia o Vite localmente
 em Linux headless e executa o fluxo real em **Chromium, Firefox e WebKit**
 (desktop e viewport de 390 × 844 px). Playwright `1.55.1` é instalado

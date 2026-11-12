@@ -1,5 +1,8 @@
 # Auditoria ampliada de lacunas do EPUB Repair
 
+> **Arquivo histórico (05/11/2026, v2.2.0).** Este inventário contém hipóteses, riscos e observações sobre o commit indicado abaixo; não representa o estado atual de `prod`. Para recursos presentes hoje e pendências verificadas, consulte [Estado atual](ESTADO_ATUAL.md), [Changelog](../CHANGELOG.md) e [Índice documental](INDICE.md). Os 99 itens não são prova de ausência de defeitos futuros.
+
+
 **Data:** 05/11/2026  •  **Repositório:** https://github.com/vitoroliveirasilva/epub-repair.vite-web  •  **Commit auditado:** `bc9a6e7e9578429d64637906d7d271203d7bd29c` (prod/dev)  •  **Versão:** 2.2.0
 
 **Escopo e limitações:** inventário abrangente de anomalias determinadas por leitura estática, hipóteses para validação e capacidades futuras relevantes ao objetivo do reparador. Não é prova de que todo item é um defeito nem garantia de 100% de cobertura. O código foi lido pelo conector GitHub. Não foi alterado. A clonagem via terminal ficou indisponível por falha de DNS, portanto não foi possível executar nova bateria local, browsers ou EPUBCheck nesta auditoria. O histórico de chats foi recuperado por busca contextual, não por exportação literal integral de todas as conversas.

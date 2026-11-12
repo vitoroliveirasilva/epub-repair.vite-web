@@ -1,5 +1,8 @@
 # Matriz de formatos e validação
 
+> **Atualização 12/11/2026:** esta matriz descreve o **motor de validação e reparo EPUB**. O site também converte PDF → EPUB, com suporte a texto ajustável/layout fixo, imagens e OCR local, mas a qualidade depende da estrutura do PDF. A especificação do conversor e suas limitações estão em [Conversor PDF → EPUB](CONVERSOR_PDF_EPUB.md). Evidências de 06/11 abaixo são datadas e não certificam dispositivos físicos. Veja [Estado atual](ESTADO_ATUAL.md).
+
+
 A ferramenta tem foco em reparos **conservadores e verificáveis** de EPUB 2 e EPUB 3.
 A execução de EPUBCheck no CI valida duas fixtures sintéticas geradas pelo motor (EPUB 2 e 3), não todos os
 livros nem todos os recursos possíveis das especificações.

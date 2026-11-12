@@ -1,5 +1,7 @@
 # CSP e isolamento do EPUB no Netlify
 
+> **Atualização 12/11/2026:** a `prod` publica a mesma CSP versionada em `netlify.toml`, com `worker-src 'self'`. O valor atual de HSTS é somente `max-age=31536000` e o HTML usa cache revalidável; assets `/assets/*` são imutáveis. Ensaios de deploy-preview de 06/11 abaixo são **evidência histórica**, não o header atual de produção. Ver [Deploy](DEPLOY_OPERACAO.md).
+
 O app funciona localmente no navegador. O `netlify.toml` define as políticas
 HTTP de implantação, e `tests/netlifyCsp99.test.ts` verifica o contrato
 mínimo dessas diretivas na CI.
@@ -21,9 +23,7 @@ Agora `worker-src 'self'` permite exclusivamente Workers com scripts
 originados do próprio domínio. O arquivo `src/app/zipLoadWorker.ts` é
 empacotado pelo Vite como Worker estático, sem `blob:` em `worker-src`.
 
-A etapa de descompactação acontece no Worker quando suportado. A leitura de
-DOM/XML, o reempacotamento e a auditoria final ainda ocorrem no contexto
-principal. O suporte real em Safari/iOS e os headers de produção continuam
+A descompactação e a recompactação ZIP contam com Workers separados quando suportados. Parte da leitura DOM/XML, das verificações de conteúdo e da interface continua na thread principal. O suporte real em Safari/iOS e os headers de produção continuam
 sujeitos a homologação, inclusive a ausência de `unsafe-eval`.
 
 ## Regressão de CSP em browsers (execução 13)
@@ -72,7 +72,4 @@ O PR foi **fechado sem merge** após o teste. Com isso E-062 atende ao
 critério de verificação **em hospedagem efetiva** sem quebrar a política
 de preservar produção.
 
-Cuidado: `netlify.toml` da versão antiga em `prod` ainda declara
-`worker-src 'none'`, coerente com a versão v2.2.0. Para lançar
-o novo código em produção, a atualização de CSP deve acompanhar a
-publicação, com a aprovação do fluxo de release.
+**Atualização de publicação:** a referência a `worker-src 'none'` dizia respeito à antiga `prod` v2.2.0. Na `prod` atual o arquivo `netlify.toml` usa `worker-src 'self'`, e cada publicação deve ser conferida pela resposta HTTPS real. O teste histórico citado não substitui essa conferência.

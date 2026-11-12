@@ -1,5 +1,8 @@
 # Andamento da auditoria de 99 itens
 
+> **Registro histórico da auditoria (última execução original em 06/11/2026).** O saldo **97/99** e a menção à produção v2.2.0 abaixo pertencem àquela data. A release `v2.5.0` e melhorias subsequentes de PDF/UI foram publicadas depois. Não extrapolar as estatísticas para novos módulos; ver [Estado atual](ESTADO_ATUAL.md) e [Qualidade](QUALIDADE_TESTES.md). Este documento permanece como trilha de evidência, sem reclassificar itens sem novos testes.
+
+
 > Auditoria complementar E-100/E-101: a classificação original 97/99 é mantida separada de novos achados. Ver seção de correções pós-99 abaixo.
 
 **Última atualização:** 06/11/2026 (execução 20: 97/99, homologação mobile isolada por deploy-preview, automações nativas em implantação) · **Branch de trabalho:** `dev` · **Produção:** `prod` preservada na v2.2.0.

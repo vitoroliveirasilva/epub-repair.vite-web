@@ -1,85 +1,42 @@
-# Política de branches, CI e releases
+# Política atual de branches e promoção
 
-Estado consultado em 05/11/2026 por API do GitHub, repositório
-`vitoroliveirasilva/epub-repair.vite-web`.
+**Verificada em 12/11/2026:** repositório `vitoroliveirasilva/epub-repair.vite-web` com duas branches listadas pela API GitHub: `dev` e `prod`. A `prod` hospeda a aplicação pública; a `dev` recebe desenvolvimento.
 
-## Evidências atuais
+## Regras observadas
 
-- Ruleset **Protect prod** (ID `18459289`) ativo em `refs/heads/prod`.
-- O ruleset proíbe exclusão e reescrita de histórico de `prod`.
-- Para `prod`, exige PR e verificações **Quality gate / Node 20.x**
-  e **Quality gate / Node 22.x**, com política estrita de atualização.
-- O job **EPUBCheck 5.4.0** existe na CI, mas **não está listado como
-  status obrigatório do ruleset de `prod`**.
-- A enumeração pública de rulesets retornou apenas **Protect prod**:
-  não foi possível comprovar proteção de `dev` por ruleset.
-- A consulta específica a endpoints `branches/{branch}/protection`
-  retornou `403 Resource not accessible by integration` para ambas
-  as branches. Portanto, a ausência de proteção legada não pode ser
-  afirmada apenas a partir desta consulta.
-- A política de tags não foi confirmada por ruleset de tags.
-  Este estado de proteção foi observado em 05/11/2026; desde então,
-  a `prod` recebeu a release `v2.3.0` em 08/11/2026.
-  A candidata `v2.4.0` permanece exclusivamente na `dev`.
+- Ruleset ativo: **Protect prod**, ID `18459289`, publicado para a branch `prod`.
+- Auditoria anterior da API identificou bloqueios de exclusão/force push, requisito de PR e checks estritos **Quality gate / Node 20.x** e **Quality gate / Node 22.x** para `prod`.
+- A API pública de rulesets continua listando **Protect prod** em 12/11/2026. Essa consulta não permite afirmar que todos os controles administrativos/legacy protection sejam visíveis ou imutáveis.
+- A lista de branches consultada em 12/11/2026 contém **apenas `dev` e `prod`**. Dependabot pode criar branches temporárias futuras, dependendo da configuração e das regras de segurança.
+- As PRs #43–#54 foram integradas em `prod`; em 12/11/2026 não havia PRs abertas no resultado consultado.
+- A tag mais recente confirmada é `v2.5.0`. A produção recebeu commits posteriores sem gerar outra release versionada.
 
-## Política operacional observada
+## Fluxo recomendado
 
-Commits de desenvolvimento são feitos **somente em `dev`**, em nome do usuário
-conectado. Não empurrar automaticamente `dev` para `prod`. Antes de criar
-PR ou release, revisar o diff, obter aprovação explícita, executar CI
-completa, EPUBCheck e homologação de EPUBs reais.
+1. Desenvolver e commitar somente em **`dev`**, sem alterações diretas em `prod`.
+2. Revisar o diff, evitar dados privados e executar testes apropriados ao escopo.
+3. Abrir **PR `dev` → `prod`**, preferencialmente quando as mudanças relacionadas estiverem consolidadas; PR em draft não equivale a homologação.
+4. Conferir no commit candidato os checks obrigatórios Node 20/22 e, quando acionados/pertinentes, EPUBCheck, browsers, cobertura, Calibre, segurança e Netlify HTTPS.
+5. Obter a aprovação de publicação prevista pelo responsável e realizar merge sem force push.
+6. Verificar a CI e o deploy **no commit final de `prod`**; não afirmar que preview é produção.
+7. Registrar em `CHANGELOG.md` alterações de produto posteriores à última tag. Versionar pacote e notas de release apenas quando decidir lançar uma versão nova.
 
-## Proposta de proteção para aprovação humana
+## Releases e tags
 
-1. Proibir force-push e exclusão de `dev` sem impor PR obrigatório, pois
-   o fluxo solicitado aceita commits diretos em `dev`.
-2. Adicionar **EPUBCheck 5.4.0** aos status obrigatórios de `prod`
-   somente após confirmar o nome de contexto estável e validar um PR.
-3. Criar política específica para tags `v*` e releases, sem
-   sobrescrever tags históricas.
-4. Conferir as permissões efetivas em **Settings > Rules > Rulesets**,
-   pois as rotas de branch protection da integração não são legíveis.
+`.github/workflows/release.yml` publica a tag `vX.Y.Z` apenas após sucesso da CI no push em `prod`, quando o SHA validado ainda é HEAD e as versões de `package.json` e `package-lock.json` coincidem. Tag/release já existente não é republicada. O workflow por si só **não impõe imutabilidade de todas as tags via ruleset**.
 
-**Nenhuma regra de branch ou tag foi alterada nesta auditoria.** E-098
-permanece parcial até as proteções de `dev` e tags serem realmente
-confirmadas ou aplicadas com aprovação.
+Para impedir criação ou substituição manual indevida de tags por contas com permissão de escrita, o administrador precisa revisar um ruleset com alvo `tag`. A existência de um workflow protegido não substitui a regra no servidor.
 
-## Organização de branches verificada em 10/11/2026
+## Segurança operacional
 
-As branches permanentes do projeto são `dev` e `prod`. Existem também
-cinco branches temporárias de dependências abertas pelo Dependabot:
-`dependabot/npm_and_yarn/frontend-tooling-58b15aa916`,
-`dependabot/npm_and_yarn/vitest-5.1.0`,
-`dependabot/npm_and_yarn/jsdom-31.0.0`,
-`dependabot/github_actions/actions/setup-java-6` e
-`dependabot/github_actions/actions/upload-artifact-7`.
+- Não apagar `dev` nem `prod`, não forçar push e não sobrescrever tags históricas.
+- Para atualizar dependências, revisar PRs temporárias individualmente; evitar promover automaticamente mudanças major sem testes.
+- Verificar as regras em **Settings → Rules → Rulesets** antes de alterar proteção ou declarar que algo está proibido pela plataforma.
+- A integração GitHub usada na auditoria anterior não possuía permissão administrativa para ler alguns endpoints antigos (`403`); não inferir “branch desprotegida” apenas por esse erro.
+- Alterações documentais não exigem release/tag nem mudança de versão do pacote.
 
-As PRs #34, #35, #36, #38 e #39 ainda estão abertas, com base `prod`.
-A PR #37 liga `dev` a `prod` e permanece rascunho até homologação e
-aprovação explícita. Não encerrar essas PRs de dependências ou apagar suas
-branches enquanto houver alterações não examinadas, sobretudo mudanças
-major. Nenhuma atualização de dependências é promovida automaticamente.
+## Registro de contexto histórico
 
-O arquivo `.github/dependabot.yml` da `dev` passa a escolher
-`target-branch: dev` para *atualizações de versão*. O Dependabot lê sua
-configuração na branch padrão `prod`, portanto a mudança só entra em vigor
-depois de ser incorporada à `prod` por uma PR homologada. PRs existentes
-não mudam de destino automaticamente. **Atualizações de segurança** do
-Dependabot continuam visando a branch padrão por regra do GitHub.
+Em 05/11/2026, o repositório tinha produção v2.2.0; em 08/11, v2.3.0; em 10/11, a candidata v2.4.0 foi promovida; em 11/11, foi publicada a [v2.5.0](https://github.com/vitoroliveirasilva/epub-repair.vite-web/releases/tag/v2.5.0). Entre 11 e 12/11 foram incorporadas PRs #43–#54. Documentos `RELEASE_2_3_0_HOMOLOGACAO.md` e `RELEASE_2_4_0_CANDIDATA.md` registram procedimentos históricos, não pedidos de merge ainda pendentes.
 
-Fluxo seguro para manter somente duas branches de longa duração:
-1. Receber código funcional exclusivamente em `dev`.
-2. Analisar atualizações de dependências individualmente, testar e aceitar
-   na `dev` ou fechar motivadamente a PR; só então apagar a branch
-   temporária, quando não houver trabalho necessário não incorporado.
-3. Publicar de `dev` para `prod` somente pela PR de release pronta
-   para revisão e com todos os checks de homologação obrigatórios.
-4. Em GitHub Settings, considerar a opção de exclusão automática de branches
-   após merge, preservando `dev` e `prod` por proteção. Isso não impede
-   branches temporárias futuras do Dependabot.
-5. Se a exigência for possuir literalmente só duas branches em todos os
-   momentos, desativar as PRs automáticas de *versão*; isso reduz
-   monitoramento de dependências e não elimina as branches geradas por
-   atualizações de segurança habilitadas.
-
-Esta rodada não fez merge, não fechou PR e não excluiu branches.
+Links: [CI econômica](CI_ECONOMICO.md) · [Deploy](DEPLOY_OPERACAO.md) · [Política de tags](BRANCH_TAG_POLICY.md) · [Estado atual](ESTADO_ATUAL.md).

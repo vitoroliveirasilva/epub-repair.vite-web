@@ -1,5 +1,8 @@
 # Critérios de promoção para v2.3.0
 
+> **Arquivo de homologação histórico da v2.3.0 (novembro de 2026).** A preparação descrita abaixo não é uma instrução para a próxima publicação: a `v2.5.0` já foi lançada, e existem mudanças pós-release. Procedimento atual: [Deploy e operação](DEPLOY_OPERACAO.md), [Estado atual](ESTADO_ATUAL.md).
+
+
 Data de preparação: 08/11/2026. Branch de origem: `dev`. Destino: `prod`.
 
 ## Evidências antes da abertura da PR de release

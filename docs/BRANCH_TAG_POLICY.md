@@ -1,5 +1,7 @@
 # Política de branches, regras e release (E-098)
 
+> **Estado observado em 12/11/2026:** o ruleset público `Protect prod` permanece ativo, e a lista de branches exibiu apenas `dev` e `prod`. A release mais recente confirmada é `v2.5.0`. As verificações de 06/11 abaixo são históricos de configuração, não uma leitura administrativa integral feita hoje; consulte [Política de branches](BRANCH_POLICY.md) e [Deploy](DEPLOY_OPERACAO.md).
+
 ## O que existe, confirmado em 06/11/2026
 
 O ruleset **Protect prod** está ativo, id `18459289`,

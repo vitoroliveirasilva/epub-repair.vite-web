@@ -1,5 +1,7 @@
 # Homologação real em iPhone/iPad e Android (E-082 e E-089)
 
+> **Atualização 12/11/2026:** o projeto publica `v2.5.0` e mudanças posteriores. Testes de hardware físico ainda precisam de evidências próprias para E-082/E-089; adicionar o fluxo `/converter` à matriz manual quando houver alteração PDF/OCR. A prévia da PR #32 e a candidata v2.4.0 mencionadas abaixo são históricas. Veja [Estado atual](ESTADO_ATUAL.md).
+
 Estas verificações precisam ser feitas em **hardware físico**.
 WebKit Linux, Chromium com viewport de celular, Playwright e
 Xcode Simulator **não são prova** do comportamento em dispositivos
@@ -13,8 +15,7 @@ protegido de terceiros. Inclui EPUB 2, EPUB 3, sumário NCX hierárquico
 e exemplos reflowable/fixed. Faça download do artifact no GitHub Actions
 e extraia os arquivos no dispositivo, ou disponibilize-os por canal seguro.
 
-Use a URL do **deploy de homologação da dev**, nunca a produção v2.3.0
-para avaliar alterações que ainda não foram integradas. Registre o SHA
+Use a URL do **deploy-preview correspondente ao SHA candidato**, não uma produção de versão anterior, para avaliar alterações ainda não integradas. Registre o SHA
 exato servido pelo deploy de homologação e confirme a CSP hospedada.
 
 ## Safari no iPhone e iPad (E-082)
