@@ -68,6 +68,10 @@ try {
   await page.waitForTimeout(350);
   for (const width of [320, 390, 760]) {
     await page.setViewportSize({ width, height: 844 });
+    await page.waitForFunction(() => {
+      const dialog = document.querySelector('.mobile-navigation-dialog');
+      return dialog?.open && Math.abs(dialog.getBoundingClientRect().left) < 2;
+    }, undefined, { timeout: 4000 });
     const bounds = await drawer.evaluate((dialog) => {
       const rect = dialog.getBoundingClientRect();
       const panel = dialog.querySelector('.mobile-navigation-panel');

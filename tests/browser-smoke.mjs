@@ -181,6 +181,10 @@ async function scenario(browser, mobile) {
       await page.waitForTimeout(350);
       for (const width of [320, 360, 390, 430, 560, 760]) {
         await page.setViewportSize({ width, height: 760 });
+        await page.waitForFunction(() => {
+          const dialog = document.querySelector('.mobile-navigation-dialog');
+          return dialog?.open && Math.abs(dialog.getBoundingClientRect().left) < 2;
+        }, undefined, { timeout: 4000 });
         const metrics = await mobileMenu.evaluate((menu) => {
           const dialog = menu.querySelector('.mobile-navigation-dialog');
           const panel = menu.querySelector('.mobile-navigation-panel');
