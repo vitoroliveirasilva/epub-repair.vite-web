@@ -63,3 +63,12 @@ Manter documentação histórica e notas v3 intactas. Não rodar suites pesadas 
 - O alerta de página sem vínculo não afirma perda de texto: pode indicar sumário ou navegação técnica descartada intencionalmente. Deve ser conferido pelo usuário.
 - O checklist Kindle organiza oito categorias e orienta a próxima ação para pendências. Sem validação em dispositivo físico ou no serviço externo, não se declara compatibilidade certificada.
 - A documentação e os testes sintéticos não substituem EPUBCheck, amostras reais e homologação em navegadores/dispositivos.
+
+## Fidelidade PDF: cabeçalhos, numeração e ilustrações sem texto
+
+- Fragmentos curtos distantes na mesma linha do PDF deixam de ser unidos por causa do tamanho pequeno do texto. A reconstrução os conserva como linhas independentes para reduzir a mistura de células, colunas e números.
+- A detecção de cabeçalhos e rodapés recorrentes compara posição superior e inferior separadamente. O mesmo texto em posições alternadas não é automaticamente tratado como repetição.
+- Padrões de capítulos numerados e títulos editoriais são preservados mesmo quando aparecem repetidamente próximos à borda da página. Isso impede que "CAPÍTULO 1", "CAPÍTULO 2" etc. sejam considerados cabeçalhos duplicados apenas por normalização de dígitos.
+- Quando uma página fica sem linhas textuais após o filtro de numeração, ilustrações recuperadas continuam sendo incluídas na reconstrução, e seus recursos entram no XHTML e no manifesto do EPUB.
+- Cinco casos novos de regressão cobrem fragmentos curtos lado a lado, capítulos numerados, margens alternadas, páginas com apenas imagem após filtro e uma verificação EPUB final por ZIP, pacote e validação.
+- São correções conservadoras e não constituem equivalência visual com o PDF: preservar o layout de tabelas complexas continua exigindo conferência manual ou layout fixo.

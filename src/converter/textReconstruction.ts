@@ -38,10 +38,11 @@ export function reconstructDocument(
 ): ReconstructedDocument {
   const trailingNavigationStart = detectTrailingNavigationStart(pages);
   const contentPages = trailingNavigationStart >= 0 ? pages.slice(0, trailingNavigationStart) : pages;
-  const repeatedMarginLines = options.removeRepeatedMargins
+  const marginPatterns = options.removeRepeatedMargins
     ? detectRepeatedMarginLines(contentPages)
-    : [];
-  const repeated = new Set(repeatedMarginLines.map(normalizeMarginKey));
+    : { samples: [], keys: new Set<string>() };
+  const repeatedMarginLines = marginPatterns.samples;
+  const repeated = marginPatterns.keys;
   const warnings: ConversionWarning[] = [];
   const blocks: Block[] = [];
   const tocHeadings = extractTocHeadings(contentPages);
@@ -51,8 +52,8 @@ export function reconstructDocument(
     const filtered = ordered.filter((line) => {
       const text = normalizeSpaces(line.text);
       if (!text) return false;
-      const margin = line.y > page.height * 0.88 || line.y < page.height * 0.12;
-      if (margin && repeated.has(normalizeMarginKey(text))) return false;
+      const zone = marginZone(line.y, page.height);
+      if (zone && repeated.has(zone + ':' + normalizeMarginKey(text))) return false;
       const paginationMargin = line.y > page.height * 0.96 || line.y < page.height * 0.06;
       if (options.removePageNumbers && paginationMargin && PAGE_NUMBER.test(text)) return false;
       return true;
@@ -211,25 +212,45 @@ export function detectColumnCount(lines: PdfLine[], pageWidth: number): number {
   return left >= 5 && right >= 5 && spanning < candidates.length * 0.22 ? 2 : 1;
 }
 
-function detectRepeatedMarginLines(pages: PdfPageAnalysis[]): string[] {
+function marginZone(y: number, height: number): 'top' | 'bottom' | undefined {
+  if (!Number.isFinite(height) || height <= 0) return undefined;
+  if (y > height * 0.88) return 'top';
+  if (y < height * 0.12) return 'bottom';
+  return undefined;
+}
+
+function detectRepeatedMarginLines(pages: PdfPageAnalysis[]): {
+  samples: string[];
+  keys: Set<string>;
+} {
   const occurrences = new Map<string, { count: number; sample: string }>();
   for (const page of pages) {
     const pageKeys = new Set<string>();
     for (const line of page.lines) {
-      if (!(line.y > page.height * 0.88 || line.y < page.height * 0.12)) continue;
+      const zone = marginZone(line.y, page.height);
+      if (!zone) continue;
       const sample = normalizeSpaces(line.text);
-      const key = normalizeMarginKey(sample);
-      if (key.length < 3 || pageKeys.has(key) || PAGE_NUMBER.test(sample)) continue;
+      if (PAGE_NUMBER.test(sample) ||
+        CHAPTER_HEADING.test(sample) || EDITORIAL_HEADING.test(sample)) continue;
+      const name = normalizeMarginKey(sample);
+      const key = zone + ':' + name;
+      if (name.length < 3 || pageKeys.has(key)) continue;
       pageKeys.add(key);
       const current = occurrences.get(key);
-      occurrences.set(key, { count: (current?.count ?? 0) + 1, sample: current?.sample ?? sample });
+      occurrences.set(key, {
+        count: (current?.count ?? 0) + 1,
+        sample: current?.sample ?? sample,
+      });
     }
   }
   const threshold = Math.max(3, Math.ceil(pages.length * 0.35));
-  return [...occurrences.values()]
-    .filter((entry) => entry.count >= threshold)
-    .sort((a, b) => b.count - a.count)
-    .map((entry) => entry.sample);
+  const repeated = [...occurrences.entries()]
+    .filter(([, entry]) => entry.count >= threshold)
+    .sort((a, b) => b[1].count - a[1].count);
+  return {
+    samples: repeated.map(([, entry]) => entry.sample),
+    keys: new Set(repeated.map(([key]) => key)),
+  };
 }
 
 function orderLines(lines: PdfLine[], pageWidth: number, columnCount: number): PdfLine[] {
@@ -267,7 +288,7 @@ function linesToBlocks(
   tocHeadings: Map<number, string>,
   tocPage: boolean,
 ): Block[] {
-  if (lines.length === 0) return [];
+  if (lines.length === 0 && !(page.figures?.length)) return [];
   const sizes = lines.map((line) => line.fontSize).filter((size) => size > 0).sort((a, b) => a - b);
   const median = sizes[Math.floor(sizes.length / 2)] ?? 12;
   const bodyLeftCandidates = lines

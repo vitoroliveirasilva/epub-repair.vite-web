@@ -475,10 +475,9 @@ export function groupItemsIntoLines(items: PdfTextItem[]): PdfLine[] {
       const left = Math.min(...candidate.items.map((part) => part.x));
       const gap = item.x >= right ? item.x - right :
         left >= item.x + item.width ? left - item.x - item.width : 0;
-      const currentTextLength = candidate.items.reduce((total, part) =>
-        total + part.text.trim().length, 0);
-      return !(currentTextLength >= 10 &&
-        gap > Math.max(40, item.fontSize * 3.2));
+      const fontSize = Math.max(item.fontSize,
+        ...candidate.items.map((part) => part.fontSize));
+      return gap <= Math.max(44, fontSize * 3.2);
     });
     if (line) {
       line.items.push(item);
