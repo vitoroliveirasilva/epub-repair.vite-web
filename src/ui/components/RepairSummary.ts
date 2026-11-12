@@ -193,38 +193,65 @@ function renderResidualIssues(result: RepairResult): HTMLElement {
   const issues = result.after.issues.filter((item) =>
     item.severity === 'fatal' || item.severity === 'error' || item.severity === 'warning');
   const skipped = result.actions.filter((action) => action.type === 'skipped');
+  const manualCount = issues.filter((issue) => !issue.repairable).length;
   const details = el('details', {
     className: 'repair-pending-issues',
     attrs: { 'aria-label': 'Ações não aplicadas e problemas remanescentes' },
   });
   details.append(el('summary', {
-    text: 'Pendências restantes: ' + issues.length +
-      ' · ações não aplicadas: ' + skipped.length,
+    children: [
+      el('span', {
+        className: 'repair-pending-heading',
+        children: [
+          el('strong', { text: manualCount > 0 ? 'Conferência manual necessária' : 'Conferência do resultado' }),
+          el('small', { text: 'Pendências restantes: ' + issues.length +
+            ' · ações não aplicadas: ' + skipped.length }),
+        ],
+      }),
+      manualCount > 0 ? el('span', {
+        className: 'repair-pending-count badge badge-manual',
+        text: `${manualCount} ${manualCount === 1 ? 'manual' : 'manuais'}`,
+      }) : undefined,
+    ],
   }));
   const list = el('ul', { className: 'repair-pending-list' });
   for (const issue of issues) {
     list.append(el('li', {
+      className: `repair-pending-item repair-pending-item-${issue.severity}`,
       children: [
-        el('strong', { text: issue.code }),
-        issue.file ? el('code', { text: issue.file }) : undefined,
-        el('span', { text: issue.title }),
-        el('small', { text: issue.repairable
-          ? 'Ainda passível de tentativa automática'
-          : 'Exige revisão manual' }),
+        el('div', { className: 'repair-pending-item-heading', children: [
+          el('strong', { text: issue.title }),
+          el('span', {
+            className: issue.repairable ? 'badge badge-repairable' : 'badge badge-manual',
+            text: issue.repairable ? 'Correção automática possível' : 'Exige revisão manual',
+          }),
+        ] }),
+        el('div', { className: 'repair-pending-item-meta', children: [
+          el('code', { text: issue.code }),
+          issue.file ? el('code', { text: issue.file }) : undefined,
+        ] }),
+        el('p', { text: issue.detail }),
+        issue.context
+          ? el('small', { className: 'repair-pending-context', text: issue.context })
+          : undefined,
       ],
     }));
   }
   for (const action of skipped) {
     list.append(el('li', {
+      className: 'repair-pending-item repair-pending-item-skipped',
       children: [
         el('strong', { text: 'Não aplicado: ' + action.title }),
         action.file ? el('code', { text: action.file }) : undefined,
-        el('span', { text: action.detail }),
+        el('p', { text: action.detail }),
       ],
     }));
   }
   if (issues.length === 0 && skipped.length === 0) {
-    list.append(el('li', { text: 'Nenhum problema pendente ou ação pulada no relatório final.' }));
+    list.append(el('li', {
+      className: 'repair-pending-item repair-pending-item-empty',
+      text: 'Nenhum problema pendente ou ação pulada no relatório final.',
+    }));
   }
   details.append(list);
   return details;

@@ -4,6 +4,7 @@ import './styles/coverActions.css';
 import './styles/mobile.css';
 import './styles/layout-polish.css';
 import './styles/converter.css';
+import './styles/reportLayoutFixes.css';
 
 const root = document.querySelector<HTMLElement>('#app');
 

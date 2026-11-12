@@ -79,6 +79,7 @@ remoteManifestRegression99
 repairConsentPreview99
 repairPolicyRegression99
 residualIssues99
+reportLayoutRegression99
 singleLoadRepair99
 skippedActionsReport99
 specialZipPaths99
