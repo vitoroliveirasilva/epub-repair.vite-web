@@ -2,6 +2,7 @@
 
 ## v4.0.0 — desenvolvimento na dev (não lançada, 12/11/2026)
 
+- Corrige a leitura de PDFs em duas colunas com linhas na mesma altura, reorganiza títulos que atravessam a página e intercala ilustrações conforme a coluna. O revisor aponta grades tabulares que merecem conferência.
 - Revisor PDF ordena alertas por prioridade, exibe evidências e impede que a normalização de espaços destrua imagens ou formatação HTML.
 - Kindle oferece checklist de oito categorias com orientações específicas e distinção entre bloqueios e conferências.
 - Prévia preserva ênfases e elementos tipográficos básicos sem injetar HTML do EPUB; oferece anterior/próximo.

@@ -7,6 +7,7 @@ batchToolsV4
 readerInlineV4
 metadataDraftV4
 reviewKindleV4
+pdfColumnFidelityV4
 accessibilitySemantics99
 activeStructuralFalsePositive99
 adversarialHtml

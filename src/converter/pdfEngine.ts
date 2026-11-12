@@ -469,7 +469,17 @@ export function groupItemsIntoLines(items: PdfTextItem[]): PdfLine[] {
   const lines: Array<{ items: PdfTextItem[]; y: number }> = [];
   for (const item of sorted) {
     const tolerance = Math.max(2.5, item.fontSize * 0.42);
-    const line = lines.find((candidate) => Math.abs(candidate.y - item.y) <= tolerance);
+    const line = lines.find((candidate) => {
+      if (Math.abs(candidate.y - item.y) > tolerance) return false;
+      const right = Math.max(...candidate.items.map((part) => part.x + part.width));
+      const left = Math.min(...candidate.items.map((part) => part.x));
+      const gap = item.x >= right ? item.x - right :
+        left >= item.x + item.width ? left - item.x - item.width : 0;
+      const currentTextLength = candidate.items.reduce((total, part) =>
+        total + part.text.trim().length, 0);
+      return !(currentTextLength >= 10 &&
+        gap > Math.max(40, item.fontSize * 3.2));
+    });
     if (line) {
       line.items.push(item);
       line.y = (line.y * (line.items.length - 1) + item.y) / line.items.length;

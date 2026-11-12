@@ -25,6 +25,24 @@ function snippet(text: string, index = 0): string | undefined {
   return (start ? '…' : '') + clipped + (clean.length > start + MAX_EXCERPT ? '…' : '');
 }
 
+function hasLikelyTableGrid(page: PdfAnalysisResult['pages'][number]): boolean {
+  if (!Number.isFinite(page.width) || page.width <= 0) return false;
+  const cells = page.lines.slice(0, 400).filter((line) => line.text.trim().length > 0 &&
+    line.width > 0 && line.width < page.width * 0.3);
+  const rowCenters: Array<{ y: number; cells: typeof cells }> = [];
+  for (const cell of cells) {
+    const row = rowCenters.find((entry) => Math.abs(entry.y - cell.y) <=
+      Math.max(4, cell.fontSize * 0.45));
+    if (row) row.cells.push(cell);
+    else rowCenters.push({ y: cell.y, cells: [cell] });
+  }
+  return rowCenters.filter((row) => {
+    const x = [...new Set(row.cells.map((cell) => Math.round(cell.x / 20) * 20))]
+      .sort((a, b) => a - b);
+    return x.length >= 3 && x[x.length - 1]! - x[0]! >= page.width * 0.4;
+  }).length >= 3;
+}
+
 function relatedSection(sections: EditableSection[], pageNumber: number): number | undefined {
   const match = sections.findIndex((section) => section.sourcePages?.includes(pageNumber));
   return match >= 0 ? match : undefined;
@@ -59,6 +77,15 @@ export function analyzeReview(
         'Confiança estimada de ' + Math.round(confidence) +
           '%. Confira nomes, números, pontuação e acentos na página original.',
         confidence < 60 ? 'high' : 'medium', page.pageNumber, sectionIndex, sourceExcerpt,
+      ));
+    }
+    if (hasLikelyTableGrid(page)) {
+      findings.push(finding(
+        'TABLE_LAYOUT', 'Possível tabela com colunas e linhas',
+        'Foi identificada uma grade textual. O EPUB ajustável pode perder alinhamento, ' +
+          'cabeçalhos e associação entre células. Confira a página e considere layout fixo ' +
+          'para preservar a apresentação visual.',
+        'medium', page.pageNumber, sectionIndex, sourceExcerpt,
       ));
     }
     if (page.columnCount >= 2) {

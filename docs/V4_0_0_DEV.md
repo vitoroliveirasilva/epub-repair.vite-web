@@ -21,6 +21,15 @@
 | Editor de metadados | Edição opcional de título, autor principal, outros créditos (até 12 linhas), idioma, identificador principal, editora, data, descrição, assunto e série. O formulário mantém um rascunho local entre abas, só envia campos efetivamente alterados, permite descartar e não apaga a cópia exportada antes de uma nova edição. Mantém IDs, funções e refinamentos existentes, preserva identificadores secundários e sincroniza UID do NCX quando aplicável | Edição de funções MARC, múltiplos identificadores, refinamentos complexos e exclusão de crédito refinado continuam bloqueadas/pendentes. Campos vazios preservam informações; EPUB assinado é bloqueado |
 | Preparar para Kindle | Checklist local com oito verificações: estrutura, metadados, capa, navegação, arquivos internos, conteúdo remoto/ativo, tamanho e alertas gerais. Diferencia bloqueios de conferências e orienta como agir; link para Send to Kindle | Verificação indicativa, não valida aceitação pela Amazon nem a aparência no dispositivo. Limite de 200 MB apenas como referência sujeita a mudança. Não realiza envio, remoção de DRM ou conversão para AZW |
 
+## Reconstrução PDF com duas colunas e ilustrações
+
+- Fragmentos de texto que compartilham a mesma altura no PDF, mas estão separados por uma distância horizontal representativa, são mantidos como linhas distintas em vez de fundidos.
+- A ordem de leitura agrupa primeiro a coluna esquerda e depois a direita em cada faixa; elementos que atravessam quase toda a largura dividem as faixas. Transições de coluna encerram o parágrafo anterior.
+- Ilustrações em páginas de duas colunas são inseridas de acordo com a coluna e posição vertical, sem depender exclusivamente da coordenada Y geral da página.
+- O revisor PDF identifica possíveis grades tabulares com três ou mais colunas por linha em pelo menos três linhas. A detecção é apenas indicativa: o conversor ainda não gera HTML semântico de tabelas e o usuário deve conferir o resultado ou selecionar layout fixo.
+- Os novos testes reproduzem páginas sintéticas com colunas alinhadas horizontalmente, títulos intermediários de largura total, figuras na coluna direita, livro de uma coluna e diferenciação entre tabela e texto em duas colunas.
+- Ainda é necessária homologação com PDFs autorizados do mundo real, especialmente tabelas irregulares, páginas com mudanças complexas de colunas, figuras flutuantes e notas. O modo reflowable não garante correspondência perfeita de paginação.
+
 ## Critérios para considerar v4.0.0 pronta para lançamento
 
 1. CI de `dev` aprovada em Node 22, incluindo typecheck, lint, Vitest, build e auditoria.
