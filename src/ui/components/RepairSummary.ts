@@ -198,6 +198,7 @@ function renderResidualIssues(result: RepairResult): HTMLElement {
     className: 'repair-pending-issues',
     attrs: { 'aria-label': 'Ações não aplicadas e problemas remanescentes' },
   });
+  details.open = manualCount > 0 && issues.length + skipped.length <= 10;
   details.append(el('summary', {
     children: [
       el('span', {
