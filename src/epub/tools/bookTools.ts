@@ -128,6 +128,10 @@ export async function readBookPreview(
         findFirstByLocalName(body, 'h2')?.textContent?.trim() ||
         findFirstByLocalName(doc, 'title')?.textContent?.trim() || title;
     } catch {
+      const fallbackTitle = raw.match(/<h[1-3]\b[^>]*>([\s\S]*?)<\/h[1-3]>/iu)?.[1];
+      if (fallbackTitle) {
+        title = fallbackTitle.replace(/<[^>]*>/gu, '').replace(/&nbsp;/giu, ' ').trim() || title;
+      }
       plain = raw.replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu, ' ')
         .replace(/<style\b[^>]*>[\s\S]*?<\/style>/giu, ' ')
         .replace(/<[^>]*>/gu, ' ')
@@ -175,9 +179,19 @@ function updateMeta(metadata: Element, doc: Document, attr: 'name' | 'property',
   else current.textContent = value;
 }
 
+async function readBlobBytes(blob: Blob): Promise<Uint8Array> {
+  if (typeof blob.arrayBuffer === 'function') return new Uint8Array(await blob.arrayBuffer());
+  return new Promise<Uint8Array>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(new Uint8Array(reader.result as ArrayBuffer));
+    reader.onerror = () => reject(reader.error ?? new Error('Não foi possível ler o EPUB gerado.'));
+    reader.readAsArrayBuffer(blob);
+  });
+}
+
 export async function writeBookMetadata(
   fileName: string, bytes: Uint8Array, changes: Partial<BookMetadata>, signal?: AbortSignal,
-): Promise<{ fileName: string; blob: Blob; report: ValidationReport }> {
+): Promise<{ fileName: string; blob: Blob; bytes: Uint8Array; report: ValidationReport }> {
   const loaded = await loadEpub(fileName, bytes, undefined, signal);
   assertValid(loaded);
   if (loaded.files.has('META-INF/signatures.xml')) {
@@ -245,9 +259,10 @@ export async function writeBookMetadata(
   const blob = await rebuildEpubZip(files);
   if (signal?.aborted) throw new DOMException('Edição cancelada.', 'AbortError');
   const outputName = fileName.replace(/\.epub$/iu, '') + '-metadados.epub';
-  const report = await inspectEpub(outputName, new Uint8Array(await blob.arrayBuffer()));
+  const outputBytes = await readBlobBytes(blob);
+  const report = await inspectEpub(outputName, outputBytes);
   assertNoNewCriticalIssues(before, report);
-  return { fileName: outputName, blob, report };
+  return { fileName: outputName, blob, bytes: outputBytes, report };
 }
 
 export interface KindleCheck { label: string; ok: boolean; detail: string }

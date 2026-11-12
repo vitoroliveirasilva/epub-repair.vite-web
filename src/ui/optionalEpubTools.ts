@@ -205,7 +205,7 @@ function renderMetadata(state: AppState, s: Session, enqueue: Queue): HTMLElemen
     enqueue('Atualizar metadados EPUB', async ({ signal }) => {
       const result = await writeBookMetadata(payload.file.name, payload.bytes, changes, signal);
       s.export = { blob: result.blob, name: result.fileName,
-        bytes: new Uint8Array(await result.blob.arrayBuffer()), report: result.report };
+        bytes: result.bytes, report: result.report };
       s.sourcePreview = undefined;
       s.editedPreview = undefined;
       s.message = 'Nova cópia com metadados pronta para baixar. O arquivo de origem foi preservado.';

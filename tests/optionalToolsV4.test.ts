@@ -34,7 +34,7 @@ describe('v4 ferramentas opt-in', () => {
     await expect(writeBookMetadata('teste.epub', bytes, {})).rejects.toThrow('Nenhuma alteração');
     const result = await writeBookMetadata('teste.epub', bytes, { title: 'Edição segura' });
     expect(result.fileName).toBe('teste-metadados.epub');
-    const copy = new Uint8Array(await result.blob.arrayBuffer());
+    const copy = result.bytes;
     const updated = await readBookMetadata(result.fileName, copy);
     expect(updated.title).toBe('Edição segura');
     expect(meta.title).toBe('Fixture Kindle Safe');
