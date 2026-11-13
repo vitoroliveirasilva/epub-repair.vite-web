@@ -164,20 +164,34 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(readFileSync('src/main.ts', 'utf8')).toContain("import './styles/desktopNavbar.css';");
   });
 
-  it('exibe Lumina invertida com somente duas tintas e sem fundo no menu de tela inteira', () => {
-    for (const build of [createApp, createConverterApp]) {
+  it('usa um menu em tela cheia com dois planos cromáticos e Lumina fora dos blocos de navegação', () => {
+    for (const { build, currentHref, sectionCount } of [
+      { build: createApp, currentHref: '/', sectionCount: 3 },
+      { build: createConverterApp, currentHref: '/converter', sectionCount: 2 },
+    ]) {
       const root = document.createElement('div');
       document.body.append(root);
       build(root);
       const dialog = root.querySelector<HTMLDialogElement>('.mobile-navigation-dialog');
-      expect(dialog).not.toBeNull();
-      expect(dialog?.querySelector<HTMLImageElement>('.mobile-navigation-mascot')
-        ?.getAttribute('src')).toBe('/lumina-navbar-mobile.svg');
-      expect(dialog?.querySelector('.mobile-navigation-wordmark .brand-wordmark-repair')
-        ?.textContent).toBe('Repair');
-      expect(dialog?.querySelector('.mobile-navigation-close')).not.toBeNull();
-      expect(dialog?.querySelectorAll('.mobile-navigation-link').length)
-        .toBeGreaterThanOrEqual(4);
+      const panel = dialog?.querySelector<HTMLElement>('.mobile-navigation-panel');
+      const mascot = dialog?.querySelector<HTMLImageElement>('.mobile-navigation-mascot');
+      expect(dialog?.getAttribute('aria-label')).toBe('Menu de navegação');
+      expect(mascot?.getAttribute('src')).toBe('/lumina-navbar-mobile.svg');
+      expect(mascot?.getAttribute('aria-hidden')).toBe('true');
+      expect(dialog?.querySelector('.mobile-navigation-drawer')?.firstElementChild).toBe(mascot);
+      expect(panel?.querySelector('.mobile-navigation-hero-title')?.textContent).toBe('OLÁ, LEITOR.');
+      expect(panel?.querySelector('.mobile-navigation-collection')).not.toBeNull();
+      expect(panel?.querySelectorAll('.mobile-navigation-link-primary')).toHaveLength(2);
+      expect(panel?.querySelectorAll('.mobile-navigation-link-secondary')).toHaveLength(sectionCount);
+      expect(panel?.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+      expect(panel?.querySelector('[aria-current="page"]')?.getAttribute('href')).toBe(currentHref);
+      expect(dialog?.querySelector('.mobile-navigation-wordmark .brand-wordmark-repair')?.textContent)
+        .toBe('Repair');
+      expect(panel?.querySelectorAll('.mobile-navigation-group-label')).toHaveLength(2);
+      expect(panel?.querySelector('.mobile-navigation-footnote')?.textContent)
+        .toContain('Feito para quem lê.');
+      expect(root.querySelector('.mobile-navigation-trigger')?.getAttribute('aria-controls'))
+        .toBe('mobile-navigation-dialog');
       root.remove();
     }
     const image = readFileSync('public/lumina-navbar-mobile.svg', 'utf8');
@@ -186,13 +200,18 @@ describe('Identidade editorial no EPUB Repair', () => {
       .toEqual(new Set(['#194C3E', '#FBF4E9']));
     expect(image).not.toContain('<image');
     const css = readFileSync('src/styles/mobileNavigation.css', 'utf8');
-    expect(css).toContain('.mobile-navigation-mascot');
-    expect(css).toContain('pointer-events: none');
-    expect(css).toContain('@media (max-width: 760px)');
-    expect(css).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(css).toContain('--nav-paper: #f5efe3');
+    expect(css).toContain('--nav-forest: #103d30');
+    expect(css).toContain('--nav-orange: #b75c35');
+    expect(css).toContain('grid-template-rows: auto minmax(0, 1fr)');
+    expect(css).toContain('height: 100dvh');
+    expect(css).toContain('overflow-y: auto');
+    expect(css).toContain('env(safe-area-inset-top, 0px)');
+    expect(css).toContain('@media (max-height: 650px) and (max-width: 760px)');
+    expect(css).toContain('@media (prefers-reduced-motion: reduce) and (max-width: 760px)');
   });
 
-  it('abre e fecha o menu sem perder foco, inclusive ao escolher um link', () => {
+  it('abre, fecha e restaura foco no menu mobile ao escolher um link', () => {
     const root = document.createElement('div');
     document.body.append(root);
     createApp(root);
@@ -225,74 +244,6 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(dialog.open).toBe(false);
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
     root.remove();
-  });
-
-  it('organiza a mascote em uma área dedicada e mantém rolagem e cabeçalho independentes', () => {
-    for (const { build, activeHref, expectedSections } of [
-      { build: createApp, activeHref: '/', expectedSections: 3 },
-      { build: createConverterApp, activeHref: '/converter', expectedSections: 2 },
-    ]) {
-      const root = document.createElement('div');
-      document.body.append(root);
-      build(root);
-      const header = root.querySelector('.mobile-navigation-topbar');
-      const panel = root.querySelector('.mobile-navigation-panel');
-      const hero = panel?.querySelector('.mobile-navigation-hero');
-      expect(header?.querySelector('.mobile-navigation-close')).not.toBeNull();
-      expect(header?.contains(hero ?? null)).toBe(false);
-      expect(hero?.querySelector('.mobile-navigation-mascot')).not.toBeNull();
-      expect(hero?.querySelector('.mobile-navigation-hero-title')?.textContent).toBe('Próximapágina.');
-      expect(hero?.querySelector('.mobile-navigation-hello')).toBeNull();
-      expect(panel?.firstElementChild).toBe(hero);
-      expect(panel?.querySelectorAll('.mobile-navigation-link-primary')).toHaveLength(2);
-      expect(panel?.querySelectorAll('.mobile-navigation-link-secondary')).toHaveLength(expectedSections);
-      expect(panel?.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
-      expect(panel?.querySelector('[aria-current="page"]')?.getAttribute('href')).toBe(activeHref);
-      const trigger = root.querySelector('.mobile-navigation-trigger');
-      expect(trigger?.getAttribute('aria-controls')).toBe('mobile-navigation-dialog');
-      root.remove();
-    }
-    const css = readFileSync('src/styles/mobileNavigation.css', 'utf8');
-    expect(css).toContain('.mobile-navigation-hero');
-    expect(css).toContain('grid-template-rows: auto minmax(0, 1fr)');
-    expect(css).toContain('overflow-y: auto');
-    expect(css).toContain('height: 100dvh');
-    expect(css).toContain('env(safe-area-inset-top, 0px)');
-    expect(css).toContain('--mobile-copper: #b75c35');
-    expect(css).toContain('--mobile-copper: #e3a184');
-    expect(css).toContain('font-family: var(--mobile-serif)');
-    expect(css).toContain('@media (max-height: 660px) and (max-width: 760px)');
-    expect(readFileSync('src/main.ts', 'utf8')).toMatch(
-      /import '\.\/styles\/desktopNavbar\.css';\s*import '\.\/styles\/mobileNavigation\.css';/u,
-    );
-  });
-
-  it('separa os destinos por linhas editoriais sem cards, preservando acessibilidade', () => {
-    for (const { build, currentHref } of [
-      { build: createApp, currentHref: '/' },
-      { build: createConverterApp, currentHref: '/converter' },
-    ]) {
-      const root = document.createElement('div');
-      document.body.append(root);
-      build(root);
-      const dialog = root.querySelector<HTMLDialogElement>('.mobile-navigation-dialog');
-      const links = [...(dialog?.querySelectorAll<HTMLAnchorElement>('.mobile-navigation-link') ?? [])];
-      expect(dialog?.getAttribute('aria-label')).toBe('Menu de navegação');
-      expect(dialog?.querySelector('.mobile-navigation-brand .brand-wordmark')).not.toBeNull();
-      expect(links.length).toBeGreaterThanOrEqual(4);
-      expect(links.filter((link) => link.getAttribute('aria-current') === 'page')).toHaveLength(1);
-      expect(links.find((link) => link.getAttribute('aria-current') === 'page')?.getAttribute('href'))
-        .toBe(currentHref);
-      expect(dialog?.querySelectorAll('.mobile-navigation-group-label')).toHaveLength(2);
-      expect(dialog?.querySelector('.mobile-navigation-footnote')?.textContent)
-        .toContain('Feito para boas leituras');
-      root.remove();
-    }
-    const css = readFileSync('src/styles/mobileNavigation.css', 'utf8');
-    expect(css).toContain('border-bottom: 1px solid var(--mobile-rule)');
-    expect(css).toContain('.mobile-navigation-link[aria-current="page"]::before');
-    expect(css).toContain('repeating-linear-gradient');
-    expect(css).toContain('@media (prefers-reduced-motion: reduce)');
   });
 
   it('exibe métricas reais apenas no relatório após analisar o arquivo carregado', async () => {
