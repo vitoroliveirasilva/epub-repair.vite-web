@@ -70,9 +70,8 @@ async function convertProgressiveJpegToBaseline(
   canvas.width = width;
   canvas.height = height;
 
-  let context: CanvasRenderingContext2D | null = null;
   try {
-    context = canvas.getContext('2d', { alpha: false });
+    const context = canvas.getContext('2d', { alpha: false });
     if (!context) return undefined;
     context.drawImage(image, 0, 0, width, height);
   } catch {
@@ -80,12 +79,16 @@ async function convertProgressiveJpegToBaseline(
   }
 
   const outputBlob = await new Promise<Blob | null>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Conversão de imagem cancelada.', 'AbortError'));
+      return;
+    }
     let finished = false;
-    let timeout: number | undefined;
+    const timeout = window.setTimeout(() => done(null), IMAGE_DECODE_TIMEOUT_MS);
     function done(result: Blob | null): void {
       if (finished) return;
       finished = true;
-      if (timeout !== undefined) clearTimeout(timeout);
+      clearTimeout(timeout);
       signal?.removeEventListener('abort', abort);
       resolve(result);
     }
@@ -96,12 +99,11 @@ async function convertProgressiveJpegToBaseline(
       signal?.removeEventListener('abort', abort);
       reject(new DOMException('Conversão de imagem cancelada.', 'AbortError'));
     }
+    signal?.addEventListener('abort', abort, { once: true });
     if (signal?.aborted) {
       abort();
       return;
     }
-    signal?.addEventListener('abort', abort, { once: true });
-    timeout = window.setTimeout(() => done(null), IMAGE_DECODE_TIMEOUT_MS);
     try {
       canvas.toBlob(done, 'image/jpeg', 0.92);
     } catch {
@@ -139,12 +141,16 @@ async function loadImage(
     const image = new Image();
     image.decoding = 'async';
     return await new Promise<HTMLImageElement | undefined>((resolve, reject) => {
+      if (signal?.aborted) {
+        reject(new DOMException('Conversão de imagem cancelada.', 'AbortError'));
+        return;
+      }
       let finished = false;
-      let timeout: number | undefined;
+      const timeout = window.setTimeout(() => done(), IMAGE_DECODE_TIMEOUT_MS);
       function done(result?: HTMLImageElement): void {
         if (finished) return;
         finished = true;
-        if (timeout !== undefined) clearTimeout(timeout);
+        clearTimeout(timeout);
         image.onload = null;
         image.onerror = null;
         signal?.removeEventListener('abort', abort);
@@ -159,12 +165,11 @@ async function loadImage(
         signal?.removeEventListener('abort', abort);
         reject(new DOMException('Conversão de imagem cancelada.', 'AbortError'));
       }
+      signal?.addEventListener('abort', abort, { once: true });
       if (signal?.aborted) {
         abort();
         return;
       }
-      signal?.addEventListener('abort', abort, { once: true });
-      timeout = window.setTimeout(() => done(), IMAGE_DECODE_TIMEOUT_MS);
       image.onload = () => done(image);
       image.onerror = () => done();
       try {
