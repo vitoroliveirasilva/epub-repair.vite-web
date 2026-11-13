@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { buildKindleIssueEpub } from './helpers/syntheticEpub';
 import { processEpubBatch, MAX_BATCH_FILES, MAX_BATCH_BYTES,
   type BatchFileProgress } from '../src/epub/tools/batchProcessor';
@@ -7,6 +7,18 @@ import { addBatchSelection } from '../src/epub/tools/batchSelection';
 import { renderUploader } from '../src/ui/components/Uploader';
 import { openBatchWithFiles, renderOptionalEpubTools } from '../src/ui/optionalEpubTools';
 import { createInitialState } from '../src/app/state';
+
+beforeAll(() => {
+  if (typeof Blob.prototype.arrayBuffer === 'function') return;
+  Blob.prototype.arrayBuffer = function (): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = () => reject(reader.error ?? new Error('Blob ilegível'));
+      reader.readAsArrayBuffer(this);
+    });
+  };
+});
 
 async function blobData(blob: Blob): Promise<Uint8Array> {
   if (typeof blob.arrayBuffer === 'function') return new Uint8Array(await blob.arrayBuffer());
