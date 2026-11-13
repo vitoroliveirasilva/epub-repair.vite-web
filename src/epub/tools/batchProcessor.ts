@@ -190,9 +190,30 @@ export async function processEpubBatch(
           let resultName = file.name;
           if (canRepairReport(final, DEFAULT_REPAIR_OPTIONS)) {
             notify('repairing', 'Corrigindo estrutura, conteúdo e navegação');
-            const result = await repairEpub(resultName, resultBytes,
-              DEFAULT_REPAIR_OPTIONS, 'repair', undefined, signal);
+            let result;
+            try {
+              result = await repairEpub(resultName, resultBytes,
+                DEFAULT_REPAIR_OPTIONS, 'repair', undefined, signal);
+            } catch (error) {
+              checkCanceled(signal);
+              notify('repairing', 'Tentando reparo conservador para preservar o livro');
+              result = await repairEpub(resultName, resultBytes,
+                { ...DEFAULT_REPAIR_OPTIONS, conservativeMode: true },
+                'repair', undefined, signal);
+              warnings.push('O reparo completo não pôde ser aplicado. ' +
+                'Foi utilizado o modo conservador: ' +
+                (error instanceof Error ? error.message.slice(0, 180)
+                  : 'a validação impediu a primeira tentativa.'));
+            }
             checkCanceled(signal);
+            if (!result.changed) {
+              notify('repairing', 'Verificando alternativa de reparo conservador');
+              const conservative = await repairEpub(resultName, resultBytes,
+                { ...DEFAULT_REPAIR_OPTIONS, conservativeMode: true },
+                'repair', undefined, signal);
+              checkCanceled(signal);
+              if (conservative.changed) result = conservative;
+            }
             final = result.after;
             repairActions.push(...result.actions);
             repairsApplied += appliedCount(result.actions);

@@ -155,7 +155,8 @@ describe('Lotes limitados e isolados', () => {
     }, { mode: 'repair', includeOptimizations: true });
     expect(result.mode).toBe('repair');
     expect(result.entries).toHaveLength(2);
-    expect(result.entries.every((entry) => entry.changed && Boolean(entry.output))).toBe(true);
+    expect(result.entries.every((entry) => entry.changed && Boolean(entry.output)),
+      JSON.stringify(result.entries)).toBe(true);
     expect(result.entries.every((entry) => entry.repairsApplied > 0)).toBe(true);
     expect(stages.filter((stage) => stage === 'repairing')).toHaveLength(2);
     const zip = await JSZip.loadAsync(await blobData(result.zip));
@@ -188,7 +189,7 @@ describe('Lotes limitados e isolados', () => {
       epub(bytes, 'corrigivel.epub'),
       epub(new TextEncoder().encode('não é um zip'), 'quebrado.epub'),
     ], undefined, undefined, { mode: 'repair' });
-    expect(result.entries[0]?.changed).toBe(true);
+    expect(result.entries[0]?.changed, JSON.stringify(result.entries)).toBe(true);
     expect(result.entries[0]?.output).toBeTruthy();
     expect(result.entries[1]?.output).toBeUndefined();
     expect(['recusado', 'falhou']).toContain(result.entries[1]?.status);
