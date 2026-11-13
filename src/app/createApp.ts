@@ -20,6 +20,7 @@ import { renderRepairSummary } from '../ui/components/RepairSummary';
 import { renderUploader } from '../ui/components/Uploader';
 import { button, downloadBlob, el } from '../ui/dom';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
+import { renderBrandName } from '../ui/brand';
 import { openBatchWithFiles, renderOptionalEpubTools } from '../ui/optionalEpubTools';
 import { abortProcessingError } from './zipWorkerClient';
 import { SerialTaskQueue } from './taskQueue';
@@ -314,7 +315,7 @@ function renderAppHeader(): HTMLElement {
       el('a', {
         className: 'brand-mark',
         attrs: { href: '/', 'aria-label': 'EPUB Repair, início' },
-        children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })],
+        children: [renderLogoSymbol(), renderBrandName()],
       }),
       el('nav', {
         className: 'header-nav',
@@ -332,7 +333,7 @@ function renderAppHeader(): HTMLElement {
         children: [
           renderThemeToggle(),
           el('a', {
-            className: 'btn btn-primary btn-small',
+            className: 'btn btn-primary btn-small nav-primary-action',
             text: 'Validar EPUB',
             attrs: { href: '#upload' },
           }),
@@ -492,7 +493,7 @@ function renderFooter(): HTMLElement {
               el('a', {
                 className: 'footer-brand',
                 attrs: { href: '#top', 'aria-label': 'EPUB Repair, voltar ao início' },
-                children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })],
+                children: [renderLogoSymbol(), renderBrandName()],
               }),
             ],
           }),
@@ -547,7 +548,7 @@ function renderLogoSymbol(): HTMLElement {
 function renderThemeToggle(): HTMLElement {
   const currentTheme = getCurrentTheme();
   const toggle = el('button', {
-    className: 'theme-toggle',
+    className: 'theme-toggle nav-theme-toggle',
     attrs: { type: 'button', 'aria-label': 'Alternar tema claro e escuro' },
     children: [
       el('span', { attrs: { 'aria-hidden': 'true' } }),

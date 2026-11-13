@@ -1,4 +1,5 @@
 import { el } from './dom';
+import { renderBrandName } from './brand';
 
 export type MobileNavigationPage = 'repair' | 'converter';
 
@@ -51,13 +52,24 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
       el('div', {
         className: 'mobile-navigation-drawer',
         children: [
+          el('img', {
+            className: 'mobile-navigation-mascot',
+            attrs: {
+              src: '/lumina-navbar-mobile.svg',
+              alt: '',
+              width: '260',
+              height: '260',
+              decoding: 'async',
+              'aria-hidden': 'true',
+            },
+          }),
           el('div', {
             className: 'mobile-navigation-topbar',
             children: [
               el('div', {
                 className: 'mobile-navigation-brand',
                 children: [
-                  el('strong', { text: 'EPUB Repair' }),
+                  el('strong', { className: 'mobile-navigation-wordmark', children: [renderBrandName()] }),
                   el('small', { text: 'Navegação' }),
                 ],
               }),

@@ -8,6 +8,7 @@ import './styles/reportLayoutFixes.css';
 import './styles/mobileNavigation.css';
 import './styles/optionalTools.css';
 import './styles/editorialIdentity.css';
+import './styles/navbarRefinement.css';
 
 const root = document.querySelector<HTMLElement>('#app');
 

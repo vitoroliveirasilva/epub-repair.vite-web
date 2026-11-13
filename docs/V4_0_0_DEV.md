@@ -153,3 +153,12 @@ Manter documentação histórica e notas v3 intactas. Não rodar suites pesadas 
 - O reparo EPUB usa agora um layout de conteúdo de coluna única. As opções de reparo continuam funcionando, mas aparecem em **Configurações de reparo**, um painel inicialmente recolhido; o estado de expansão permanece após alterar uma opção e rerenderizar a tela.
 - O conversor removeu os quatro cartões promocionais da abertura e apresenta um título curto, descrição objetiva e acesso direto à escolha de PDF. Diagnóstico, edição, revisão, conversão e download continuam abaixo, sem alterações nos motores.
 - Sem alterações em políticas de segurança, motor de reparo, opções padrão ou formatos de saída. Regressões de visual e formulário cobertas em `tests/heroPreviewFactualScore.test.ts`; homologação manual de telas reais ainda recomendada.
+
+## Navbar editorial, identidade da marca e Lumina mobile
+
+- O nome da marca na navbar e nos rodapés possui duas partes com cores distintas: `EPUB` conserva a cor do texto e `Repair` utiliza cobre `#B75C35`, exatamente a tinta do ícone de livros.
+- A navegação de desktop ganhou hover com realce sutil e sublinhado cobre, foco visível por teclado e estado ativo para a página correspondente.
+- Os dois controles da direita (tema e ação principal) ganharam superfícies e estados de hover/foco próprios. O tema permanece funcional e o botão principal preserva o destino da tela EPUB ou PDF.
+- No celular, o menu continua ocupando `100dvh`. A mascote enviada pelo usuário, de cabeça para baixo e acenando, aparece presa à borda superior do menu, sem receber eventos de clique e sem bloquear os controles.
+- A mascote de celular foi vetorizada a partir do PNG original com transparência, preservando a pose e restringindo a arte a duas tintas exatas: verde `#194C3E` e creme `#FBF4E9`. O arquivo `public/lumina-navbar-mobile.svg` não tem plano de fundo nem dependência externa.
+- O arquivo `src/styles/navbarRefinement.css`, importado por último, concentra os estilos da navbar. Os layouts estreitos (incluindo telas abaixo de 390 px), a área segura do celular, a rolagem interna e o respeito a movimento reduzido foram considerados. Os motores EPUB/PDF e a branch `prod` não foram alterados.

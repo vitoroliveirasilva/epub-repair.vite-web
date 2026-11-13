@@ -4,6 +4,7 @@ import type { ConverterState, EditableSection, PdfAnalysisResult } from './model
 import { analyzePdf, renderPdfPagePreview } from './pdfEngine';
 import { button, downloadBlob, el, formatBytes } from '../ui/dom';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
+import { renderBrandName } from '../ui/brand';
 import { buildReviewAudit, exportReviewAudit, reviewFindingKey,
   normalizeSectionSpaces, type ReviewFinding } from './reviewSuggestions';
 
@@ -95,7 +96,7 @@ function renderHeader(): HTMLElement {
       el('a', {
         className: 'brand-mark',
         attrs: { href: '/', 'aria-label': 'EPUB Repair, início' },
-        children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })],
+        children: [renderLogoSymbol(), renderBrandName()],
       }),
       el('nav', {
         className: 'header-nav',
@@ -111,7 +112,7 @@ function renderHeader(): HTMLElement {
       el('div', {
         className: 'header-actions',
         children: [renderThemeToggle(), el('a', {
-          className: 'btn btn-primary btn-small',
+          className: 'btn btn-primary btn-small nav-primary-action',
           text: 'Selecionar PDF',
           attrs: { href: '#pdf-upload' },
         })],
@@ -1213,7 +1214,7 @@ function howCard(number: string, title: string, detail: string): HTMLElement {
 function renderFooter(): HTMLElement {
   return el('footer', { className: 'footer app-footer', children: [
     el('div', { className: 'footer-main', children: [
-      el('a', { className: 'footer-brand', attrs: { href: '/' }, children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })] }),
+      el('a', { className: 'footer-brand', attrs: { href: '/' }, children: [renderLogoSymbol(), renderBrandName()] }),
       el('nav', { className: 'footer-links', attrs: { 'aria-label': 'Links de navegação e projeto' }, children: [
         el('a', { text: 'Desenvolvedor', attrs: { href: 'https://github.com/vitoroliveirasilva', target: '_blank', rel: 'noreferrer noopener' } }),
         el('a', { text: 'Projeto no GitHub', attrs: { href: 'https://github.com/vitoroliveirasilva/epub-repair.vite-web', target: '_blank', rel: 'noreferrer noopener' } }),
@@ -1243,7 +1244,7 @@ function renderLogoSymbol(): HTMLElement {
 }
 
 function renderThemeToggle(): HTMLElement {
-  const toggle = el('button', { className: 'theme-toggle', attrs: { type: 'button', 'aria-label': 'Alternar tema claro e escuro' }, children: [
+  const toggle = el('button', { className: 'theme-toggle nav-theme-toggle', attrs: { type: 'button', 'aria-label': 'Alternar tema claro e escuro' }, children: [
     el('span', { attrs: { 'aria-hidden': 'true' } }),
     el('strong', { text: currentTheme() === 'dark' ? 'Escuro' : 'Claro' }),
   ] });

@@ -1,6 +1,7 @@
 # Histórico de mudanças do EPUB Repair
 
 ## v4.0.0 — desenvolvimento na dev (não lançada, 12/11/2026)
+- Navbar editorial refinada nas duas telas: nome EPUB/Repair com cobre do ícone, hover com sublinhado, tema e ação principal redesenhados; menu mobile fullscreen com Lumina invertida vetorial, transparente e em duas tintas.
 - Refinamento minimalista do tema editorial nas duas telas: cards com bordas sutis, hierarquia tipográfica enxuta e menos efeitos visuais. Configurações avançadas EPUB ficam recolhidas por padrão, sem painel lateral; a abertura do PDF deixa de exibir cartões promocionais redundantes.
 - Nova direção editorial na página de reparo com Lumina, hero simplificada sem cartões de benefícios e navegação superior; ícone de livros personalizado na navbar e favicon das duas telas.
 

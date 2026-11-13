@@ -87,6 +87,58 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
   });
 
+  it('aplica as cores da marca e os dois controles da direita nas duas navbars', () => {
+    for (const build of [createApp, createConverterApp]) {
+      const root = document.createElement('div');
+      document.body.append(root);
+      build(root);
+      const brand = root.querySelector('.app-header .brand-wordmark');
+      expect(brand?.querySelector('.brand-wordmark-epub')?.textContent).toBe('EPUB');
+      expect(brand?.querySelector('.brand-wordmark-repair')?.textContent).toBe('Repair');
+      expect(root.querySelector('.app-header .nav-theme-toggle')).not.toBeNull();
+      expect(root.querySelector('.app-header .nav-primary-action')).not.toBeNull();
+      expect(root.querySelectorAll('.app-header .header-nav a').length)
+        .toBeGreaterThanOrEqual(4);
+      root.remove();
+    }
+    const css = readFileSync('src/styles/navbarRefinement.css', 'utf8');
+    expect(css).toContain('.brand-wordmark-repair');
+    expect(css).toContain('color: #b75c35');
+    expect(css).toContain('.app-header .header-nav a:hover::after');
+    expect(css).toContain('.app-header .nav-primary-action:hover');
+    expect(css).toContain('.app-header .nav-theme-toggle:hover');
+    expect(readFileSync('src/main.ts', 'utf8'))
+      .toContain("import './styles/navbarRefinement.css';");
+  });
+
+  it('exibe Lumina invertida com somente duas tintas e sem fundo no menu de tela inteira', () => {
+    for (const build of [createApp, createConverterApp]) {
+      const root = document.createElement('div');
+      document.body.append(root);
+      build(root);
+      const dialog = root.querySelector<HTMLDialogElement>('.mobile-navigation-dialog');
+      expect(dialog).not.toBeNull();
+      expect(dialog?.querySelector<HTMLImageElement>('.mobile-navigation-mascot')
+        ?.getAttribute('src')).toBe('/lumina-navbar-mobile.svg');
+      expect(dialog?.querySelector('.mobile-navigation-wordmark .brand-wordmark-repair')
+        ?.textContent).toBe('Repair');
+      expect(dialog?.querySelector('.mobile-navigation-close')).not.toBeNull();
+      expect(dialog?.querySelectorAll('.mobile-navigation-link').length)
+        .toBeGreaterThanOrEqual(4);
+      root.remove();
+    }
+    const image = readFileSync('public/lumina-navbar-mobile.svg', 'utf8');
+    expect(image).toContain('viewBox="0 0 1254 1254"');
+    expect(new Set(image.match(/#[a-fA-F0-9]{6}/gu)))
+      .toEqual(new Set(['#194C3E', '#FBF4E9']));
+    expect(image).not.toContain('<image');
+    const css = readFileSync('src/styles/navbarRefinement.css', 'utf8');
+    expect(css).toContain('.mobile-navigation-mascot');
+    expect(css).toContain('pointer-events: none');
+    expect(css).toContain('@media (max-width: 760px)');
+    expect(css).toContain('@media (prefers-reduced-motion: reduce)');
+  });
+
   it('exibe métricas reais apenas no relatório após analisar o arquivo carregado', async () => {
     const root = document.createElement('div');
     document.body.append(root);
