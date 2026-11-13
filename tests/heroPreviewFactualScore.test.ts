@@ -143,7 +143,7 @@ describe('Identidade editorial no EPUB Repair', () => {
       const indicator = nav?.querySelector<HTMLElement>('.header-nav-indicator');
       const links = nav?.querySelectorAll<HTMLAnchorElement>('a');
       expect(indicator?.getAttribute('aria-hidden')).toBe('true');
-      expect(links?.length).toBe(4);
+      expect(links?.length).toBe(build === createApp ? 5 : 4);
       expect(nav?.classList.contains('header-nav-indicator-visible')).toBe(false);
       links?.[0]?.dispatchEvent(new Event('pointerenter'));
       expect(nav?.classList.contains('header-nav-indicator-visible')).toBe(true);
@@ -185,11 +185,82 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(new Set(image.match(/#[a-fA-F0-9]{6}/gu)))
       .toEqual(new Set(['#194C3E', '#FBF4E9']));
     expect(image).not.toContain('<image');
-    const css = readFileSync('src/styles/navbarRefinement.css', 'utf8');
+    const css = readFileSync('src/styles/mobileNavigation.css', 'utf8');
     expect(css).toContain('.mobile-navigation-mascot');
     expect(css).toContain('pointer-events: none');
     expect(css).toContain('@media (max-width: 760px)');
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
+  });
+
+  it('abre e fecha o menu sem perder foco, inclusive ao escolher um link', () => {
+    const root = document.createElement('div');
+    document.body.append(root);
+    createApp(root);
+    const trigger = root.querySelector<HTMLButtonElement>('.mobile-navigation-trigger')!;
+    const dialog = root.querySelector<HTMLDialogElement>('.mobile-navigation-dialog')!;
+    const closeButton = root.querySelector<HTMLButtonElement>('.mobile-navigation-close')!;
+    Object.defineProperty(dialog, 'showModal', {
+      configurable: true,
+      value: () => { dialog.setAttribute('open', ''); },
+    });
+    Object.defineProperty(dialog, 'close', {
+      configurable: true,
+      value: () => {
+        dialog.removeAttribute('open');
+        dialog.dispatchEvent(new Event('close'));
+      },
+    });
+    trigger.click();
+    expect(dialog.open).toBe(true);
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(closeButton);
+    closeButton.click();
+    expect(dialog.open).toBe(false);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(trigger);
+    trigger.click();
+    const internalLink = dialog.querySelector<HTMLAnchorElement>('a[href="#privacy"]')!;
+    internalLink.addEventListener('click', (event) => event.preventDefault());
+    internalLink.click();
+    expect(dialog.open).toBe(false);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    root.remove();
+  });
+
+  it('organiza a mascote em uma área dedicada e mantém rolagem e cabeçalho independentes', () => {
+    for (const { build, activeHref, expectedSections } of [
+      { build: createApp, activeHref: '/', expectedSections: 3 },
+      { build: createConverterApp, activeHref: '/converter', expectedSections: 2 },
+    ]) {
+      const root = document.createElement('div');
+      document.body.append(root);
+      build(root);
+      const header = root.querySelector('.mobile-navigation-topbar');
+      const panel = root.querySelector('.mobile-navigation-panel');
+      const hero = panel?.querySelector('.mobile-navigation-hero');
+      expect(header?.querySelector('.mobile-navigation-close')).not.toBeNull();
+      expect(header?.contains(hero ?? null)).toBe(false);
+      expect(hero?.querySelector('.mobile-navigation-mascot')).not.toBeNull();
+      expect(panel?.firstElementChild).toBe(hero);
+      expect(panel?.querySelectorAll('.mobile-navigation-link-primary')).toHaveLength(2);
+      expect(panel?.querySelectorAll('.mobile-navigation-link-secondary')).toHaveLength(expectedSections);
+      expect(panel?.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+      expect(panel?.querySelector('[aria-current="page"]')?.getAttribute('href')).toBe(activeHref);
+      const trigger = root.querySelector('.mobile-navigation-trigger');
+      expect(trigger?.getAttribute('aria-controls')).toBe('mobile-navigation-dialog');
+      root.remove();
+    }
+    const css = readFileSync('src/styles/mobileNavigation.css', 'utf8');
+    expect(css).toContain('.mobile-navigation-hero');
+    expect(css).toContain('grid-template-rows: auto minmax(0, 1fr)');
+    expect(css).toContain('overflow-y: auto');
+    expect(css).toContain('height: 100dvh');
+    expect(css).toContain('env(safe-area-inset-top, 0px)');
+    expect(css).toContain('color: #a84a25');
+    expect(css).toContain('@media (max-height: 640px) and (max-width: 760px)');
+    expect(readFileSync('src/main.ts', 'utf8')).toMatch(
+      /import '\.\/styles\/desktopNavbar\.css';\s*import '\.\/styles\/mobileNavigation\.css';/u,
+    );
   });
 
   it('exibe métricas reais apenas no relatório após analisar o arquivo carregado', async () => {
