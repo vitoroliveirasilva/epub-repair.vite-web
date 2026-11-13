@@ -18,6 +18,7 @@ export interface BookSection {
   text: string;
   truncated: boolean;
   blocks?: BookBlock[] | undefined;
+  styleFingerprint?: string | undefined;
 }
 export interface BookPreview {
   title: string;

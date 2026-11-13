@@ -5,14 +5,19 @@ import { resolveReference } from '../utils/pathUtils';
 import { findFirstByLocalName, parseXml } from '../utils/xmlUtils';
 import type { LoadedEpub } from '../model/epubTypes';
 import { inlineRunsOf, type InlineRun } from './readerInline';
+import { isFootnote, readSafeNote, readSafeTable, type ReaderTable } from './readerStructures';
 
 export interface BookBlock {
-  kind: 'heading' | 'paragraph' | 'quotation' | 'list-item' | 'verse' | 'caption' | 'image';
+  kind: 'heading' | 'paragraph' | 'quotation' | 'list-item' | 'verse' |
+    'caption' | 'image' | 'table' | 'footnote';
   text: string;
   imageDataUrl?: string | undefined;
   imagePath?: string | undefined;
   runs?: InlineRun[] | undefined;
   level?: number | undefined;
+  table?: ReaderTable | undefined;
+  noteId?: string | undefined;
+  ordered?: boolean | undefined;
 }
 
 const IMAGE_TYPES = new Map([
@@ -101,19 +106,58 @@ function isInsideDisallowed(node: Element, body: Element): boolean {
 function isNestedTextBlock(node: Element, body: Element): boolean {
   let ancestor = node.parentElement;
   while (ancestor && ancestor !== body) {
-    if (['p', 'li', 'blockquote', 'pre', 'figcaption', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']
-      .includes(ancestor.localName.toLowerCase())) return true;
+    if (['p', 'li', 'blockquote', 'pre', 'figcaption', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table']
+      .includes(ancestor.localName.toLowerCase()) || isFootnote(ancestor)) return true;
     ancestor = ancestor.parentElement;
   }
   return false;
+}
+
+function styleFingerprint(
+  xml: Document, filePath: string, loaded: LoadedEpub,
+): string {
+  const entries: string[] = [];
+  let remaining = 512_000;
+  let count = 0;
+  for (const node of Array.from(xml.getElementsByTagName('*'))) {
+    if (++count > 8_000 || remaining <= 0) break;
+    const tag = node.localName.toLowerCase();
+    const className = node.getAttribute('class');
+    const inline = node.getAttribute('style');
+    if (className) entries.push('class:' + className.slice(0, 400));
+    if (inline) entries.push('style:' + inline.slice(0, 4_000));
+    if (tag === 'style') {
+      const value = (node.textContent ?? '').slice(0, Math.min(remaining, 120_000));
+      entries.push('internal:' + value);
+      remaining -= value.length;
+    }
+    if (tag !== 'link' || !(node.getAttribute('rel') ?? '').toLowerCase()
+      .split(/\s+/u).includes('stylesheet')) continue;
+    const href = node.getAttribute('href') ?? '';
+    if (/^[a-z][a-z0-9+.-]*:|^\/\//iu.test(href)) continue;
+    const resolved = resolveReference(filePath, href);
+    if (!resolved.safe) continue;
+    const file = loaded.files.get(resolved.path);
+    if (!file || file.directory || file.bytes.length > remaining) continue;
+    const value = new TextDecoder('utf-8').decode(file.bytes);
+    entries.push('external:' + resolved.path + ':' + value);
+    remaining -= value.length;
+  }
+  if (!entries.length) return '';
+  let hash = 2166136261;
+  for (const char of entries.join('\n')) {
+    hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
+  }
+  return hash.toString(16);
 }
 
 function blocksFromXhtml(
   source: string, filePath: string, loaded: LoadedEpub,
   imageManifest: Map<string, string>, budget: { bytes: number; count: number },
   cache: Map<string, string>,
-): { title: string; blocks: BookBlock[]; text: string } {
+): { title: string; blocks: BookBlock[]; text: string; styleFingerprint: string } {
   const xml = parseXml(normalizeNamedEntities(source));
+  const style = styleFingerprint(xml, filePath, loaded);
   const body = findFirstByLocalName(xml, 'body') ?? xml.documentElement;
   for (const element of Array.from(body.getElementsByTagName('*'))) {
     if (DISALLOWED.has(element.localName.toLowerCase())) element.remove();
@@ -127,6 +171,19 @@ function blocksFromXhtml(
     if (blocks.length >= MAX_BLOCKS) break;
     const tag = node.localName.toLowerCase();
     if (isInsideDisallowed(node, body)) continue;
+    if (tag !== 'img' && tag !== 'image' && isNestedTextBlock(node, body)) continue;
+    if (tag === 'table') {
+      const table = readSafeTable(node);
+      if (table.rows.length) blocks.push({ kind: 'table', text: table.caption,
+        table });
+      continue;
+    }
+    if (isFootnote(node)) {
+      const note = readSafeNote(node);
+      if (note.text) blocks.push({ kind: 'footnote', text: note.text,
+        runs: note.runs, noteId: note.id });
+      continue;
+    }
     if (tag === 'img' || tag === 'image') {
       const ref = node.getAttribute('src') ?? node.getAttribute('href') ?? '';
       const img = imageFromBook(ref, filePath, loaded, imageManifest, budget, cache);
@@ -146,11 +203,21 @@ function blocksFromXhtml(
       : tag === 'li' ? 'list-item' : tag === 'blockquote' ? 'quotation'
         : tag === 'pre' ? 'verse' : tag === 'figcaption' ? 'caption' : 'paragraph';
     blocks.push({ kind, text: text.slice(0, 20000), runs,
-      ...(kind === 'heading' ? { level: Number(tag.slice(1)) } : {}) });
+      ...(kind === 'heading' ? { level: Number(tag.slice(1)) } : {}),
+      ...(kind === 'list-item'
+        ? { ordered: node.parentElement?.localName.toLowerCase() === 'ol' }
+        : {}),
+    });
   }
-  const text = blocks.filter((item) => item.kind !== 'image').map((block) => block.text)
-    .join('\n\n') || textClean(body.textContent ?? '');
-  return { title: textClean(title), blocks, text };
+  const text = blocks.flatMap((block) => {
+    if (block.kind === 'image') return [];
+    if (block.kind === 'table') return [
+      block.table?.caption ?? '',
+      ...(block.table?.rows.flatMap((row) => row.map((cell) => cell.text)) ?? []),
+    ].filter(Boolean);
+    return [block.text];
+  }).join('\n\n') || textClean(body.textContent ?? '');
+  return { title: textClean(title), blocks, text, styleFingerprint: style };
 }
 
 function legacyFallback(source: string): { title: string; blocks: BookBlock[]; text: string } {
@@ -159,7 +226,8 @@ function legacyFallback(source: string): { title: string; blocks: BookBlock[]; t
   const text = source.replace(/<(?:script|style)\b[^>]*>[\s\S]*?<\/(?:script|style)>/giu, ' ')
     .replace(/<[^>]*>/gu, ' ').replace(/&nbsp;/giu, ' ')
     .replace(/&amp;/giu, '&').replace(/\s+/gu, ' ').trim();
-  return { title, text, blocks: [{ kind: 'paragraph', text: text.slice(0, MAX_CHARS) }] };
+  return { title, text, blocks: [{ kind: 'paragraph', text: text.slice(0, MAX_CHARS) }],
+    styleFingerprint: '' };
 }
 
 export async function readRichBookPreview(
@@ -197,6 +265,7 @@ export async function readRichBookPreview(
       title: (parsed.title || item.href.split('/').pop() || 'Seção').slice(0, 140),
       text: parsed.text.slice(0, MAX_CHARS),
       blocks: parsed.blocks,
+      styleFingerprint: parsed.styleFingerprint,
       truncated: parsed.text.length > MAX_CHARS || parsed.blocks.length >= MAX_BLOCKS,
     });
   }

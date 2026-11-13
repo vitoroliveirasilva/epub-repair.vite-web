@@ -5,6 +5,7 @@ optionalToolsV4
 bookReaderV4
 batchToolsV4
 readerInlineV4
+readerStructuresV4
 metadataDraftV4
 reviewKindleV4
 pdfColumnFidelityV4

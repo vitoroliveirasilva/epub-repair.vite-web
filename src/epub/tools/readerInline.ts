@@ -3,6 +3,7 @@ export type InlineMark = 'strong' | 'emphasis' | 'code' | 'sup' | 'sub';
 export interface InlineRun {
   text: string;
   marks: InlineMark[];
+  hrefId?: string | undefined;
 }
 
 const IGNORE = new Set([
@@ -25,35 +26,41 @@ function markOf(tag: string): InlineMark | undefined {
 export function inlineRunsOf(element: Element): InlineRun[] {
   const runs: InlineRun[] = [];
   let characters = 0;
-  const append = (raw: string, marks: InlineMark[]): void => {
+  const append = (raw: string, marks: InlineMark[], hrefId?: string): void => {
     const normalized = raw === '\n' ? '\n' : raw.replace(/[\t\r\n ]+/gu, ' ');
     const text = normalized.slice(0, Math.max(0, MAX_CHARACTERS - characters));
     if (!text || runs.length >= MAX_RUNS) return;
     const previous = runs[runs.length - 1];
     if (previous && previous.marks.join('|') === marks.join('|') &&
-      previous.text.length + text.length <= 4_000) {
+      previous.hrefId === hrefId && previous.text.length + text.length <= 4_000) {
       previous.text += text;
     } else {
-      runs.push({ text, marks: [...marks] });
+      runs.push({ text, marks: [...marks], ...(hrefId ? { hrefId } : {}) });
     }
     characters += text.length;
   };
-  const visit = (node: Node, marks: InlineMark[], depth: number): void => {
+  const visit = (node: Node, marks: InlineMark[], depth: number,
+    hrefId?: string): void => {
     if (characters >= MAX_CHARACTERS || runs.length >= MAX_RUNS || depth > MAX_DEPTH) return;
     if (node.nodeType === 3) {
-      append(node.nodeValue ?? '', marks);
+      append(node.nodeValue ?? '', marks, hrefId);
       return;
     }
     if (node.nodeType !== 1) return;
     const tag = (node as Element).localName.toLowerCase();
     if (IGNORE.has(tag)) return;
     if (tag === 'br') {
-      append('\n', marks);
+      append('\n', marks, hrefId);
       return;
     }
     const mark = markOf(tag);
     const next = mark && !marks.includes(mark) ? [...marks, mark] : marks;
-    for (const child of Array.from(node.childNodes)) visit(child, next, depth + 1);
+    const ref = tag === 'a' ? (node as Element).getAttribute('href') : undefined;
+    const safeId = ref?.startsWith('#') && /^[\w.:-]{1,90}$/u.test(ref.slice(1))
+      ? ref.slice(1) : undefined;
+    for (const child of Array.from(node.childNodes)) {
+      visit(child, next, depth + 1, safeId ?? hrefId);
+    }
   };
   for (const child of Array.from(element.childNodes)) visit(child, [], 0);
   while (runs[0]?.text.startsWith(' ')) {

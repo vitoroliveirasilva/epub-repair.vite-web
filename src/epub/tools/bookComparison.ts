@@ -1,10 +1,17 @@
 import type { BookPreview, BookSection } from './bookTools';
+import type { BookBlock } from './bookReader';
+
+export type DifferenceStatus =
+  'same' | 'text-changed' | 'images-changed' | 'structure-changed' |
+  'format-changed' | 'style-changed' | 'added' | 'removed';
+export type DifferenceAspect = 'text' | 'images' | 'structure' | 'format' | 'styles';
 
 export interface BookDifference {
   label: string;
   before?: BookSection | undefined;
   after?: BookSection | undefined;
-  status: 'same' | 'text-changed' | 'images-changed' | 'added' | 'removed';
+  status: DifferenceStatus;
+  aspects: DifferenceAspect[];
   approximate: boolean;
   addedWords: number;
   removedWords: number;
@@ -24,31 +31,79 @@ function wordChanges(before: string, after: string): { added: number; removed: n
   return { added: bEnd - start, removed: aEnd - start };
 }
 
-function imagesOf(section: BookSection): string[] {
-  return (section.blocks ?? []).filter((block) => block.kind === 'image')
-    .map((block) => block.imagePath + ':' + block.imageDataUrl);
+function imagesOf(section: BookSection): BookBlock[] {
+  return (section.blocks ?? []).filter((block) => block.kind === 'image');
 }
 
-function comparePair(before: BookSection | undefined, after: BookSection | undefined,
-  approximate: boolean): BookDifference {
+function imagesChanged(before: BookSection, after: BookSection): boolean {
+  const a = imagesOf(before);
+  const b = imagesOf(after);
+  if (a.length !== b.length) return true;
+  return a.some((image, index) => image.imagePath !== b[index]?.imagePath ||
+    image.imageDataUrl !== b[index]?.imageDataUrl);
+}
+
+function shapeOf(block: BookBlock): string {
+  const table = block.table;
+  return [
+    block.kind, block.level ?? '', block.ordered ? 1 : 0,
+    block.kind === 'table' && table
+      ? table.rows.map((row) => row.map((cell) =>
+        (cell.heading ? 'h' : 'd') + cell.colspan + 'x' + cell.rowspan).join(',')).join(';')
+      : '',
+    block.kind === 'footnote' ? block.noteId ?? '' : '',
+  ].join('|');
+}
+
+function structureOf(section: BookSection): string {
+  return (section.blocks ?? []).map(shapeOf).join('\n');
+}
+
+function marksOf(section: BookSection): string {
+  return (section.blocks ?? []).map((block) => {
+    const own = (block.runs ?? []).map((run) =>
+      run.text + ':' + run.marks.join(',')).join('|');
+    const cells = block.table?.rows.map((row) => row.map((cell) =>
+      cell.runs.map((run) => run.text + ':' + run.marks.join(',')).join('|')).join(';')).join('\n')
+      ?? '';
+    return own + '/' + cells;
+  }).join('\n');
+}
+
+function comparePair(
+  before: BookSection | undefined, after: BookSection | undefined,
+  approximate: boolean,
+): BookDifference {
   const label = after?.title ?? before?.title ?? 'Seção';
-  if (!before) return { label, before, after, status: 'added', approximate,
-    ...wordCounts('', after?.text ?? '') };
-  if (!after) return { label, before, after, status: 'removed', approximate,
-    ...wordCounts(before.text, '') };
-  const changed = wordChanges(before.text, after.text);
-  const imagesChanged = imagesOf(before).join('\u0000') !== imagesOf(after).join('\u0000');
+  if (!before || !after) {
+    const changed = wordChanges(before?.text ?? '', after?.text ?? '');
+    return {
+      label, before, after, approximate, aspects: [],
+      status: before ? 'removed' : 'added',
+      addedWords: changed.added, removedWords: changed.removed,
+    };
+  }
+  const words = wordChanges(before.text, after.text);
+  const aspects: DifferenceAspect[] = [];
+  if (before.text !== after.text) aspects.push('text');
+  if (imagesChanged(before, after)) aspects.push('images');
+  if (before.blocks && after.blocks && structureOf(before) !== structureOf(after)) {
+    aspects.push('structure');
+  }
+  if (before.blocks && after.blocks && marksOf(before) !== marksOf(after)) {
+    aspects.push('format');
+  }
+  if (before.styleFingerprint !== undefined && after.styleFingerprint !== undefined &&
+    before.styleFingerprint !== after.styleFingerprint) aspects.push('styles');
+  const status: DifferenceStatus = aspects.includes('text') ? 'text-changed'
+    : aspects.includes('images') ? 'images-changed'
+      : aspects.includes('structure') ? 'structure-changed'
+        : aspects.includes('format') ? 'format-changed'
+          : aspects.includes('styles') ? 'style-changed' : 'same';
   return {
-    label, before, after, approximate,
-    status: before.text !== after.text ? 'text-changed'
-      : imagesChanged ? 'images-changed' : 'same',
-    addedWords: changed.added, removedWords: changed.removed,
+    label, before, after, approximate, status, aspects,
+    addedWords: words.added, removedWords: words.removed,
   };
-}
-
-function wordCounts(before: string, after: string): { addedWords: number; removedWords: number } {
-  const { added, removed } = wordChanges(before, after);
-  return { addedWords: added, removedWords: removed };
 }
 
 export function compareBookPreviews(before: BookPreview, after: BookPreview): BookDifference[] {
@@ -79,8 +134,10 @@ export function compareBookPreviews(before: BookPreview, after: BookPreview): Bo
 
 export function comparisonSummary(rows: BookDifference[]): string {
   const unchanged = rows.filter((row) => row.status === 'same').length;
-  const changed = rows.filter((row) => row.status === 'text-changed' || row.status === 'images-changed').length;
+  const changed = rows.filter((row) => row.status !== 'same' &&
+    row.status !== 'added' && row.status !== 'removed').length;
   const added = rows.filter((row) => row.status === 'added').length;
   const removed = rows.filter((row) => row.status === 'removed').length;
-  return `${unchanged} sem diferenças detectadas · ${changed} alterada(s) · ${added} nova(s) · ${removed} removida(s)`;
+  return unchanged + ' sem diferenças detectadas · ' + changed +
+    ' alterada(s) · ' + added + ' nova(s) · ' + removed + ' removida(s)';
 }

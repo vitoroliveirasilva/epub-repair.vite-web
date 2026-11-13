@@ -89,7 +89,10 @@ function sectionChooser(
   return select;
 }
 
-function renderInlineRun(run: InlineRun): Node {
+function renderInlineRun(
+  run: InlineRun, availableNotes?: Set<string>,
+  noteTargets?: Map<string, HTMLDetailsElement>,
+): Node {
   let node: Node = document.createTextNode(run.text);
   for (const mark of [...run.marks].reverse()) {
     const tag: 'strong' | 'em' | 'code' | 'sup' | 'sub' =
@@ -98,15 +101,45 @@ function renderInlineRun(run: InlineRun): Node {
     wrapper.append(node);
     node = wrapper;
   }
+  if (run.hrefId && availableNotes?.has(run.hrefId) && noteTargets) {
+    const id = run.hrefId;
+    const link = el('button', { className: 'optional-reader-noteref',
+      attrs: { type: 'button', 'aria-label': 'Abrir nota de rodapé ' + run.text } });
+    link.append(node);
+    link.addEventListener('click', () => {
+      const target = noteTargets.get(id);
+      if (!target) return;
+      target.open = true;
+      target.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+      target.focus();
+    });
+    return link;
+  }
   return node;
 }
 
-function readerCard(section: BookSection, fontSize: number, label: string): HTMLElement {
+export function readerCard(section: BookSection, fontSize: number, label: string): HTMLElement {
   const content = el('div', { className: 'optional-reader-body' });
   content.style.fontSize = fontSize + 'px';
   content.append(el('h4', { text: section.title }));
+  const notes = new Set((section.blocks ?? []).filter((block) =>
+    block.kind === 'footnote' && block.noteId).map((block) => block.noteId!));
+  const noteTargets = new Map<string, HTMLDetailsElement>();
+  const appendRuns = (target: HTMLElement, runs?: InlineRun[], fallback = ''): void => {
+    if (runs?.length) {
+      for (const run of runs) {
+        target.append(renderInlineRun(run, notes, noteTargets));
+      }
+    } else target.append(fallback);
+  };
+  let orderedIndex = 0;
+  let previousOrdered = false;
   if (section.blocks?.length) {
     for (const block of section.blocks) {
+      if (block.kind !== 'list-item' || !block.ordered) {
+        orderedIndex = 0;
+        previousOrdered = false;
+      }
       if (block.kind === 'image') {
         if (block.imageDataUrl) {
           content.append(el('figure', { className: 'optional-reader-figure', children: [
@@ -119,21 +152,64 @@ function readerCard(section: BookSection, fontSize: number, label: string): HTML
         }
         continue;
       }
+      if (block.kind === 'table' && block.table) {
+        const table = el('table', { className: 'optional-reader-table' });
+        if (block.table.caption) table.append(el('caption', { text: block.table.caption }));
+        const tbody = el('tbody');
+        for (const row of block.table.rows) {
+          const tr = el('tr');
+          for (const cell of row) {
+            const td = el(cell.heading ? 'th' : 'td', { attrs: {
+              ...(cell.heading ? { scope: 'col' } : {}),
+              ...(cell.colspan > 1 ? { colspan: String(cell.colspan) } : {}),
+              ...(cell.rowspan > 1 ? { rowspan: String(cell.rowspan) } : {}),
+            } });
+            appendRuns(td, cell.runs, cell.text);
+            tr.append(td);
+          }
+          tbody.append(tr);
+        }
+        table.append(tbody);
+        content.append(el('div', { className: 'optional-reader-table-scroll',
+          attrs: { tabindex: '0', role: 'region',
+            'aria-label': 'Tabela do capítulo (deslize horizontalmente se necessário)' },
+          children: [table] }));
+        if (block.table.truncated) {
+          content.append(paragraph('Tabela extensa: apenas parte das linhas ou células foi exibida.'));
+        }
+        continue;
+      }
+      if (block.kind === 'footnote') {
+        const details = el('details', { className: 'optional-reader-footnote',
+          attrs: { tabindex: '0' },
+          children: [
+            el('summary', { text: 'Nota de rodapé' }),
+          ] }) as HTMLDetailsElement;
+        const value = el('p');
+        appendRuns(value, block.runs, block.text);
+        details.append(value);
+        if (block.noteId && !noteTargets.has(block.noteId)) {
+          noteTargets.set(block.noteId, details);
+        }
+        content.append(details);
+        continue;
+      }
       const className = 'optional-reader-' + block.kind +
         (block.kind === 'heading' ? ' optional-reader-heading-level-' + (block.level ?? 2) : '');
       const element = block.kind === 'heading' ? el('h5', { className })
         : block.kind === 'quotation' ? el('blockquote', { className })
           : el('p', { className });
-      if (block.kind === 'list-item') element.append('• ');
-      if (block.runs?.length) {
-        for (const run of block.runs) element.append(renderInlineRun(run));
-      } else {
-        element.append(block.text);
+      if (block.kind === 'list-item') {
+        const ordered = Boolean(block.ordered);
+        if (ordered) orderedIndex = previousOrdered ? orderedIndex + 1 : 1;
+        previousOrdered = ordered;
+        element.append(ordered ? String(orderedIndex) + '. ' : '• ');
       }
+      appendRuns(element, block.runs, block.text);
       content.append(element);
     }
   } else {
-    for (const part of section.text.split(/\\n\\n+/u).slice(0, 500)) {
+    for (const part of section.text.split(/\n\n+/u).slice(0, 500)) {
       content.append(el('p', { text: part }));
     }
   }
@@ -168,9 +244,9 @@ function renderPreview(state: AppState, s: Session, rerender: () => void, enqueu
   });
   const chapter = view?.sections[s.chapter] ?? view?.sections[0];
   return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Prévia segura de capítulos, parágrafos, títulos e imagens internas compatíveis. Estilos originais, fontes e layout fixo ainda podem diferir do leitor real. Scripts e recursos remotos não são carregados.'),
+    paragraph('Prévia local segura: capítulos, parágrafos, imagens internas, tabelas limitadas e notas de rodapé. Ela usa estilos próprios e não executa CSS, scripts ou recursos remotos do livro.'),
     control,
-    view ? paragraph(`${view.sections.length} seção(ões) carregada(s)${view.omitted ? `, ${view.omitted} omitida(s)` : ''}.${view.fixedLayout ? ' Este livro usa layout fixo.' : ''}`) : undefined,
+    view ? paragraph(`${view.sections.length} seção(ões) carregada(s)${view.omitted ? `, ${view.omitted} omitida(s)` : ''}.${view.fixedLayout ? ' EPUB de layout fixo: esta é uma prévia simplificada, não uma reprodução da página.' : ''}`) : undefined,
     view?.sections.length ? el('div', { className: 'optional-reader-controls', children: [
       toolButton('Anterior', s.chapter > 0, () => { s.chapter -= 1; rerender(); }),
       sectionChooser(view.sections, s.chapter, (n) => { s.chapter = n; rerender(); }),
@@ -249,21 +325,39 @@ function renderCompare(state: AppState, s: Session, rerender: () => void, enqueu
     same: 'Texto e imagens carregadas sem mudanças detectadas',
     'text-changed': 'Diferença de texto detectada',
     'images-changed': 'Imagens internas diferentes',
+    'structure-changed': 'Mudança na estrutura editorial',
+    'format-changed': 'Mudança na formatação do texto',
+    'style-changed': 'Arquivo CSS ou estilo declarado alterado',
     added: 'Seção adicionada',
     removed: 'Seção removida',
   };
   return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Comparação de texto, capítulos e imagens internas carregadas. Não é uma certificação de fidelidade tipográfica, CSS ou paginação. Se caminhos mudarem, o alinhamento exige conferência.'),
+    paragraph('Comparação editorial local: texto, ordem dos blocos, tabelas, notas, formatação, imagens internas e alterações nos estilos declarados. Não renderiza o CSS do livro nem certifica fidelidade visual ou paginação.'),
     run,
     !hasChanged ? paragraph('Depois de reparar ou editar metadados, a comparação ficará disponível aqui.') : undefined,
     rows.length ? paragraph(comparisonSummary(rows)) : undefined,
+    rows.length && ((s.sourcePreview?.omitted ?? 0) > 0 ||
+      (s.editedPreview?.omitted ?? 0) > 0 ||
+      s.sourcePreview?.sections.some((section) => section.truncated) ||
+      s.editedPreview?.sections.some((section) => section.truncated))
+      ? paragraph('Comparação parcial: capítulos ou trechos foram limitados para proteger a memória do navegador.')
+      : undefined,
     rows.length ? sectionChooser(rows.map((row) => ({ title: row.label })), s.compareChapter,
       (index) => { s.compareChapter = index; rerender(); }) : undefined,
     selected ? el('div', { className: 'optional-comparison-summary', children: [
       el('strong', { text: status[selected.status] }),
-      paragraph(`${selected.addedWords} palavra(s) incluída(s) no trecho alterado; ${selected.removedWords} removida(s).`),
+      selected.aspects.includes('text') || selected.status === 'added' || selected.status === 'removed'
+        ? paragraph(`${selected.addedWords} palavra(s) incluída(s) no trecho alterado; ${selected.removedWords} removida(s).`)
+        : undefined,
+      selected.aspects.length ? paragraph('Aspectos alterados: ' + selected.aspects.map((aspect) => ({
+        text: 'texto', images: 'imagens', structure: 'títulos, tabelas ou organização',
+        format: 'marcação tipográfica', styles: 'CSS/classes declarados',
+      }[aspect])).join(', ') + '.') : undefined,
+      selected.aspects.includes('styles')
+        ? paragraph('O estilo declarado mudou, mas esta prévia simplificada não executa o CSS original. Confirme a aparência no leitor final.')
+        : undefined,
       selected.approximate
-        ? paragraph('O caminho deste capítulo mudou. Correspondência aproximada pelo título e posição.')
+        ? paragraph('O caminho deste capítulo mudou. Correspondência aproximada pelo título único; confira manualmente.')
         : undefined,
     ] }) : undefined,
     selected ? el('div', { className: 'optional-compare-grid', children: [

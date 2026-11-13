@@ -343,3 +343,70 @@
   margin: 0.35rem 0 0;
   overflow-wrap: anywhere;
 }
+
+.optional-reader-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  margin-block: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+.optional-reader-table-scroll:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.optional-reader-table {
+  width: 100%;
+  border-collapse: collapse;
+  line-height: 1.5;
+  font-family: var(--font-sans);
+  font-size: 0.85em;
+}
+.optional-reader-table caption {
+  padding: 0.75rem;
+  text-align: start;
+  font-weight: 650;
+}
+.optional-reader-table th,
+.optional-reader-table td {
+  padding: 0.6rem;
+  border: 1px solid var(--color-border);
+  vertical-align: top;
+  min-width: 5rem;
+}
+.optional-reader-table th {
+  font-weight: 700;
+  background: var(--color-surface);
+}
+.optional-reader-footnote {
+  width: 100%;
+  border-inline-start: 3px solid var(--color-border);
+  padding: 0.6rem 0.8rem;
+  margin-block: 0.6rem;
+  background: var(--color-surface);
+  font-size: 0.86em;
+}
+.optional-reader-footnote summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.optional-reader-footnote p {
+  margin: 0.5rem 0 0;
+}
+.optional-reader-footnote:focus-visible,
+.optional-reader-footnote summary:focus-visible,
+.optional-reader-noteref:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.optional-reader-noteref {
+  border: 0;
+  border-radius: var(--radius-xs);
+  color: var(--color-accent);
+  text-decoration: underline;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  padding: 0 0.15em;
+}
