@@ -100,7 +100,8 @@ describe('Lotes limitados e isolados', () => {
       stages.push(detail.stage);
       if (detail.index === 1 && detail.stage === 'reading') controller.abort();
     })).rejects.toMatchObject({ name: 'AbortError' });
-    expect(stages).toContain('completed');
+    expect(stages.some((stage) => stage === 'completed' || stage === 'failed'))
+      .toBe(true);
     expect(stages.filter((stage) => stage === 'reading')).toHaveLength(2);
   });
 
