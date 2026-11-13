@@ -117,7 +117,7 @@ export async function processEpubBatch(
     checkCanceled(signal);
     const source = safeName(file.name);
     let status: BatchEntry['status'] = 'falhou';
-    let detail = '';
+    let detail: string;
     let output: string | undefined;
     let initial: ValidationReport | undefined;
     let final: ValidationReport | undefined;
