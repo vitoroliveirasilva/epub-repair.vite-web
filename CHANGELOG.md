@@ -1,6 +1,7 @@
 # Histórico de mudanças do EPUB Repair
 
 ## v4.0.0 — desenvolvimento na dev (não lançada, 12/11/2026)
+- Nova direção editorial na página de reparo com Lumina, hero simplificada sem cartões de benefícios e navegação superior; ícone de livros personalizado na navbar e favicon das duas telas.
 
 - Permite selecionar ou arrastar múltiplos EPUBs no upload principal, abrindo automaticamente o lote; também suporta um ou vários arquivos na área dedicada.
 - Separa análise em lote de correção completa opt-in e aplica reparos e otimizações de compatibilidade a cada EPUB elegível, com relatórios de mudanças realmente aplicadas.

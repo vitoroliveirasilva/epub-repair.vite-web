@@ -89,7 +89,8 @@ function render(
 ): void {
   root.replaceChildren(
     renderAppHeader(),
-    renderHero(state.report),
+    renderHero(),
+    renderEditorialPaths(),
     el('main', {
       className: 'layout',
       attrs: { id: 'app-workspace', tabindex: '-1' },
@@ -341,98 +342,82 @@ function renderAppHeader(): HTMLElement {
   });
 }
 
-function renderHero(report: AppState['report']): HTMLElement {
+function renderHero(): HTMLElement {
   return el('section', {
-    className: 'hero',
-    attrs: { id: 'top' },
+    className: 'hero editorial-hero',
+    attrs: { id: 'top', 'aria-label': 'EPUB Repair' },
     children: [
+      el('div', {
+        className: 'hero-illustration',
+        children: [
+          el('span', { className: 'hero-illustration-shape', attrs: { 'aria-hidden': 'true' } }),
+          el('img', {
+            className: 'hero-mascot',
+            attrs: {
+              src: '/lumina-hero.svg',
+              width: '410',
+              height: '545',
+              alt: 'Lumina, mascote do EPUB Repair, lendo um livro',
+              fetchpriority: 'high',
+              decoding: 'async',
+            },
+          }),
+        ],
+      }),
       el('div', {
         className: 'hero-content',
         children: [
-          el('p', { className: 'eyebrow', text: 'Validação e reparo local de EPUB' }),
-          el('h1', { text: 'Conserte arquivos EPUB antes de enviar para o seu leitor' }),
-          el('p', {
-            className: 'hero-copy',
-            text: 'Analise a estrutura, limpe arquivos problemáticos, reconstrua pacotes e gere um EPUB mais amigável para Kindle e e-readers direto no navegador',
-          }),
+          el('h1', { children: [
+            'Prepare seus livros digitais com ',
+            el('span', { className: 'hero-emphasis', text: 'qualidade' }),
+          ] }),
           el('div', {
             className: 'hero-actions',
             children: [
               el('a', {
                 className: 'btn btn-primary btn-large',
-                text: 'Selecionar EPUB',
+                text: 'Reparar EPUB',
                 attrs: { href: '#upload' },
               }),
               el('a', {
                 className: 'btn btn-ghost btn-large',
-                text: 'Converter PDF em EPUB',
+                text: 'PDF → EPUB',
                 attrs: { href: '/converter' },
               }),
             ],
           }),
         ],
       }),
-      renderHeroPreview(report),
     ],
   });
 }
 
-function renderHeroPreview(report: AppState['report']): HTMLElement {
-  
-  
-  const hasReport = Boolean(report);
-  return el('aside', {
-    className: 'hero-preview',
-    attrs: {
-      'aria-label': hasReport
-        ? 'Resumo do EPUB analisado'
-        : 'Exemplo ilustrativo de relatório EPUB Repair',
-    },
+function renderEditorialPaths(): HTMLElement {
+  return el('nav', {
+    className: 'editorial-paths',
+    attrs: { 'aria-label': 'Escolha sua ferramenta' },
     children: [
-      el('div', {
-        className: 'preview-toolbar',
-        children: [el('span'), el('span'), el('span'), el('strong', {
-          text: hasReport ? 'Relatório atual' : 'Exemplo ilustrativo',
-        })],
-      }),
-      el('div', {
-        className: 'preview-score score-good',
+      el('a', {
+        className: 'editorial-path editorial-path-repair',
+        attrs: { href: '#upload' },
         children: [
-          el('span', { text: report ? String(report.stats.kindleScore) : '92' }),
-          el('small', { text: 'Kindle score' }),
+          el('span', { className: 'editorial-path-label', text: 'EPUB' }),
+          el('strong', { text: 'Reparar EPUB' }),
+          el('span', { text: 'Corrija a estrutura e prepare seu livro para leitura.' }),
+          el('span', { className: 'editorial-path-arrow', text: '↗', attrs: { 'aria-hidden': 'true' } }),
         ],
       }),
-      el('div', {
-        className: 'preview-grid',
+      el('a', {
+        className: 'editorial-path editorial-path-pdf',
+        attrs: { href: '/converter' },
         children: [
-          renderPreviewMetric(String(report?.stats.fatalCount ?? 0), 'Fatais', 'success'),
-          renderPreviewMetric(String(report?.stats.errorCount ?? 2), 'Erros', 'error'),
-          renderPreviewMetric(String(report?.stats.warningCount ?? 6), 'Avisos', 'warning'),
-        ],
-      }),
-      el('div', {
-        className: 'preview-list',
-        children: [
-          renderPreviewLine('Manifest revisado', 'success'),
-          renderPreviewLine('Capa Kindle identificada', 'info'),
-          renderPreviewLine('Relatório simples e técnico', 'warning'),
+          el('span', { className: 'editorial-path-label', text: 'PDF → EPUB' }),
+          el('strong', { text: 'Converter PDF em EPUB' }),
+          el('span', { text: 'Transforme documentos em livros digitais organizados.' }),
+          el('span', { className: 'editorial-path-arrow', text: '↗', attrs: { 'aria-hidden': 'true' } }),
         ],
       }),
     ],
-  });
-}
-
-function renderPreviewMetric(value: string, label: string, tone: string): HTMLElement {
-  return el('div', {
-    className: `preview-metric preview-metric-${tone}`,
-    children: [el('strong', { text: value }), el('small', { text: label })],
-  });
-}
-
-function renderPreviewLine(text: string, tone: string): HTMLElement {
-  return el('p', {
-    className: `preview-line preview-line-${tone}`,
-    children: [el('span'), text],
   });
 }
 
@@ -546,15 +531,16 @@ function renderFooterLink(text: string, href: string, external = false): HTMLEle
 }
 
 function renderLogoSymbol(): HTMLElement {
-  return el('span', {
-    className: 'logo-symbol',
-    attrs: { 'aria-hidden': 'true' },
-    children: [
-      el('span', { className: 'logo-fold' }),
-      el('span', { className: 'logo-line logo-line-1' }),
-      el('span', { className: 'logo-line logo-line-2' }),
-      el('span', { className: 'logo-check' }),
-    ],
+  return el('img', {
+    className: 'brand-icon',
+    attrs: {
+      src: '/favicon.svg',
+      alt: '',
+      width: '44',
+      height: '44',
+      decoding: 'async',
+      'aria-hidden': 'true',
+    },
   });
 }
 

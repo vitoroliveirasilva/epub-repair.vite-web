@@ -1240,12 +1240,17 @@ function renderFooter(): HTMLElement {
 }
 
 function renderLogoSymbol(): HTMLElement {
-  return el('span', { className: 'logo-symbol', attrs: { 'aria-hidden': 'true' }, children: [
-    el('span', { className: 'logo-fold' }),
-    el('span', { className: 'logo-line logo-line-1' }),
-    el('span', { className: 'logo-line logo-line-2' }),
-    el('span', { className: 'logo-check' }),
-  ] });
+  return el('img', {
+    className: 'brand-icon',
+    attrs: {
+      src: '/favicon.svg',
+      alt: '',
+      width: '44',
+      height: '44',
+      decoding: 'async',
+      'aria-hidden': 'true',
+    },
+  });
 }
 
 function renderThemeToggle(): HTMLElement {

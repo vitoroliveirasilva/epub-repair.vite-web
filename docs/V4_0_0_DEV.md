@@ -135,3 +135,12 @@ Manter documentação histórica e notas v3 intactas. Não rodar suites pesadas 
 - O processamento é cancelável e nunca disponibiliza ZIP parcial. Permanecem as limitações de processamento local, seis arquivos e 80 MB de entrada.
 
 - **JPEG progressivo:** a conversão opcional tem limite de espera de 2,5 segundos para carregar/decodificar uma imagem e para o canvas devolver o resultado. Se o navegador não conseguir decodificar, a melhoria é ignorada e registrada, sem travar a fila. O sinal de cancelamento também interrompe a decodificação pendente.
+
+## Identidade editorial e ícone do site (dev)
+
+- A página de reparo utiliza hero editorial com a mascote Lumina à esquerda e título/ações à direita em desktop. Removidos o texto de apoio e o rótulo decorativo acima do título; não há faixa de três cartões promocionais ou métricas fictícias na hero.
+- A identidade mantém layout responsivo e navegação superior, com duas opções diretas para reparo EPUB e conversão de PDF. Ferramentas existentes, relatórios reais, upload individual/em lote, privacidade e limitações continuam acessíveis.
+- Ícone fornecido pelo usuário (três livros empilhados) foi adaptado para SVG vetorial transparente, com respiro para tamanhos reduzidos, e é reutilizado nas duas navbars, rodapés e favicon. O SVG usa cobre editorial e não depende de fontes ou imagens externas.
+- Lumina foi adaptada ao hero como ilustração vetorial transparente com apenas duas tintas (verde profundo e creme), preservando a identidade da mascote.
+- A paleta editorial clara/escura e os estados responsivos são implementados em `src/styles/editorialIdentity.css`, ao final da cascata existente para limitar regressões. Não foram alterados motores de reparo nem conversão.
+- Homologação visual com telas reais em celulares e leitores de tela permanece necessária antes de promover à produção.
