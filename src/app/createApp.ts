@@ -176,9 +176,9 @@ function render(
                 })
               : undefined,
             renderOptionalEpubTools(state, rerender, enqueue),
+            renderOptionsPanel(state, rerender),
           ],
         }),
-        renderOptionsPanel(state, rerender),
       ],
     }),
     renderSupportSections(),

@@ -128,41 +128,30 @@ function renderHero(): HTMLElement {
       el('div', {
         className: 'converter-hero-copy',
         children: [
-          el('p', { className: 'eyebrow', text: 'Conversão editorial local' }),
-          el('h1', { text: 'Transforme PDF em EPUB sem carregar a bagunça junto' }),
+          el('p', { className: 'eyebrow', text: 'PDF → EPUB' }),
+          el('h1', { text: 'Do PDF ao EPUB, sem complicação' }),
           el('p', {
             className: 'hero-copy',
-            text: 'Reconstrua parágrafos, capítulos e ordem de leitura, leia textos de páginas digitalizadas, compare o resultado e gere um EPUB validado sem enviar o documento para servidor.',
+            text: 'Reconstrua capítulos, imagens e a ordem de leitura em um arquivo pronto para revisar.',
           }),
-          el('div', { className: 'hero-actions', children: [
-            el('a', { className: 'btn btn-primary btn-large', text: 'Converter meu PDF', attrs: { href: '#pdf-upload' } }),
-            el('a', { className: 'btn btn-ghost btn-large', text: 'Entender o processo', attrs: { href: '#converter-how' } }),
-          ] }),
-        ],
-      }),
-      el('aside', {
-        className: 'hero-preview converter-hero-preview',
-        attrs: { 'aria-label': 'Recursos do conversor PDF para EPUB' },
-        children: [
-          el('div', { className: 'preview-toolbar', children: [
-            el('span'), el('span'), el('span'), el('strong', { text: 'PDF → EPUB' }),
-          ] }),
-          renderFeature('Diagnóstico por página', 'Texto, digitalização, colunas e imagens'),
-          renderFeature('Reconstrução editorial', 'Parágrafos, capítulos, notas e tipografia'),
-          renderFeature('Leitura de páginas digitalizadas', 'Reconhece texto em imagens sem enviar o arquivo'),
-          renderFeature('Validação final', 'Estrutura EPUB e compatibilidade Kindle'),
+          el('div', {
+            className: 'hero-actions',
+            children: [
+              el('a', {
+                className: 'btn btn-primary btn-large',
+                text: 'Selecionar PDF',
+                attrs: { href: '#pdf-upload' },
+              }),
+              el('a', {
+                className: 'btn btn-ghost btn-large',
+                text: 'Como funciona',
+                attrs: { href: '#converter-how' },
+              }),
+            ],
+          }),
         ],
       }),
     ],
-  });
-}
-
-function renderFeature(title: string, detail: string): HTMLElement {
-  return el('div', {
-    className: 'converter-feature',
-    children: [el('span', { text: '✓' }), el('div', {
-      children: [el('strong', { text: title }), el('small', { text: detail })],
-    })],
   });
 }
 

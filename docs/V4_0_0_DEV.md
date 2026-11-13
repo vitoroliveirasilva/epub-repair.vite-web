@@ -144,3 +144,12 @@ Manter documentação histórica e notas v3 intactas. Não rodar suites pesadas 
 - Lumina foi adaptada ao hero como ilustração vetorial transparente com apenas duas tintas (verde profundo e creme), preservando a identidade da mascote.
 - A paleta editorial clara/escura e os estados responsivos são implementados em `src/styles/editorialIdentity.css`, ao final da cascata existente para limitar regressões. Não foram alterados motores de reparo nem conversão.
 - Homologação visual com telas reais em celulares e leitores de tela permanece necessária antes de promover à produção.
+
+## Refinamento minimalista de todas as telas (dev)
+
+- Mantém o conceito editorial escolhido e a Lumina à esquerda do título, reduzindo o tamanho do hero, a intensidade do fundo decorativo e as cores de destaque; preserva a marca de livros empilhados na aba e nas duas barras superiores.
+- Simplifica os dois cards de entrada EPUB/PDF para superfícies com borda discreta, rótulo e seta de navegação, sem gráficos desnecessários, gradientes chamativos ou animações ostensivas.
+- Unifica botões, bordas, espaçamentos, cards de relatório, indicadores, opções, ferramentas EPUB, etapas e cartões do conversor em `src/styles/editorialIdentity.css`. Tema escuro, estados de hover/foco e responsividade mantidos.
+- O reparo EPUB usa agora um layout de conteúdo de coluna única. As opções de reparo continuam funcionando, mas aparecem em **Configurações de reparo**, um painel inicialmente recolhido; o estado de expansão permanece após alterar uma opção e rerenderizar a tela.
+- O conversor removeu os quatro cartões promocionais da abertura e apresenta um título curto, descrição objetiva e acesso direto à escolha de PDF. Diagnóstico, edição, revisão, conversão e download continuam abaixo, sem alterações nos motores.
+- Sem alterações em políticas de segurança, motor de reparo, opções padrão ou formatos de saída. Regressões de visual e formulário cobertas em `tests/heroPreviewFactualScore.test.ts`; homologação manual de telas reais ainda recomendada.

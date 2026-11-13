@@ -44,6 +44,49 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(svg).toContain('#B75C35');
   });
 
+  it('mantém configurações avançadas recolhidas e preserva a escolha ao atualizar o reparo', () => {
+    const root = document.createElement('div');
+    document.body.append(root);
+    createApp(root);
+    const settings = root.querySelector<HTMLDetailsElement>('details.advanced-settings');
+    expect(settings).not.toBeNull();
+    expect(settings?.open).toBe(false);
+    expect(settings?.querySelectorAll('.option-item').length).toBeGreaterThan(10);
+    expect(root.querySelector('.sidebar')).toBeNull();
+    settings!.open = true;
+    settings!.dispatchEvent(new Event('toggle'));
+    const option = settings!.querySelector<HTMLInputElement>('#stripSystemFiles');
+    expect(option).not.toBeNull();
+    const previous = option!.checked;
+    option!.click();
+    const updated = root.querySelector<HTMLDetailsElement>('details.advanced-settings');
+    expect(updated?.open).toBe(true);
+    expect(updated?.querySelector<HTMLInputElement>('#stripSystemFiles')?.checked).toBe(!previous);
+  });
+
+  it('simplifica o conversor sem painel promocional e mantém acesso ao upload', () => {
+    const root = document.createElement('div');
+    document.body.append(root);
+    createConverterApp(root);
+    const hero = root.querySelector<HTMLElement>('.converter-hero');
+    expect(hero?.querySelector('h1')?.textContent).toBe('Do PDF ao EPUB, sem complicação');
+    expect(hero?.querySelector('.converter-hero-preview')).toBeNull();
+    expect(hero?.querySelectorAll('.converter-feature')).toHaveLength(0);
+    expect(hero?.querySelector<HTMLAnchorElement>('a[href="#pdf-upload"]')).not.toBeNull();
+    expect(root.querySelector('#pdf-upload')).not.toBeNull();
+  });
+
+  it('compartilha superfície e bordas discretas nos cards e preserva os temas', () => {
+    const css = readFileSync('src/styles/editorialIdentity.css', 'utf8');
+    expect(css).toContain('.editorial-path-repair');
+    expect(css).toContain('.converter-form-section');
+    expect(css).toContain('.optional-batch-choice');
+    expect(css).toContain('.advanced-settings > .options-list');
+    expect(css).toContain('grid-template-columns: minmax(0, 1fr)');
+    expect(css).toContain(':root[data-theme="dark"]');
+    expect(css).toContain('@media (prefers-reduced-motion: reduce)');
+  });
+
   it('exibe métricas reais apenas no relatório após analisar o arquivo carregado', async () => {
     const root = document.createElement('div');
     document.body.append(root);
