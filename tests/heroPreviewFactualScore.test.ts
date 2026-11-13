@@ -111,6 +111,36 @@ describe('Identidade editorial no EPUB Repair', () => {
       .toContain("import './styles/navbarRefinement.css';");
   });
 
+  it('destaca a navegação desktop no hover e no foco sem modificar o menu mobile', () => {
+    for (const build of [createApp, createConverterApp]) {
+      const root = document.createElement('div');
+      document.body.append(root);
+      build(root);
+      const nav = root.querySelector<HTMLElement>('.app-header .header-nav');
+      const indicator = nav?.querySelector<HTMLElement>('.header-nav-indicator');
+      const links = nav?.querySelectorAll<HTMLAnchorElement>('a');
+      expect(indicator?.getAttribute('aria-hidden')).toBe('true');
+      expect(links?.length).toBe(4);
+      expect(nav?.classList.contains('header-nav-indicator-visible')).toBe(false);
+      links?.[0]?.dispatchEvent(new Event('pointerenter'));
+      expect(nav?.classList.contains('header-nav-indicator-visible')).toBe(true);
+      nav?.dispatchEvent(new Event('pointerleave'));
+      expect(nav?.classList.contains('header-nav-indicator-visible')).toBe(false);
+      links?.[0]?.focus();
+      expect(nav?.classList.contains('header-nav-indicator-visible')).toBe(true);
+      links?.[0]?.blur();
+      expect(nav?.classList.contains('header-nav-indicator-visible')).toBe(false);
+      expect(root.querySelector('.mobile-navigation-dialog')).not.toBeNull();
+      root.remove();
+    }
+    const css = readFileSync('src/styles/desktopNavbar.css', 'utf8');
+    expect(css).toContain('@media (min-width: 761px)');
+    expect(css).toContain('.header-nav-indicator-visible .header-nav-indicator');
+    expect(css).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(css).toContain(':root[data-theme="dark"]');
+    expect(readFileSync('src/main.ts', 'utf8')).toContain("import './styles/desktopNavbar.css';");
+  });
+
   it('exibe Lumina invertida com somente duas tintas e sem fundo no menu de tela inteira', () => {
     for (const build of [createApp, createConverterApp]) {
       const root = document.createElement('div');

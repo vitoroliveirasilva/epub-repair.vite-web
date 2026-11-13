@@ -4,6 +4,7 @@ import type { ConverterState, EditableSection, PdfAnalysisResult } from './model
 import { analyzePdf, renderPdfPagePreview } from './pdfEngine';
 import { button, downloadBlob, el, formatBytes } from '../ui/dom';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
+import { renderDesktopNavigation } from '../ui/desktopNavigation';
 import { renderBrandName } from '../ui/brand';
 import { buildReviewAudit, exportReviewAudit, reviewFindingKey,
   normalizeSectionSpaces, type ReviewFinding } from './reviewSuggestions';
@@ -98,16 +99,12 @@ function renderHeader(): HTMLElement {
         attrs: { href: '/', 'aria-label': 'EPUB Repair, início' },
         children: [renderLogoSymbol(), renderBrandName()],
       }),
-      el('nav', {
-        className: 'header-nav',
-        attrs: { 'aria-label': 'Navegação principal' },
-        children: [
-          el('a', { text: 'Reparar EPUB', attrs: { href: '/' } }),
-          el('a', { text: 'Converter PDF', attrs: { href: '/converter', 'aria-current': 'page' } }),
-          el('a', { text: 'Como funciona', attrs: { href: '#converter-how' } }),
-          el('a', { text: 'Privacidade', attrs: { href: '#converter-privacy' } }),
-        ],
-      }),
+      renderDesktopNavigation([
+        { label: 'Reparar EPUB', href: '/' },
+        { label: 'Converter PDF', href: '/converter', current: true },
+        { label: 'Como funciona', href: '#converter-how' },
+        { label: 'Privacidade', href: '#converter-privacy' },
+      ]),
       renderMobileNavigation('converter'),
       el('div', {
         className: 'header-actions',

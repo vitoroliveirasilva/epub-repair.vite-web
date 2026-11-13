@@ -20,6 +20,7 @@ import { renderRepairSummary } from '../ui/components/RepairSummary';
 import { renderUploader } from '../ui/components/Uploader';
 import { button, downloadBlob, el } from '../ui/dom';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
+import { renderDesktopNavigation } from '../ui/desktopNavigation';
 import { renderBrandName } from '../ui/brand';
 import { openBatchWithFiles, renderOptionalEpubTools } from '../ui/optionalEpubTools';
 import { abortProcessingError } from './zipWorkerClient';
@@ -317,16 +318,12 @@ function renderAppHeader(): HTMLElement {
         attrs: { href: '/', 'aria-label': 'EPUB Repair, início' },
         children: [renderLogoSymbol(), renderBrandName()],
       }),
-      el('nav', {
-        className: 'header-nav',
-        attrs: { 'aria-label': 'Navegação principal' },
-        children: [
-          el('a', { text: 'Converter PDF', attrs: { href: '/converter' } }),
-          el('a', { text: 'Como funciona', attrs: { href: '#privacy' } }),
-          el('a', { text: 'Limitações', attrs: { href: '#limitations' } }),
-          el('a', { text: 'Relatório', attrs: { href: '#app-workspace' } }),
-        ],
-      }),
+      renderDesktopNavigation([
+        { label: 'Converter PDF', href: '/converter' },
+        { label: 'Como funciona', href: '#privacy' },
+        { label: 'Limitações', href: '#limitations' },
+        { label: 'Relatório', href: '#app-workspace' },
+      ]),
       renderMobileNavigation('repair'),
       el('div', {
         className: 'header-actions',
