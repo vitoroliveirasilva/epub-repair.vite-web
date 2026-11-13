@@ -209,14 +209,20 @@
   }
 
   .app-header .header-nav a[aria-current="page"] {
-    color: var(--color-accent-strong);
-    border-color: transparent;
-    background: color-mix(in srgb, var(--color-accent-soft) 52%, transparent);
-    box-shadow: none;
+    color: var(--desktop-nav-copper);
+    border-color: color-mix(in srgb, var(--desktop-nav-copper) 26%, transparent);
+    background: color-mix(in srgb, var(--desktop-nav-copper) 11%, var(--color-surface));
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--desktop-nav-copper) 9%, transparent);
+    font-weight: 800;
   }
 
   .app-header .header-nav a[aria-current="page"]::after {
     transform: scaleX(1);
+  }
+
+  .app-header .header-nav a[aria-current="page"]:hover,
+  .app-header .header-nav a[aria-current="page"]:focus-visible {
+    color: var(--desktop-nav-copper);
   }
 
   .app-header .header-nav a:focus-visible {

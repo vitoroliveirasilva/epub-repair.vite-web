@@ -319,6 +319,7 @@ function renderAppHeader(): HTMLElement {
         children: [renderLogoSymbol(), renderBrandName()],
       }),
       renderDesktopNavigation([
+        { label: 'Reparar EPUB', href: '/', current: true },
         { label: 'Converter PDF', href: '/converter' },
         { label: 'Como funciona', href: '#privacy' },
         { label: 'Limitações', href: '#limitations' },

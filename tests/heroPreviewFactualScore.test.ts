@@ -111,6 +111,29 @@ describe('Identidade editorial no EPUB Repair', () => {
       .toContain("import './styles/navbarRefinement.css';");
   });
 
+  it('sinaliza a ferramenta atual em cobre nas duas páginas sem selecionar destinos secundários', () => {
+    for (const { build, href, count } of [
+      { build: createApp, href: '/', count: 5 },
+      { build: createConverterApp, href: '/converter', count: 4 },
+    ]) {
+      const root = document.createElement('div');
+      document.body.append(root);
+      build(root);
+      const links = [...root.querySelectorAll<HTMLAnchorElement>('.app-header .header-nav a')];
+      expect(links).toHaveLength(count);
+      const selected = links.filter((link) => link.getAttribute('aria-current') === 'page');
+      expect(selected).toHaveLength(1);
+      expect(selected[0]?.getAttribute('href')).toBe(href);
+      expect(links.filter((link) => link !== selected[0]).every((link) => !link.hasAttribute('aria-current')))
+        .toBe(true);
+      root.remove();
+    }
+    const css = readFileSync('src/styles/desktopNavbar.css', 'utf8');
+    expect(css).toContain('color: var(--desktop-nav-copper);');
+    expect(css).toContain('.header-nav a[aria-current="page"]');
+    expect(css).toContain('background: color-mix(in srgb, var(--desktop-nav-copper) 11%, var(--color-surface));');
+  });
+
   it('destaca a navegação desktop no hover e no foco sem modificar o menu mobile', () => {
     for (const build of [createApp, createConverterApp]) {
       const root = document.createElement('div');
