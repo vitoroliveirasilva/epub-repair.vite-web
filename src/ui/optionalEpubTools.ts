@@ -184,7 +184,7 @@ export function readerCard(section: BookSection, fontSize: number, label: string
           attrs: { tabindex: '0' },
           children: [
             el('summary', { text: 'Nota de rodapé' }),
-          ] }) as HTMLDetailsElement;
+          ] });
         const value = el('p');
         appendRuns(value, block.runs, block.text);
         details.append(value);
