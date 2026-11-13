@@ -220,7 +220,9 @@ function blocksFromXhtml(
   return { title: textClean(title), blocks, text, styleFingerprint: style };
 }
 
-function legacyFallback(source: string): { title: string; blocks: BookBlock[]; text: string } {
+function legacyFallback(source: string): {
+  title: string; blocks: BookBlock[]; text: string; styleFingerprint: string;
+} {
   const title = source.match(/<h[1-3]\b[^>]*>([\s\S]*?)<\/h[1-3]>/iu)?.[1]
     ?.replace(/<[^>]*>/gu, '').trim() ?? '';
   const text = source.replace(/<(?:script|style)\b[^>]*>[\s\S]*?<\/(?:script|style)>/giu, ' ')
