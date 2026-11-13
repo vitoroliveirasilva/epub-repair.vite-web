@@ -89,7 +89,8 @@ export async function repairEpub(
   if (mode === 'optimization') {
     const optimizedFiles = new Map<string, Uint8Array>();
     for (const [path, entry] of loaded.files) optimizedFiles.set(path, entry.bytes);
-    const attempted = await repairImageCompatibility(optimizedFiles, parsed.packageInfo, options);
+    const attempted = await repairImageCompatibility(
+      optimizedFiles, parsed.packageInfo, options, signal);
     if (!options.conservativeMode && before.issues.some((issue) => issue.code === 'XHTML_LANG_MISSING')) {
       attempted.push(...repairOptionalXhtmlLanguage(optimizedFiles, parsed.packageInfo));
     }

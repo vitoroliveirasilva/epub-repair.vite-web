@@ -40,7 +40,7 @@ describe('Lotes limitados e isolados', () => {
     const result = await processEpubBatch(files, undefined,
       (_phase, completed, _total, detail) => {
         if (detail) progress.push({ ...detail, completed });
-      });
+      }, { mode: 'validate' });
     expect(result.entries).toHaveLength(4);
     expect(result.entries[2]?.status).toBe('recusado');
     expect(result.entries[3]?.status).toBe('recusado');
@@ -108,7 +108,7 @@ describe('Lotes limitados e isolados', () => {
       if (!detail) return;
       stages.push(detail.stage);
       if (detail.index === 1 && detail.stage === 'reading') controller.abort();
-    })).rejects.toMatchObject({ name: 'AbortError' });
+    }, { mode: 'validate' })).rejects.toMatchObject({ name: 'AbortError' });
     expect(stages.some((stage) => stage === 'completed' || stage === 'failed'))
       .toBe(true);
     expect(stages.filter((stage) => stage === 'reading')).toHaveLength(2);
@@ -116,7 +116,8 @@ describe('Lotes limitados e isolados', () => {
 
   it('inclui o relatório de cada resultado mesmo quando o EPUB requer revisão manual', async () => {
     const bytes = await buildKindleIssueEpub();
-    const result = await processEpubBatch([epub(bytes, 'manual.epub')]);
+    const result = await processEpubBatch([epub(bytes, 'manual.epub')],
+      undefined, undefined, { mode: 'validate' });
     const zip = await JSZip.loadAsync(await blobData(result.zip));
     const entry = result.entries[0]!;
     expect(entry.report).toMatch(/relatorios\/arquivo-01\.json/u);
@@ -193,7 +194,7 @@ describe('Lotes limitados e isolados', () => {
     const result = await processEpubBatch([
       epub(bytes, 'corrigivel.epub'),
       epub(new TextEncoder().encode('não é um zip'), 'quebrado.epub'),
-    ], undefined, undefined, { mode: 'repair' });
+    ], undefined, undefined, { mode: 'repair', includeOptimizations: false });
     expect(result.entries[0]?.changed, JSON.stringify(result.entries)).toBe(true);
     expect(result.entries[0]?.output).toBeTruthy();
     expect(result.entries[1]?.output).toBeUndefined();

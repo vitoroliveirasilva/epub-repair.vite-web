@@ -133,3 +133,5 @@ Manter documentação histórica e notas v3 intactas. Não rodar suites pesadas 
 - Falhas de otimização opcional não devem invalidar um EPUB já corrigido: o sistema preserva o último resultado verificado e registra a falha como alerta. Arquivos assinados, protegidos ou irrecuperáveis não têm proteções removidas.
 - O ZIP contém livros de saída no modo de correção, `resultado-lote.txt`, `resultado-lote.json` e `relatorios/arquivo-NN.json` para cada EPUB, incluindo recusados. Os originais permanecem no computador do usuário.
 - O processamento é cancelável e nunca disponibiliza ZIP parcial. Permanecem as limitações de processamento local, seis arquivos e 80 MB de entrada.
+
+- **JPEG progressivo:** a conversão opcional tem limite de espera de 2,5 segundos para carregar/decodificar uma imagem e para o canvas devolver o resultado. Se o navegador não conseguir decodificar, a melhoria é ignorada e registrada, sem travar a fila. O sinal de cancelamento também interrompe a decodificação pendente.

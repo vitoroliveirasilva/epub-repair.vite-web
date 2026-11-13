@@ -4,6 +4,7 @@
 
 - Permite selecionar ou arrastar múltiplos EPUBs no upload principal, abrindo automaticamente o lote; também suporta um ou vários arquivos na área dedicada.
 - Separa análise em lote de correção completa opt-in e aplica reparos e otimizações de compatibilidade a cada EPUB elegível, com relatórios de mudanças realmente aplicadas.
+- Limita o tempo de decodificação de JPEG progressivo e permite cancelar a otimização de imagem, impedindo que um recurso sem evento de carregamento trave o processamento em lote.
 
 - Finaliza o editor opcional de metadados: autores reorganizados sem perder identidades e refinamentos, funções MARC EPUB 2/3, correção de múltiplas coleções/séries e preservação de identificadores.
 - Amplia a preparação Kindle para dez verificações com bloqueios, acessibilidade, layout, segurança, ações guiadas e exportação de diagnóstico JSON.

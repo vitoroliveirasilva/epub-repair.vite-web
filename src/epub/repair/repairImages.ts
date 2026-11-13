@@ -3,21 +3,25 @@ import type { RepairAction, RepairOptions } from '../model/repairTypes';
 import { isJpegMediaType, isProgressiveJpeg, readJpegDimensions } from '../utils/kindleCompatibility';
 
 const MAX_CANVAS_PIXELS = 50_000_000;
+const IMAGE_DECODE_TIMEOUT_MS = 2_500;
 
 export async function repairImageCompatibility(
   files: Map<string, Uint8Array>,
   pkg: PackageDocumentInfo,
   options: Pick<RepairOptions, 'kindleSafeMode' | 'conservativeMode'>,
+  signal?: AbortSignal,
 ): Promise<RepairAction[]> {
   const actions: RepairAction[] = [];
   if (!options.kindleSafeMode || options.conservativeMode) return actions;
 
   for (const item of pkg.manifest) {
+    if (signal?.aborted) throw new DOMException('Conversão de imagem cancelada.', 'AbortError');
     if (!item.exists || !isJpegMediaType(item.mediaType)) continue;
     const bytes = files.get(item.resolvedPath);
     if (!bytes || !isProgressiveJpeg(bytes)) continue;
 
-    const normalized = await convertProgressiveJpegToBaseline(bytes);
+    const normalized = await convertProgressiveJpegToBaseline(bytes, signal);
+    if (signal?.aborted) throw new DOMException('Conversão de imagem cancelada.', 'AbortError');
     if (!normalized) {
       actions.push({
         type: 'skipped',
@@ -42,7 +46,7 @@ export async function repairImageCompatibility(
 }
 
 async function convertProgressiveJpegToBaseline(
-  bytes: Uint8Array,
+  bytes: Uint8Array, signal?: AbortSignal,
 ): Promise<Uint8Array | undefined> {
   if (typeof document === 'undefined') return undefined;
 
@@ -54,7 +58,7 @@ async function convertProgressiveJpegToBaseline(
   const imageBuffer = new ArrayBuffer(bytes.byteLength);
   new Uint8Array(imageBuffer).set(bytes);
   const blob = new Blob([imageBuffer], { type: 'image/jpeg' });
-  const image = await loadImage(blob);
+  const image = await loadImage(blob, signal);
   if (!image) return undefined;
 
   const { width, height } = image;
@@ -66,12 +70,43 @@ async function convertProgressiveJpegToBaseline(
   canvas.width = width;
   canvas.height = height;
 
-  const context = canvas.getContext('2d', { alpha: false });
-  if (!context) return undefined;
-  context.drawImage(image, 0, 0, width, height);
+  let context: CanvasRenderingContext2D | null = null;
+  try {
+    context = canvas.getContext('2d', { alpha: false });
+    if (!context) return undefined;
+    context.drawImage(image, 0, 0, width, height);
+  } catch {
+    return undefined;
+  }
 
-  const outputBlob = await new Promise<Blob | null>((resolve) => {
-    canvas.toBlob(resolve, 'image/jpeg', 0.92);
+  const outputBlob = await new Promise<Blob | null>((resolve, reject) => {
+    let finished = false;
+    let timeout: number | undefined;
+    function done(result: Blob | null): void {
+      if (finished) return;
+      finished = true;
+      if (timeout !== undefined) clearTimeout(timeout);
+      signal?.removeEventListener('abort', abort);
+      resolve(result);
+    }
+    function abort(): void {
+      if (finished) return;
+      finished = true;
+      if (timeout !== undefined) clearTimeout(timeout);
+      signal?.removeEventListener('abort', abort);
+      reject(new DOMException('Conversão de imagem cancelada.', 'AbortError'));
+    }
+    if (signal?.aborted) {
+      abort();
+      return;
+    }
+    signal?.addEventListener('abort', abort, { once: true });
+    timeout = window.setTimeout(() => done(null), IMAGE_DECODE_TIMEOUT_MS);
+    try {
+      canvas.toBlob(done, 'image/jpeg', 0.92);
+    } catch {
+      done(null);
+    }
   });
   if (!outputBlob || outputBlob.size === 0) return undefined;
   const output = new Uint8Array(await outputBlob.arrayBuffer());
@@ -79,7 +114,7 @@ async function convertProgressiveJpegToBaseline(
   
   if (output.length < 4 || output[0] !== 0xff || output[1] !== 0xd8 ||
       isProgressiveJpeg(output)) return undefined;
-  const decodedOutput = await loadImage(outputBlob);
+  const decodedOutput = await loadImage(outputBlob, signal);
   if (!decodedOutput || decodedOutput.width !== width || decodedOutput.height !== height) {
     return undefined;
   }
@@ -90,24 +125,58 @@ async function convertProgressiveJpegToBaseline(
   return output;
 }
 
-async function loadImage(blob: Blob): Promise<HTMLImageElement | undefined> {
-  const objectUrl = URL.createObjectURL(blob);
+async function loadImage(
+  blob: Blob, signal?: AbortSignal,
+): Promise<HTMLImageElement | undefined> {
+  if (typeof URL.createObjectURL !== 'function') return undefined;
+  let objectUrl: string;
+  try {
+    objectUrl = URL.createObjectURL(blob);
+  } catch {
+    return undefined;
+  }
   try {
     const image = new Image();
     image.decoding = 'async';
-    const loaded = new Promise<HTMLImageElement | undefined>((resolve) => {
-      image.onload = () => resolve(image);
-      image.onerror = () => resolve(undefined);
+    return await new Promise<HTMLImageElement | undefined>((resolve, reject) => {
+      let finished = false;
+      let timeout: number | undefined;
+      function done(result?: HTMLImageElement): void {
+        if (finished) return;
+        finished = true;
+        if (timeout !== undefined) clearTimeout(timeout);
+        image.onload = null;
+        image.onerror = null;
+        signal?.removeEventListener('abort', abort);
+        resolve(result);
+      }
+      function abort(): void {
+        if (finished) return;
+        finished = true;
+        if (timeout !== undefined) clearTimeout(timeout);
+        image.onload = null;
+        image.onerror = null;
+        signal?.removeEventListener('abort', abort);
+        reject(new DOMException('Conversão de imagem cancelada.', 'AbortError'));
+      }
+      if (signal?.aborted) {
+        abort();
+        return;
+      }
+      signal?.addEventListener('abort', abort, { once: true });
+      timeout = window.setTimeout(() => done(), IMAGE_DECODE_TIMEOUT_MS);
+      image.onload = () => done(image);
+      image.onerror = () => done();
+      try {
+        image.src = objectUrl;
+      } catch {
+        done();
+      }
     });
-    image.src = objectUrl;
-    return await loaded;
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
 }
-
-
-
 
 
 
