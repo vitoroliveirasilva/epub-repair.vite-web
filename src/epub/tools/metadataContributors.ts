@@ -139,7 +139,7 @@ export function updateAdditionalCreators(
     const oldName = normalize(old.textContent?.trim() ?? '');
     if (!kept.has(oldName) && protectedCredit(doc, old)) {
       throw new Error('O crédito "' + (old.textContent?.trim() ?? '') +
-        '" contém função editorial ou refinamentos vinculados. ' +
+        '" contém função editorial vinculada ou refinamentos vinculados. ' +
         'Mantenha o crédito ou edite seus vínculos com uma ferramenta especializada.');
     }
   }
