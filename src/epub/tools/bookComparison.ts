@@ -108,8 +108,8 @@ function comparePair(
   const status: DifferenceStatus = aspects.includes('text') ? 'text-changed'
     : aspects.includes('images') ? 'images-changed'
       : aspects.includes('structure') ? 'structure-changed'
-        : aspects.includes('format') ? 'format-changed'
-          : aspects.includes('styles') ? 'style-changed' : 'same';
+        : aspects.includes('styles') ? 'style-changed'
+          : aspects.includes('format') ? 'format-changed' : 'same';
   return {
     label, before, after, approximate, status, aspects,
     addedWords: words.added, removedWords: words.removed,

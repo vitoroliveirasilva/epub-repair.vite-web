@@ -38,9 +38,11 @@ function declarations(input: string): ReaderPresentation {
     if (property === 'text-align' && ['left', 'right', 'center', 'justify'].includes(raw)) {
       value.align = raw as ReaderPresentation['align'];
     } else if (property === 'text-indent') {
-      value.indentEm = numericEm(raw, 0, 4) ?? value.indentEm;
+      const safe = numericEm(raw, 0, 4);
+      if (safe !== undefined) value.indentEm = safe;
     } else if (property === 'font-size') {
-      value.fontSizeEm = numericEm(raw, 0.7, 1.8) ?? value.fontSizeEm;
+      const safe = numericEm(raw, 0.7, 1.8);
+      if (safe !== undefined) value.fontSizeEm = safe;
     } else if (property === 'font-family') {
       if (/monospace/iu.test(raw)) value.fontFamily = 'monospace';
       else if (/sans-serif/iu.test(raw)) value.fontFamily = 'sans-serif';
@@ -54,9 +56,11 @@ function declarations(input: string): ReaderPresentation {
       const num = Number(raw);
       if (Number.isFinite(num) && num >= 1 && num <= 2.5) value.lineHeight = num;
     } else if (property === 'margin-top') {
-      value.beforeEm = numericEm(raw, 0, 3) ?? value.beforeEm;
+      const safe = numericEm(raw, 0, 3);
+      if (safe !== undefined) value.beforeEm = safe;
     } else if (property === 'margin-bottom') {
-      value.afterEm = numericEm(raw, 0, 3) ?? value.afterEm;
+      const safe = numericEm(raw, 0, 3);
+      if (safe !== undefined) value.afterEm = safe;
     }
   }
   return value;

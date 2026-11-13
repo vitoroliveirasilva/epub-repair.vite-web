@@ -4,6 +4,7 @@ import { readBookPreview } from '../src/epub/tools/bookTools';
 import { readerCard } from '../src/ui/optionalEpubTools';
 import { readSafeTable } from '../src/epub/tools/readerStructures';
 import { compareBookPreviews } from '../src/epub/tools/bookComparison';
+import { comparisonCards } from '../src/ui/optionalEpubTools';
 
 const pixel = Uint8Array.from(Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==',
@@ -283,5 +284,31 @@ describe('Visualizador EPUB: tabelas e notas de rodapé', () => {
     expect(preview.omitted).toBe(0);
     expect(preview.sections.at(-1)?.text).toContain('Texto único da seção 84.');
   });
+  it('alinha a rolagem proporcional opcional dos painéis na comparação', async () => {
+    const before = await readBookPreview('before.epub', await book('<p>Texto antigo.</p>'));
+    const after = await readBookPreview('after.epub', await book('<p>Texto atual.</p>'));
+    const row = compareBookPreviews(before, after)[0]!;
+    const view = comparisonCards(row, 18, true);
+    const cards = view.querySelectorAll<HTMLElement>('.optional-reader-card');
+    const left = cards[0]!;
+    const right = cards[1]!;
+    Object.defineProperties(left, {
+      scrollHeight: { configurable: true, value: 900 },
+      clientHeight: { configurable: true, value: 100 },
+    });
+    Object.defineProperties(right, {
+      scrollHeight: { configurable: true, value: 600 },
+      clientHeight: { configurable: true, value: 100 },
+    });
+    left.scrollTop = 400;
+    left.dispatchEvent(new Event('scroll'));
+    expect(right.scrollTop).toBe(250);
+    const independent = comparisonCards(row, 18, false);
+    const other = independent.querySelectorAll<HTMLElement>('.optional-reader-card');
+    other[0]!.scrollTop = 150;
+    other[0]!.dispatchEvent(new Event('scroll'));
+    expect(other[1]!.scrollTop).toBe(0);
+  });
+
 
 });
