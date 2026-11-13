@@ -6,8 +6,12 @@ export function metadataChanges(
   const changes: Partial<BookMetadata> = {};
   const keys = Object.keys(original) as Array<keyof BookMetadata>;
   for (const key of keys) {
-    const value = draft[key].trim();
-    if (!value || value === original[key].trim()) continue;
+    const normalize = (value: string): string => key === 'additionalCreatorRoles'
+      ? value.replace(/\r\n/gu, '\n').split('\n')
+        .map((line) => line.trim()).join('\n')
+      : value.trim();
+    const value = normalize(draft[key]);
+    if (!value.trim() || value === normalize(original[key])) continue;
     changes[key] = value;
   }
   return changes;

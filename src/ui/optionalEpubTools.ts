@@ -4,7 +4,8 @@ import { MAX_FILE_SIZE_BYTES } from '../epub/utils/constants';
 import { processEpubBatch, MAX_BATCH_BYTES, MAX_BATCH_FILES } from '../epub/tools/batchProcessor';
 import { button, downloadBlob, el, formatBytes } from './dom';
 import {
-  buildKindleChecks, summarizeKindleChecks, readBookMetadata, readBookPreview, writeBookMetadata,
+  buildKindleChecks, summarizeKindleChecks, exportKindleReadiness,
+  readBookMetadata, readBookPreview, writeBookMetadata,
   type BookMetadata, type BookPreview, type BookSection,
 } from '../epub/tools/bookTools';
 import { compareBookPreviews, comparisonSummary, type BookDifference } from '../epub/tools/bookComparison';
@@ -469,7 +470,8 @@ function renderCompare(state: AppState, s: Session, rerender: () => void, enqueu
 
 const FIELDS: Array<[keyof BookMetadata, string]> = [
   ['title', 'Título'], ['creator', 'Autor principal'],
-  ['additionalCreators', 'Outros autores e colaboradores (um por linha)'],
+  ['additionalCreators', 'Outros autores (um por linha)'],
+  ['additionalCreatorRoles', 'Funções dos autores adicionais (códigos MARC, um por linha)'],
   ['language', 'Idioma (pt-BR)'],
   ['identifier', 'Identificador principal'], ['publisher', 'Editora'], ['date', 'Data de publicação'],
   ['description', 'Descrição'], ['subject', 'Assunto'], ['series', 'Série'],
@@ -501,13 +503,19 @@ function renderMetadata(state: AppState, s: Session, rerender: () => void, enque
     attrs: { role: 'status' },
   });
   const inputs = original && draft ? FIELDS.map(([key, title]) => {
-    const input = key === 'description' || key === 'additionalCreators'
+    const input = key === 'description' || key === 'additionalCreators' ||
+      key === 'additionalCreatorRoles'
       ? el('textarea', { attrs: {
         rows: key === 'description' ? '3' : '4',
-        maxlength: key === 'description' ? '6000' : '3000',
+        maxlength: key === 'description' ? '6000' :
+          key === 'additionalCreatorRoles' ? '500' : '3000',
         'aria-description': key === 'additionalCreators'
-          ? 'Um nome por linha. Os vínculos editoriais existentes são preservados.'
-          : 'Texto de descrição editorial',
+          ? 'Um nome por linha. A reordenação conserva as funções ligadas a cada nome.'
+          : key === 'additionalCreatorRoles'
+            ? 'Alinhe cada código à linha do autor correspondente. ' +
+              'Use aut para autor, edt para editor, trl para tradutor e ill para ilustrador. ' +
+              'Linhas vazias preservam funções existentes.'
+            : 'Texto de descrição editorial',
       }, text: draft[key] })
       : el('input', { attrs: { type: 'text', value: draft[key],
         maxlength: '300', autocomplete: 'off' } });
@@ -561,7 +569,11 @@ function renderMetadata(state: AppState, s: Session, rerender: () => void, enque
     rerender();
   });
   return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Edite apenas o necessário. Campos vazios não apagam valores existentes; os outros autores são separados por linha. Vínculos editoriais são preservados e EPUBs assinados não podem ser editados.'),
+    paragraph('Edite apenas o necessário. Campos vazios preservam informações. ' +
+      'Ao reorganizar os autores, seus vínculos editoriais acompanham cada nome. ' +
+      'Funções MARC opcionais usam uma linha por autor adicional; uma função ' +
+      'existente não é apagada por uma linha vazia. Autores vinculados não podem ' +
+      'ser excluídos silenciosamente. EPUBs assinados não são editados.'),
     load,
     original && draft ? el('div', { className: 'optional-metadata-grid', children: inputs }) : undefined,
     original && draft ? changedLabel : undefined,
@@ -594,7 +606,9 @@ function renderKindle(state: AppState): HTMLElement {
       ' ponto(s) para revisar · ' + summary.blocked + ' bloqueio(s).'),
   ] }) : paragraph('Valide o EPUB primeiro para receber recomendações sobre capa, navegação, metadados, arquivos ausentes e recursos externos.');
   return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Checklist local e orientativo para envio ao Kindle. Não garante que a Amazon aceite o EPUB nem que a aparência seja idêntica no dispositivo. Nenhum arquivo é enviado automaticamente.'),
+    paragraph('Verificação local orientativa de estrutura, capa, navegação, segurança, ' +
+      'acessibilidade, metadados, layout e tamanho. O serviço da Amazon ainda pode ' +
+      'recusar o arquivo, e a aparência pode mudar no Kindle. Não há envio automático.'),
     result,
     ...checks.map((check) => el('div', { className: 'optional-check', children: [
       el('strong', { text: check.label + ' · ' + statusNames[check.status] }),
@@ -602,6 +616,9 @@ function renderKindle(state: AppState): HTMLElement {
       !check.ok ? el('p', { className: 'optional-kindle-action', text: 'O que fazer: ' + check.action })
         : undefined,
     ] })),
+    report ? button('Baixar diagnóstico Kindle (JSON)', 'btn btn-secondary btn-small',
+      () => downloadBlob(new Blob([exportKindleReadiness(report)],
+        { type: 'application/json' }), 'diagnostico-kindle.json')) : undefined,
     el('a', { className: 'btn btn-secondary btn-small', text: 'Abrir Send to Kindle oficial',
       attrs: { href: 'https://www.amazon.com/sendtokindle', target: '_blank', rel: 'noopener noreferrer' } }),
   ] });

@@ -7,6 +7,7 @@ batchToolsV4
 readerInlineV4
 readerStructuresV4
 metadataDraftV4
+metadataIntegrityV4
 reviewKindleV4
 pdfColumnFidelityV4
 pdfContentSafetyV4

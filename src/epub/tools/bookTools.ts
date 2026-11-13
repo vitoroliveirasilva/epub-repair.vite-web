@@ -6,7 +6,8 @@ import { parsePackageDocument } from '../validation/opfParser';
 import { inspectEpub } from '../validation/validateEpub';
 import { findFirstByLocalName, parseXml, serializeXmlPreservingDeclaration } from '../utils/xmlUtils';
 import { readRichBookPreview, type BookBlock } from './bookReader';
-import { additionalCreators, updateAdditionalCreators } from './metadataContributors';
+import { additionalCreators, additionalCreatorRoles,
+  updateAdditionalCreators, updateAdditionalCreatorRoles } from './metadataContributors';
 
 const DC = 'http://purl.org/dc/elements/1.1/';
 const OPF = 'http://www.idpf.org/2007/opf';
@@ -30,6 +31,7 @@ export interface BookMetadata {
   title: string;
   creator: string;
   additionalCreators: string;
+  additionalCreatorRoles: string;
   language: string;
   identifier: string;
   publisher: string;
@@ -73,6 +75,28 @@ function findMeta(parent: Element, name: string, attr: 'name' | 'property'): Ele
     child.getAttribute(attr) === name);
 }
 
+function seriesPosition(metadata: Element, series?: Element): Element | undefined {
+  if (!series) return undefined;
+  const positions = Array.from(metadata.children).filter((node) =>
+    node.localName === 'meta' && node.getAttribute('property') === 'group-position');
+  const id = series.getAttribute('id');
+  if (id) return positions.find((node) => node.getAttribute('refines') === '#' + id);
+  const collections = Array.from(metadata.children).filter((node) =>
+    node.localName === 'meta' &&
+    node.getAttribute('property') === 'belongs-to-collection');
+  return collections.length === 1 && positions.length === 1 &&
+    !positions[0]?.getAttribute('refines') ? positions[0] : undefined;
+}
+
+function ensureUniqueMetadataId(doc: Document, base: string): string {
+  const ids = new Set(Array.from(doc.getElementsByTagName('*'))
+    .map((node) => node.getAttribute('id')).filter(Boolean));
+  let result = base;
+  let index = 2;
+  while (ids.has(result)) result = base + '-' + index++;
+  return result;
+}
+
 function primaryIdentifier(doc: Document, metadata: Element): Element | undefined {
   const primaryId = findFirstByLocalName(doc, 'package')?.getAttribute('unique-identifier');
   const identifiers = Array.from(metadata.children).filter((node) => node.localName === 'identifier');
@@ -86,12 +110,7 @@ function setPrimaryIdentifier(doc: Document, metadata: Element, value: string): 
     metadata.appendChild(identifier);
   }
   if (!identifier.getAttribute('id')) {
-    let uid = 'epub-repair-uid';
-    let index = 1;
-    while (Array.from(doc.querySelectorAll('[id]')).some((node) => node.id === uid)) {
-      uid = 'epub-repair-uid-' + index++;
-    }
-    identifier.setAttribute('id', uid);
+    identifier.setAttribute('id', ensureUniqueMetadataId(doc, 'epub-repair-uid'));
   }
   findFirstByLocalName(doc, 'package')?.setAttribute('unique-identifier',
     identifier.getAttribute('id') ?? 'epub-repair-uid');
@@ -101,15 +120,12 @@ function setPrimaryIdentifier(doc: Document, metadata: Element, value: string): 
 export function metadataFromLoaded(loaded: LoadedEpub): BookMetadata {
   const { doc, metadata } = getMetadataNode(loaded);
   const seriesNode = findMeta(metadata, 'belongs-to-collection', 'property');
-  const positions = Array.from(metadata.children).filter((node) =>
-    node.localName === 'meta' && node.getAttribute('property') === 'group-position');
-  const selectedPosition = seriesNode?.id
-    ? positions.find((node) => node.getAttribute('refines') === '#' + seriesNode.id)
-    : positions[0];
+  const selectedPosition = seriesPosition(metadata, seriesNode);
   return {
     title: valueOf(metadata, 'title'),
     creator: valueOf(metadata, 'creator'),
     additionalCreators: additionalCreators(metadata),
+    additionalCreatorRoles: additionalCreatorRoles(metadata),
     language: valueOf(metadata, 'language'),
     identifier: primaryIdentifier(doc, metadata)?.textContent?.trim() ?? '',
     publisher: valueOf(metadata, 'publisher'),
@@ -178,7 +194,8 @@ export async function writeBookMetadata(
   const before = await inspectEpub(fileName, bytes);
   if (before.stats.fatalCount > 0) throw new Error('Corrija os problemas fatais antes de editar metadados.');
   const { path, doc, metadata, original } = getMetadataNode(loaded);
-  const fields: Array<Exclude<MetadataField, 'series' | 'seriesIndex' | 'additionalCreators'>> = [
+  const fields: Array<Exclude<MetadataField,
+    'series' | 'seriesIndex' | 'additionalCreators' | 'additionalCreatorRoles'>> = [
     'title', 'creator', 'language', 'identifier', 'publisher', 'date', 'description', 'subject',
   ];
   let changed = false;
@@ -224,34 +241,48 @@ export async function writeBookMetadata(
   }
   if (changes.seriesIndex?.trim()) {
     const value = changes.seriesIndex.trim();
-    if (!/^\d{1,4}(?:\.\d{1,3})?$/u.test(value)) throw new Error('Posição na série inválida.');
-    const originalIndex = isEpub3
-      ? findMeta(metadata, 'group-position', 'property')?.textContent?.trim() ?? ''
-      : findMeta(metadata, 'calibre:series_index', 'name')?.getAttribute('content') ?? '';
-    if (originalIndex !== value) {
+    if (!/^\d{1,4}(?:\.\d{1,3})?$/u.test(value)) {
+      throw new Error('Posição na série inválida.');
+    }
     if (isEpub3) {
       const series = findMeta(metadata, 'belongs-to-collection', 'property');
       if (!series?.textContent?.trim()) {
         throw new Error('Informe a série para definir a posição do volume em EPUB 3.');
       }
-      if (!series.id) {
-        let id = 'epub-repair-series';
-        let index = 1;
-        while (Array.from(doc.querySelectorAll('[id]')).some((node) => node.id === id)) {
-          id = 'epub-repair-series-' + index++;
-        }
-        series.id = id;
+      let id = series.getAttribute('id');
+      if (!id) {
+        id = ensureUniqueMetadataId(doc, 'epub-repair-series');
+        series.setAttribute('id', id);
+        changed = true;
       }
-      updateMeta(metadata, doc, 'property', 'group-position', value);
-      findMeta(metadata, 'group-position', 'property')?.setAttribute('refines', '#' + series.id);
+      let position = seriesPosition(metadata, series);
+      if (!position) {
+        position = doc.createElementNS(OPF, 'meta');
+        position.setAttribute('property', 'group-position');
+        position.setAttribute('refines', '#' + id);
+        metadata.appendChild(position);
+        changed = true;
+      }
+      if (position.textContent?.trim() !== value ||
+        position.getAttribute('refines') !== '#' + id) {
+        position.textContent = value;
+        position.setAttribute('refines', '#' + id);
+        changed = true;
+      }
     } else {
-      updateMeta(metadata, doc, 'name', 'calibre:series_index', value);
-    }
-      changed = true;
+      const current = findMeta(metadata, 'calibre:series_index', 'name');
+      if (current?.getAttribute('content') !== value) {
+        updateMeta(metadata, doc, 'name', 'calibre:series_index', value);
+        changed = true;
+      }
     }
   }
   if (changes.additionalCreators !== undefined &&
     updateAdditionalCreators(doc, metadata, changes.additionalCreators)) changed = true;
+  if (changes.additionalCreatorRoles !== undefined &&
+    updateAdditionalCreatorRoles(doc, metadata, changes.additionalCreatorRoles, isEpub3)) {
+    changed = true;
+  }
   if (!changed) throw new Error('Nenhuma alteração foi informada.');
   if (isEpub3) {
     updateMeta(metadata, doc, 'property', 'dcterms:modified',
@@ -309,81 +340,140 @@ export function summarizeKindleChecks(checks: KindleCheck[]): KindleReadiness {
     ready, review, blocked };
 }
 
+export const KINDLE_WEB_SIZE_LIMIT = 200 * 1024 * 1024;
+
 export function buildKindleChecks(report: ValidationReport): KindleCheck[] {
-  const issue = report.issues.filter((item) =>
+  const issues = report.issues.filter((item) =>
     item.severity === 'fatal' || item.severity === 'error' || item.severity === 'warning');
-  const packageInfo = report.packageInfo;
-  const hasFatal = !report.validZip || report.stats.fatalCount > 0;
-  const hasErrors = report.stats.errorCount > 0;
-  const navIssues = issue.filter((item) => /^(?:NAV_|NCX_|SPINE_|TOC_)/u.test(item.code));
-  const imageIssues = issue.filter((item) => /^(?:COVER_|IMAGE_)/u.test(item.code));
-  const metadataIssues = issue.filter((item) => /^(?:OPF_(?:TITLE|LANGUAGE|IDENTIFIER|UNIQUE)|METADATA_)/u.test(item.code));
-  const activeIssues = issue.filter((item) =>
-    /(?:ACTIVE|SCRIPT|REMOTE|EXTERNAL|SECURITY|ENCRYPT|DRM)/iu.test(item.code));
-  const metadata = packageInfo?.metadata;
-  const title = Boolean(metadata?.title?.trim());
-  const language = Boolean(metadata?.language?.trim());
-  const identifier = Boolean(metadata?.identifier?.trim());
+  const pkg = report.packageInfo;
+  const packageBroken = !report.validZip || report.stats.fatalCount > 0 ||
+    !pkg || !pkg.spine.length || !pkg.opfPath;
+  const metadataIssues = issues.filter((item) =>
+    /^(?:OPF_(?:TITLE|LANGUAGE|IDENTIFIER|UNIQUE|MODIFIED|DATE|REFINES|PREFIX|METADATA)|PACKAGE_SEMANTICS|METADATA_)/u
+      .test(item.code));
+  const navIssues = issues.filter((item) =>
+    /^(?:NAV_|NCX_|SPINE_|TOC_|OPF_SPINE_)/u.test(item.code));
+  const coverIssues = issues.filter((item) => /^(?:COVER_|OPF_COVER_|IMAGE_)/u.test(item.code));
+  const dependencies = issues.filter((item) =>
+    /^(?:CONTENT_MISSING_RESOURCE|CONTENT_KINDLE_EMBED_BROKEN|CSS_MISSING_RESOURCE|OPF_MISSING_RESOURCE|OPF_FALLBACK_)/u
+      .test(item.code));
+  const remoteActive = issues.filter((item) =>
+    /(?:ACTIVE|SCRIPT|REMOTE|EXTERNAL|SECURITY|ENCRYPT|DRM|UNSAFE|SUSPICIOUS)/iu
+      .test(item.code));
+  const encryption = issues.filter((item) =>
+    /(?:DRM|ENCRYPT|ZIP_ENCRYPTED_ENTRY)/iu.test(item.code));
+  const accessibility = issues.filter((item) =>
+    /^(?:CONTENT_(?:IMAGE_ALT_MISSING|ARIA_|FOOTNOTE_|LANGUAGE_CONFLICT|LINK_NAME_MISSING)|XHTML_LANG_MISSING)/u
+      .test(item.code));
+  const layout = report.issues.filter((item) =>
+    /^(?:FIXED_LAYOUT_|IMAGE_PROGRESSIVE_JPEG|OPF_PACKAGE_VERSION_UNSUPPORTED|KINDLE_COMPATIBILITY)/u
+      .test(item.code));
+  const title = Boolean(pkg?.metadata.title?.trim());
+  const language = Boolean(pkg?.metadata.language?.trim());
+  const identifier = Boolean(pkg?.metadata.identifier?.trim());
   const missing = [!title ? 'título' : '', !language ? 'idioma' : '',
     !identifier ? 'identificador' : ''].filter(Boolean);
-  const nav = packageInfo?.version.startsWith('3')
-    ? packageInfo.navItem : packageInfo?.ncxItem ?? packageInfo?.navItem;
+  const nav = pkg?.version.startsWith('3')
+    ? pkg.navItem : pkg?.ncxItem ?? pkg?.navItem;
   const navigationReady = Boolean(nav?.exists && nav.pathSafe &&
-    packageInfo?.spine.length && navIssues.length === 0);
-  const remote = packageInfo?.manifest.filter((item) =>
+    pkg?.spine.length && navIssues.length === 0);
+  const remote = pkg?.manifest.filter((item) =>
     item.remote || /^https?:\/\//iu.test(item.href)) ?? [];
-  const missingResources = packageInfo?.manifest.filter((item) =>
+  const missingResources = pkg?.manifest.filter((item) =>
     !item.exists && !item.remote) ?? [];
   const hasCover = Boolean(report.cover?.exists);
   const coverDeclared = Boolean(report.cover?.declared);
-  const coverReady = hasCover && coverDeclared && imageIssues.length === 0;
   const checks: KindleCheck[] = [];
   const push = (label: string, status: KindleStatus, detail: string, action: string): void => {
     checks.push({ label, status, ok: status === 'ready', detail, action });
   };
+
   push('Estrutura válida',
-    hasFatal ? 'blocked' : hasErrors ? 'review' : 'ready',
-    hasFatal ? 'O EPUB possui problema fatal ou ZIP inválido.' :
-      hasErrors ? report.stats.errorCount + ' erro(s) estrutural(is) identificado(s).' :
-        'Nenhum erro estrutural de gravidade alta detectado.',
-    'Valide e repare o arquivo antes de enviá-lo.');
+    packageBroken ? 'blocked' : report.stats.errorCount > 0 ? 'review' : 'ready',
+    packageBroken ? 'ZIP, pacote OPF ou ordem de leitura ausente/inválida.' :
+      report.stats.errorCount > 0 ? report.stats.errorCount + ' erro(s) no EPUB.' :
+        'Nenhum problema estrutural grave foi identificado.',
+    'Valide e repare o EPUB. Erros estruturais remanescentes exigem conferência.');
   push('Metadados essenciais',
-    !title || !language || !identifier || metadataIssues.length ? 'review' : 'ready',
+    missing.length || metadataIssues.length ? 'review' : 'ready',
     missing.length ? 'Faltam: ' + missing.join(', ') + '.' :
-      metadataIssues.length ? metadataIssues.length + ' alerta(s) nos metadados.' :
-        'Título, idioma e identificador presentes.',
-    'Use o editor de metadados para preencher as informações ausentes.');
-  push('Capa reconhecida', coverReady ? 'ready' : 'review',
-    !hasCover ? 'Nenhuma imagem de capa reconhecida.' :
-      !coverDeclared ? 'Imagem identificada, mas sem declaração explícita como capa.' :
-        imageIssues.length ? imageIssues.length + ' alerta(s) relacionados à imagem da capa.' :
-          'Capa encontrada e declarada.',
-    'Confira a capa no relatório; se necessário, substitua ou repare a declaração.');
-  push('Navegação', navigationReady ? 'ready' : 'review',
-    !packageInfo?.spine.length ? 'Não há capítulos de leitura no spine.' :
-      !nav?.exists ? 'Sumário de navegação ausente ou inválido para a versão do EPUB.' :
-        navIssues.length ? navIssues.length + ' alerta(s) no sumário ou spine.' :
-          'Sumário de navegação e ordem de leitura identificados.',
-    'Confira a ordem dos capítulos e a navegação no relatório EPUB.');
+      metadataIssues.length ? metadataIssues.length + ' alerta(s) sobre metadados.' :
+        'Título, idioma e identificador principal presentes.',
+    'Complete título, idioma e identificador; confira IDs e refinamentos no OPF.');
+  push('Capa reconhecida',
+    !hasCover || !coverDeclared || coverIssues.length ? 'review' : 'ready',
+    !hasCover ? 'Imagem de capa não identificada.' :
+      !coverDeclared ? 'Imagem presente, sem declaração inequívoca de capa.' :
+        coverIssues.length ? coverIssues.length + ' alerta(s) sobre imagens/capa.' :
+          'Imagem e declaração de capa identificadas.',
+    'Confira a capa e os metadados de capa no relatório; corrija o necessário.');
+  push('Navegação',
+    navigationReady ? 'ready' : 'review',
+    !pkg?.spine.length ? 'O spine não contém capítulos válidos.' :
+      !nav?.exists ? 'Não foi encontrado sumário adequado à versão do EPUB.' :
+        navIssues.length ? navIssues.length + ' alerta(s) sobre capítulos e navegação.' :
+          'Sumário e ordem de leitura encontrados.',
+    'Confira TOC, NCX, links internos e ordem dos capítulos.');
   push('Recursos e dependências',
-    missingResources.length ? 'review' : 'ready',
-    missingResources.length ? missingResources.length + ' recurso(s) do manifesto não encontrado(s).' :
-      'Referências locais do manifesto presentes.',
-    'Corrija imagens, estilos ou recursos ausentes antes do envio.');
+    missingResources.length || dependencies.length ? 'review' : 'ready',
+    missingResources.length || dependencies.length
+      ? missingResources.length + ' item(ns) ausente(s) no manifesto e ' +
+        dependencies.length + ' alerta(s) de referência ou dependência.'
+      : 'Arquivos locais e referências essenciais identificados.',
+    'Corrija imagens, folhas de estilo e outros destinos quebrados.');
   push('Conteúdo externo ou ativo',
-    activeIssues.length || remote.length ? 'review' : 'ready',
-    remote.length ? remote.length + ' recurso(s) remoto(s) referenciado(s).' :
-      activeIssues.length ? activeIssues.length + ' alerta(s) de conteúdo ativo/segurança.' :
-        'Nenhum alerta relevante de conteúdo remoto ou ativo detectado.',
-    'Prefira conteúdos autossuficientes; revise dependências externas e scripts.');
-  const fileSizeOk = report.fileSize <= 200 * 1024 * 1024;
-  push('Tamanho para envio web', fileSizeOk ? 'ready' : 'blocked',
-    fileSizeOk ? 'O arquivo está abaixo do limite de referência de 200 MB.' :
-      'O arquivo ultrapassa o limite de referência de 200 MB.',
-    'Consulte o limite atualizado do Send to Kindle e reduza o arquivo se necessário.');
-  push('Alertas residuais', issue.length ? 'review' : 'ready',
-    issue.length ? issue.length + ' alerta(s)/erro(s) exigem avaliação.' :
-      'Nenhum alerta de severidade elevada encontrado.',
-    'Revise os avisos no relatório técnico, mesmo se os demais itens estiverem adequados.');
+    encryption.length ? 'blocked' :
+      remoteActive.length || remote.length ? 'review' : 'ready',
+    encryption.length ? 'Há ' + encryption.length +
+      ' alerta(s) de criptografia, DRM ou recurso protegido.' :
+      remote.length ? remote.length + ' recurso(s) remoto(s) declarados.' :
+        remoteActive.length ? remoteActive.length + ' alerta(s) de segurança.' :
+          'Nenhum sinal relevante de conteúdo ativo ou externo detectado.',
+    'Evite dependências remotas e scripts. Conteúdo com DRM/criptografia precisa ' +
+      'de uma versão legalmente acessível, sem tentar remover a proteção.');
+  const sizeOk = report.fileSize > 0 && report.fileSize <= KINDLE_WEB_SIZE_LIMIT;
+  push('Tamanho para envio web', sizeOk ? 'ready' : 'blocked',
+    sizeOk ? 'Arquivo dentro do limite anunciado de 200 MB para envio pela web.' :
+      'Arquivo vazio ou acima de 200 MB para envio pela web.',
+    'Consulte os limites atuais do Send to Kindle. O envio por e-mail possui limites diferentes.');
+  push('Acessibilidade',
+    accessibility.length ? 'review' : 'ready',
+    accessibility.length ? accessibility.length +
+      ' alerta(s) sobre imagens, idiomas, notas ou rótulos acessíveis.' :
+        'Nenhuma das verificações de acessibilidade sinalizou problema.',
+    'Descreva imagens relevantes, confira idioma e links, e revise as notas de rodapé.');
+  push('Layout e formatos especiais',
+    layout.length ? 'review' : 'ready',
+    layout.length ? layout.length +
+      ' alerta(s) de layout fixo, mídia ou compatibilidade Kindle.' :
+        'Nenhum alerta específico de layout ou mídia detectado pela análise.',
+    'Livros de layout fixo, quadrinhos e mídias complexas exigem testes no leitor real.');
+  push('Alertas residuais',
+    issues.length ? 'review' : 'ready',
+    issues.length ? issues.length + ' alerta(s) ou erro(s) precisam de avaliação.' :
+      'Nenhum alerta relevante detectado pela análise estática.',
+    'Examine o relatório técnico; nenhuma verificação local garante aceite pela Amazon.');
+
   return checks;
 }
+
+export function exportKindleReadiness(report: ValidationReport): string {
+  const checks = buildKindleChecks(report);
+  return JSON.stringify({
+    source: {
+      fileName: report.fileName,
+      fileSize: report.fileSize,
+      epubVersion: report.packageInfo?.version ?? null,
+    },
+    summary: summarizeKindleChecks(checks),
+    checks,
+    guidance: {
+      webLimitBytes: KINDLE_WEB_SIZE_LIMIT,
+      sendToKindleUrl: 'https://www.amazon.com/sendtokindle',
+      automatedUpload: false,
+      limitations: 'Auditoria estática e orientativa. EPUB pode ser recusado pelo serviço ' +
+        'ou apresentar diferenças no aparelho. Confira no Kindle e-reader ou aplicativo.',
+    },
+  }, null, 2);
+}
+

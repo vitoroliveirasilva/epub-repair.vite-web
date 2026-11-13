@@ -7,7 +7,8 @@ import type { BookMetadata } from '../src/epub/tools/bookTools';
 
 const metadata: BookMetadata = {
   title: 'Livro', creator: 'Autor', additionalCreators: 'Colaborador',
-  language: 'pt-BR', identifier: 'urn:uuid:123', publisher: '',
+  additionalCreatorRoles: 'edt', language: 'pt-BR',
+  identifier: 'urn:uuid:123', publisher: '',
   date: '', description: '', subject: '', series: '', seriesIndex: '',
 };
 
@@ -22,6 +23,25 @@ describe('Rascunhos seguros de metadados', () => {
     expect(metadataChanges(metadata, draft)).toEqual({ title: 'Livro revisado' });
     expect(metadataChangeCount(metadata, draft)).toBe(1);
     expect(metadataChangeCount(metadata, { ...metadata })).toBe(0);
+  });
+
+  it('registra alteração explícita de papel MARC sem reenviar outros campos', () => {
+    const next = { ...metadata, additionalCreatorRoles: 'trl' };
+    expect(metadataChanges(metadata, next)).toEqual({ additionalCreatorRoles: 'trl' });
+    expect(metadataChangeCount(metadata, next)).toBe(1);
+    expect(metadataChanges(metadata, { ...metadata, additionalCreatorRoles: '' }))
+      .toEqual({});
+  });
+
+  it('preserva linhas vazias antes da função MARC, mantendo os créditos corretos', () => {
+    const withEmptyRole = { ...metadata, additionalCreatorRoles: '' };
+    const changed = { ...withEmptyRole, additionalCreatorRoles: '\ntrl' };
+    expect(metadataChanges(withEmptyRole, changed)).toEqual({
+      additionalCreatorRoles: '\ntrl',
+    });
+    expect(metadataChanges(withEmptyRole, {
+      ...withEmptyRole, additionalCreatorRoles: '\n\n',
+    })).toEqual({});
   });
 
   it('não perde alterações ao trocar de ferramenta e mantém o botão desabilitado sem mudanças', async () => {

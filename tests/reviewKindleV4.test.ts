@@ -6,7 +6,7 @@ import {
   normalizeHtmlTextSpaces, normalizeSectionSpaces, normalizeRepeatedSpaces,
 } from '../src/converter/reviewSuggestions';
 import {
-  buildKindleChecks, summarizeKindleChecks,
+  buildKindleChecks, summarizeKindleChecks, exportKindleReadiness,
 } from '../src/epub/tools/bookTools';
 
 function section(text: string, html: string, page = 3): EditableSection {
@@ -167,11 +167,11 @@ describe('Revisor PDF orientado por prioridade', () => {
 describe('Checklist de riscos para Kindle', () => {
   it('reconhece dados estruturais positivos sem declarar certificação', () => {
     const checks = buildKindleChecks(report());
-    expect(checks).toHaveLength(8);
+    expect(checks).toHaveLength(10);
     expect(checks.find((item) => item.label === 'Navegação')?.ok).toBe(true);
     expect(checks.find((item) => item.label === 'Metadados essenciais')?.ok).toBe(true);
     expect(summarizeKindleChecks(checks)).toEqual({
-      status: 'ready', ready: 8, review: 0, blocked: 0,
+      status: 'ready', ready: 10, review: 0, blocked: 0,
     });
   });
 
@@ -196,6 +196,66 @@ describe('Checklist de riscos para Kindle', () => {
     expect(checks.filter((item) => !item.ok).every((item) => item.action.length > 10))
       .toBe(true);
     expect(summarizeKindleChecks(checks).status).toBe('review');
+  });
+
+  it('trata DRM e entradas criptografadas como bloqueio de envio, não simples aviso', () => {
+    const sample = report();
+    sample.issues.push({
+      id: 'locked', code: 'DRM_OR_ENCRYPTION', severity: 'warning',
+      title: 'Protegido', detail: 'Conteúdo protegido por DRM', repairable: false,
+    });
+    sample.stats.warningCount = 1;
+    const checks = buildKindleChecks(sample);
+    const security = checks.find((item) => item.label === 'Conteúdo externo ou ativo');
+    expect(security?.status).toBe('blocked');
+    expect(security?.detail).toContain('DRM');
+    expect(summarizeKindleChecks(checks).status).toBe('blocked');
+    expect(checks.find((item) => item.label === 'Alertas residuais')?.status).toBe('review');
+  });
+
+  it('identifica acessibilidade e layout, inclusive informações que exigem atenção', () => {
+    const sample = report();
+    sample.issues.push({
+      id: 'alt', code: 'CONTENT_IMAGE_ALT_MISSING', severity: 'warning',
+      title: 'Alt ausente', detail: 'Ilustração sem descrição', repairable: false,
+    }, {
+      id: 'layout', code: 'FIXED_LAYOUT_MISSING_VIEWPORT', severity: 'warning',
+      title: 'Viewport ausente', detail: 'Página visual sem viewport', repairable: false,
+    });
+    sample.stats.warningCount = 2;
+    const checks = buildKindleChecks(sample);
+    expect(checks.find((item) => item.label === 'Acessibilidade')?.status).toBe('review');
+    expect(checks.find((item) => item.label === 'Layout e formatos especiais')?.status)
+      .toBe('review');
+    expect(checks.find((item) => item.label === 'Recursos e dependências')?.status)
+      .toBe('ready');
+  });
+
+  it('não declara EPUB pronto sem pacote OPF ou ordem de leitura', () => {
+    const sample = report();
+    sample.packageInfo = undefined;
+    const checks = buildKindleChecks(sample);
+    expect(checks.find((item) => item.label === 'Estrutura válida')?.status).toBe('blocked');
+    expect(checks.find((item) => item.label === 'Navegação')?.status).toBe('review');
+    expect(checks.find((item) => item.label === 'Metadados essenciais')?.status).toBe('review');
+  });
+
+  it('exporta um laudo estruturado com recomendações e ressalva explícita', () => {
+    const sample = report();
+    const exported = JSON.parse(exportKindleReadiness(sample)) as {
+      source: { fileName: string; epubVersion: string };
+      summary: { status: string };
+      checks: Array<{ label: string; action: string }>;
+      guidance: { automatedUpload: boolean; webLimitBytes: number; limitations: string };
+    };
+    expect(exported.source.fileName).toBe('obra.epub');
+    expect(exported.source.epubVersion).toBe('3.0');
+    expect(exported.summary.status).toBe('ready');
+    expect(exported.checks).toHaveLength(10);
+    expect(exported.checks.every((item) => item.action.length > 10)).toBe(true);
+    expect(exported.guidance.webLimitBytes).toBe(200 * 1024 * 1024);
+    expect(exported.guidance.automatedUpload).toBe(false);
+    expect(exported.guidance.limitations).toMatch(/Kindle|Amazon/u);
   });
 
   it('distingue ZIP inválido e tamanho excessivo dos alertas menores', () => {
