@@ -3,6 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { buildKindleIssueEpub } from './helpers/syntheticEpub';
 import { processEpubBatch, MAX_BATCH_FILES, MAX_BATCH_BYTES,
   type BatchFileProgress } from '../src/epub/tools/batchProcessor';
+import { addBatchSelection } from '../src/epub/tools/batchSelection';
+import { renderUploader } from '../src/ui/components/Uploader';
+import { openBatchWithFiles, renderOptionalEpubTools } from '../src/ui/optionalEpubTools';
+import { createInitialState } from '../src/app/state';
 
 async function blobData(blob: Blob): Promise<Uint8Array> {
   if (typeof blob.arrayBuffer === 'function') return new Uint8Array(await blob.arrayBuffer());
@@ -119,4 +123,150 @@ describe('Lotes limitados e isolados', () => {
     expect(Array.isArray(detail.original.issues)).toBe(true);
     expect(Array.isArray(detail.final.issues)).toBe(true);
   });
+  it('analisa um ou vários arquivos sem reparar quando o usuário escolhe somente verificar', async () => {
+    const bytes = await buildKindleIssueEpub();
+    const result = await processEpubBatch([
+      epub(bytes, 'um.epub'), epub(bytes, 'dois.epub'),
+    ], undefined, undefined, { mode: 'validate' });
+    expect(result.mode).toBe('validate');
+    expect(result.entries).toHaveLength(2);
+    expect(result.entries.every((entry) => !entry.changed && !entry.output)).toBe(true);
+    expect(result.entries.every((entry) => entry.repairsApplied === 0 &&
+      entry.optimizationsApplied === 0)).toBe(true);
+    const zip = await JSZip.loadAsync(await blobData(result.zip));
+    expect(zip.file(/\.epub$/iu)).toHaveLength(0);
+    const summary = JSON.parse(await zip.file('resultado-lote.json')!.async('string')) as {
+      mode: string; counts: { changed: number; exported: number };
+    };
+    expect(summary.mode).toBe('validate');
+    expect(summary.counts.changed).toBe(0);
+    expect(summary.counts.exported).toBe(0);
+    expect(zip.file('relatorios/arquivo-01.json')).not.toBeNull();
+    expect(zip.file('relatorios/arquivo-02.json')).not.toBeNull();
+  });
+
+  it('corrige de verdade TODOS os EPUBs elegíveis, com conteúdo alterado e ações documentadas', async () => {
+    const bytes = await buildKindleIssueEpub();
+    const stages: string[] = [];
+    const result = await processEpubBatch([
+      epub(bytes, 'livro-a.epub'), epub(bytes, 'livro-b.epub'),
+    ], undefined, (_phase, _n, _total, detail) => {
+      if (detail) stages.push(detail.stage);
+    }, { mode: 'repair', includeOptimizations: true });
+    expect(result.mode).toBe('repair');
+    expect(result.entries).toHaveLength(2);
+    expect(result.entries.every((entry) => entry.changed && Boolean(entry.output))).toBe(true);
+    expect(result.entries.every((entry) => entry.repairsApplied > 0)).toBe(true);
+    expect(stages.filter((stage) => stage === 'repairing')).toHaveLength(2);
+    const zip = await JSZip.loadAsync(await blobData(result.zip));
+    const summary = JSON.parse(await zip.file('resultado-lote.json')!.async('string')) as {
+      counts: { changed: number; repaired: number; exported: number };
+    };
+    expect(summary.counts.changed).toBe(2);
+    expect(summary.counts.repaired).toBe(2);
+    expect(summary.counts.exported).toBe(2);
+    for (const [index, entry] of result.entries.entries()) {
+      const revisedBytes = await zip.file(entry.output!)!.async('uint8array');
+      expect(Array.from(revisedBytes)).not.toEqual(Array.from(bytes));
+      const report = JSON.parse(await zip.file(entry.report)!.async('string')) as {
+        changed: boolean;
+        repairsApplied: number;
+        repairActions: Array<{ type: string; title: string; detail: string }>;
+        final: { summary: { fatal: number } };
+      };
+      expect(report.changed).toBe(true);
+      expect(report.repairsApplied).toBeGreaterThan(0);
+      expect(report.repairActions.length).toBeGreaterThan(0);
+      expect(report.final.summary.fatal).toBe(0);
+      expect(entry.source).toBe('livro-' + (index ? 'b' : 'a') + '.epub');
+    }
+  });
+
+  it('isola EPUB quebrado e mantém o arquivo efetivamente corrigido no ZIP', async () => {
+    const bytes = await buildKindleIssueEpub();
+    const result = await processEpubBatch([
+      epub(bytes, 'corrigivel.epub'),
+      epub(new TextEncoder().encode('não é um zip'), 'quebrado.epub'),
+    ], undefined, undefined, { mode: 'repair' });
+    expect(result.entries[0]?.changed).toBe(true);
+    expect(result.entries[0]?.output).toBeTruthy();
+    expect(result.entries[1]?.output).toBeUndefined();
+    expect(['recusado', 'falhou']).toContain(result.entries[1]?.status);
+    const zip = await JSZip.loadAsync(await blobData(result.zip));
+    expect(zip.file(result.entries[0]!.output!)).toBeTruthy();
+    expect(zip.file(result.entries[1]!.report)).toBeTruthy();
+  });
+
+  it('aceita um EPUB e adiciona outros por seleções sucessivas preservando o limite', () => {
+    const first = new File(['a'], 'primeiro.epub', { lastModified: 10 });
+    const second = new File(['b'], 'segundo.epub', { lastModified: 20 });
+    const selected = addBatchSelection([], [first]);
+    expect(selected.files).toHaveLength(1);
+    const more = addBatchSelection(selected.files, [first, second,
+      new File(['x'], 'texto.txt')]);
+    expect(more.files.map((file) => file.name))
+      .toEqual(['primeiro.epub', 'segundo.epub']);
+    expect(more.added).toBe(1);
+    expect(more.ignored).toBe(1);
+    const overflow = addBatchSelection(more.files, Array.from({ length: 5 },
+      (_, index) => new File(['x'], 'book-' + index + '.epub')));
+    expect(overflow.error).toMatch(/até|permite/iu);
+    expect(overflow.files).toEqual(more.files);
+  });
+
+  it('o upload principal aceita um ou vários EPUBs por escolha e por arrasto', () => {
+    const state = createInitialState();
+    const one = new File(['a'], 'um.epub');
+    const two = new File(['b'], 'dois.epub');
+    const singles: string[] = [];
+    const multiples: string[][] = [];
+    const view = renderUploader(state,
+      (file) => singles.push(file.name),
+      (files) => multiples.push(files.map((file) => file.name)));
+    const input = view.querySelector<HTMLInputElement>('#epub-file-input')!;
+    expect(input.multiple).toBe(true);
+    Object.defineProperty(input, 'files', { configurable: true, value: [one] });
+    input.dispatchEvent(new Event('change'));
+    expect(singles).toEqual(['um.epub']);
+    Object.defineProperty(input, 'files', { configurable: true, value: [one, two] });
+    input.dispatchEvent(new Event('change'));
+    expect(multiples).toEqual([['um.epub', 'dois.epub']]);
+    const zone = view.querySelector<HTMLElement>('.dropzone')!;
+    const drop = new Event('drop', { bubbles: true, cancelable: true });
+    Object.defineProperty(drop, 'dataTransfer', { value: { files: [two, one] } });
+    zone.dispatchEvent(drop);
+    expect(multiples[1]).toEqual(['dois.epub', 'um.epub']);
+  });
+
+  it('abre o lote automaticamente, aceita arrastar mais um e alterna modos explicitamente', () => {
+    const state = createInitialState();
+    const one = new File(['a'], 'um.epub');
+    const two = new File(['b'], 'dois.epub');
+    const host = document.createElement('div');
+    const rerender = (): void => {
+      host.replaceChildren(renderOptionalEpubTools(state, rerender, () => {}));
+    };
+    openBatchWithFiles(state, [one]);
+    rerender();
+    expect((host.querySelector('.optional-tools') as HTMLDetailsElement).open).toBe(true);
+    expect(host.textContent).toContain('1 EPUB(s) selecionado(s)');
+    expect(host.querySelector<HTMLInputElement>('input[value="repair"]')?.checked).toBe(true);
+    const dropZone = host.querySelector<HTMLElement>('.optional-batch-dropzone')!;
+    const drop = new Event('drop', { bubbles: true, cancelable: true });
+    Object.defineProperty(drop, 'dataTransfer', { value: { files: [two] } });
+    dropZone.dispatchEvent(drop);
+    expect(host.textContent).toContain('2 EPUB(s) selecionado(s)');
+    const radios = host.querySelectorAll<HTMLInputElement>('input[name="optional-batch-mode"]');
+    expect(radios).toHaveLength(2);
+    const validate = host.querySelector<HTMLInputElement>('input[value="validate"]')!;
+    validate.checked = true;
+    validate.dispatchEvent(new Event('change'));
+    expect(host.textContent).toContain('Verificar EPUB(s)');
+    expect(host.querySelector<HTMLInputElement>('input[value="validate"]')?.checked).toBe(true);
+    const remove = Array.from(host.querySelectorAll<HTMLButtonElement>(
+      '.optional-batch-files button')).find((button) => button.textContent === 'Remover');
+    remove?.click();
+    expect(host.textContent).toContain('1 EPUB(s) selecionado(s)');
+  });
+
 });

@@ -2,6 +2,9 @@
 
 ## v4.0.0 — desenvolvimento na dev (não lançada, 12/11/2026)
 
+- Permite selecionar ou arrastar múltiplos EPUBs no upload principal, abrindo automaticamente o lote; também suporta um ou vários arquivos na área dedicada.
+- Separa análise em lote de correção completa opt-in e aplica reparos e otimizações de compatibilidade a cada EPUB elegível, com relatórios de mudanças realmente aplicadas.
+
 - Finaliza o editor opcional de metadados: autores reorganizados sem perder identidades e refinamentos, funções MARC EPUB 2/3, correção de múltiplas coleções/séries e preservação de identificadores.
 - Amplia a preparação Kindle para dez verificações com bloqueios, acessibilidade, layout, segurança, ações guiadas e exportação de diagnóstico JSON.
 - Completa o fluxo funcional da revisão assistida de PDFs com exportação JSON integral, filtros de prioridade, marcação de conferência e verificação de figuras sem referência.

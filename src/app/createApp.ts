@@ -20,7 +20,7 @@ import { renderRepairSummary } from '../ui/components/RepairSummary';
 import { renderUploader } from '../ui/components/Uploader';
 import { button, downloadBlob, el } from '../ui/dom';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
-import { renderOptionalEpubTools } from '../ui/optionalEpubTools';
+import { openBatchWithFiles, renderOptionalEpubTools } from '../ui/optionalEpubTools';
 import { abortProcessingError } from './zipWorkerClient';
 import { SerialTaskQueue } from './taskQueue';
 
@@ -100,6 +100,13 @@ function render(
             renderUploader(state, (file) => {
               enqueue('Carregar e analisar EPUB', (ctx) =>
                 loadAndAnalyzeCandidate(file, state, ctx));
+            }, (files) => {
+              openBatchWithFiles(state, files);
+              rerender();
+              requestAnimationFrame(() =>
+                document.querySelector('.optional-tools')?.scrollIntoView({
+                  behavior: 'smooth', block: 'start',
+                }));
             }),
             renderControls(state, {
               analyze: () => {

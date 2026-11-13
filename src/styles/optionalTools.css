@@ -471,3 +471,99 @@
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
+
+.optional-batch-dropzone {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 9rem;
+  padding: 1.4rem 1rem;
+  text-align: center;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+.optional-batch-dropzone span {
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+}
+.optional-batch-dropzone:hover,
+.optional-batch-dropzone.optional-batch-dragging {
+  border-color: var(--color-accent);
+  background: var(--color-surface);
+}
+.optional-batch-dropzone:focus-visible,
+.optional-batch-choice:focus-within {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.optional-batch-dropzone[aria-disabled="true"] {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.optional-batch-mode {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.optional-batch-mode legend {
+  margin-bottom: 0.7rem;
+  font-weight: 650;
+}
+.optional-batch-choice {
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+  padding: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.optional-batch-choice:has(input:checked) {
+  border-color: var(--color-accent);
+  background: var(--color-surface-2);
+}
+.optional-batch-choice input {
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+  accent-color: var(--color-accent);
+}
+.optional-batch-choice span {
+  display: grid;
+  gap: 0.3rem;
+}
+.optional-batch-choice small {
+  color: var(--color-text-muted);
+}
+.optional-batch-selection,
+.optional-batch-files {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: 0.55rem;
+}
+.optional-batch-files {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.optional-batch-files li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.7rem;
+  overflow-wrap: anywhere;
+}
