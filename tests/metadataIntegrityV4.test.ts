@@ -8,7 +8,6 @@ import { parseXml } from '../src/epub/utils/xmlUtils';
 
 const DC = 'http://purl.org/dc/elements/1.1/';
 const OPF = 'http://www.idpf.org/2007/opf';
-const decoder = new TextDecoder();
 
 function xml(credits: string, version = '3.0'): Document {
   return parseXml('<package xmlns="' + OPF + '" xmlns:dc="' + DC +
