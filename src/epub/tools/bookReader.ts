@@ -4,8 +4,9 @@ import { parsePackageDocument } from '../validation/opfParser';
 import { resolveReference } from '../utils/pathUtils';
 import { findFirstByLocalName, parseXml } from '../utils/xmlUtils';
 import type { LoadedEpub } from '../model/epubTypes';
-import { inlineRunsOf, type InlineRun } from './readerInline';
-import { isFootnote, readSafeNote, readSafeTable, type ReaderTable } from './readerStructures';
+import { inlineRunsOf, type InlineNoteReference, type InlineRun } from './readerInline';
+import { isFootnote, readSafeNote, readSafeTable, type ReaderCellImage, type ReaderTable } from './readerStructures';
+import { readerPresentationRules, type ReaderPresentation } from './readerPresentation';
 
 export interface BookBlock {
   kind: 'heading' | 'paragraph' | 'quotation' | 'list-item' | 'verse' |
@@ -18,6 +19,7 @@ export interface BookBlock {
   table?: ReaderTable | undefined;
   noteId?: string | undefined;
   ordered?: boolean | undefined;
+  presentation?: ReaderPresentation | undefined;
 }
 
 const IMAGE_TYPES = new Map([
@@ -29,9 +31,11 @@ const IMAGE_TYPES = new Map([
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const MAX_IMAGE_BUDGET = 8 * 1024 * 1024;
 const MAX_IMAGE_COUNT = 20;
-const MAX_SECTIONS = 80;
-const MAX_BLOCKS = 280;
-const MAX_CHARS = 120_000;
+const MAX_SECTIONS = 240;
+const MAX_BLOCKS = 480;
+const MAX_CHARS = 160_000;
+const MAX_BOOK_XHTML_BYTES = 20 * 1024 * 1024;
+const MAX_BOOK_BLOCKS = 12_000;
 const DISALLOWED = new Set([
   'script', 'style', 'iframe', 'object', 'embed', 'noscript', 'svg', 'form',
   'audio', 'video', 'canvas', 'math', 'template', 'head',
@@ -151,6 +155,19 @@ function styleFingerprint(
   return hash.toString(16);
 }
 
+function noteTarget(href: string, filePath: string): InlineNoteReference | undefined {
+  const trimmed = href.trim();
+  if (!trimmed || /^[a-z][a-z0-9+.-]*:|^\/\//iu.test(trimmed)) return undefined;
+  const hash = trimmed.indexOf('#');
+  if (hash < 0) return undefined;
+  const id = trimmed.slice(hash + 1);
+  if (!/^[\w.:-]{1,90}$/u.test(id)) return undefined;
+  const localPath = trimmed.slice(0, hash);
+  if (!localPath) return { id, path: filePath };
+  const resolved = resolveReference(filePath, localPath);
+  return resolved.safe ? { id, path: resolved.path } : undefined;
+}
+
 function blocksFromXhtml(
   source: string, filePath: string, loaded: LoadedEpub,
   imageManifest: Map<string, string>, budget: { bytes: number; count: number },
@@ -158,6 +175,9 @@ function blocksFromXhtml(
 ): { title: string; blocks: BookBlock[]; text: string; styleFingerprint: string } {
   const xml = parseXml(normalizeNamedEntities(source));
   const style = styleFingerprint(xml, filePath, loaded);
+  const presentation = readerPresentationRules(xml, filePath, loaded);
+  const linkResolver = (href: string): InlineNoteReference | undefined =>
+    noteTarget(href, filePath);
   const body = findFirstByLocalName(xml, 'body') ?? xml.documentElement;
   for (const element of Array.from(body.getElementsByTagName('*'))) {
     if (DISALLOWED.has(element.localName.toLowerCase())) element.remove();
@@ -173,18 +193,24 @@ function blocksFromXhtml(
     if (isInsideDisallowed(node, body)) continue;
     if (tag !== 'img' && tag !== 'image' && isNestedTextBlock(node, body)) continue;
     if (tag === 'table') {
-      const table = readSafeTable(node);
+      const imageResolver = (src: string, alt: string): ReaderCellImage | undefined => {
+        const image = imageFromBook(src, filePath, loaded, imageManifest, budget, cache);
+        if (!image.dataUrl || !image.path) return undefined;
+        return { imageDataUrl: image.dataUrl, imagePath: image.path, text: alt };
+      };
+      const table = readSafeTable(node, presentation, imageResolver, linkResolver);
       if (table.rows.length) blocks.push({ kind: 'table', text: table.caption,
         table });
       continue;
     }
     if (isFootnote(node)) {
-      const note = readSafeNote(node);
+      const note = readSafeNote(node, presentation, linkResolver);
       if (note.text) blocks.push({ kind: 'footnote', text: note.text,
         runs: note.runs, noteId: note.id });
       continue;
     }
     if (tag === 'img' || tag === 'image') {
+      if (node.parentElement?.closest('table')) continue;
       const ref = node.getAttribute('src') ?? node.getAttribute('href') ?? '';
       const img = imageFromBook(ref, filePath, loaded, imageManifest, budget, cache);
       if (img.dataUrl) blocks.push({
@@ -196,13 +222,14 @@ function blocksFromXhtml(
     if (!['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li',
       'blockquote', 'pre', 'figcaption'].includes(tag)) continue;
     if (isNestedTextBlock(node, body)) continue;
-    const runs = inlineRunsOf(node);
+    const runs = inlineRunsOf(node, presentation, linkResolver);
     const text = textClean(runs.map((run) => run.text).join(''));
     if (!text) continue;
     const kind: BookBlock['kind'] = tag.startsWith('h') ? 'heading'
       : tag === 'li' ? 'list-item' : tag === 'blockquote' ? 'quotation'
         : tag === 'pre' ? 'verse' : tag === 'figcaption' ? 'caption' : 'paragraph';
     blocks.push({ kind, text: text.slice(0, 20000), runs,
+      presentation: presentation(node),
       ...(kind === 'heading' ? { level: Number(tag.slice(1)) } : {}),
       ...(kind === 'list-item'
         ? { ordered: node.parentElement?.localName.toLowerCase() === 'ol' }
@@ -250,11 +277,15 @@ export async function readRichBookPreview(
   const budget = { bytes: MAX_IMAGE_BUDGET, count: 0 };
   const cache = new Map<string, string>();
   const sections: BookSection[] = [];
+  let remainingBytes = MAX_BOOK_XHTML_BYTES;
+  let remainingBlocks = MAX_BOOK_BLOCKS;
   for (const item of items.slice(0, MAX_SECTIONS)) {
     if (signal?.aborted) throw new DOMException('Leitura cancelada.', 'AbortError');
     if (!item) continue;
     const entry = loaded.files.get(item.resolvedPath);
     if (!entry || entry.bytes.length > 4_000_000) continue;
+    if (entry.bytes.length > remainingBytes || remainingBlocks <= 0) break;
+    remainingBytes -= entry.bytes.length;
     const source = new TextDecoder('utf-8').decode(entry.bytes);
     let parsed: ReturnType<typeof blocksFromXhtml>;
     try {
@@ -262,6 +293,8 @@ export async function readRichBookPreview(
     } catch {
       parsed = legacyFallback(source);
     }
+    if (parsed.blocks.length > remainingBlocks) break;
+    remainingBlocks -= parsed.blocks.length;
     sections.push({
       path: item.resolvedPath,
       title: (parsed.title || item.href.split('/').pop() || 'Seção').slice(0, 140),

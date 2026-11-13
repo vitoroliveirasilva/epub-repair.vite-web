@@ -1,4 +1,11 @@
-import { inlineRunsOf, type InlineRun } from './readerInline';
+import { inlineRunsOf, type InlineNoteReference, type InlineRun } from './readerInline';
+import type { ReaderPresentation } from './readerPresentation';
+
+export interface ReaderCellImage {
+  text: string;
+  imageDataUrl: string;
+  imagePath: string;
+}
 
 export interface ReaderCell {
   text: string;
@@ -6,6 +13,7 @@ export interface ReaderCell {
   heading: boolean;
   colspan: number;
   rowspan: number;
+  images?: ReaderCellImage[] | undefined;
 }
 
 export interface ReaderTable {
@@ -43,7 +51,12 @@ function positiveSpan(value: string | null): number {
     ? parsed : 1;
 }
 
-export function readSafeTable(table: Element): ReaderTable {
+export function readSafeTable(
+  table: Element,
+  resolver?: (node: Element) => ReaderPresentation,
+  imageResolver?: (src: string, alt: string) => ReaderCellImage | undefined,
+  linkResolver?: (href: string) => InlineNoteReference | undefined,
+): ReaderTable {
   const rows: ReaderCell[][] = [];
   const candidates = tableRows(table);
   let cellsRead = 0;
@@ -59,13 +72,22 @@ export function readSafeTable(table: Element): ReaderTable {
         truncated = true;
         break;
       }
-      const runs = inlineRunsOf(node);
+      const runs = inlineRunsOf(node, resolver, linkResolver);
+      const images = Array.from(node.querySelectorAll('img[src]'))
+        .filter((image) => image.closest('table') === table)
+        .slice(0, 3).flatMap((image) => {
+          const source = image.getAttribute('src') ?? '';
+          const alt = clean(image.getAttribute('alt') ?? '').slice(0, 160);
+          const safe = imageResolver?.(source, alt);
+          return safe ? [safe] : [];
+        });
       const text = clean(runs.map((run) => run.text).join('')).slice(0, MAX_CELL_TEXT);
       if (clean(node.textContent ?? '').length > MAX_CELL_TEXT) truncated = true;
       cells.push({
         text, runs, heading: node.localName.toLowerCase() === 'th',
         colspan: positiveSpan(node.getAttribute('colspan')),
         rowspan: positiveSpan(node.getAttribute('rowspan')),
+        ...(images.length ? { images } : {}),
       });
       cellsRead += 1;
     }
@@ -80,8 +102,11 @@ export function readSafeTable(table: Element): ReaderTable {
   };
 }
 
-export function readSafeNote(node: Element): ReaderNote {
-  const runs = inlineRunsOf(node);
+export function readSafeNote(
+  node: Element, resolver?: (node: Element) => ReaderPresentation,
+  linkResolver?: (href: string) => InlineNoteReference | undefined,
+): ReaderNote {
+  const runs = inlineRunsOf(node, resolver, linkResolver);
   const text = clean(runs.map((run) => run.text).join('')).slice(0, MAX_NOTE_TEXT);
   const original = clean(node.textContent ?? '');
   const id = node.getAttribute('id') ?? undefined;

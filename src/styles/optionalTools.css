@@ -410,3 +410,34 @@
   font: inherit;
   padding: 0 0.15em;
 }
+
+.optional-reader-cell-image {
+  display: grid;
+  justify-items: center;
+  margin: 0.45rem 0;
+  max-width: 100%;
+}
+.optional-reader-cell-image img {
+  display: block;
+  max-width: min(100%, 17rem);
+  max-height: 12rem;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+}
+.optional-compare-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+.optional-compare-sync input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--color-accent);
+}
+.optional-compare-sync input:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}

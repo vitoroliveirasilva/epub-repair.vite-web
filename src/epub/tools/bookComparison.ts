@@ -31,16 +31,26 @@ function wordChanges(before: string, after: string): { added: number; removed: n
   return { added: bEnd - start, removed: aEnd - start };
 }
 
-function imagesOf(section: BookSection): BookBlock[] {
-  return (section.blocks ?? []).filter((block) => block.kind === 'image');
+function imagesOf(section: BookSection): string[] {
+  return (section.blocks ?? []).flatMap((block) => {
+    if (block.kind === 'image') {
+      return [(block.imagePath ?? '') + ':' + (block.imageDataUrl ?? '') +
+        ':' + block.text];
+    }
+    if (block.kind === 'table') {
+      return block.table?.rows.flatMap((row) =>
+        row.flatMap((cell) => (cell.images ?? []).map((image) =>
+          image.imagePath + ':' + image.imageDataUrl + ':' + image.text))) ?? [];
+    }
+    return [];
+  });
 }
 
 function imagesChanged(before: BookSection, after: BookSection): boolean {
   const a = imagesOf(before);
   const b = imagesOf(after);
   if (a.length !== b.length) return true;
-  return a.some((image, index) => image.imagePath !== b[index]?.imagePath ||
-    image.imageDataUrl !== b[index]?.imageDataUrl);
+  return a.some((image, index) => image !== b[index]);
 }
 
 function shapeOf(block: BookBlock): string {

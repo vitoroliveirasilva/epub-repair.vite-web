@@ -154,9 +154,134 @@ describe('Visualizador EPUB: tabelas e notas de rodapé', () => {
     const section = (await readBookPreview('tabela.epub', bytes)).sections[0]!;
     expect(section.blocks?.filter((block) => block.kind === 'table')).toHaveLength(1);
     const images = section.blocks?.filter((block) => block.kind === 'image') ?? [];
-    expect(images).toHaveLength(1);
-    expect(images[0]?.text).toBe('Foto da tabela');
+    expect(images).toHaveLength(0);
+    const cellImages = section.blocks?.find((block) => block.kind === 'table')
+      ?.table?.rows[1]?.[0]?.images ?? [];
+    expect(cellImages).toHaveLength(1);
+    expect(cellImages[0]?.text).toBe('Foto da tabela');
     expect(JSON.stringify(section)).not.toContain('https://example.org');
+    const dom = readerCard(section, 18, 'Tabela');
+    expect(dom.querySelectorAll('td img')).toHaveLength(1);
+    expect(dom.querySelectorAll('.optional-reader-figure')).toHaveLength(0);
+  });
+
+  it('aplica propriedades de estilo previamente validadas sem carregar CSS ativo', async () => {
+    const zip = await JSZip.loadAsync(await book(
+      '<p class="capitulo">Texto com <span class="destaque">ênfase CSS</span>.</p>'));
+    const path = 'OPS/Text/chapter.xhtml';
+    const xhtml = await zip.file(path)!.async('string');
+    zip.file(path, xhtml.replace('</head>',
+      '<link rel="stylesheet" href="../Styles/theme.css" /></head>'));
+    zip.file('OPS/Styles/theme.css',
+      'p.capitulo { text-align: justify; text-indent: 1.2em;' +
+      ' font-family: sans-serif; line-height: 1.65; margin-bottom: 1.5em; }' +
+      '.destaque { font-weight: bold; font-style: italic; }');
+    const preview = await readBookPreview('estilo.epub',
+      new Uint8Array(await zip.generateAsync({ type: 'uint8array' })));
+    const para = preview.sections[0]?.blocks?.find((block) =>
+      block.kind === 'paragraph' && block.text.includes('Texto com'));
+    expect(para?.presentation).toMatchObject({
+      align: 'justify', indentEm: 1.2, fontFamily: 'sans-serif',
+      lineHeight: 1.65, afterEm: 1.5,
+    });
+    expect(para?.runs?.find((run) => run.text.includes('ênfase CSS'))?.marks)
+      .toEqual(expect.arrayContaining(['strong', 'emphasis']));
+    const dom = readerCard(preview.sections[0]!, 18, 'Leitura');
+    const actual = Array.from(dom.querySelectorAll<HTMLElement>('p')).find((node) =>
+      node.textContent.includes('Texto com'));
+    expect(actual?.style.textAlign).toBe('justify');
+    expect(actual?.style.textIndent).toBe('1.2em');
+    expect(actual?.style.fontFamily).toBe('sans-serif');
+    expect(actual?.style.lineHeight).toBe('1.65');
+    expect(actual?.querySelector('strong em, em strong')).not.toBeNull();
+    expect(dom.querySelectorAll('link, style, iframe, script')).toHaveLength(0);
+  });
+
+  it('descarta regras inseguras e limites exagerados sem executar CSS fornecido pelo EPUB', async () => {
+    const zip = await JSZip.loadAsync(await book('<p class="evil">Texto seguro.</p>'));
+    const path = 'OPS/Text/chapter.xhtml';
+    const xhtml = await zip.file(path)!.async('string');
+    zip.file(path, xhtml.replace('</head>',
+      '<style>.evil { position: fixed; background: url(https://bad.example/x.png);' +
+      ' font-size: 200em; text-align: center; text-indent: -500em; }' +
+      ' @import url("https://bad.example/spy.css");</style></head>'));
+    const preview = await readBookPreview('seguro.epub',
+      new Uint8Array(await zip.generateAsync({ type: 'uint8array' })));
+    const block = preview.sections[0]?.blocks?.find((item) => item.kind === 'paragraph');
+    expect(block?.presentation).toMatchObject({ align: 'center' });
+    expect(block?.presentation).not.toHaveProperty('fontSizeEm');
+    expect(block?.presentation).not.toHaveProperty('indentEm');
+    const rendered = readerCard(preview.sections[0]!, 18, 'Leitura');
+    const safe = rendered.querySelector<HTMLElement>('p.optional-reader-paragraph');
+    expect(safe?.style.position).toBe('');
+    expect(safe?.style.backgroundImage).toBe('');
+    expect(safe?.style.textAlign).toBe('center');
+    expect(JSON.stringify(preview)).not.toContain('bad.example');
+  });
+
+  it('detecta imagem substituída dentro de tabela sem alteração no texto', async () => {
+    const before = await readBookPreview('a.epub', await book(
+      '<table><tr><td><img src="../Images/pixel.png" alt="Capa A" /></td></tr></table>'));
+    const after = await readBookPreview('b.epub', await book(
+      '<table><tr><td><img src="../Images/pixel.png" alt="Capa B" /></td></tr></table>'));
+    const [row] = compareBookPreviews(before, after);
+    expect(row?.status).toBe('images-changed');
+    expect(row?.aspects).toContain('images');
+    expect(row?.aspects).not.toContain('text');
+  });
+
+  it('permite navegação segura até uma nota em outro arquivo do spine', async () => {
+    const zip = await JSZip.loadAsync(await book(
+      '<p>Veja a <a href="notas.xhtml#nota-final"><sup>2</sup></a> para detalhes.</p>'));
+    const opf = await zip.file('OPS/content.opf')!.async('string');
+    zip.file('OPS/content.opf', opf
+      .replace('</manifest>', '<item id="notes" href="Text/notas.xhtml"' +
+        ' media-type="application/xhtml+xml"/></manifest>')
+      .replace('</spine>', '<itemref idref="notes"/></spine>'));
+    zip.file('OPS/Text/notas.xhtml',
+      '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">' +
+      '<head><title>Notas</title></head><body><aside epub:type="footnote" id="nota-final">' +
+      '<p>Nota preservada em outro capítulo.</p></aside></body></html>');
+    const preview = await readBookPreview('notas-externas.epub',
+      new Uint8Array(await zip.generateAsync({ type: 'uint8array' })));
+    expect(preview.sections).toHaveLength(2);
+    const ref = preview.sections[0]?.blocks?.find((block) => block.kind === 'paragraph')
+      ?.runs?.find((run) => run.text === '2');
+    expect(ref?.hrefId).toBe('nota-final');
+    expect(ref?.hrefPath).toBe('OPS/Text/notas.xhtml');
+    const target = preview.sections[1]?.blocks?.find((block) => block.kind === 'footnote');
+    expect(target?.noteId).toBe('nota-final');
+    let opened = '';
+    const rendered = readerCard(preview.sections[0]!, 18, 'Texto', {
+      knownNotes: new Set(['OPS/Text/notas.xhtml#nota-final']),
+      onOpenNote: (path, id) => { opened = path + '#' + id; },
+    });
+    rendered.querySelector<HTMLButtonElement>('.optional-reader-noteref')?.click();
+    expect(opened).toBe('OPS/Text/notas.xhtml#nota-final');
+    expect(rendered.querySelectorAll('a[href]')).toHaveLength(0);
+  });
+
+  it('permite pré-visualizar livro com mais de oitenta capítulos com orçamento global', async () => {
+    const zip = await JSZip.loadAsync(await book('<p>Capítulo zero.</p>'));
+    let opf = await zip.file('OPS/content.opf')!.async('string');
+    let manifest = '';
+    let spine = '';
+    for (let i = 1; i <= 84; i += 1) {
+      manifest += '<item id="chapter-' + i + '" href="Text/chapter-' + i +
+        '.xhtml" media-type="application/xhtml+xml"/>';
+      spine += '<itemref idref="chapter-' + i + '"/>';
+      zip.file('OPS/Text/chapter-' + i + '.xhtml',
+        '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Capítulo ' +
+        i + '</title></head><body><p>Texto único da seção ' + i + '.</p></body></html>');
+    }
+    opf = opf.replace('</manifest>', manifest + '</manifest>');
+    opf = opf.replace('</spine>', spine + '</spine>');
+    zip.file('OPS/content.opf', opf);
+    const preview = await readBookPreview('livro-longo.epub',
+      new Uint8Array(await zip.generateAsync({ type: 'uint8array' })));
+    expect(preview.sections).toHaveLength(85);
+    expect(preview.omitted).toBe(0);
+    expect(preview.sections.at(-1)?.text).toContain('Texto único da seção 84.');
   });
 
 });

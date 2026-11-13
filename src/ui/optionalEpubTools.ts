@@ -10,6 +10,7 @@ import {
 import { compareBookPreviews, comparisonSummary, type BookDifference } from '../epub/tools/bookComparison';
 import { compareWords, type WordDiffSegment } from '../epub/tools/bookWordDiff';
 import type { InlineRun } from '../epub/tools/readerInline';
+import type { ReaderPresentation } from '../epub/tools/readerPresentation';
 import { metadataChanges, metadataChangeCount } from '../epub/tools/metadataDraft';
 
 type ExtraTab = 'preview' | 'compare' | 'metadata' | 'kindle' | 'batch';
@@ -35,6 +36,7 @@ interface Session {
   chapter: number;
   compareChapter: number;
   fontSize: number;
+  syncScroll: boolean;
   message: string;
 }
 
@@ -48,7 +50,8 @@ function sessionFor(state: AppState): Session {
   let current = sessions.get(state);
   if (!current) {
     current = { expanded: false, tab: 'preview', batchFiles: [],
-      batchStatus: [], chapter: 0, compareChapter: 0, fontSize: 18, message: '' };
+      batchStatus: [], chapter: 0, compareChapter: 0, fontSize: 18,
+      syncScroll: true, message: '' };
     sessions.set(state, current);
   }
   if (current.key !== state.payload?.bytes) {
@@ -89,9 +92,15 @@ function sectionChooser(
   return select;
 }
 
+interface ReaderNoteNavigation {
+  knownNotes: Set<string>;
+  onOpenNote: (path: string, id: string) => void;
+}
+
 function renderInlineRun(
   run: InlineRun, availableNotes?: Set<string>,
   noteTargets?: Map<string, HTMLDetailsElement>,
+  currentPath?: string, navigation?: ReaderNoteNavigation,
 ): Node {
   let node: Node = document.createTextNode(run.text);
   for (const mark of [...run.marks].reverse()) {
@@ -101,24 +110,50 @@ function renderInlineRun(
     wrapper.append(node);
     node = wrapper;
   }
-  if (run.hrefId && availableNotes?.has(run.hrefId) && noteTargets) {
+  if (run.hrefId && noteTargets) {
     const id = run.hrefId;
-    const link = el('button', { className: 'optional-reader-noteref',
-      attrs: { type: 'button', 'aria-label': 'Abrir nota de rodapé ' + run.text } });
-    link.append(node);
-    link.addEventListener('click', () => {
-      const target = noteTargets.get(id);
-      if (!target) return;
-      target.open = true;
-      target.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
-      target.focus();
-    });
-    return link;
+    const crossFile = Boolean(run.hrefPath && currentPath && run.hrefPath !== currentPath);
+    const local = !crossFile && availableNotes?.has(id);
+    const external = crossFile && Boolean(navigation?.knownNotes.has(run.hrefPath + '#' + id));
+    if (local || external) {
+      const link = el('button', { className: 'optional-reader-noteref',
+        attrs: { type: 'button', 'aria-label': 'Abrir nota ' + run.text } });
+      link.append(node);
+      link.addEventListener('click', () => {
+        if (external && run.hrefPath) {
+          navigation?.onOpenNote(run.hrefPath, id);
+          return;
+        }
+        const target = noteTargets.get(id);
+        if (!target) return;
+        target.open = true;
+        target.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+        target.focus();
+      });
+      return link;
+    }
   }
   return node;
 }
 
-export function readerCard(section: BookSection, fontSize: number, label: string): HTMLElement {
+function applyReaderPresentation(element: HTMLElement, presentation?: ReaderPresentation): void {
+  if (!presentation) return;
+  if (presentation.align) element.style.textAlign = presentation.align;
+  if (presentation.indentEm !== undefined) element.style.textIndent = presentation.indentEm + 'em';
+  if (presentation.fontSizeEm !== undefined) element.style.fontSize = presentation.fontSizeEm + 'em';
+  if (presentation.fontFamily) element.style.fontFamily = presentation.fontFamily;
+  if (presentation.weight) element.style.fontWeight = presentation.weight;
+  if (presentation.italic !== undefined) element.style.fontStyle =
+    presentation.italic ? 'italic' : 'normal';
+  if (presentation.lineHeight !== undefined) element.style.lineHeight = String(presentation.lineHeight);
+  if (presentation.beforeEm !== undefined) element.style.marginTop = presentation.beforeEm + 'em';
+  if (presentation.afterEm !== undefined) element.style.marginBottom = presentation.afterEm + 'em';
+}
+
+export function readerCard(
+  section: BookSection, fontSize: number, label: string,
+  navigation?: ReaderNoteNavigation,
+): HTMLElement {
   const content = el('div', { className: 'optional-reader-body' });
   content.style.fontSize = fontSize + 'px';
   content.append(el('h4', { text: section.title }));
@@ -128,7 +163,7 @@ export function readerCard(section: BookSection, fontSize: number, label: string
   const appendRuns = (target: HTMLElement, runs?: InlineRun[], fallback = ''): void => {
     if (runs?.length) {
       for (const run of runs) {
-        target.append(renderInlineRun(run, notes, noteTargets));
+        target.append(renderInlineRun(run, notes, noteTargets, section.path, navigation));
       }
     } else target.append(fallback);
   };
@@ -165,6 +200,12 @@ export function readerCard(section: BookSection, fontSize: number, label: string
               ...(cell.rowspan > 1 ? { rowspan: String(cell.rowspan) } : {}),
             } });
             appendRuns(td, cell.runs, cell.text);
+            for (const image of cell.images ?? []) {
+              td.append(el('figure', { className: 'optional-reader-cell-image', children: [
+                el('img', { attrs: { src: image.imageDataUrl, alt: image.text ||
+                  'Ilustração da célula', loading: 'lazy', decoding: 'async' } }),
+              ] }));
+            }
             tr.append(td);
           }
           tbody.append(tr);
@@ -181,7 +222,7 @@ export function readerCard(section: BookSection, fontSize: number, label: string
       }
       if (block.kind === 'footnote') {
         const details = el('details', { className: 'optional-reader-footnote',
-          attrs: { tabindex: '0' },
+          attrs: { tabindex: '0', ...(block.noteId ? { 'data-reader-note': block.noteId } : {}) },
           children: [
             el('summary', { text: 'Nota de rodapé' }),
           ] });
@@ -206,6 +247,7 @@ export function readerCard(section: BookSection, fontSize: number, label: string
         element.append(ordered ? String(orderedIndex) + '. ' : '• ');
       }
       appendRuns(element, block.runs, block.text);
+      applyReaderPresentation(element, block.presentation);
       content.append(element);
     }
   } else {
@@ -243,8 +285,34 @@ function renderPreview(state: AppState, s: Session, rerender: () => void, enqueu
     if (node) node.style.fontSize = s.fontSize + 'px';
   });
   const chapter = view?.sections[s.chapter] ?? view?.sections[0];
+  const noteLocations = new Map<string, number>();
+  view?.sections.forEach((section, index) => {
+    section.blocks?.forEach((block) => {
+      if (block.kind === 'footnote' && block.noteId) {
+        noteLocations.set(section.path + '#' + block.noteId, index);
+      }
+    });
+  });
+  const navigation: ReaderNoteNavigation = {
+    knownNotes: new Set(noteLocations.keys()),
+    onOpenNote: (path, id) => {
+      const targetIndex = noteLocations.get(path + '#' + id);
+      if (targetIndex === undefined) return;
+      s.chapter = targetIndex;
+      rerender();
+      requestAnimationFrame(() => {
+        const target = [...document.querySelectorAll<HTMLDetailsElement>(
+          '.optional-reader-card .optional-reader-footnote',
+        )].find((node) => node.getAttribute('data-reader-note') === id);
+        if (!target) return;
+        target.open = true;
+        target.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+        target.focus();
+      });
+    },
+  };
   return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Prévia local segura: capítulos, parágrafos, imagens internas, tabelas limitadas e notas de rodapé. Ela usa estilos próprios e não executa CSS, scripts ou recursos remotos do livro.'),
+    paragraph('Prévia local segura: capítulos, imagens internas, tabelas e notas. Preserva uma seleção limitada de alinhamento, tipografia e espaçamento do CSS, sem executá-lo. A aparência em Kindle ou outros leitores pode diferir.'),
     control,
     view ? paragraph(`${view.sections.length} seção(ões) carregada(s)${view.omitted ? `, ${view.omitted} omitida(s)` : ''}.${view.fixedLayout ? ' EPUB de layout fixo: esta é uma prévia simplificada, não uma reprodução da página.' : ''}`) : undefined,
     view?.sections.length ? el('div', { className: 'optional-reader-controls', children: [
@@ -255,7 +323,7 @@ function renderPreview(state: AppState, s: Session, rerender: () => void, enqueu
       }),
       el('label', { children: [el('span', { text: 'Fonte' }), scale] }),
     ] }) : undefined,
-    chapter ? readerCard(chapter, s.fontSize, 'Prévia do capítulo') : undefined,
+    chapter ? readerCard(chapter, s.fontSize, 'Prévia do capítulo', navigation) : undefined,
   ] });
 }
 
@@ -299,6 +367,32 @@ function renderWordDiff(row: BookDifference): HTMLElement | undefined {
   return details;
 }
 
+export function comparisonCards(
+  row: BookDifference, fontSize: number, syncScroll = true,
+): HTMLElement {
+  const left = readerCard(row.before ?? { path: '', title: 'Seção ausente',
+    text: 'Este capítulo não existe nesta versão.', truncated: false }, fontSize, 'Original');
+  const right = readerCard(row.after ?? { path: '', title: 'Seção ausente',
+    text: 'Este capítulo não existe nesta versão.', truncated: false }, fontSize, 'Atual');
+  if (syncScroll) {
+    let locked = false;
+    const connect = (source: HTMLElement, destination: HTMLElement): void => {
+      source.addEventListener('scroll', () => {
+        if (locked) return;
+        const sourceRange = source.scrollHeight - source.clientHeight;
+        const destinationRange = Math.max(0, destination.scrollHeight - destination.clientHeight);
+        if (sourceRange <= 0 || destinationRange <= 0) return;
+        locked = true;
+        destination.scrollTop = (source.scrollTop / sourceRange) * destinationRange;
+        window.setTimeout(() => { locked = false; }, 0);
+      });
+    };
+    connect(left, right);
+    connect(right, left);
+  }
+  return el('div', { className: 'optional-compare-grid', children: [left, right] });
+}
+
 function renderCompare(state: AppState, s: Session, rerender: () => void, enqueue: Queue): HTMLElement {
   const source = state.originalSource;
   const current = state.payload;
@@ -320,6 +414,11 @@ function renderCompare(state: AppState, s: Session, rerender: () => void, enqueu
     });
   });
   const rows = s.comparison ?? [];
+  const sync = el('input', { attrs: {
+    type: 'checkbox', 'aria-label': 'Sincronizar rolagem dos dois painéis',
+    ...(s.syncScroll ? { checked: 'checked' } : {}),
+  } });
+  sync.addEventListener('change', () => { s.syncScroll = sync.checked; rerender(); });
   const selected = rows[Math.min(s.compareChapter, Math.max(rows.length - 1, 0))];
   const status: Record<BookDifference['status'], string> = {
     same: 'Texto e imagens carregadas sem mudanças detectadas',
@@ -332,7 +431,7 @@ function renderCompare(state: AppState, s: Session, rerender: () => void, enqueu
     removed: 'Seção removida',
   };
   return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Comparação editorial local: texto, ordem dos blocos, tabelas, notas, formatação, imagens internas e alterações nos estilos declarados. Não renderiza o CSS do livro nem certifica fidelidade visual ou paginação.'),
+    paragraph('Comparação editorial local: texto, organização, tabelas, notas, imagens e mudanças de estilo. Os dois painéis reproduzem apenas propriedades visuais seguras selecionadas. Não equivale a comparar pixels, fontes incorporadas ou a paginação de um Kindle.'),
     run,
     !hasChanged ? paragraph('Depois de reparar ou editar metadados, a comparação ficará disponível aqui.') : undefined,
     rows.length ? paragraph(comparisonSummary(rows)) : undefined,
@@ -344,6 +443,9 @@ function renderCompare(state: AppState, s: Session, rerender: () => void, enqueu
       : undefined,
     rows.length ? sectionChooser(rows.map((row) => ({ title: row.label })), s.compareChapter,
       (index) => { s.compareChapter = index; rerender(); }) : undefined,
+    rows.length ? el('label', { className: 'optional-compare-sync', children: [
+      sync, el('span', { text: 'Sincronizar rolagem proporcional dos painéis' }),
+    ] }) : undefined,
     selected ? el('div', { className: 'optional-comparison-summary', children: [
       el('strong', { text: status[selected.status] }),
       selected.aspects.includes('text') || selected.status === 'added' || selected.status === 'removed'
@@ -360,12 +462,7 @@ function renderCompare(state: AppState, s: Session, rerender: () => void, enqueu
         ? paragraph('O caminho deste capítulo mudou. Correspondência aproximada pelo título único; confira manualmente.')
         : undefined,
     ] }) : undefined,
-    selected ? el('div', { className: 'optional-compare-grid', children: [
-      readerCard(selected.before ?? { path: '', title: 'Seção ausente',
-        text: 'Este capítulo não existe nesta versão.', truncated: false }, s.fontSize, 'Original'),
-      readerCard(selected.after ?? { path: '', title: 'Seção ausente',
-        text: 'Este capítulo não existe nesta versão.', truncated: false }, s.fontSize, 'Atual'),
-    ] }) : undefined,
+    selected ? comparisonCards(selected, s.fontSize, s.syncScroll) : undefined,
     selected ? renderWordDiff(selected) : undefined,
   ] });
 }

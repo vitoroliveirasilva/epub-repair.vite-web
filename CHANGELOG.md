@@ -2,6 +2,8 @@
 
 ## v4.0.0 — desenvolvimento na dev (não lançada, 12/11/2026)
 
+- Finaliza o escopo técnico de prévia estruturada: CSS seguro limitado, imagens dentro de células, navegação de notas em outros capítulos e 240 seções com orçamento global de memória.
+- O comparador aplica estilos visuais seguros aproximados, acompanha imagens em tabelas e oferece rolagem proporcional sincronizável entre as versões.
 - Aprimora o leitor EPUB: tabelas estruturadas, fusões de células, notas de rodapé recolhíveis, referências internas seguras, listas numeradas e prévia explicativa de layout fixo.
 - Comparação editorial detecta alterações tipográficas, estrutura de títulos e tabelas, notas, imagens e assinaturas de CSS/classes além das diferenças textuais. Não executa estilos originais nem declara equivalência pixel a pixel.
 

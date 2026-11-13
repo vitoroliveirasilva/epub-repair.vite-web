@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { BookPreview, BookSection } from '../src/epub/tools/bookTools';
 import type { BookBlock } from '../src/epub/tools/bookReader';
 import { compareBookPreviews, comparisonSummary } from '../src/epub/tools/bookComparison';
+import { comparisonCards } from '../src/ui/optionalEpubTools';
 
 function chapter(text: string, blocks: BookBlock[],
   styleFingerprint = ''): BookSection {
@@ -110,4 +111,30 @@ describe('v4 comparação de formatação, estrutura e recursos', () => {
     expect(rows[0]?.aspects).toEqual([]);
     expect(comparisonSummary(rows)).toContain('1 nova(s)');
   });
+  it('alinha proporcionalmente a rolagem quando o usuário ativa comparação sincronizada', () => {
+    const source = chapter('Texto antigo', [{ kind: 'paragraph', text: 'Texto antigo' }]);
+    const target = chapter('Texto atual', [{ kind: 'paragraph', text: 'Texto atual' }]);
+    const row = compareBookPreviews(book(source), book(target))[0]!;
+    const view = comparisonCards(row, 18, true);
+    const cards = view.querySelectorAll<HTMLElement>('.optional-reader-card');
+    const left = cards[0]!;
+    const right = cards[1]!;
+    Object.defineProperties(left, {
+      scrollHeight: { configurable: true, value: 900 },
+      clientHeight: { configurable: true, value: 100 },
+    });
+    Object.defineProperties(right, {
+      scrollHeight: { configurable: true, value: 600 },
+      clientHeight: { configurable: true, value: 100 },
+    });
+    left.scrollTop = 400;
+    left.dispatchEvent(new Event('scroll'));
+    expect(right.scrollTop).toBe(250);
+    const independent = comparisonCards(row, 18, false);
+    const others = independent.querySelectorAll<HTMLElement>('.optional-reader-card');
+    others[0]!.scrollTop = 150;
+    others[0]!.dispatchEvent(new Event('scroll'));
+    expect(others[1]!.scrollTop).toBe(0);
+  });
+
 });
