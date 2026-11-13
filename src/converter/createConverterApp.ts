@@ -4,7 +4,8 @@ import type { ConverterState, EditableSection, PdfAnalysisResult } from './model
 import { analyzePdf, renderPdfPagePreview } from './pdfEngine';
 import { button, downloadBlob, el, formatBytes } from '../ui/dom';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
-import { analyzeReview, normalizeSectionSpaces, type ReviewFinding } from './reviewSuggestions';
+import { buildReviewAudit, exportReviewAudit, reviewFindingKey,
+  normalizeSectionSpaces, type ReviewFinding } from './reviewSuggestions';
 
 const THEME_STORAGE_KEY = 'epub-repair-theme';
 const MAX_PDF_SIZE = 250 * 1024 * 1024;
@@ -630,9 +631,15 @@ function renderAdvancedReview(state: ConverterState, rerender: () => void): HTML
 }
 
 function renderReviewAssist(state: ConverterState, rerender: () => void): HTMLElement {
-  const findings = state.analysis ? analyzeReview(state.analysis, state.sections) : [];
-  const highCount = findings.filter((finding) => finding.priority === 'high').length;
-  const mediumCount = findings.filter((finding) => finding.priority === 'medium').length;
+  const audit = state.analysis ? buildReviewAudit(state.analysis, state.sections) : undefined;
+  const reviewed = state.reviewedFindingIds ?? new Set<string>();
+  const filter = state.reviewPriorityFilter ?? 'all';
+  const findings = (audit?.findings ?? []).filter((item) =>
+    filter === 'all' || item.priority === filter);
+  const highCount = audit?.high ?? 0;
+  const mediumCount = audit?.medium ?? 0;
+  const reviewedCount = (audit?.findings ?? []).filter((finding) =>
+    reviewed.has(reviewFindingKey(finding))).length;
   const priorityNames: Record<ReviewFinding['priority'], string> = {
     high: 'Prioridade alta', medium: 'Revisar', low: 'Conferir se necessário',
   };
@@ -659,39 +666,80 @@ function renderReviewAssist(state: ConverterState, rerender: () => void): HTMLEl
           rerender();
         })
       : undefined;
+    const key = reviewFindingKey(finding);
+    const isReviewed = reviewed.has(key);
+    const toggleReviewed = button(isReviewed ? 'Reabrir revisão' : 'Marcar como conferido',
+      'btn btn-ghost btn-small', () => {
+        state.reviewedFindingIds ??= new Set();
+        if (state.reviewedFindingIds.has(key)) state.reviewedFindingIds.delete(key);
+        else state.reviewedFindingIds.add(key);
+        rerender();
+      });
     const origin = [
       priorityNames[finding.priority],
       ...(finding.page !== undefined ? ['Página ' + finding.page] : []),
       ...(finding.sectionIndex !== undefined ? ['Seção ' + (finding.sectionIndex + 1)] : []),
     ].join(' · ');
     return el('article', { className: 'optional-review-item', children: [
-      el('strong', { text: finding.title }),
+      el('strong', { text: finding.title + (isReviewed ? ' · Conferido' : '') }),
       el('small', { className: 'optional-review-origin', text: origin }),
       el('p', { className: 'muted', text: finding.reason }),
       finding.evidence ? el('p', { className: 'optional-review-evidence',
         text: 'Trecho de referência: ' + finding.evidence }) : undefined,
-      el('div', { className: 'optional-review-actions', children: [navigate, normalize] }),
+      el('div', { className: 'optional-review-actions',
+        children: [navigate, normalize, toggleReviewed] }),
     ] });
   };
   const additional = findings.slice(6);
+  const prioritySelect = el('select', { attrs: { 'aria-label': 'Filtrar alertas da revisão' },
+    children: [
+      el('option', { attrs: { value: 'all',
+        ...(filter === 'all' ? { selected: 'selected' } : {}) }, text: 'Todas as prioridades' }),
+      ...(['high', 'medium', 'low'] as const).map((priority) => el('option', {
+        text: priorityNames[priority],
+        attrs: { value: priority,
+          ...(filter === priority ? { selected: 'selected' } : {}) },
+      })),
+    ],
+  });
+  prioritySelect.addEventListener('change', () => {
+    state.reviewPriorityFilter = prioritySelect.value as typeof filter;
+    rerender();
+  });
+  const exportReport = button('Baixar relatório detalhado (JSON)',
+    'btn btn-secondary btn-small', () => {
+      if (!state.analysis) return;
+      const report = exportReviewAudit(state.analysis, state.sections,
+        state.reviewedFindingIds);
+      downloadBlob(new Blob([report], { type: 'application/json' }),
+        'revisao-assistida-pdf.json');
+    });
   const details = el('details', { className: 'converter-advanced-review optional-pdf-review', children: [
     el('summary', { children: [
       el('span', { className: 'converter-advanced-icon', text: 'Aa' }),
       el('span', { className: 'converter-advanced-copy', children: [
         el('strong', { text: 'Revisão assistida de PDF' }),
-        el('small', { text: 'Opcional · ' + findings.length +
-          ' ponto(s); ' + highCount + ' prioritário(s). Nenhuma mudança automática.' }),
+        el('small', { text: 'Opcional · ' + (audit?.total ?? 0) +
+          ' alerta(s); ' + highCount + ' prioritário(s). Nenhuma mudança automática.' }),
       ] }),
       el('span', { className: 'converter-advanced-action', text: 'Ver sugestões' }),
     ] }),
     el('div', { className: 'optional-review-list', children: [
       el('p', { className: 'muted',
         text: 'Alertas heurísticos, não diagnósticos definitivos. Confira primeiro os pontos de maior prioridade. A revisão não altera o PDF original.' }),
-      findings.length
+      audit?.total
         ? el('p', { className: 'muted', text: highCount + ' prioridade(s) alta(s) · ' +
           mediumCount + ' revisão(ões) recomendada(s) · ' +
-          (findings.length - highCount - mediumCount) + ' conferência(s) opcional(is).' })
+          audit.low + ' conferência(s) opcional(is). ' +
+          reviewedCount + ' alerta(s) marcado(s) como conferido(s) entre os exibidos.' })
         : el('p', { text: 'Nenhum sinal adicional encontrado nesta verificação.' }),
+      audit?.omitted ? el('p', { className: 'muted',
+        text: 'Exibindo até ' + audit.displayed + ' dos ' + audit.total +
+          ' alertas. Baixe o relatório para consultar todos os achados.',
+      }) : undefined,
+      el('div', { className: 'optional-review-actions', children: [
+        prioritySelect, exportReport,
+      ] }),
       ...findings.slice(0, 6).map(renderFinding),
       additional.length ? el('details', { className: 'optional-review-more', children: [
         el('summary', { text: 'Mostrar outros ' + additional.length + ' ponto(s) para conferir' }),
@@ -867,6 +915,8 @@ async function loadAndAnalyze(file: File, state: ConverterState, rerender: () =>
   state.selectedSection = 0;
   state.advancedReviewOpen = false;
   state.assistedReviewOpen = false;
+  state.reviewedFindingIds = new Set();
+  state.reviewPriorityFilter = 'all';
   await analyzeCurrent(state, rerender);
 }
 
@@ -888,6 +938,7 @@ async function analyzeCurrent(state: ConverterState, rerender: () => void): Prom
       },
     });
     state.analysis = analysis;
+    state.reviewedFindingIds = new Set();
     state.sections = analysis.sections.map((section) => ({ ...section, sourcePages: [...section.sourcePages] }));
     if (!state.title.trim()) state.title = analysis.title;
     if (!state.author.trim()) state.author = analysis.author;

@@ -13,6 +13,17 @@ export interface ReviewFinding {
   canNormalizeSpaces?: boolean | undefined;
 }
 
+export interface ReviewAudit {
+  findings: ReviewFinding[];
+  total: number;
+  displayed: number;
+  omitted: number;
+  pages: number;
+  high: number;
+  medium: number;
+  low: number;
+}
+
 const MAX_FINDINGS = 60;
 const MAX_EXCERPT = 110;
 const priorities: Record<ReviewPriority, number> = { high: 0, medium: 1, low: 2 };
@@ -51,6 +62,7 @@ function normalizedContent(value: string): string {
 function sectionContentByPage(sections: EditableSection[]): Map<number, string> {
   const result = new Map<number, string>();
   for (const section of sections) {
+    if (section.sourcePages.length !== 1) continue;
     const content = normalizedContent(section.plainText);
     for (const page of section.sourcePages) {
       result.set(page, (result.get(page) ?? '') + content);
@@ -98,7 +110,7 @@ function finding(
   };
 }
 
-export function analyzeReview(
+function collectReviewFindings(
   analysis: PdfAnalysisResult, sections: EditableSection[],
 ): ReviewFinding[] {
   const findings: ReviewFinding[] = [];
@@ -106,6 +118,20 @@ export function analyzeReview(
   for (const page of analysis.pages) {
     const sectionIndex = relatedSection(sections, page.pageNumber);
     const sourceExcerpt = snippet(page.text || '');
+    const missingFigures = (page.figures ?? []).filter((figure) =>
+      !sections.some((section) =>
+        section.sourcePages.includes(page.pageNumber) &&
+        section.html.includes('Images/' + figure.id + '.jpg')));
+    if (!page.preserveAsImage && missingFigures.length > 0) {
+      findings.push(finding(
+        'FIGURES_NOT_LINKED', 'Ilustração potencialmente ausente no EPUB',
+        missingFigures.length + ' figura(s) extraída(s) desta página não foram ' +
+          'localizadas nas seções editáveis. Confira se imagens importantes ' +
+          'serão preservadas antes da conversão.',
+        'high', page.pageNumber, sectionIndex,
+        missingFigures.slice(0, 3).map((figure) => figure.id).join(', '),
+      ));
+    }
     const missingLine = likelyMissingLines(page, byPage.get(page.pageNumber) ?? '');
     if (missingLine) {
       findings.push(finding(
@@ -199,11 +225,56 @@ export function analyzeReview(
       ));
     }
   }
-  return findings
-    .sort((a, b) => priorities[a.priority] - priorities[b.priority] ||
-      (a.page ?? Number.MAX_SAFE_INTEGER) - (b.page ?? Number.MAX_SAFE_INTEGER) ||
-      a.code.localeCompare(b.code))
-    .slice(0, MAX_FINDINGS);
+  return findings.sort((a, b) => priorities[a.priority] - priorities[b.priority] ||
+    (a.page ?? Number.MAX_SAFE_INTEGER) - (b.page ?? Number.MAX_SAFE_INTEGER) ||
+    a.code.localeCompare(b.code));
+}
+
+export function buildReviewAudit(
+  analysis: PdfAnalysisResult, sections: EditableSection[],
+): ReviewAudit {
+  const all = collectReviewFindings(analysis, sections);
+  return {
+    findings: all.slice(0, MAX_FINDINGS),
+    total: all.length,
+    displayed: Math.min(MAX_FINDINGS, all.length),
+    omitted: Math.max(0, all.length - MAX_FINDINGS),
+    pages: analysis.pages.length,
+    high: all.filter((item) => item.priority === 'high').length,
+    medium: all.filter((item) => item.priority === 'medium').length,
+    low: all.filter((item) => item.priority === 'low').length,
+  };
+}
+
+export function analyzeReview(
+  analysis: PdfAnalysisResult, sections: EditableSection[],
+): ReviewFinding[] {
+  return buildReviewAudit(analysis, sections).findings;
+}
+
+export function exportReviewAudit(
+  analysis: PdfAnalysisResult, sections: EditableSection[],
+  reviewed: ReadonlySet<string> = new Set(),
+): string {
+  const summary = buildReviewAudit(analysis, sections);
+  const findings = collectReviewFindings(analysis, sections).map((item) => ({
+    ...item,
+    reviewed: reviewed.has(reviewFindingKey(item)),
+  }));
+  return JSON.stringify({
+    source: { fileName: analysis.fileName, pageCount: analysis.pageCount },
+    summary: { total: summary.total, high: summary.high,
+      medium: summary.medium, low: summary.low,
+      reviewed: findings.filter((item) => item.reviewed).length },
+    findings,
+    limitations: 'Regras heurísticas, não diagnóstico definitivo. ' +
+      'Conferir com o PDF original. Nenhum conteúdo é alterado automaticamente.',
+  }, null, 2);
+}
+
+export function reviewFindingKey(item: ReviewFinding): string {
+  return [item.code, item.page ?? '-', item.sectionIndex ?? '-',
+    item.evidence ?? ''].join('|');
 }
 
 export function normalizeRepeatedSpaces(text: string): string {

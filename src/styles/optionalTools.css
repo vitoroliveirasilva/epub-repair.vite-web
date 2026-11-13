@@ -441,3 +441,33 @@
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
+
+.optional-batch-progress {
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0.25rem 0.25rem 0.25rem 1.7rem;
+  overflow-wrap: anywhere;
+}
+.optional-batch-progress li {
+  min-width: 0;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+}
+.optional-review-actions select {
+  min-width: 10rem;
+  max-width: 100%;
+  padding: 0.45rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.optional-review-actions select:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}

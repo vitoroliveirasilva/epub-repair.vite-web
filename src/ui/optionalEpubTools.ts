@@ -1,7 +1,7 @@
 import type { AppState, ProcessingProgress } from '../app/state';
 import type { ValidationReport } from '../epub';
 import { MAX_FILE_SIZE_BYTES } from '../epub/utils/constants';
-import { processEpubBatch } from '../epub/tools/batchProcessor';
+import { processEpubBatch, MAX_BATCH_BYTES, MAX_BATCH_FILES } from '../epub/tools/batchProcessor';
 import { button, downloadBlob, el, formatBytes } from './dom';
 import {
   buildKindleChecks, summarizeKindleChecks, readBookMetadata, readBookPreview, writeBookMetadata,
@@ -614,35 +614,49 @@ function renderBatch(state: AppState, s: Session, rerender: () => void, enqueue:
   input.addEventListener('change', () => {
     const files = Array.from(input.files ?? []);
     const total = files.reduce((sum, file) => sum + file.size, 0);
-    if (files.length > 6 || total > 80 * 1024 * 1024 || files.some((file) =>
-      !file.name.toLowerCase().endsWith('.epub') || file.size > MAX_FILE_SIZE_BYTES)) {
-      s.message = 'Escolha até 6 EPUBs, com no máximo 80 MB somados.';
+    s.batchZip = undefined;
+    s.batchStatus = [];
+    if (files.length > MAX_BATCH_FILES || total > MAX_BATCH_BYTES || files.some((file) =>
+      !file.name.toLowerCase().endsWith('.epub') ||
+      file.size > MAX_FILE_SIZE_BYTES || file.size < 1)) {
+      s.message = 'Escolha até 6 EPUBs válidos, com no máximo 80 MB somados.';
       s.batchFiles = [];
     } else {
       s.batchFiles = files;
-      s.batchStatus = [];
-      s.batchZip = undefined;
       s.message = files.length + ' arquivo(s) selecionado(s).';
     }
     rerender();
   });
   const start = toolButton('Validar e reparar lote', s.batchFiles.length > 0 && !state.busy, () => {
     const files = [...s.batchFiles];
+    s.batchStatus = files.map((file) => file.name + ': aguardando');
+    s.batchZip = undefined;
     enqueue('Processar lote EPUB', async ({ signal, onProgress }) => {
-      const processed = await processEpubBatch(files, signal, (phase, completed, total) =>
-        onProgress({ phase, completed, total }));
+      const processed = await processEpubBatch(files, signal,
+        (phase, completed, total, detail) => {
+          if (detail && detail.source !== 'ZIP final') {
+            s.batchStatus[detail.index] = detail.source + ': ' + detail.detail;
+          }
+          onProgress({ phase, completed, total });
+        });
       s.batchZip = processed.zip;
       s.batchStatus = processed.entries.map((entry) =>
-        entry.source + ': ' + entry.status + ' (' + entry.detail + ')');
-      s.message = 'Lote concluído. Confira o resultado de cada livro e baixe o ZIP.';
+        entry.source + ': ' + entry.status + ' (' + entry.detail + ')' +
+        ' · Relatório: ' + entry.report);
+      const available = processed.entries.filter((entry) => entry.output).length;
+      s.message = 'Lote concluído: ' + available + '/' + files.length +
+        ' EPUB(s) exportados. Consulte os relatórios individuais no ZIP.';
     });
   });
   return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Processamento local, sequencial e conservador. Até 6 EPUBs / 80 MB por lote para limitar o uso de memória. Um arquivo problemático não interrompe os demais.'),
+    paragraph('Processamento local e sequencial de até 6 EPUBs e 80 MB. Cada livro recebe um relatório JSON individual, mesmo quando é recusado. O ZIP contém um resumo TXT/JSON. Arquivos problemáticos não bloqueiam os demais.'),
     input,
     s.batchFiles.length ? paragraph(s.batchFiles.map((f) => `${f.name} (${formatBytes(f.size)})`).join(' · ')) : undefined,
     start,
-    ...s.batchStatus.map((message) => el('p', { text: message })),
+    s.batchStatus.length ? el('ol', { className: 'optional-batch-progress',
+      attrs: { 'aria-label': 'Andamento de cada EPUB', 'aria-live': 'polite' },
+      children: s.batchStatus.map((message) => el('li', { text: message })),
+    }) : undefined,
     s.batchZip ? button('Baixar resultados do lote (ZIP)', 'btn btn-primary btn-small', () =>
       downloadBlob(s.batchZip!, 'epub-repair-lote.zip')) : undefined,
   ] });

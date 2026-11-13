@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { EditableSection, PdfAnalysisResult } from '../src/converter/model';
 import type { ValidationReport } from '../src/epub/model/epubTypes';
 import {
-  analyzeReview, normalizeHtmlTextSpaces, normalizeSectionSpaces, normalizeRepeatedSpaces,
+  analyzeReview, buildReviewAudit, exportReviewAudit, reviewFindingKey,
+  normalizeHtmlTextSpaces, normalizeSectionSpaces, normalizeRepeatedSpaces,
 } from '../src/converter/reviewSuggestions';
 import {
   buildKindleChecks, summarizeKindleChecks,
@@ -89,6 +90,72 @@ describe('Revisor PDF orientado por prioridade', () => {
     expect(fixed.html).toBe(normalized);
     expect(original.html).toBe(html);
     expect(normalizeRepeatedSpaces('um    texto')).toBe('um texto');
+  });
+
+  it('mostra contagens exatas apesar do limite de 60 alertas e exporta o diagnóstico completo', () => {
+    const pages = Array.from({ length: 75 }, (_, index) => ({
+      pageNumber: index + 1, columnCount: 2,
+      nativeCharacters: 350,
+      text: 'Página com duas colunas e parágrafos que exigem revisão.',
+    }));
+    const analysis = pdf(pages);
+    const audit = buildReviewAudit(analysis, []);
+    expect(audit.total).toBe(75);
+    expect(audit.displayed).toBe(60);
+    expect(audit.omitted).toBe(15);
+    expect(audit.medium).toBe(75);
+    expect(audit.high).toBe(0);
+    expect(analyzeReview(analysis, [])).toHaveLength(60);
+    const first = audit.findings[0]!;
+    const marked = new Set([reviewFindingKey(first)]);
+    const parsed = JSON.parse(exportReviewAudit(analysis, [], marked)) as {
+      summary: { total: number; reviewed: number };
+      findings: Array<{ code: string; reviewed: boolean }>;
+    };
+    expect(parsed.summary.total).toBe(75);
+    expect(parsed.summary.reviewed).toBe(1);
+    expect(parsed.findings).toHaveLength(75);
+    expect(parsed.findings[0]?.reviewed).toBe(true);
+    expect(parsed.findings.slice(1).every((finding) => !finding.reviewed)).toBe(true);
+  });
+
+  it('sinaliza figuras perdidas na conversão e confirma as que foram mantidas', () => {
+    const page = {
+      pageNumber: 1, figures: [
+        { id: 'figure-0001-01', pageNumber: 1, x: 50, y: 150,
+          width: 200, height: 180, dataUrl: 'data:image/png;base64,iVBORw0KGgo=' },
+        { id: 'figure-0001-02', pageNumber: 1, x: 80, y: 400,
+          width: 200, height: 180, dataUrl: 'data:image/png;base64,iVBORw0KGgo=' },
+      ],
+    };
+    const source = { id: 'section-1', title: 'Capítulo', sourcePages: [1],
+      plainText: 'Texto e imagens',
+      html: '<p>Texto e imagens</p><img src="../Images/figure-0001-01.jpg"/>' };
+    const result = analyzeReview(pdf([page]), [source]);
+    expect(result.filter((finding) => finding.code === 'FIGURES_NOT_LINKED'))
+      .toHaveLength(1);
+    expect(result.find((finding) => finding.code === 'FIGURES_NOT_LINKED')?.evidence)
+      .toContain('figure-0001-02');
+    const complete = { ...source,
+      html: source.html + '<img src="../Images/figure-0001-02.jpg"/>' };
+    expect(analyzeReview(pdf([page]), [complete])
+      .some((finding) => finding.code === 'FIGURES_NOT_LINKED')).toBe(false);
+  });
+
+  it('não reporta como perda textual páginas sem associação confiável por ter seção multipágina', () => {
+    const lines = Array.from({ length: 9 }, (_, index) => ({
+      text: 'Conteúdo extraído longo e relevante da página número ' +
+        (index + 1) + ' com textos diferentes.',
+      x: 50, y: 700 - index * 25, width: 430, fontSize: 12, fontName: 'body',
+    }));
+    const analysis = pdf([{ pageNumber: 1, lines, text: lines.map((line) =>
+      line.text).join('\n') }]);
+    const source = { id: 'seção-multipágina', title: 'Capítulo longo',
+      plainText: 'A sequência foi distribuída em diferentes páginas.',
+      html: '<p>A sequência foi distribuída em diferentes páginas.</p>',
+      sourcePages: [1, 2] };
+    const result = analyzeReview(analysis, [source]);
+    expect(result.some((finding) => finding.code === 'POSSIBLE_TEXT_LOSS')).toBe(false);
   });
 
   it('não altera seções que não exigem correção', () => {

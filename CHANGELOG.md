@@ -2,6 +2,8 @@
 
 ## v4.0.0 — desenvolvimento na dev (não lançada, 12/11/2026)
 
+- Completa o fluxo funcional da revisão assistida de PDFs com exportação JSON integral, filtros de prioridade, marcação de conferência e verificação de figuras sem referência.
+- Melhora o lote local com etapas e progresso por EPUB, relatórios individuais para recusados, resumo JSON/TXT, validação final, isolamento de falhas e cancelamento sem ZIP parcial.
 - Finaliza o escopo técnico de prévia estruturada: CSS seguro limitado, imagens dentro de células, navegação de notas em outros capítulos e 240 seções com orçamento global de memória.
 - O comparador aplica estilos visuais seguros aproximados, acompanha imagens em tabelas e oferece rolagem proporcional sincronizável entre as versões.
 - Aprimora o leitor EPUB: tabelas estruturadas, fusões de células, notas de rodapé recolhíveis, referências internas seguras, listas numeradas e prévia explicativa de layout fixo.

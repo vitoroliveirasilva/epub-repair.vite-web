@@ -25,8 +25,11 @@ import { validateMediaOverlays } from './validateMediaOverlays';
 import { validateFixedLayout } from './validateFixedLayout';
 import { validateEditorialOcrQuality } from './validateEditorialOcrQuality';
 
-export async function inspectEpub(fileName: string, bytes: Uint8Array): Promise<ValidationReport> {
-  const loaded = await loadEpub(fileName, bytes);
+export async function inspectEpub(
+  fileName: string, bytes: Uint8Array, signal?: AbortSignal,
+): Promise<ValidationReport> {
+  const loaded = await loadEpub(fileName, bytes, undefined, signal);
+  if (signal?.aborted) throw new DOMException('Verificação cancelada.', 'AbortError');
   return inspectLoadedEpub(fileName, bytes.length, loaded);
 }
 

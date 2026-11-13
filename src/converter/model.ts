@@ -141,6 +141,8 @@ export interface ConverterState {
   selectedSection: number;
   advancedReviewOpen: boolean;
   assistedReviewOpen: boolean;
+  reviewPriorityFilter?: 'all' | 'high' | 'medium' | 'low' | undefined;
+  reviewedFindingIds?: Set<string> | undefined;
   controller?: AbortController | undefined;
 }
 
@@ -172,5 +174,7 @@ export function createInitialConverterState(): ConverterState {
     selectedSection: 0,
     advancedReviewOpen: false,
     assistedReviewOpen: false,
+    reviewPriorityFilter: 'all',
+    reviewedFindingIds: new Set(),
   };
 }
