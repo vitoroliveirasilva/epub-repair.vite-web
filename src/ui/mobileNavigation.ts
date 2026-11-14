@@ -81,7 +81,6 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
               el('div', {
                 className: 'mobile-navigation-hero',
                 children: [
-                  el('h2', { className: 'mobile-navigation-hero-title', text: 'O que você quer fazer?' }),
                   el('img', {
                     className: 'mobile-navigation-mascot',
                     attrs: {

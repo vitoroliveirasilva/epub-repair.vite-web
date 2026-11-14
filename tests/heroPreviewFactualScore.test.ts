@@ -180,7 +180,9 @@ describe('Identidade editorial no EPUB Repair', () => {
       expect(mascot?.getAttribute('aria-hidden')).toBe('true');
       expect(mascot?.parentElement?.classList.contains('mobile-navigation-hero')).toBe(true);
       expect(dialog?.querySelector('.mobile-navigation-topbar')?.contains(mascot ?? null)).toBe(false);
-      expect(panel?.querySelector('.mobile-navigation-hero-title')?.textContent).toBe('O que você quer fazer?');
+      expect(panel?.querySelector('.mobile-navigation-hero-title')).toBeNull();
+      expect(panel?.querySelector('.mobile-navigation-hero')?.textContent?.trim()).toBe('');
+      expect(panel?.querySelector('.mobile-navigation-hero')?.firstElementChild).toBe(mascot);
       expect(panel?.querySelector('.mobile-navigation-collection')).not.toBeNull();
       expect(panel?.querySelectorAll('.mobile-navigation-link-primary')).toHaveLength(2);
       expect(panel?.querySelectorAll('.mobile-navigation-link-secondary')).toHaveLength(sectionCount);
@@ -206,6 +208,9 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(readFileSync('public/theme-moon.svg', 'utf8')).toContain('viewBox="0 0 24 24"');
     const css = readFileSync('src/styles/mobileNavigation.css', 'utf8');
     expect(css).toContain('--nav-paper: #f5efe3');
+    expect(css).toContain('flex: 0 0 clamp(7.1rem, 18dvh, 8.2rem)');
+    expect(css).toContain('transform: translateX(-50%) rotate(2deg)');
+    expect(css).not.toContain('.mobile-navigation-hero-title');
     expect(css).toContain("mask: url('/theme-sun.svg') center / contain no-repeat");
     expect(css).toContain("mask: url('/theme-moon.svg') center / contain no-repeat");
     expect(css).toContain('--nav-forest: #103d30');

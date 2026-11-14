@@ -346,15 +346,15 @@
 
   .mobile-navigation-mascot {
     position: absolute;
-    top: -2.7rem;
-    right: -1.2rem;
+    top: -2.85rem;
+    left: 50%;
     z-index: 1;
     display: block;
-    width: clamp(11.8rem, 51vw, 13.8rem);
+    width: clamp(11.2rem, 47vw, 12.6rem);
     height: auto;
     max-width: none;
-    transform: rotate(2deg);
-    transform-origin: 55% 0%;
+    transform: translateX(-50%) rotate(2deg);
+    transform-origin: 50% 0%;
     pointer-events: none;
     user-select: none;
     -webkit-user-drag: none;
@@ -388,39 +388,14 @@
   .mobile-navigation-hero {
     position: relative;
     isolation: isolate;
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    min-height: clamp(9.4rem, 20dvh, 11.1rem);
-    padding: 0.85rem calc(1.4rem + env(safe-area-inset-right, 0px))
-      0.85rem calc(1.4rem + env(safe-area-inset-left, 0px));
+    flex: 0 0 clamp(7.1rem, 18dvh, 8.2rem);
+    display: block;
+    height: clamp(7.1rem, 18dvh, 8.2rem);
+    padding: 0;
     overflow: hidden;
     border-bottom: 1px solid var(--nav-rule-paper);
     background: var(--nav-paper);
-    color: var(--nav-ink);
   }
-
-
-
-
-
-  .mobile-navigation-hero-title {
-    position: relative;
-    z-index: 2;
-    max-width: min(57%, 13.6rem);
-    margin: 0;
-    color: var(--nav-ink);
-    font-family: var(--font-display);
-    font-size: clamp(1.48rem, 6.1vw, 2.04rem);
-    font-weight: 830;
-    line-height: 1.12;
-    letter-spacing: -0.052em;
-    text-wrap: balance;
-  }
-
-
-
-
 
   .mobile-navigation-collection {
     position: relative;
@@ -519,8 +494,6 @@
     white-space: nowrap;
   }
 
-
-
   .mobile-navigation-current {
     display: inline-flex;
     align-items: center;
@@ -603,10 +576,6 @@
     font-size: 1.04rem;
   }
 
-
-
-
-
   html:has(.mobile-navigation-dialog[open]),
   body:has(.mobile-navigation-dialog[open]) {
     overflow: hidden;
@@ -622,7 +591,6 @@
     mask: url('/theme-moon.svg') center / contain no-repeat;
   }
 
-  .mobile-navigation-dialog[open] .mobile-navigation-hero-title,
   .mobile-navigation-dialog[open] .mobile-navigation-group {
     animation: mobile-nav-content 520ms cubic-bezier(0.19, 1, 0.22, 1) both;
   }
@@ -635,7 +603,6 @@
     animation-delay: 120ms;
   }
 
-
   @keyframes mobile-nav-reveal {
     from { opacity: 0.7; transform: translateY(-1.5rem); }
     to { opacity: 1; transform: translateY(0); }
@@ -647,8 +614,8 @@
   }
 
   @keyframes mobile-lumina-wave {
-    from { opacity: 0; transform: translateY(-2rem) rotate(-4deg); }
-    to { opacity: 1; transform: translateY(0) rotate(5deg); }
+    from { opacity: 0; transform: translate(-50%, -1.5rem) rotate(-3deg); }
+    to { opacity: 1; transform: translateX(-50%) rotate(2deg); }
   }
 
   .mobile-navigation-trigger:focus-visible,
@@ -676,13 +643,8 @@
   }
 
   .mobile-navigation-mascot {
-    top: -2.15rem;
-    right: -1.35rem;
-    width: 11.5rem;
-  }
-
-  .mobile-navigation-hero-title {
-    font-size: clamp(1.42rem, 5.7vw, 1.75rem);
+    top: -2.5rem;
+    width: 11.2rem;
   }
 
   .mobile-navigation-collection {
@@ -701,16 +663,12 @@
 
 @media (max-height: 650px) and (max-width: 760px) {
   .mobile-navigation-hero {
-    min-height: 8.7rem;
-    padding-block: 0.7rem;
-  }
-
-  .mobile-navigation-hero-title {
-    font-size: clamp(1.43rem, 5.6vw, 1.8rem);
+    flex-basis: 6.7rem;
+    height: 6.7rem;
   }
 
   .mobile-navigation-mascot {
-    top: -2.15rem;
+    top: -2.85rem;
     width: 10.8rem;
   }
 
@@ -730,7 +688,6 @@
 @media (prefers-reduced-motion: reduce) and (max-width: 760px) {
   .mobile-navigation-dialog[open],
   .mobile-navigation-dialog[open] .mobile-navigation-mascot,
-  .mobile-navigation-dialog[open] .mobile-navigation-hero-title,
   .mobile-navigation-dialog[open] .mobile-navigation-group {
     animation: none;
   }
