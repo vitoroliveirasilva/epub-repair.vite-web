@@ -1,5 +1,37 @@
 # Histórico de mudanças do EPUB Repair
 
+## v4.0.0 — desenvolvimento na dev (não lançada, 12/11/2026)
+- Navbar editorial refinada nas duas telas: nome EPUB/Repair com cobre do ícone, hover com sublinhado, tema e ação principal redesenhados; menu mobile fullscreen com Lumina invertida vetorial, transparente e em duas tintas.
+- Refinamento minimalista do tema editorial nas duas telas: cards com bordas sutis, hierarquia tipográfica enxuta e menos efeitos visuais. Configurações avançadas EPUB ficam recolhidas por padrão, sem painel lateral; a abertura do PDF deixa de exibir cartões promocionais redundantes.
+- Nova direção editorial na página de reparo com Lumina, hero simplificada sem cartões de benefícios e navegação superior; ícone de livros personalizado na navbar e favicon das duas telas.
+
+- Permite selecionar ou arrastar múltiplos EPUBs no upload principal, abrindo automaticamente o lote; também suporta um ou vários arquivos na área dedicada.
+- Separa análise em lote de correção completa opt-in e aplica reparos e otimizações de compatibilidade a cada EPUB elegível, com relatórios de mudanças realmente aplicadas.
+- Limita o tempo de decodificação de JPEG progressivo e permite cancelar a otimização de imagem, impedindo que um recurso sem evento de carregamento trave o processamento em lote.
+
+- Finaliza o editor opcional de metadados: autores reorganizados sem perder identidades e refinamentos, funções MARC EPUB 2/3, correção de múltiplas coleções/séries e preservação de identificadores.
+- Amplia a preparação Kindle para dez verificações com bloqueios, acessibilidade, layout, segurança, ações guiadas e exportação de diagnóstico JSON.
+- Completa o fluxo funcional da revisão assistida de PDFs com exportação JSON integral, filtros de prioridade, marcação de conferência e verificação de figuras sem referência.
+- Melhora o lote local com etapas e progresso por EPUB, relatórios individuais para recusados, resumo JSON/TXT, validação final, isolamento de falhas e cancelamento sem ZIP parcial.
+- Finaliza o escopo técnico de prévia estruturada: CSS seguro limitado, imagens dentro de células, navegação de notas em outros capítulos e 240 seções com orçamento global de memória.
+- O comparador aplica estilos visuais seguros aproximados, acompanha imagens em tabelas e oferece rolagem proporcional sincronizável entre as versões.
+- Aprimora o leitor EPUB: tabelas estruturadas, fusões de células, notas de rodapé recolhíveis, referências internas seguras, listas numeradas e prévia explicativa de layout fixo.
+- Comparação editorial detecta alterações tipográficas, estrutura de títulos e tabelas, notas, imagens e assinaturas de CSS/classes além das diferenças textuais. Não executa estilos originais nem declara equivalência pixel a pixel.
+
+- Valida a integridade do EPUB final contra o conteúdo editado: capítulos no spine, texto e imagens no XHTML e no manifesto. Impede download quando houver perda objetiva e mostra verificação no resultado.
+- Preserva alterações manuais nas páginas visuais, inclusive após edição simples que remove marcadores; o revisor PDF avisa quando a cobertura textual por página fica suspeitamente baixa.
+- Impede exclusão de capítulos numerados por falso cabeçalho recorrente, protege figuras em páginas sem texto após filtros e separa fragmentos curtos distantes na mesma altura.
+- Corrige a leitura de PDFs em duas colunas com linhas na mesma altura, reorganiza títulos que atravessam a página e intercala ilustrações conforme a coluna. O revisor aponta grades tabulares que merecem conferência.
+- Revisor PDF ordena alertas por prioridade, exibe evidências e impede que a normalização de espaços destrua imagens ou formatação HTML.
+- Kindle oferece checklist de oito categorias com orientações específicas e distinção entre bloqueios e conferências.
+- Prévia preserva ênfases e elementos tipográficos básicos sem injetar HTML do EPUB; oferece anterior/próximo.
+- Edição de metadados mantém rascunhos entre as ferramentas, valida campos alterados e permite descartar edições sem substituir o arquivo original.
+- Novo painel recolhido de ferramentas opcionais para EPUB: prévia textual, comparação lado a lado, metadados, checklist Send to Kindle e lote sequencial com limite de memória.
+- Revisão PDF assistida por heurísticas de OCR, coluna, texto visual e formatação, com intervenção explícita do usuário.
+- Produção e release oficial mantidas em `v3.0.0` até autorização de merge. Escopo e limitações registradas em [V4_0_0_DEV.md](docs/V4_0_0_DEV.md).
+
+
+
 > **Nota de leitura (12/11/2026):** a versão `3.0.0` reúne melhorias posteriores à `v2.5.0`. A publicação da tag depende da CI aprovada na `prod`. Entradas anteriores são preservadas como **registro histórico**, inclusive frases escritas antes de versões já publicadas. Estado operacional: [ESTADO_ATUAL.md](docs/ESTADO_ATUAL.md).
 
 ## v3.0.0 (12/11/2026)

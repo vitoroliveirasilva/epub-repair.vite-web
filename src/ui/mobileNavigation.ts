@@ -1,37 +1,48 @@
 import { el } from './dom';
+import { renderBrandName } from './brand';
 
 export type MobileNavigationPage = 'repair' | 'converter';
 
 export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement {
-  const links = [
-    { label: 'Reparar EPUB', href: '/', current: page === 'repair' },
-    { label: 'Converter PDF', href: '/converter', current: page === 'converter' },
-    ...(page === 'converter'
-      ? [
-          { label: 'Como funciona', href: '#converter-how', current: false },
-          { label: 'Privacidade', href: '#converter-privacy', current: false },
-        ]
-      : [
-          { label: 'Como funciona', href: '#privacy', current: false },
-          { label: 'Limitações', href: '#limitations', current: false },
-          { label: 'Relatório', href: '#app-workspace', current: false },
-        ]),
+  const tools = [
+    {
+      title: 'Reparar EPUB',
+      href: '/',
+      current: page === 'repair',
+    },
+    {
+      title: 'Converter PDF',
+      href: '/converter',
+      current: page === 'converter',
+    },
   ];
-  const openButton = el('button', {
+  const sections = page === 'converter'
+    ? [
+        { title: 'Como funciona', href: '#converter-how' },
+        { title: 'Privacidade', href: '#converter-privacy' },
+      ]
+    : [
+        { title: 'Como funciona', href: '#privacy' },
+        { title: 'Limitações', href: '#limitations' },
+        { title: 'Relatório', href: '#app-workspace' },
+      ];
+
+  const trigger = el('button', {
     className: 'mobile-navigation-trigger',
     attrs: {
       type: 'button',
       'aria-label': 'Abrir menu de navegação',
+      'aria-controls': 'mobile-navigation-dialog',
       'aria-haspopup': 'dialog',
       'aria-expanded': 'false',
     },
     children: [
+      el('span', { className: 'mobile-navigation-label', text: 'Menu' }),
       el('span', {
         className: 'mobile-navigation-glyph',
         attrs: { 'aria-hidden': 'true' },
-        children: [el('i'), el('i'), el('i')],
+        children: [el('i'), el('i')],
       }),
-      el('span', { className: 'mobile-navigation-label', text: 'Menu' }),
     ],
   });
 
@@ -39,14 +50,14 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
     className: 'mobile-navigation-close',
     attrs: { type: 'button', 'aria-label': 'Fechar menu de navegação' },
     children: [
-      el('span', { text: 'Fechar' }),
+      el('span', { className: 'mobile-navigation-close-label', text: 'Fechar' }),
       el('span', { className: 'mobile-navigation-close-icon', text: '×', attrs: { 'aria-hidden': 'true' } }),
     ],
   });
 
   const dialog = el('dialog', {
     className: 'mobile-navigation-dialog',
-    attrs: { 'aria-label': 'Menu de navegação' },
+    attrs: { id: 'mobile-navigation-dialog', 'aria-label': 'Menu de navegação' },
     children: [
       el('div', {
         className: 'mobile-navigation-drawer',
@@ -57,8 +68,7 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
               el('div', {
                 className: 'mobile-navigation-brand',
                 children: [
-                  el('strong', { text: 'EPUB Repair' }),
-                  el('small', { text: 'Navegação' }),
+                  el('strong', { className: 'mobile-navigation-wordmark', children: [renderBrandName()] }),
                 ],
               }),
               closeButton,
@@ -69,44 +79,78 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
             attrs: { 'aria-label': 'Navegação no celular' },
             children: [
               el('div', {
-                className: 'mobile-navigation-panel-heading',
+                className: 'mobile-navigation-hero',
                 children: [
-                  el('strong', { text: 'Para onde vamos?' }),
-                  el('small', { text: 'Acesse as ferramentas e as seções do site' }),
+                  el('h2', { className: 'mobile-navigation-hero-title', text: 'O que você quer fazer?' }),
+                  el('img', {
+                    className: 'mobile-navigation-mascot',
+                    attrs: {
+                      src: '/lumina-navbar-mobile.svg',
+                      alt: '',
+                      width: '260',
+                      height: '260',
+                      decoding: 'async',
+                      draggable: 'false',
+                      'aria-hidden': 'true',
+                    },
+                  }),
                 ],
               }),
               el('div', {
-                className: 'mobile-navigation-group mobile-navigation-group-primary',
+                className: 'mobile-navigation-collection',
                 children: [
-                  el('span', { className: 'mobile-navigation-group-label', text: 'Ferramentas' }),
-                  ...links.slice(0, 2).map(({ label, href, current }) =>
-                    el('a', {
-                      className: current
-                        ? 'mobile-navigation-link mobile-navigation-link-primary mobile-navigation-link-active'
-                        : 'mobile-navigation-link mobile-navigation-link-primary',
-                      attrs: { href, ...(current ? { 'aria-current': 'page' } : {}) },
-                      children: [
-                        el('span', { className: 'mobile-navigation-link-text', text: label }),
-                        current
-                          ? el('span', { className: 'mobile-navigation-current', text: 'Atual' })
-                          : el('span', { className: 'mobile-navigation-link-arrow', attrs: { 'aria-hidden': 'true' }, text: '›' }),
-                      ],
-                    })),
-                ],
-              }),
-              el('div', {
-                className: 'mobile-navigation-group mobile-navigation-group-sections',
-                children: [
-                  el('span', { className: 'mobile-navigation-group-label', text: 'Nesta página' }),
-                  ...links.slice(2).map(({ label, href }) =>
-                    el('a', {
-                      className: 'mobile-navigation-link mobile-navigation-link-secondary',
-                      attrs: { href },
-                      children: [
-                        el('span', { className: 'mobile-navigation-link-text', text: label }),
-                        el('span', { className: 'mobile-navigation-link-arrow', attrs: { 'aria-hidden': 'true' }, text: '›' }),
-                      ],
-                    })),
+                  el('div', {
+                    className: 'mobile-navigation-group mobile-navigation-group-primary',
+                    children: [
+                      el('span', { className: 'mobile-navigation-group-label', text: 'Ferramentas' }),
+                      ...tools.map(({ title, href, current }, index) =>
+                        el('a', {
+                          className: current
+                            ? 'mobile-navigation-link mobile-navigation-link-primary mobile-navigation-link-active'
+                            : 'mobile-navigation-link mobile-navigation-link-primary',
+                          attrs: { href, ...(current ? { 'aria-current': 'page' } : {}) },
+                          children: [
+                            el('span', {
+                              className: 'mobile-navigation-link-index',
+                              attrs: { 'aria-hidden': 'true' },
+                              text: `0${index + 1}`,
+                            }),
+                            el('span', {
+                              className: 'mobile-navigation-link-copy',
+                              children: [
+                                el('strong', { text: title }),
+                              ],
+                            }),
+                            current
+                              ? el('span', { className: 'mobile-navigation-current', text: 'Atual' })
+                              : el('span', {
+                                  className: 'mobile-navigation-link-arrow',
+                                  attrs: { 'aria-hidden': 'true' },
+                                  text: '↗',
+                                }),
+                          ],
+                        })),
+                    ],
+                  }),
+                  el('div', {
+                    className: 'mobile-navigation-group mobile-navigation-group-sections',
+                    children: [
+                      el('span', { className: 'mobile-navigation-group-label', text: 'Nesta página' }),
+                      ...sections.map(({ title, href }) =>
+                        el('a', {
+                          className: 'mobile-navigation-link mobile-navigation-link-secondary',
+                          attrs: { href },
+                          children: [
+                            el('span', { className: 'mobile-navigation-link-text', text: title }),
+                            el('span', {
+                              className: 'mobile-navigation-link-arrow',
+                              attrs: { 'aria-hidden': 'true' },
+                              text: '↗',
+                            }),
+                          ],
+                        })),
+                    ],
+                  }),
                 ],
               }),
             ],
@@ -116,28 +160,36 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
     ],
   });
 
-  const menu = el('div', {
+  const mobileNav = el('div', {
     className: 'mobile-navigation',
-    children: [openButton, dialog],
+    children: [trigger, dialog],
   });
 
-  openButton.addEventListener('click', () => {
+  const closeOnDesktop = (): void => {
+    if (window.innerWidth > 760 && dialog.open) dialog.close();
+  };
+
+  trigger.addEventListener('click', () => {
     if (dialog.open) return;
     dialog.showModal();
-    openButton.setAttribute('aria-expanded', 'true');
+    trigger.setAttribute('aria-expanded', 'true');
+    window.addEventListener('resize', closeOnDesktop);
     closeButton.focus();
   });
 
   closeButton.addEventListener('click', () => dialog.close());
+
   dialog.addEventListener('close', () => {
-    openButton.setAttribute('aria-expanded', 'false');
-    if (openButton.isConnected) openButton.focus();
+    trigger.setAttribute('aria-expanded', 'false');
+    window.removeEventListener('resize', closeOnDesktop);
+    if (trigger.isConnected) trigger.focus({ preventScroll: true });
   });
+
   dialog.addEventListener('click', (event) => {
     if (event.target instanceof Element && event.target.closest('.mobile-navigation-panel a')) {
       dialog.close();
     }
   });
 
-  return menu;
+  return mobileNav;
 }

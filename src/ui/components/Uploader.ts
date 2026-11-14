@@ -1,12 +1,16 @@
 import type { AppState } from '../../app/state';
 import { el, formatBytes } from '../dom';
 
-export function renderUploader(state: AppState, onFile: (file: File) => void): HTMLElement {
+export function renderUploader(
+  state: AppState, onFile: (file: File) => void,
+  onFiles?: (files: File[]) => void,
+): HTMLElement {
   const input = el('input', {
     attrs: {
       type: 'file',
       accept: '.epub,application/epub+zip',
       id: 'epub-file-input',
+      multiple: 'multiple',
       'aria-describedby': 'upload-help',
     },
   });
@@ -19,26 +23,29 @@ export function renderUploader(state: AppState, onFile: (file: File) => void): H
       for: 'epub-file-input',
       tabindex: '0',
       role: 'button',
-      'aria-label': 'Escolher ou arrastar arquivo EPUB para análise local',
+      'aria-label': 'Escolher ou arrastar um ou vários EPUBs para análise local',
       'aria-disabled': String(state.busy),
     },
     children: [
       renderDropIcon(),
       el('strong', {
-        text: state.payload ? 'EPUB carregado com segurança' : 'Arraste seu arquivo EPUB aqui',
+        text: state.payload ? 'EPUB carregado com segurança' : 'Arraste um ou vários EPUBs aqui',
       }),
       el('p', {
         text: state.payload
-          ? 'Você pode analisar novamente, reparar ou escolher outro arquivo quando quiser'
-          : 'ou clique para escolher um arquivo',
+          ? 'Você pode analisar novamente, reparar ou adicionar outros arquivos em lote'
+          : 'ou clique para escolher um ou vários arquivos',
       }),
     ],
   });
 
+  const submitFiles = (files: File[]): void => {
+    if (state.busy || !files.length) return;
+    if (files.length === 1) onFile(files[0]!);
+    else onFiles?.(files);
+  };
   input.addEventListener('change', () => {
-    if (state.busy) return;
-    const file = input.files?.[0];
-    if (file) onFile(file);
+    submitFiles(Array.from(input.files ?? []));
   });
 
   dropzone.addEventListener('dragover', (event) => {
@@ -51,8 +58,7 @@ export function renderUploader(state: AppState, onFile: (file: File) => void): H
     event.preventDefault();
     if (state.busy) return;
     dropzone.classList.remove('dropzone-active');
-    const file = event.dataTransfer?.files[0];
-    if (file) onFile(file);
+    submitFiles(Array.from(event.dataTransfer?.files ?? []));
   });
   dropzone.addEventListener('keydown', (event) => {
     if (state.busy) return;
@@ -71,13 +77,14 @@ export function renderUploader(state: AppState, onFile: (file: File) => void): H
         children: [
           el('p', { className: 'eyebrow', text: 'Upload' }),
           el('h2', {
-            text: 'Escolha o EPUB a ser alterado',
+            text: 'Escolha um ou vários EPUBs',
             attrs: { id: 'upload-title' },
           }),
           el('p', {
             className: 'muted',
             attrs: { id: 'upload-help' },
-            text: 'Arquivos .epub são aceitos com o limite sugerido de 250 MB para evitar travamentos em navegadores mais modestos',
+            text: 'Um EPUB abre o fluxo individual (até 250 MB); dois ou mais abrem o ' +
+              'processamento em lote, com correção opcional (até 6 EPUBs e 80 MB somados).',
           }),
         ],
       }),

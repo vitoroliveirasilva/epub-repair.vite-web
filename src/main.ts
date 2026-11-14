@@ -5,6 +5,10 @@ import './styles/mobile.css';
 import './styles/layout-polish.css';
 import './styles/converter.css';
 import './styles/reportLayoutFixes.css';
+import './styles/optionalTools.css';
+import './styles/editorialIdentity.css';
+import './styles/navbarRefinement.css';
+import './styles/desktopNavbar.css';
 import './styles/mobileNavigation.css';
 
 const root = document.querySelector<HTMLElement>('#app');

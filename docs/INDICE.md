@@ -8,6 +8,8 @@ A documentação está dividida em **guias vivos** (comportamento e procedimento
 
 ### Guias vivos
 
+- [Plano e estado da candidata v4.0.0 em dev](V4_0_0_DEV.md): ferramentas opcionais, limites atuais e critérios de liberação.
+
 | Arquivo | Assunto | Atualizar quando... |
 | --- | --- | --- |
 | [README](../README.md) | Visão geral, rotas, instalação, limitações e links | Mudar funcionalidade visível, dependência principal ou documentação |

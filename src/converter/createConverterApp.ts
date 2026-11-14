@@ -4,6 +4,10 @@ import type { ConverterState, EditableSection, PdfAnalysisResult } from './model
 import { analyzePdf, renderPdfPagePreview } from './pdfEngine';
 import { button, downloadBlob, el, formatBytes } from '../ui/dom';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
+import { renderDesktopNavigation } from '../ui/desktopNavigation';
+import { renderBrandName } from '../ui/brand';
+import { buildReviewAudit, exportReviewAudit, reviewFindingKey,
+  normalizeSectionSpaces, type ReviewFinding } from './reviewSuggestions';
 
 const THEME_STORAGE_KEY = 'epub-repair-theme';
 const MAX_PDF_SIZE = 250 * 1024 * 1024;
@@ -32,6 +36,7 @@ function render(root: HTMLElement, state: ConverterState, rerender: () => void):
             state.result ? renderResult(state) : undefined,
             state.analysis ? renderOverview(state) : !state.file ? renderConverterEmptyState() : undefined,
             state.analysis && !state.busy ? renderSettings(state, rerender) : undefined,
+            state.analysis && !state.busy ? renderReviewAssist(state, rerender) : undefined,
             state.analysis && !state.busy ? renderAdvancedReview(state, rerender) : undefined,
           ],
         }),
@@ -92,23 +97,19 @@ function renderHeader(): HTMLElement {
       el('a', {
         className: 'brand-mark',
         attrs: { href: '/', 'aria-label': 'EPUB Repair, início' },
-        children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })],
+        children: [renderLogoSymbol(), renderBrandName()],
       }),
-      el('nav', {
-        className: 'header-nav',
-        attrs: { 'aria-label': 'Navegação principal' },
-        children: [
-          el('a', { text: 'Reparar EPUB', attrs: { href: '/' } }),
-          el('a', { text: 'Converter PDF', attrs: { href: '/converter', 'aria-current': 'page' } }),
-          el('a', { text: 'Como funciona', attrs: { href: '#converter-how' } }),
-          el('a', { text: 'Privacidade', attrs: { href: '#converter-privacy' } }),
-        ],
-      }),
+      renderDesktopNavigation([
+        { label: 'Reparar EPUB', href: '/' },
+        { label: 'Converter PDF', href: '/converter', current: true },
+        { label: 'Como funciona', href: '#converter-how' },
+        { label: 'Privacidade', href: '#converter-privacy' },
+      ]),
       renderMobileNavigation('converter'),
       el('div', {
         className: 'header-actions',
         children: [renderThemeToggle(), el('a', {
-          className: 'btn btn-primary btn-small',
+          className: 'btn btn-primary btn-small nav-primary-action',
           text: 'Selecionar PDF',
           attrs: { href: '#pdf-upload' },
         })],
@@ -125,41 +126,30 @@ function renderHero(): HTMLElement {
       el('div', {
         className: 'converter-hero-copy',
         children: [
-          el('p', { className: 'eyebrow', text: 'Conversão editorial local' }),
-          el('h1', { text: 'Transforme PDF em EPUB sem carregar a bagunça junto' }),
+          el('p', { className: 'eyebrow', text: 'PDF → EPUB' }),
+          el('h1', { text: 'Do PDF ao EPUB, sem complicação' }),
           el('p', {
             className: 'hero-copy',
-            text: 'Reconstrua parágrafos, capítulos e ordem de leitura, leia textos de páginas digitalizadas, compare o resultado e gere um EPUB validado sem enviar o documento para servidor.',
+            text: 'Reconstrua capítulos, imagens e a ordem de leitura em um arquivo pronto para revisar.',
           }),
-          el('div', { className: 'hero-actions', children: [
-            el('a', { className: 'btn btn-primary btn-large', text: 'Converter meu PDF', attrs: { href: '#pdf-upload' } }),
-            el('a', { className: 'btn btn-ghost btn-large', text: 'Entender o processo', attrs: { href: '#converter-how' } }),
-          ] }),
-        ],
-      }),
-      el('aside', {
-        className: 'hero-preview converter-hero-preview',
-        attrs: { 'aria-label': 'Recursos do conversor PDF para EPUB' },
-        children: [
-          el('div', { className: 'preview-toolbar', children: [
-            el('span'), el('span'), el('span'), el('strong', { text: 'PDF → EPUB' }),
-          ] }),
-          renderFeature('Diagnóstico por página', 'Texto, digitalização, colunas e imagens'),
-          renderFeature('Reconstrução editorial', 'Parágrafos, capítulos, notas e tipografia'),
-          renderFeature('Leitura de páginas digitalizadas', 'Reconhece texto em imagens sem enviar o arquivo'),
-          renderFeature('Validação final', 'Estrutura EPUB e compatibilidade Kindle'),
+          el('div', {
+            className: 'hero-actions',
+            children: [
+              el('a', {
+                className: 'btn btn-primary btn-large',
+                text: 'Selecionar PDF',
+                attrs: { href: '#pdf-upload' },
+              }),
+              el('a', {
+                className: 'btn btn-ghost btn-large',
+                text: 'Como funciona',
+                attrs: { href: '#converter-how' },
+              }),
+            ],
+          }),
         ],
       }),
     ],
-  });
-}
-
-function renderFeature(title: string, detail: string): HTMLElement {
-  return el('div', {
-    className: 'converter-feature',
-    children: [el('span', { text: '✓' }), el('div', {
-      children: [el('strong', { text: title }), el('small', { text: detail })],
-    })],
   });
 }
 
@@ -627,6 +617,130 @@ function renderAdvancedReview(state: ConverterState, rerender: () => void): HTML
   return details;
 }
 
+function renderReviewAssist(state: ConverterState, rerender: () => void): HTMLElement {
+  const audit = state.analysis ? buildReviewAudit(state.analysis, state.sections) : undefined;
+  const reviewed = state.reviewedFindingIds ?? new Set<string>();
+  const filter = state.reviewPriorityFilter ?? 'all';
+  const findings = (audit?.findings ?? []).filter((item) =>
+    filter === 'all' || item.priority === filter);
+  const highCount = audit?.high ?? 0;
+  const mediumCount = audit?.medium ?? 0;
+  const reviewedCount = (audit?.findings ?? []).filter((finding) =>
+    reviewed.has(reviewFindingKey(finding))).length;
+  const priorityNames: Record<ReviewFinding['priority'], string> = {
+    high: 'Prioridade alta', medium: 'Revisar', low: 'Conferir se necessário',
+  };
+  const renderFinding = (finding: ReviewFinding): HTMLElement => {
+    const canNavigate = finding.page !== undefined || finding.sectionIndex !== undefined;
+    const navigate = button('Conferir no editor', 'btn btn-ghost btn-small', () => {
+      if (finding.page !== undefined) state.selectedPage = finding.page;
+      if (finding.sectionIndex !== undefined) state.selectedSection = finding.sectionIndex;
+      state.advancedReviewOpen = true;
+      rerender();
+      requestAnimationFrame(() => document.querySelector('.converter-comparison')?.scrollIntoView({
+        behavior: 'smooth', block: 'start',
+      }));
+    });
+    navigate.disabled = !canNavigate;
+    const normalize = finding.canNormalizeSpaces && finding.sectionIndex !== undefined
+      ? button('Normalizar espaços desta seção', 'btn btn-secondary btn-small', () => {
+          if (!window.confirm('Normalizar sequências de três ou mais espaços no texto desta seção, preservando o HTML, as imagens e a formatação?')) return;
+          const index = finding.sectionIndex!;
+          const section = state.sections[index];
+          if (!section) return;
+          state.sections[index] = normalizeSectionSpaces(section);
+          state.result = undefined;
+          rerender();
+        })
+      : undefined;
+    const key = reviewFindingKey(finding);
+    const isReviewed = reviewed.has(key);
+    const toggleReviewed = button(isReviewed ? 'Reabrir revisão' : 'Marcar como conferido',
+      'btn btn-ghost btn-small', () => {
+        state.reviewedFindingIds ??= new Set();
+        if (state.reviewedFindingIds.has(key)) state.reviewedFindingIds.delete(key);
+        else state.reviewedFindingIds.add(key);
+        rerender();
+      });
+    const origin = [
+      priorityNames[finding.priority],
+      ...(finding.page !== undefined ? ['Página ' + finding.page] : []),
+      ...(finding.sectionIndex !== undefined ? ['Seção ' + (finding.sectionIndex + 1)] : []),
+    ].join(' · ');
+    return el('article', { className: 'optional-review-item', children: [
+      el('strong', { text: finding.title + (isReviewed ? ' · Conferido' : '') }),
+      el('small', { className: 'optional-review-origin', text: origin }),
+      el('p', { className: 'muted', text: finding.reason }),
+      finding.evidence ? el('p', { className: 'optional-review-evidence',
+        text: 'Trecho de referência: ' + finding.evidence }) : undefined,
+      el('div', { className: 'optional-review-actions',
+        children: [navigate, normalize, toggleReviewed] }),
+    ] });
+  };
+  const additional = findings.slice(6);
+  const prioritySelect = el('select', { attrs: { 'aria-label': 'Filtrar alertas da revisão' },
+    children: [
+      el('option', { attrs: { value: 'all',
+        ...(filter === 'all' ? { selected: 'selected' } : {}) }, text: 'Todas as prioridades' }),
+      ...(['high', 'medium', 'low'] as const).map((priority) => el('option', {
+        text: priorityNames[priority],
+        attrs: { value: priority,
+          ...(filter === priority ? { selected: 'selected' } : {}) },
+      })),
+    ],
+  });
+  prioritySelect.addEventListener('change', () => {
+    state.reviewPriorityFilter = prioritySelect.value as typeof filter;
+    rerender();
+  });
+  const exportReport = button('Baixar relatório detalhado (JSON)',
+    'btn btn-secondary btn-small', () => {
+      if (!state.analysis) return;
+      const report = exportReviewAudit(state.analysis, state.sections,
+        state.reviewedFindingIds);
+      downloadBlob(new Blob([report], { type: 'application/json' }),
+        'revisao-assistida-pdf.json');
+    });
+  const details = el('details', { className: 'converter-advanced-review optional-pdf-review', children: [
+    el('summary', { children: [
+      el('span', { className: 'converter-advanced-icon', text: 'Aa' }),
+      el('span', { className: 'converter-advanced-copy', children: [
+        el('strong', { text: 'Revisão assistida de PDF' }),
+        el('small', { text: 'Opcional · ' + (audit?.total ?? 0) +
+          ' alerta(s); ' + highCount + ' prioritário(s). Nenhuma mudança automática.' }),
+      ] }),
+      el('span', { className: 'converter-advanced-action', text: 'Ver sugestões' }),
+    ] }),
+    el('div', { className: 'optional-review-list', children: [
+      el('p', { className: 'muted',
+        text: 'Alertas heurísticos, não diagnósticos definitivos. Confira primeiro os pontos de maior prioridade. A revisão não altera o PDF original.' }),
+      audit?.total
+        ? el('p', { className: 'muted', text: highCount + ' prioridade(s) alta(s) · ' +
+          mediumCount + ' revisão(ões) recomendada(s) · ' +
+          audit.low + ' conferência(s) opcional(is). ' +
+          reviewedCount + ' alerta(s) marcado(s) como conferido(s) entre os exibidos.' })
+        : el('p', { text: 'Nenhum sinal adicional encontrado nesta verificação.' }),
+      audit?.omitted ? el('p', { className: 'muted',
+        text: 'Exibindo até ' + audit.displayed + ' dos ' + audit.total +
+          ' alertas. Baixe o relatório para consultar todos os achados.',
+      }) : undefined,
+      el('div', { className: 'optional-review-actions', children: [
+        prioritySelect, exportReport,
+      ] }),
+      ...findings.slice(0, 6).map(renderFinding),
+      additional.length ? el('details', { className: 'optional-review-more', children: [
+        el('summary', { text: 'Mostrar outros ' + additional.length + ' ponto(s) para conferir' }),
+        ...additional.map(renderFinding),
+      ] }) : undefined,
+    ] }),
+  ] });
+  details.open = state.assistedReviewOpen;
+  details.addEventListener('toggle', () => {
+    if (details.isConnected) state.assistedReviewOpen = details.open;
+  });
+  return details;
+}
+
 function renderQualitySidebar(state: ConverterState): HTMLElement {
   const warnings = state.analysis?.warnings ?? [];
   return el('aside', {
@@ -693,6 +807,11 @@ function renderResult(state: ConverterState): HTMLElement {
           el('p', { className: 'eyebrow', text: 'Conversão finalizada' }),
           el('h2', { text: 'Seu EPUB está pronto para baixar' }),
           el('p', { className: 'muted', text: 'O arquivo foi gerado, passou pelo reparo automático e foi revalidado com sucesso.' }),
+          result.integrity ? el('p', { className: 'muted',
+            text: 'Integridade do EPUB conferida: ' +
+              result.integrity.sectionsChecked + ' seção(ões) e ' +
+              result.integrity.imageReferencesChecked + ' referência(s) de imagem preservadas. ' +
+              'Esta verificação compara o conteúdo editado com o arquivo final; não garante equivalência com a diagramação do PDF.' }) : undefined,
         ] }),
       ] }),
       el('div', { className: 'converter-result-file', children: [
@@ -782,6 +901,9 @@ async function loadAndAnalyze(file: File, state: ConverterState, rerender: () =>
   state.selectedPage = 1;
   state.selectedSection = 0;
   state.advancedReviewOpen = false;
+  state.assistedReviewOpen = false;
+  state.reviewedFindingIds = new Set();
+  state.reviewPriorityFilter = 'all';
   await analyzeCurrent(state, rerender);
 }
 
@@ -803,6 +925,7 @@ async function analyzeCurrent(state: ConverterState, rerender: () => void): Prom
       },
     });
     state.analysis = analysis;
+    state.reviewedFindingIds = new Set();
     state.sections = analysis.sections.map((section) => ({ ...section, sourcePages: [...section.sourcePages] }));
     if (!state.title.trim()) state.title = analysis.title;
     if (!state.author.trim()) state.author = analysis.author;
@@ -1088,7 +1211,7 @@ function howCard(number: string, title: string, detail: string): HTMLElement {
 function renderFooter(): HTMLElement {
   return el('footer', { className: 'footer app-footer', children: [
     el('div', { className: 'footer-main', children: [
-      el('a', { className: 'footer-brand', attrs: { href: '/' }, children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })] }),
+      el('a', { className: 'footer-brand', attrs: { href: '/' }, children: [renderLogoSymbol(), renderBrandName()] }),
       el('nav', { className: 'footer-links', attrs: { 'aria-label': 'Links de navegação e projeto' }, children: [
         el('a', { text: 'Desenvolvedor', attrs: { href: 'https://github.com/vitoroliveirasilva', target: '_blank', rel: 'noreferrer noopener' } }),
         el('a', { text: 'Projeto no GitHub', attrs: { href: 'https://github.com/vitoroliveirasilva/epub-repair.vite-web', target: '_blank', rel: 'noreferrer noopener' } }),
@@ -1104,16 +1227,21 @@ function renderFooter(): HTMLElement {
 }
 
 function renderLogoSymbol(): HTMLElement {
-  return el('span', { className: 'logo-symbol', attrs: { 'aria-hidden': 'true' }, children: [
-    el('span', { className: 'logo-fold' }),
-    el('span', { className: 'logo-line logo-line-1' }),
-    el('span', { className: 'logo-line logo-line-2' }),
-    el('span', { className: 'logo-check' }),
-  ] });
+  return el('img', {
+    className: 'brand-icon',
+    attrs: {
+      src: '/favicon.svg',
+      alt: '',
+      width: '44',
+      height: '44',
+      decoding: 'async',
+      'aria-hidden': 'true',
+    },
+  });
 }
 
 function renderThemeToggle(): HTMLElement {
-  const toggle = el('button', { className: 'theme-toggle', attrs: { type: 'button', 'aria-label': 'Alternar tema claro e escuro' }, children: [
+  const toggle = el('button', { className: 'theme-toggle nav-theme-toggle', attrs: { type: 'button', 'aria-label': 'Alternar tema claro e escuro' }, children: [
     el('span', { attrs: { 'aria-hidden': 'true' } }),
     el('strong', { text: currentTheme() === 'dark' ? 'Escuro' : 'Claro' }),
   ] });

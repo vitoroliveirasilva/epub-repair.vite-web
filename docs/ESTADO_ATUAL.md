@@ -1,5 +1,8 @@
 # Estado atual do EPUB Repair
 
+> **Atenção à branch:** este registro descreve a release publicada `v3.0.0`. Na `dev`, a candidata `v4.0.0` está em construção, com fluxo principal preservado e ferramentas opcionais. Consulte [estado da v4](V4_0_0_DEV.md). A produção não foi alterada por esse desenvolvimento.
+
+
 **Data-base:** 12/11/2026. **Fonte de verdade:** árvore de código e configuração em `dev`/`prod`, `package.json`, `netlify.toml`, workflows e PRs integradas. Este documento **não substitui** a consulta ao HEAD e aos checks de uma nova PR.
 
 ## Situação de produto e versionamento

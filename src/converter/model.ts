@@ -107,12 +107,18 @@ export interface PdfAnalysisResult {
   qualityScore: number;
 }
 
+export interface ConvertedContentIntegrity {
+  sectionsChecked: number;
+  imageReferencesChecked: number;
+}
+
 export interface ConversionResult {
   fileName: string;
   blob: Blob;
   bytes: Uint8Array;
   layout: ConversionLayout;
   validation: ValidationReport;
+  integrity?: ConvertedContentIntegrity | undefined;
   warnings: ConversionWarning[];
 }
 
@@ -134,6 +140,9 @@ export interface ConverterState {
   selectedPage: number;
   selectedSection: number;
   advancedReviewOpen: boolean;
+  assistedReviewOpen: boolean;
+  reviewPriorityFilter?: 'all' | 'high' | 'medium' | 'low' | undefined;
+  reviewedFindingIds?: Set<string> | undefined;
   controller?: AbortController | undefined;
 }
 
@@ -164,5 +173,8 @@ export function createInitialConverterState(): ConverterState {
     selectedPage: 1,
     selectedSection: 0,
     advancedReviewOpen: false,
+    assistedReviewOpen: false,
+    reviewPriorityFilter: 'all',
+    reviewedFindingIds: new Set(),
   };
 }
