@@ -164,7 +164,7 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(readFileSync('src/main.ts', 'utf8')).toContain("import './styles/desktopNavbar.css';");
   });
 
-  it('usa um menu em tela cheia com dois planos cromáticos e Lumina fora dos blocos de navegação', () => {
+  it('mantém menu bicolor, Lumina centralizada e navegação organizada sem copy decorativa', () => {
     for (const { build, currentHref, sectionCount } of [
       { build: createApp, currentHref: '/', sectionCount: 3 },
       { build: createConverterApp, currentHref: '/converter', sectionCount: 2 },
@@ -181,7 +181,7 @@ describe('Identidade editorial no EPUB Repair', () => {
       expect(mascot?.parentElement?.classList.contains('mobile-navigation-hero')).toBe(true);
       expect(dialog?.querySelector('.mobile-navigation-topbar')?.contains(mascot ?? null)).toBe(false);
       expect(panel?.querySelector('.mobile-navigation-hero-title')).toBeNull();
-      expect(panel?.querySelector('.mobile-navigation-hero-label')?.textContent).toBe('Ferramentas');
+      expect(panel?.querySelector('.mobile-navigation-hero-label')).toBeNull();
       expect(panel?.querySelector('.mobile-navigation-hero')?.lastElementChild).toBe(mascot);
       expect(panel?.querySelector('.mobile-navigation-group-primary .mobile-navigation-group-label'))
         .toBeNull();
@@ -214,9 +214,14 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(readFileSync('public/theme-moon.svg', 'utf8')).toContain('viewBox="0 0 24 24"');
     const css = readFileSync('src/styles/mobileNavigation.css', 'utf8');
     expect(css).toContain('--nav-paper: #f5efe3');
-    expect(css).toContain('flex: 0 0 clamp(6.7rem, 17dvh, 7rem)');
-    expect(css).toContain('right: -0.7rem');
-    expect(css).toContain('font-size: clamp(1.27rem, 5.3vw, 1.65rem)');
+    expect(css).toContain('flex: 0 0 clamp(6.7rem, 16dvh, 7.3rem)');
+    expect(css).toContain('transform: translateX(-50%) rotate(2deg)');
+    expect(css).toContain('.mobile-navigation-group-primary');
+    expect(css).toContain('border-radius: 0 0 1.2rem 1.2rem');
+    expect(css).toMatch(/\.app-header > \.mobile-navigation \{[\s\S]*?grid-column: 3;/u);
+    expect(css).toMatch(/\.app-header > \.header-actions \{[\s\S]*?grid-column: 2;/u);
+    expect(css).toContain('font-size: clamp(1.32rem, 5.9vw, 1.77rem)');
+    expect(css).toContain('color: var(--nav-ink)');
     expect(css).not.toContain('.mobile-navigation-link-index');
     expect(css).not.toContain('.mobile-navigation-hero-title');
     expect(css).toContain("mask: url('/theme-sun.svg') center / contain no-repeat");

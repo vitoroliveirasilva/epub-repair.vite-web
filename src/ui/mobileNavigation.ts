@@ -81,7 +81,6 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
               el('div', {
                 className: 'mobile-navigation-hero',
                 children: [
-                  el('span', { className: 'mobile-navigation-hero-label', text: 'Ferramentas' }),
                   el('img', {
                     className: 'mobile-navigation-mascot',
                     attrs: {
