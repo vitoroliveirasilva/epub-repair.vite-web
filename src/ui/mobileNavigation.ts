@@ -81,6 +81,7 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
               el('div', {
                 className: 'mobile-navigation-hero',
                 children: [
+                  el('span', { className: 'mobile-navigation-hero-label', text: 'Ferramentas' }),
                   el('img', {
                     className: 'mobile-navigation-mascot',
                     attrs: {
@@ -101,8 +102,7 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
                   el('div', {
                     className: 'mobile-navigation-group mobile-navigation-group-primary',
                     children: [
-                      el('span', { className: 'mobile-navigation-group-label', text: 'Ferramentas' }),
-                      ...tools.map(({ title, href, current }, index) =>
+                      ...tools.map(({ title, href, current }) =>
                         el('a', {
                           className: current
                             ? 'mobile-navigation-link mobile-navigation-link-primary mobile-navigation-link-active'
@@ -110,23 +110,16 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
                           attrs: { href, ...(current ? { 'aria-current': 'page' } : {}) },
                           children: [
                             el('span', {
-                              className: 'mobile-navigation-link-index',
-                              attrs: { 'aria-hidden': 'true' },
-                              text: `0${index + 1}`,
-                            }),
-                            el('span', {
                               className: 'mobile-navigation-link-copy',
                               children: [
                                 el('strong', { text: title }),
                               ],
                             }),
-                            current
-                              ? el('span', { className: 'mobile-navigation-current', text: 'Atual' })
-                              : el('span', {
-                                  className: 'mobile-navigation-link-arrow',
-                                  attrs: { 'aria-hidden': 'true' },
-                                  text: '↗',
-                                }),
+                            el('span', {
+                              className: 'mobile-navigation-link-arrow',
+                              attrs: { 'aria-hidden': 'true' },
+                              text: '↗',
+                            }),
                           ],
                         })),
                     ],

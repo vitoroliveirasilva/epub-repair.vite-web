@@ -181,8 +181,14 @@ describe('Identidade editorial no EPUB Repair', () => {
       expect(mascot?.parentElement?.classList.contains('mobile-navigation-hero')).toBe(true);
       expect(dialog?.querySelector('.mobile-navigation-topbar')?.contains(mascot ?? null)).toBe(false);
       expect(panel?.querySelector('.mobile-navigation-hero-title')).toBeNull();
-      expect(panel?.querySelector('.mobile-navigation-hero')?.textContent?.trim()).toBe('');
-      expect(panel?.querySelector('.mobile-navigation-hero')?.firstElementChild).toBe(mascot);
+      expect(panel?.querySelector('.mobile-navigation-hero-label')?.textContent).toBe('Ferramentas');
+      expect(panel?.querySelector('.mobile-navigation-hero')?.lastElementChild).toBe(mascot);
+      expect(panel?.querySelector('.mobile-navigation-group-primary .mobile-navigation-group-label'))
+        .toBeNull();
+      expect(panel?.querySelectorAll('.mobile-navigation-link-index')).toHaveLength(0);
+      expect(panel?.querySelectorAll('.mobile-navigation-current')).toHaveLength(0);
+      expect(panel?.querySelectorAll('.mobile-navigation-link-primary .mobile-navigation-link-arrow'))
+        .toHaveLength(2);
       expect(panel?.querySelector('.mobile-navigation-collection')).not.toBeNull();
       expect(panel?.querySelectorAll('.mobile-navigation-link-primary')).toHaveLength(2);
       expect(panel?.querySelectorAll('.mobile-navigation-link-secondary')).toHaveLength(sectionCount);
@@ -190,7 +196,7 @@ describe('Identidade editorial no EPUB Repair', () => {
       expect(panel?.querySelector('[aria-current="page"]')?.getAttribute('href')).toBe(currentHref);
       expect(dialog?.querySelector('.mobile-navigation-wordmark .brand-wordmark-repair')?.textContent)
         .toBe('Repair');
-      expect(panel?.querySelectorAll('.mobile-navigation-group-label')).toHaveLength(2);
+      expect(panel?.querySelectorAll('.mobile-navigation-group-label')).toHaveLength(1);
       expect(panel?.querySelector('.mobile-navigation-footnote')).toBeNull();
       expect(panel?.querySelector('.mobile-navigation-edition')).toBeNull();
       expect(dialog?.querySelector('.mobile-navigation-brand small')).toBeNull();
@@ -208,8 +214,10 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(readFileSync('public/theme-moon.svg', 'utf8')).toContain('viewBox="0 0 24 24"');
     const css = readFileSync('src/styles/mobileNavigation.css', 'utf8');
     expect(css).toContain('--nav-paper: #f5efe3');
-    expect(css).toContain('flex: 0 0 clamp(7.1rem, 18dvh, 8.2rem)');
-    expect(css).toContain('transform: translateX(-50%) rotate(2deg)');
+    expect(css).toContain('flex: 0 0 clamp(6.7rem, 17dvh, 7rem)');
+    expect(css).toContain('right: -0.7rem');
+    expect(css).toContain('font-size: clamp(1.27rem, 5.3vw, 1.65rem)');
+    expect(css).not.toContain('.mobile-navigation-link-index');
     expect(css).not.toContain('.mobile-navigation-hero-title');
     expect(css).toContain("mask: url('/theme-sun.svg') center / contain no-repeat");
     expect(css).toContain("mask: url('/theme-moon.svg') center / contain no-repeat");
