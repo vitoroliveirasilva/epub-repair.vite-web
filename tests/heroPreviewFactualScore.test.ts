@@ -178,8 +178,9 @@ describe('Identidade editorial no EPUB Repair', () => {
       expect(dialog?.getAttribute('aria-label')).toBe('Menu de navegação');
       expect(mascot?.getAttribute('src')).toBe('/lumina-navbar-mobile.svg');
       expect(mascot?.getAttribute('aria-hidden')).toBe('true');
-      expect(dialog?.querySelector('.mobile-navigation-drawer')?.firstElementChild).toBe(mascot);
-      expect(panel?.querySelector('.mobile-navigation-hero-title')?.textContent).toBe('OLÁ, LEITOR.');
+      expect(mascot?.parentElement?.classList.contains('mobile-navigation-hero')).toBe(true);
+      expect(dialog?.querySelector('.mobile-navigation-topbar')?.contains(mascot ?? null)).toBe(false);
+      expect(panel?.querySelector('.mobile-navigation-hero-title')?.textContent).toBe('O que você quer fazer?');
       expect(panel?.querySelector('.mobile-navigation-collection')).not.toBeNull();
       expect(panel?.querySelectorAll('.mobile-navigation-link-primary')).toHaveLength(2);
       expect(panel?.querySelectorAll('.mobile-navigation-link-secondary')).toHaveLength(sectionCount);
@@ -188,8 +189,10 @@ describe('Identidade editorial no EPUB Repair', () => {
       expect(dialog?.querySelector('.mobile-navigation-wordmark .brand-wordmark-repair')?.textContent)
         .toBe('Repair');
       expect(panel?.querySelectorAll('.mobile-navigation-group-label')).toHaveLength(2);
-      expect(panel?.querySelector('.mobile-navigation-footnote')?.textContent)
-        .toContain('Feito para quem lê.');
+      expect(panel?.querySelector('.mobile-navigation-footnote')).toBeNull();
+      expect(panel?.querySelector('.mobile-navigation-edition')).toBeNull();
+      expect(dialog?.querySelector('.mobile-navigation-brand small')).toBeNull();
+      expect(panel?.querySelectorAll('.mobile-navigation-link-copy small')).toHaveLength(0);
       expect(root.querySelector('.mobile-navigation-trigger')?.getAttribute('aria-controls'))
         .toBe('mobile-navigation-dialog');
       root.remove();
@@ -199,8 +202,12 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(new Set(image.match(/#[a-fA-F0-9]{6}/gu)))
       .toEqual(new Set(['#194C3E', '#FBF4E9']));
     expect(image).not.toContain('<image');
+    expect(readFileSync('public/theme-sun.svg', 'utf8')).toContain('viewBox="0 0 24 24"');
+    expect(readFileSync('public/theme-moon.svg', 'utf8')).toContain('viewBox="0 0 24 24"');
     const css = readFileSync('src/styles/mobileNavigation.css', 'utf8');
     expect(css).toContain('--nav-paper: #f5efe3');
+    expect(css).toContain("mask: url('/theme-sun.svg') center / contain no-repeat");
+    expect(css).toContain("mask: url('/theme-moon.svg') center / contain no-repeat");
     expect(css).toContain('--nav-forest: #103d30');
     expect(css).toContain('--nav-orange: #b75c35');
     expect(css).toContain('grid-template-rows: auto minmax(0, 1fr)');

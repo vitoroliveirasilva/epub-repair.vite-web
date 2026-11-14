@@ -7,13 +7,11 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
   const tools = [
     {
       title: 'Reparar EPUB',
-      description: 'Corrija seu livro digital',
       href: '/',
       current: page === 'repair',
     },
     {
       title: 'Converter PDF',
-      description: 'Transforme PDF em EPUB',
       href: '/converter',
       current: page === 'converter',
     },
@@ -64,18 +62,6 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
       el('div', {
         className: 'mobile-navigation-drawer',
         children: [
-          el('img', {
-            className: 'mobile-navigation-mascot',
-            attrs: {
-              src: '/lumina-navbar-mobile.svg',
-              alt: '',
-              width: '260',
-              height: '260',
-              decoding: 'async',
-              draggable: 'false',
-              'aria-hidden': 'true',
-            },
-          }),
           el('div', {
             className: 'mobile-navigation-topbar',
             children: [
@@ -83,7 +69,6 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
                 className: 'mobile-navigation-brand',
                 children: [
                   el('strong', { className: 'mobile-navigation-wordmark', children: [renderBrandName()] }),
-                  el('small', { text: 'Sua biblioteca, seu ritmo' }),
                 ],
               }),
               closeButton,
@@ -96,15 +81,19 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
               el('div', {
                 className: 'mobile-navigation-hero',
                 children: [
-                  el('span', { className: 'mobile-navigation-edition', text: 'UM OI DA LUMINA  /  01' }),
-                  el('h2', {
-                    className: 'mobile-navigation-hero-title',
-                    children: [
-                      el('span', { text: 'OLÁ, ' }),
-                      el('span', { text: 'LEITOR.' }),
-                    ],
+                  el('h2', { className: 'mobile-navigation-hero-title', text: 'O que você quer fazer?' }),
+                  el('img', {
+                    className: 'mobile-navigation-mascot',
+                    attrs: {
+                      src: '/lumina-navbar-mobile.svg',
+                      alt: '',
+                      width: '260',
+                      height: '260',
+                      decoding: 'async',
+                      draggable: 'false',
+                      'aria-hidden': 'true',
+                    },
                   }),
-                  el('p', { className: 'mobile-navigation-hero-subtitle', text: 'O próximo capítulo é seu.' }),
                 ],
               }),
               el('div', {
@@ -113,8 +102,8 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
                   el('div', {
                     className: 'mobile-navigation-group mobile-navigation-group-primary',
                     children: [
-                      el('span', { className: 'mobile-navigation-group-label', text: 'ESCOLHA SEU CAMINHO' }),
-                      ...tools.map(({ title, description, href, current }, index) =>
+                      el('span', { className: 'mobile-navigation-group-label', text: 'Ferramentas' }),
+                      ...tools.map(({ title, href, current }, index) =>
                         el('a', {
                           className: current
                             ? 'mobile-navigation-link mobile-navigation-link-primary mobile-navigation-link-active'
@@ -130,11 +119,10 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
                               className: 'mobile-navigation-link-copy',
                               children: [
                                 el('strong', { text: title }),
-                                el('small', { text: description }),
                               ],
                             }),
                             current
-                              ? el('span', { className: 'mobile-navigation-current', text: 'Aqui' })
+                              ? el('span', { className: 'mobile-navigation-current', text: 'Atual' })
                               : el('span', {
                                   className: 'mobile-navigation-link-arrow',
                                   attrs: { 'aria-hidden': 'true' },
@@ -147,7 +135,7 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
                   el('div', {
                     className: 'mobile-navigation-group mobile-navigation-group-sections',
                     children: [
-                      el('span', { className: 'mobile-navigation-group-label', text: 'CONTINUE EXPLORANDO' }),
+                      el('span', { className: 'mobile-navigation-group-label', text: 'Nesta página' }),
                       ...sections.map(({ title, href }) =>
                         el('a', {
                           className: 'mobile-navigation-link mobile-navigation-link-secondary',
@@ -161,13 +149,6 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
                             }),
                           ],
                         })),
-                    ],
-                  }),
-                  el('div', {
-                    className: 'mobile-navigation-footnote',
-                    children: [
-                      el('span', { text: 'EPUB REPAIR' }),
-                      el('span', { text: 'Feito para quem lê.' }),
                     ],
                   }),
                 ],
