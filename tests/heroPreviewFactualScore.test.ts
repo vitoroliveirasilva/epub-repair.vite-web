@@ -164,7 +164,7 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(readFileSync('src/main.ts', 'utf8')).toContain("import './styles/desktopNavbar.css';");
   });
 
-  it('mantém o layout verde aprovado, a Lumina abaixo do cabeçalho e as rotas acessíveis', () => {
+  it('mantém Lumina inteira sobre fundo claro e as duas ferramentas acessíveis', () => {
     for (const { build, currentHref, sectionCount } of [
       { build: createApp, currentHref: '/', sectionCount: 3 },
       { build: createConverterApp, currentHref: '/converter', sectionCount: 2 },
@@ -174,69 +174,50 @@ describe('Identidade editorial no EPUB Repair', () => {
       build(root);
       const dialog = root.querySelector<HTMLDialogElement>('.mobile-navigation-dialog');
       const panel = dialog?.querySelector<HTMLElement>('.mobile-navigation-panel');
-      const mascot = dialog?.querySelector<HTMLImageElement>('.mobile-navigation-mascot');
+      const primary = panel?.querySelector<HTMLElement>('.mobile-navigation-group-primary');
+      const mascot = panel?.querySelector<HTMLImageElement>('.mobile-navigation-mascot');
       expect(dialog?.getAttribute('aria-label')).toBe('Menu de navegação');
+      expect(primary?.firstElementChild).toBe(mascot);
       expect(mascot?.getAttribute('src')).toBe('/lumina-navbar-mobile.svg');
       expect(mascot?.getAttribute('aria-hidden')).toBe('true');
-      expect(mascot?.parentElement?.classList.contains('mobile-navigation-hero')).toBe(true);
       expect(dialog?.querySelector('.mobile-navigation-topbar')?.contains(mascot ?? null)).toBe(false);
-      expect(panel?.querySelector('.mobile-navigation-hero-title')).toBeNull();
-      expect(panel?.querySelector('.mobile-navigation-hero-label')).toBeNull();
-      expect(panel?.querySelector('.mobile-navigation-hero')?.textContent?.trim()).toBe('');
-      expect(panel?.querySelector('.mobile-navigation-hero')?.lastElementChild).toBe(mascot);
-
-
-      expect(panel?.querySelectorAll('.mobile-navigation-current')).toHaveLength(0);
-      expect(panel?.querySelectorAll('.mobile-navigation-link-primary .mobile-navigation-link-arrow'))
-        .toHaveLength(2);
-      expect(panel?.querySelectorAll('.mobile-navigation-link-index')).toHaveLength(2);
-      expect(panel?.querySelectorAll('.mobile-navigation-link-copy small')).toHaveLength(2);
-      expect(panel?.querySelector('.mobile-navigation-group-primary .mobile-navigation-group-label')?.textContent)
-        .toBe('Ferramentas');
-      expect(panel?.querySelector('.mobile-navigation-collection')).not.toBeNull();
-      expect(panel?.querySelectorAll('.mobile-navigation-link-primary')).toHaveLength(2);
+      expect(panel?.querySelector('.mobile-navigation-hero')).toBeNull();
+      expect(primary?.querySelectorAll('.mobile-navigation-link-primary')).toHaveLength(2);
       expect(panel?.querySelectorAll('.mobile-navigation-link-secondary')).toHaveLength(sectionCount);
       expect(panel?.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
       expect(panel?.querySelector('[aria-current="page"]')?.getAttribute('href')).toBe(currentHref);
-      expect(dialog?.querySelector('.mobile-navigation-wordmark .brand-wordmark-repair')?.textContent)
-        .toBe('Repair');
-      expect(panel?.querySelectorAll('.mobile-navigation-group-label')).toHaveLength(2);
-      expect(panel?.querySelector('.mobile-navigation-footnote')).toBeNull();
-      expect(panel?.querySelector('.mobile-navigation-edition')).toBeNull();
-      expect(dialog?.querySelector('.mobile-navigation-brand small')).toBeNull();
-
+      expect(panel?.querySelector('.mobile-navigation-group-sections .mobile-navigation-group-label')?.textContent)
+        .toBe('Nesta página');
+      expect(panel?.querySelectorAll('.mobile-navigation-link-index')).toHaveLength(0);
+      expect(panel?.querySelectorAll('.mobile-navigation-current')).toHaveLength(0);
+      expect(dialog?.textContent).not.toContain('O que você quer fazer?');
       expect(root.querySelector('.mobile-navigation-trigger')?.getAttribute('aria-controls'))
         .toBe('mobile-navigation-dialog');
       root.remove();
     }
-    const image = readFileSync('public/lumina-navbar-mobile.svg', 'utf8');
-    expect(image).toContain('viewBox="0 0 1254 1254"');
-    expect(new Set(image.match(/#[a-fA-F0-9]{6}/gu)))
+
+    const svg = readFileSync('public/lumina-navbar-mobile.svg', 'utf8');
+    expect(svg).toContain('viewBox="0 0 1254 1254"');
+    expect(new Set(svg.match(/#[a-fA-F0-9]{6}/gu)))
       .toEqual(new Set(['#194C3E', '#FBF4E9']));
-    expect(image).not.toContain('<image');
-    expect(readFileSync('public/theme-sun.svg', 'utf8')).toContain('viewBox="0 0 24 24"');
-    expect(readFileSync('public/theme-moon.svg', 'utf8')).toContain('viewBox="0 0 24 24"');
+    expect(svg).not.toContain('<image');
+
     const css = readFileSync('src/styles/mobileNavigation.css', 'utf8');
     expect(css).toContain('--nav-paper: #f5efe3');
-    expect(css).toContain('flex: 0 0 clamp(5.4rem, 13dvh, 6.1rem)');
-    expect(css.slice(css.indexOf('  .mobile-navigation-hero {'), css.indexOf('  .mobile-navigation-mascot {'))).toContain('background: var(--nav-forest);');
-    expect(css.slice(css.indexOf('  .mobile-navigation-hero {'), css.indexOf('  .mobile-navigation-mascot {'))).not.toContain('background: var(--nav-paper);');
-    expect(css).toContain('right: clamp(1.1rem, 7vw, 2.2rem)');
-    expect(css).toContain('background: var(--nav-forest)');
-    expect(css).toContain('font-size: clamp(1.32rem, 6vw, 1.8rem)');
-    expect(css).toContain('color: var(--nav-orange-light)');
-    expect(css).toContain('.mobile-navigation-link-index');
-    expect(css).not.toContain('.mobile-navigation-hero-title');
-    expect(css).toContain("mask: url('/theme-sun.svg') center / contain no-repeat");
-    expect(css).toContain("mask: url('/theme-moon.svg') center / contain no-repeat");
-    expect(css).toContain('--nav-forest: #103d30');
-    expect(css).toContain('--nav-orange: #b75c35');
-    expect(css).toContain('grid-template-rows: auto minmax(0, 1fr)');
+    expect(css).toContain('background: var(--nav-paper)');
+    expect(css).toContain('overflow: visible');
+    expect(css).toContain('object-fit: contain');
+    expect(css).toContain('width: calc(100% - clamp(9.3rem, 40vw, 10.6rem))');
+    expect(css).not.toContain('.mobile-navigation-hero');
+    expect(css).not.toContain('background: var(--nav-forest)');
     expect(css).toContain('height: 100dvh');
     expect(css).toContain('overflow-y: auto');
     expect(css).toContain('env(safe-area-inset-top, 0px)');
-    expect(css).toContain('@media (max-height: 650px) and (max-width: 760px)');
+    expect(css).toContain('@media (max-width: 390px)');
+    expect(css).toContain('@media (max-height: 670px) and (max-width: 760px)');
     expect(css).toContain('@media (prefers-reduced-motion: reduce) and (max-width: 760px)');
+    expect(readFileSync('public/theme-sun.svg', 'utf8')).toContain('viewBox="0 0 24 24"');
+    expect(readFileSync('public/theme-moon.svg', 'utf8')).toContain('viewBox="0 0 24 24"');
   });
 
   it('abre, fecha e restaura foco no menu mobile ao escolher um link', () => {

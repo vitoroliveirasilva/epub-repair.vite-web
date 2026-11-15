@@ -79,30 +79,24 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
             attrs: { 'aria-label': 'Navegação no celular' },
             children: [
               el('div', {
-                className: 'mobile-navigation-hero',
-                children: [
-                  el('img', {
-                    className: 'mobile-navigation-mascot',
-                    attrs: {
-                      src: '/lumina-navbar-mobile.svg',
-                      alt: '',
-                      width: '260',
-                      height: '260',
-                      decoding: 'async',
-                      draggable: 'false',
-                      'aria-hidden': 'true',
-                    },
-                  }),
-                ],
-              }),
-              el('div', {
                 className: 'mobile-navigation-collection',
                 children: [
                   el('div', {
                     className: 'mobile-navigation-group mobile-navigation-group-primary',
                     children: [
-                      el('span', { className: 'mobile-navigation-group-label', text: 'Ferramentas' }),
-                      ...tools.map(({ title, href, current }, index) =>
+                      el('img', {
+                        className: 'mobile-navigation-mascot',
+                        attrs: {
+                          src: '/lumina-navbar-mobile.svg',
+                          alt: '',
+                          width: '260',
+                          height: '260',
+                          decoding: 'async',
+                          draggable: 'false',
+                          'aria-hidden': 'true',
+                        },
+                      }),
+                      ...tools.map(({ title, href, current }) =>
                         el('a', {
                           className: current
                             ? 'mobile-navigation-link mobile-navigation-link-primary mobile-navigation-link-active'
@@ -110,16 +104,8 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
                           attrs: { href, ...(current ? { 'aria-current': 'page' } : {}) },
                           children: [
                             el('span', {
-                              className: 'mobile-navigation-link-index',
-                              attrs: { 'aria-hidden': 'true' },
-                              text: `0${index + 1}`,
-                            }),
-                            el('span', {
                               className: 'mobile-navigation-link-copy',
-                              children: [
-                                el('strong', { text: title }),
-                                el('small', { text: title === 'Reparar EPUB' ? 'Verificar e corrigir arquivos' : 'Transformar PDF em EPUB' }),
-                              ],
+                              children: [el('strong', { text: title })],
                             }),
                             el('span', {
                               className: 'mobile-navigation-link-arrow',
