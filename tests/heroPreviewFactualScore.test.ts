@@ -210,11 +210,14 @@ describe('Identidade editorial no EPUB Repair', () => {
     const svg = readFileSync('public/lumina-navbar-mobile.svg', 'utf8');
     expect(svg).toContain('viewBox="0 0 1254 1254"');
     expect(new Set(svg.match(/#[a-fA-F0-9]{6}/gu)))
-      .toEqual(new Set(['#194C3E', '#FBF4E9']));
+      .toEqual(new Set(['#194C3E', '#FFF9F0', '#C87531']));
     expect(svg).not.toContain('<image');
     const ornaments = readFileSync('public/mobile-nav-ornaments.svg', 'utf8');
     expect(ornaments).toContain('viewBox="0 0 390 300"');
-    expect(ornaments).toContain('#d88435');
+    expect(ornaments).toContain('#c57632');
+    expect(ornaments).not.toContain('stroke-width');
+    expect(svg).toContain('M261,657 252,660 231,725');
+
     for (const icon of ['book', 'convert', 'gear', 'alert', 'chart', 'shield']) {
       expect(readFileSync(`public/mobile-nav-icon-${icon}.svg`, 'utf8')).toContain('viewBox="0 0 32 32"');
     }
@@ -225,6 +228,8 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(css).toContain('--nav-orange: #dc7d28');
     expect(css).toContain('.mobile-navigation-topbar::after');
     expect(css).toContain('height: clamp(16.8rem, 36dvh, 19rem)');
+    expect(css).toContain('#ead5bd 0%');
+    expect(css).toContain('#f1e2cd 38%');
     expect(css).toContain('top: -1.5rem');
     expect(css).toContain('overflow: hidden');
     expect(css).toContain('.mobile-navigation-tool--convert');

@@ -394,7 +394,14 @@
     width: 100%;
     height: clamp(16.8rem, 36dvh, 19rem);
     overflow: hidden;
-    background: var(--nav-paper);
+    background:
+      radial-gradient(
+        ellipse 54% 64% at 50% 43%,
+        #ead5bd 0%,
+        #f1e2cd 38%,
+        rgba(251, 244, 233, 0) 78%
+      ),
+      var(--nav-paper);
   }
 
   .mobile-navigation-mascot {

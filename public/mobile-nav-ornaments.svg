@@ -1,11 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 300" fill="none" aria-hidden="true">
-<g stroke="#d88435" stroke-width="1.35" stroke-linecap="round">
-<path d="M315 65C380 91 369 181 316 203"/>
-<path d="M140 249C76 264 44 244 69 202"/>
+<g fill="#c57632">
+<path d="M333 84q0 15 14 17-14 2-14 17-1-15-15-17 14-2 15-17Z"/>
+<circle cx="346" cy="125" r="2" opacity=".6"/>
 </g>
-<g fill="#df872e">
-<path d="M334 54 339 67 352 72 339 77 334 90 329 77 316 72 329 67Z"/>
-<path d="M95 230 99 241 110 245 99 249 95 260 91 249 80 245 91 241Z"/>
-</g>
-<g stroke="#d97925" stroke-width="3.3" stroke-linecap="round"><path d="m79 162-12 4"/><path d="m84 174-10 12"/><path d="m96 180-2 13"/></g>
 </svg>
