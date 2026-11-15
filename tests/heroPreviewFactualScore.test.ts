@@ -164,7 +164,7 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(readFileSync('src/main.ts', 'utf8')).toContain("import './styles/desktopNavbar.css';");
   });
 
-  it('mantém o menu mobile alinhado, a Lumina inteira e links acessíveis', () => {
+  it('reproduz o menu aprovado com Lumina saindo do cabeçalho e botões verde e laranja', () => {
     for (const { build, currentHref, sectionCount } of [
       { build: createApp, currentHref: '/', sectionCount: 3 },
       { build: createConverterApp, currentHref: '/converter', sectionCount: 2 },
@@ -172,29 +172,38 @@ describe('Identidade editorial no EPUB Repair', () => {
       const root = document.createElement('div');
       document.body.append(root);
       build(root);
+
       const dialog = root.querySelector<HTMLDialogElement>('.mobile-navigation-dialog');
-      const panel = dialog?.querySelector<HTMLElement>('.mobile-navigation-panel');
-      const primary = panel?.querySelector<HTMLElement>('.mobile-navigation-group-primary');
-      const mascot = panel?.querySelector<HTMLImageElement>('.mobile-navigation-mascot');
+      const hero = dialog?.querySelector<HTMLElement>('.mobile-navigation-hero');
+      const mascot = hero?.querySelector<HTMLImageElement>('.mobile-navigation-mascot');
+      const decoration = hero?.querySelector<HTMLImageElement>('.mobile-navigation-orbit');
+      const tools = dialog?.querySelector<HTMLElement>('.mobile-navigation-group-primary');
+      const links = dialog?.querySelectorAll<HTMLAnchorElement>('.mobile-navigation-tool');
+
       expect(dialog?.getAttribute('aria-label')).toBe('Menu de navegação');
-      expect(primary?.getAttribute('role')).toBe('group');
-      expect(primary?.getAttribute('aria-label')).toBe('Ferramentas');
-      expect(primary?.firstElementChild).toBe(mascot);
+      expect(dialog?.querySelector('.mobile-navigation-topbar-actions .mobile-navigation-theme-toggle'))
+        .not.toBeNull();
+      expect(dialog?.querySelector('.mobile-navigation-close')?.getAttribute('aria-label'))
+        .toBe('Fechar menu de navegação');
+      expect(dialog?.querySelector('.mobile-navigation-wordmark .brand-wordmark-repair')?.textContent)
+        .toBe('Repair');
       expect(mascot?.getAttribute('src')).toBe('/lumina-navbar-mobile.svg');
       expect(mascot?.getAttribute('aria-hidden')).toBe('true');
-      expect(dialog?.querySelector('.mobile-navigation-topbar')?.contains(mascot ?? null)).toBe(false);
-      expect(panel?.querySelector('.mobile-navigation-hero')).toBeNull();
-      expect(primary?.querySelectorAll('.mobile-navigation-link-primary')).toHaveLength(2);
-      expect(panel?.querySelectorAll('.mobile-navigation-link-secondary')).toHaveLength(sectionCount);
-      expect(panel?.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
-      expect(panel?.querySelector('[aria-current="page"]')?.getAttribute('href')).toBe(currentHref);
-      expect(panel?.querySelector('.mobile-navigation-group-sections .mobile-navigation-group-label')?.textContent)
-        .toBe('Nesta página');
-      expect(panel?.querySelectorAll('.mobile-navigation-link-index')).toHaveLength(0);
-      expect(panel?.querySelectorAll('.mobile-navigation-current')).toHaveLength(0);
-      expect(dialog?.textContent).not.toContain('O que você quer fazer?');
+      expect(decoration?.getAttribute('src')).toBe('/mobile-nav-ornaments.svg');
+      expect(decoration?.getAttribute('aria-hidden')).toBe('true');
+      expect(tools?.getAttribute('role')).toBe('group');
+      expect(tools?.getAttribute('aria-label')).toBe('Ferramentas');
+      expect(links).toHaveLength(2);
+      expect(links?.[0]?.textContent).toBe('Reparar EPUB›');
+      expect(links?.[1]?.textContent).toBe('Converter PDF›');
+      expect(links?.[0]?.querySelector('.mobile-navigation-icon--book')).not.toBeNull();
+      expect(links?.[1]?.querySelector('.mobile-navigation-icon--convert')).not.toBeNull();
+      expect(dialog?.querySelectorAll('.mobile-navigation-section-link')).toHaveLength(sectionCount);
+      expect(dialog?.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+      expect(dialog?.querySelector('[aria-current="page"]')?.getAttribute('href')).toBe(currentHref);
       expect(root.querySelector('.mobile-navigation-trigger')?.getAttribute('aria-controls'))
         .toBe('mobile-navigation-dialog');
+      expect(dialog?.textContent).not.toContain('O que você quer fazer?');
       root.remove();
     }
 
@@ -203,28 +212,32 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(new Set(svg.match(/#[a-fA-F0-9]{6}/gu)))
       .toEqual(new Set(['#194C3E', '#FBF4E9']));
     expect(svg).not.toContain('<image');
+    const ornaments = readFileSync('public/mobile-nav-ornaments.svg', 'utf8');
+    expect(ornaments).toContain('viewBox="0 0 390 300"');
+    expect(ornaments).toContain('#d88435');
+    for (const icon of ['book', 'convert', 'gear', 'alert', 'chart', 'shield']) {
+      expect(readFileSync(`public/mobile-nav-icon-${icon}.svg`, 'utf8')).toContain('viewBox="0 0 32 32"');
+    }
 
     const css = readFileSync('src/styles/mobileNavigation.css', 'utf8');
     expect(css).toContain('--nav-paper: #fbf4e9');
-    expect(css).toContain('background: var(--nav-paper)');
-    expect(css).toContain('overflow: visible');
-    expect(css).toContain('object-fit: contain');
-    expect(css).toContain('min-height: 12.375rem');
-    expect(css).toContain('--nav-gutter: clamp(1.25rem, 6vw, 1.6rem)');
-    expect(css).toContain('white-space: nowrap');
-    expect(css).toContain('width: clamp(8.7rem, 39vw, 9.9rem)');
-    expect(css).toContain('width: calc(100% - 9rem)');
-    expect(css).toContain('width: calc(100% - 8.35rem)');
-    expect(css).toContain('.mobile-navigation-link-primary .mobile-navigation-link-arrow');
-    expect(css).toContain('border: 1px solid #daccb9');
-    expect(css).toContain('width: calc(100% - clamp(9.2rem, 41vw, 10.4rem))');
-    expect(css).not.toContain('.mobile-navigation-hero');
-    expect(css).not.toContain('background: var(--nav-forest)');
+    expect(css).toContain('--nav-forest: #0d4736');
+    expect(css).toContain('--nav-orange: #dc7d28');
+    expect(css).toContain('.mobile-navigation-topbar::after');
+    expect(css).toContain('height: clamp(16.8rem, 36dvh, 19rem)');
+    expect(css).toContain('top: -1.5rem');
+    expect(css).toContain('overflow: hidden');
+    expect(css).toContain('.mobile-navigation-tool--convert');
+    expect(css).toContain('background: var(--nav-orange)');
+    expect(css).toContain('border-radius: 999px');
+    expect(css).toContain('font-family: Georgia, "Literata", serif');
+    expect(css).toContain('.mobile-navigation-section-link');
+    expect(css).toContain('.mobile-navigation-theme-toggle');
     expect(css).toContain('height: 100dvh');
     expect(css).toContain('overflow-y: auto');
     expect(css).toContain('env(safe-area-inset-top, 0px)');
-    expect(css).toContain('@media (max-width: 380px)');
-    expect(css).toContain('@media (max-height: 680px) and (max-width: 760px)');
+    expect(css).toContain('@media (max-width: 360px)');
+    expect(css).toContain('@media (max-height: 690px) and (max-width: 760px)');
     expect(css).toContain('@media (prefers-reduced-motion: reduce) and (max-width: 760px)');
     expect(readFileSync('public/theme-sun.svg', 'utf8')).toContain('viewBox="0 0 24 24"');
     expect(readFileSync('public/theme-moon.svg', 'utf8')).toContain('viewBox="0 0 24 24"');
