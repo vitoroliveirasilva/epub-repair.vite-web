@@ -164,7 +164,7 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(readFileSync('src/main.ts', 'utf8')).toContain("import './styles/desktopNavbar.css';");
   });
 
-  it('mantém Lumina inteira sobre fundo claro e as duas ferramentas acessíveis', () => {
+  it('mantém o menu mobile alinhado, a Lumina inteira e links acessíveis', () => {
     for (const { build, currentHref, sectionCount } of [
       { build: createApp, currentHref: '/', sectionCount: 3 },
       { build: createConverterApp, currentHref: '/converter', sectionCount: 2 },
@@ -177,6 +177,8 @@ describe('Identidade editorial no EPUB Repair', () => {
       const primary = panel?.querySelector<HTMLElement>('.mobile-navigation-group-primary');
       const mascot = panel?.querySelector<HTMLImageElement>('.mobile-navigation-mascot');
       expect(dialog?.getAttribute('aria-label')).toBe('Menu de navegação');
+      expect(primary?.getAttribute('role')).toBe('group');
+      expect(primary?.getAttribute('aria-label')).toBe('Ferramentas');
       expect(primary?.firstElementChild).toBe(mascot);
       expect(mascot?.getAttribute('src')).toBe('/lumina-navbar-mobile.svg');
       expect(mascot?.getAttribute('aria-hidden')).toBe('true');
@@ -203,18 +205,26 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(svg).not.toContain('<image');
 
     const css = readFileSync('src/styles/mobileNavigation.css', 'utf8');
-    expect(css).toContain('--nav-paper: #f5efe3');
+    expect(css).toContain('--nav-paper: #fbf4e9');
     expect(css).toContain('background: var(--nav-paper)');
     expect(css).toContain('overflow: visible');
     expect(css).toContain('object-fit: contain');
-    expect(css).toContain('width: calc(100% - clamp(9.3rem, 40vw, 10.6rem))');
+    expect(css).toContain('min-height: 12.375rem');
+    expect(css).toContain('--nav-gutter: clamp(1.25rem, 6vw, 1.6rem)');
+    expect(css).toContain('white-space: nowrap');
+    expect(css).toContain('width: clamp(8.7rem, 39vw, 9.9rem)');
+    expect(css).toContain('width: calc(100% - 9rem)');
+    expect(css).toContain('width: calc(100% - 8.35rem)');
+    expect(css).toContain('.mobile-navigation-link-primary .mobile-navigation-link-arrow');
+    expect(css).toContain('border: 1px solid #daccb9');
+    expect(css).toContain('width: calc(100% - clamp(9.2rem, 41vw, 10.4rem))');
     expect(css).not.toContain('.mobile-navigation-hero');
     expect(css).not.toContain('background: var(--nav-forest)');
     expect(css).toContain('height: 100dvh');
     expect(css).toContain('overflow-y: auto');
     expect(css).toContain('env(safe-area-inset-top, 0px)');
-    expect(css).toContain('@media (max-width: 390px)');
-    expect(css).toContain('@media (max-height: 670px) and (max-width: 760px)');
+    expect(css).toContain('@media (max-width: 380px)');
+    expect(css).toContain('@media (max-height: 680px) and (max-width: 760px)');
     expect(css).toContain('@media (prefers-reduced-motion: reduce) and (max-width: 760px)');
     expect(readFileSync('public/theme-sun.svg', 'utf8')).toContain('viewBox="0 0 24 24"');
     expect(readFileSync('public/theme-moon.svg', 'utf8')).toContain('viewBox="0 0 24 24"');

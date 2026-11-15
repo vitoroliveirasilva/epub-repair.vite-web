@@ -83,6 +83,7 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
                 children: [
                   el('div', {
                     className: 'mobile-navigation-group mobile-navigation-group-primary',
+                    attrs: { role: 'group', 'aria-label': 'Ferramentas' },
                     children: [
                       el('img', {
                         className: 'mobile-navigation-mascot',
