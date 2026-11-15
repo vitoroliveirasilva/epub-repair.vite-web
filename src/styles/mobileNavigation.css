@@ -280,65 +280,6 @@
     font-style: italic;
   }
 
-  .mobile-navigation-topbar-actions {
-    display: inline-flex;
-    flex: 0 0 auto;
-    align-items: center;
-    gap: 0.56rem;
-  }
-
-  .mobile-navigation-theme-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 4.62rem;
-    height: 2.22rem;
-    padding: 0.13rem;
-    border: 1px solid #d8c9b2;
-    border-radius: 999px;
-    background: transparent;
-    color: var(--nav-ink);
-    cursor: pointer;
-  }
-
-  .mobile-navigation-theme-sun,
-  .mobile-navigation-theme-moon {
-    display: grid;
-    flex: 0 0 1.8rem;
-    place-items: center;
-    width: 1.8rem;
-    height: 1.8rem;
-    border-radius: 50%;
-    background: transparent;
-    color: #c1a98c;
-    transition: background-color 180ms ease, color 180ms ease;
-  }
-
-  .mobile-navigation-theme-sun::before,
-  .mobile-navigation-theme-moon::before {
-    display: block;
-    width: 1.17rem;
-    height: 1.17rem;
-    background: currentColor;
-    content: "";
-  }
-
-  .mobile-navigation-theme-sun::before {
-    -webkit-mask: url('/theme-sun.svg') center / contain no-repeat;
-    mask: url('/theme-sun.svg') center / contain no-repeat;
-  }
-
-  .mobile-navigation-theme-moon::before {
-    -webkit-mask: url('/theme-moon.svg') center / contain no-repeat;
-    mask: url('/theme-moon.svg') center / contain no-repeat;
-  }
-
-  :root:not([data-theme="dark"]) .mobile-navigation-theme-sun,
-  :root[data-theme="dark"] .mobile-navigation-theme-moon {
-    background: var(--nav-forest);
-    color: var(--nav-paper);
-  }
-
   .mobile-navigation-close {
     display: grid;
     flex: 0 0 2.55rem;
@@ -346,9 +287,7 @@
     width: 2.55rem;
     height: 2.55rem;
     padding: 0;
-    margin-left: 0.45rem;
     border: 0;
-    border-left: 1px solid #dbccb8;
     border-radius: 0;
     background: transparent;
     color: var(--nav-ink);
@@ -357,7 +296,6 @@
 
   .mobile-navigation-close-icon {
     display: block;
-    padding-left: 0.45rem;
     font-family: Arial, sans-serif;
     font-size: 2.2rem;
     font-weight: 280;
@@ -466,7 +404,7 @@
     min-height: clamp(3.6rem, 8dvh, 4.2rem);
     padding: 0.5rem clamp(0.85rem, 3.4vw, 1.5rem);
     border: 1px solid transparent;
-    border-radius: 999px;
+    border-radius: 1.15rem;
     background: var(--nav-forest);
     box-shadow: 0 3px 9px rgba(13, 71, 54, 0.08);
     color: var(--nav-paper);
@@ -643,8 +581,7 @@
   }
 
   .mobile-navigation-trigger:focus-visible,
-  .mobile-navigation-close:focus-visible,
-  .mobile-navigation-theme-toggle:focus-visible {
+  .mobile-navigation-close:focus-visible {
     outline: 3px solid var(--nav-orange);
     outline-offset: 3px;
   }
@@ -662,18 +599,6 @@
 
   .mobile-navigation-wordmark .brand-wordmark {
     font-size: clamp(1.28rem, 6.1vw, 1.45rem);
-  }
-
-  .mobile-navigation-topbar-actions {
-    gap: 0.25rem;
-  }
-
-  .mobile-navigation-theme-toggle {
-    width: 4.1rem;
-  }
-
-  .mobile-navigation-close {
-    margin-left: 0.15rem;
   }
 
   .mobile-navigation-tool {
@@ -743,8 +668,6 @@
   .app-header .mobile-navigation-trigger,
   .app-header .nav-theme-toggle,
   .mobile-navigation-close-icon,
-  .mobile-navigation-theme-sun,
-  .mobile-navigation-theme-moon,
   .mobile-navigation-tool,
   .mobile-navigation-section-link {
     transition: none;

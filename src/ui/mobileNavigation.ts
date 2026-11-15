@@ -38,15 +38,6 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
     ],
   });
 
-  const themeButton = el('button', {
-    className: 'mobile-navigation-theme-toggle',
-    attrs: { type: 'button', 'aria-label': 'Alternar tema claro e escuro' },
-    children: [
-      el('span', { className: 'mobile-navigation-theme-sun', attrs: { 'aria-hidden': 'true' } }),
-      el('span', { className: 'mobile-navigation-theme-moon', attrs: { 'aria-hidden': 'true' } }),
-    ],
-  });
-
   const closeButton = el('button', {
     className: 'mobile-navigation-close',
     attrs: { type: 'button', 'aria-label': 'Fechar menu de navegação' },
@@ -64,10 +55,7 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
             className: 'mobile-navigation-topbar',
             children: [
               el('strong', { className: 'mobile-navigation-wordmark', children: [renderBrandName()] }),
-              el('div', {
-                className: 'mobile-navigation-topbar-actions',
-                children: [themeButton, closeButton],
-              }),
+              closeButton,
             ],
           }),
           el('nav', {
@@ -155,20 +143,8 @@ export function renderMobileNavigation(page: MobileNavigationPage): HTMLElement 
     if (window.innerWidth > 760 && dialog.open) dialog.close();
   };
 
-  const syncThemeLabel = (): void => {
-    const isDark = document.documentElement.dataset.theme === 'dark';
-    themeButton.setAttribute('aria-label', isDark ? 'Ativar tema claro' : 'Ativar tema escuro');
-  };
-
-  themeButton.addEventListener('click', () => {
-    const headerToggle = document.querySelector<HTMLButtonElement>('.app-header > .header-actions .nav-theme-toggle');
-    headerToggle?.click();
-    syncThemeLabel();
-  });
-
   trigger.addEventListener('click', () => {
     if (dialog.open) return;
-    syncThemeLabel();
     dialog.showModal();
     trigger.setAttribute('aria-expanded', 'true');
     window.addEventListener('resize', closeOnDesktop);

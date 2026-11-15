@@ -181,8 +181,10 @@ describe('Identidade editorial no EPUB Repair', () => {
       const links = dialog?.querySelectorAll<HTMLAnchorElement>('.mobile-navigation-tool');
 
       expect(dialog?.getAttribute('aria-label')).toBe('Menu de navegação');
-      expect(dialog?.querySelector('.mobile-navigation-topbar-actions .mobile-navigation-theme-toggle'))
-        .not.toBeNull();
+      expect(dialog?.querySelector('.mobile-navigation-theme-toggle')).toBeNull();
+      expect(dialog?.querySelector('.mobile-navigation-topbar')?.lastElementChild)
+        .toBe(dialog?.querySelector('.mobile-navigation-close'));
+      expect(root.querySelector('.app-header .nav-theme-toggle')).not.toBeNull();
       expect(dialog?.querySelector('.mobile-navigation-close')?.getAttribute('aria-label'))
         .toBe('Fechar menu de navegação');
       expect(dialog?.querySelector('.mobile-navigation-wordmark .brand-wordmark-repair')?.textContent)
@@ -234,10 +236,10 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(css).toContain('overflow: hidden');
     expect(css).toContain('.mobile-navigation-tool--convert');
     expect(css).toContain('background: var(--nav-orange)');
-    expect(css).toContain('border-radius: 999px');
+    expect(css).toContain('border-radius: 1.15rem');
     expect(css).toContain('font-family: Georgia, "Literata", serif');
     expect(css).toContain('.mobile-navigation-section-link');
-    expect(css).toContain('.mobile-navigation-theme-toggle');
+    expect(css).not.toContain('.mobile-navigation-theme-toggle');
     expect(css).toContain('height: 100dvh');
     expect(css).toContain('overflow-y: auto');
     expect(css).toContain('env(safe-area-inset-top, 0px)');
