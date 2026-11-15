@@ -219,6 +219,8 @@ describe('Identidade editorial no EPUB Repair', () => {
     const css = readFileSync('src/styles/mobileNavigation.css', 'utf8');
     expect(css).toContain('--nav-paper: #f5efe3');
     expect(css).toContain('flex: 0 0 clamp(5.4rem, 13dvh, 6.1rem)');
+    expect(css.slice(css.indexOf('  .mobile-navigation-hero {'), css.indexOf('  .mobile-navigation-mascot {'))).toContain('background: var(--nav-forest);');
+    expect(css.slice(css.indexOf('  .mobile-navigation-hero {'), css.indexOf('  .mobile-navigation-mascot {'))).not.toContain('background: var(--nav-paper);');
     expect(css).toContain('right: clamp(1.1rem, 7vw, 2.2rem)');
     expect(css).toContain('background: var(--nav-forest)');
     expect(css).toContain('font-size: clamp(1.32rem, 6vw, 1.8rem)');

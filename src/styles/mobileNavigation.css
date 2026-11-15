@@ -340,7 +340,7 @@
     height: clamp(5.4rem, 13dvh, 6.1rem);
     min-height: 0;
     overflow: hidden;
-    background: var(--nav-paper);
+    background: var(--nav-forest);
   }
 
   .mobile-navigation-mascot {
