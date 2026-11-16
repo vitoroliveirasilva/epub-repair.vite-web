@@ -91,17 +91,7 @@ function render(
 ): void {
   root.replaceChildren(
     renderAppHeader(),
-    renderHero(renderUploader(state, (file) => {
-      enqueue('Carregar e analisar EPUB', (ctx) =>
-        loadAndAnalyzeCandidate(file, state, ctx));
-    }, (files) => {
-      openBatchWithFiles(state, files);
-      rerender();
-      requestAnimationFrame(() =>
-        document.querySelector('.optional-tools')?.scrollIntoView({
-          behavior: 'smooth', block: 'start',
-        }));
-    })),
+    renderHero(),
     el('main', {
       className: 'layout',
       attrs: { id: 'app-workspace', tabindex: '-1' },
@@ -109,6 +99,17 @@ function render(
         el('div', {
           className: 'workspace',
           children: [
+            renderUploader(state, (file) => {
+              enqueue('Carregar e analisar EPUB', (ctx) =>
+                loadAndAnalyzeCandidate(file, state, ctx));
+            }, (files) => {
+              openBatchWithFiles(state, files);
+              rerender();
+              requestAnimationFrame(() =>
+                document.querySelector('.optional-tools')?.scrollIntoView({
+                  behavior: 'smooth', block: 'start',
+                }));
+            }),
             renderControls(state, {
               analyze: () => {
                 enqueue('Verificar EPUB', (ctx) => analyzeCurrentFile(state, ctx));
@@ -339,8 +340,8 @@ function renderAppHeader(): HTMLElement {
   });
 }
 
-function renderHero(uploader: HTMLElement): HTMLElement {
-  const hero = el('section', {
+function renderHero(): HTMLElement {
+  return el('section', {
     className: 'hero editorial-hero epub-home',
     attrs: { id: 'top', 'aria-label': 'EPUB Repair' },
     children: [
@@ -350,17 +351,17 @@ function renderHero(uploader: HTMLElement): HTMLElement {
           el('div', {
             className: 'home-art',
             children: [
-              el('span', { className: 'home-art-halo', attrs: { 'aria-hidden': 'true' } }),
-              el('img', {
-                className: 'home-scene',
-                attrs: {
-                  src: '/home-scene.svg',
-                  alt: '',
-                  width: '680',
-                  height: '620',
-                  'aria-hidden': 'true',
-                  decoding: 'async',
-                },
+              el('span', {
+                className: 'home-art-halo',
+                attrs: { 'aria-hidden': 'true' },
+              }),
+              el('span', {
+                className: 'home-star home-star-primary',
+                attrs: { 'aria-hidden': 'true' },
+              }),
+              el('span', {
+                className: 'home-star home-star-secondary',
+                attrs: { 'aria-hidden': 'true' },
               }),
               el('img', {
                 className: 'home-mascot',
@@ -368,9 +369,9 @@ function renderHero(uploader: HTMLElement): HTMLElement {
                   src: '/lumina-hero.svg',
                   width: '820',
                   height: '1089',
-                  alt: 'Lumina, mascote do EPUB Repair, sentada, lendo um livro e segurando uma xícara',
-                  fetchpriority: 'high',
+                  alt: 'Lumina sentada, lendo um livro e segurando uma xícara de café',
                   decoding: 'async',
+                  fetchpriority: 'high',
                 },
               }),
             ],
@@ -378,16 +379,22 @@ function renderHero(uploader: HTMLElement): HTMLElement {
           el('div', {
             className: 'home-content',
             children: [
-              el('span', { className: 'home-title-rule', attrs: { 'aria-hidden': 'true' } }),
               el('h1', {
+                attrs: { 'aria-label': 'Conserte seus arquivos EPUB' },
                 children: [
-                  el('span', { text: 'Seus livros,' }),
-                  el('em', { text: 'em ordem.' }),
+                  el('span', { className: 'home-title-row', text: 'Conserte seus ' }),
+                  el('span', {
+                    className: 'home-title-row',
+                    children: [
+                      el('span', { text: 'arquivos ' }),
+                      el('span', { className: 'home-title-accent', text: 'EPUB' }),
+                    ],
+                  }),
                 ],
               }),
               el('p', {
                 className: 'home-subtitle',
-                text: 'Organize, valide e prepare o seu EPUB com facilidade.',
+                text: 'Analise a estrutura, corrija arquivos problemáticos e prepare seus EPUBs para Kindle e outros e-readers, diretamente no navegador',
               }),
               el('nav', {
                 className: 'home-actions',
@@ -396,55 +403,21 @@ function renderHero(uploader: HTMLElement): HTMLElement {
                   el('a', {
                     className: 'home-action home-action-repair',
                     attrs: { href: '#upload' },
-                    children: [
-                      el('span', { className: 'home-action-symbol home-action-symbol-book', attrs: { 'aria-hidden': 'true' } }),
-                      el('strong', { text: 'Reparar EPUB' }),
-                      el('span', { className: 'home-action-arrow', attrs: { 'aria-hidden': 'true' }, text: '↗' }),
-                    ],
+                    children: [el('strong', { text: 'Reparar EPUB' })],
                   }),
                   el('a', {
                     className: 'home-action home-action-converter',
                     attrs: { href: '/converter' },
-                    children: [
-                      el('span', { className: 'home-action-symbol home-action-symbol-convert', attrs: { 'aria-hidden': 'true' } }),
-                      el('strong', { text: 'Converter PDF' }),
-                      el('span', { className: 'home-action-arrow', attrs: { 'aria-hidden': 'true' }, text: '↗' }),
-                    ],
+                    children: [el('strong', { text: 'Converter PDF' })],
                   }),
-                ],
-              }),
-              el('div', { className: 'home-upload-wrap', children: [uploader] }),
-              el('div', {
-                className: 'home-feature-tags',
-                attrs: { 'aria-label': 'Recursos do reparador' },
-                children: [
-                  el('span', { className: 'home-feature home-feature-structure', text: 'Estrutura' }),
-                  el('span', { className: 'home-feature home-feature-cover', text: 'Capa' }),
-                  el('span', { className: 'home-feature home-feature-toc', text: 'Sumário' }),
                 ],
               }),
             ],
           }),
         ],
       }),
-      el('img', {
-        className: 'home-bottom-waves',
-        attrs: { src: '/home-waves.svg', alt: '', width: '1600', height: '160', decoding: 'async', 'aria-hidden': 'true' },
-      }),
     ],
   });
-
-  const fileInput = uploader.querySelector<HTMLInputElement>('#epub-file-input');
-  hero.querySelector<HTMLAnchorElement>('.home-action-repair')?.addEventListener('click', (event) => {
-    if (!fileInput || fileInput.disabled) return;
-    event.preventDefault();
-    if (uploader.querySelector('.file-pill')) {
-      document.getElementById('app-workspace')?.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      fileInput.click();
-    }
-  });
-  return hero;
 }
 
 function renderEmptyState(): HTMLElement {

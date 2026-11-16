@@ -7,67 +7,69 @@ import { buildKindleIssueEpub } from './helpers/syntheticEpub';
 afterEach(() => { document.body.replaceChildren(); });
 
 describe('Identidade editorial no EPUB Repair', () => {
-  it('reproduz a proposta aprovada e conecta o seletor real de EPUB à seção principal', () => {
+  it('mantém Lumina inteira, hero editorial e upload funcional fora da primeira dobra', () => {
     const root = document.createElement('div');
     document.body.append(root);
     createApp(root);
 
-    const hero = root.querySelector<HTMLElement>('section.epub-home');
-    const upload = hero?.querySelector<HTMLElement>('#upload');
-    const input = upload?.querySelector<HTMLInputElement>('#epub-file-input');
+    const hero = root.querySelector<HTMLElement>('.hero.editorial-hero.epub-home');
     expect(hero).not.toBeNull();
     expect(hero?.querySelector('.home-showcase')?.children).toHaveLength(2);
-    expect(hero?.querySelector('.home-art')).not.toBeNull();
-    expect(hero?.querySelector<HTMLImageElement>('.home-mascot')?.getAttribute('src'))
-      .toBe('/lumina-hero.svg');
-    expect(hero?.querySelector('h1')?.textContent).toBe('Seus livros,em ordem.');
-    expect(hero?.querySelector('p.home-subtitle')?.textContent)
-      .toBe('Organize, valide e prepare o seu EPUB com facilidade.');
+
+    const lumina = hero?.querySelector<HTMLImageElement>('.home-mascot');
+    expect(lumina?.getAttribute('src')).toBe('/lumina-hero.svg');
+    expect(lumina?.getAttribute('width')).toBe('820');
+    expect(lumina?.getAttribute('height')).toBe('1089');
+    expect(hero?.querySelectorAll('.home-star')).toHaveLength(2);
+    expect(hero?.querySelector('.home-art-halo')).not.toBeNull();
+    expect(hero?.querySelector('.home-scene')).toBeNull();
+    expect(hero?.querySelector('.home-bottom-waves')).toBeNull();
+    expect(hero?.querySelector('.home-upload-wrap')).toBeNull();
+    expect(hero?.querySelectorAll('.home-feature')).toHaveLength(0);
+
+    const heading = hero?.querySelector('h1');
+    expect(heading?.getAttribute('aria-label')).toBe('Conserte seus arquivos EPUB');
+    expect(heading?.textContent).toBe('Conserte seus arquivos EPUB');
+    expect(heading?.querySelector('.home-title-accent')?.textContent).toBe('EPUB');
+    expect(hero?.querySelector('.home-subtitle')?.textContent)
+      .toBe('Analise a estrutura, corrija arquivos problemáticos e prepare seus EPUBs para Kindle e outros e-readers, diretamente no navegador');
+
     expect(hero?.querySelector<HTMLAnchorElement>('.home-action-repair')?.getAttribute('href'))
       .toBe('#upload');
     expect(hero?.querySelector<HTMLAnchorElement>('.home-action-converter')?.getAttribute('href'))
       .toBe('/converter');
+    expect(hero?.querySelectorAll('.home-action')).toHaveLength(2);
+    expect(hero?.querySelectorAll('.home-action-symbol')).toHaveLength(0);
+    expect(hero?.querySelectorAll('.home-action-arrow')).toHaveLength(0);
 
-    expect(upload?.querySelector('#upload-title')?.textContent).toBe('Escolha seu EPUB');
+    const upload = root.querySelector<HTMLElement>('.workspace #upload');
+    const input = upload?.querySelector<HTMLInputElement>('#epub-file-input');
+    expect(upload).not.toBeNull();
+    expect(hero?.querySelector('#upload')).toBeNull();
     expect(root.querySelectorAll('#upload')).toHaveLength(1);
     expect(root.querySelectorAll('#epub-file-input')).toHaveLength(1);
+    expect(upload?.querySelector('#upload-title')?.textContent).toBe('Escolha seu EPUB');
     expect(input?.getAttribute('accept')).toContain('.epub');
     expect(input?.hasAttribute('multiple')).toBe(true);
-    const filePicker = vi.spyOn(input!, 'click').mockImplementation(() => {});
-    const repairLink = hero?.querySelector<HTMLAnchorElement>('.home-action-repair');
-    expect(repairLink?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })))
-      .toBe(false);
-    expect(filePicker).toHaveBeenCalledTimes(1);
-    filePicker.mockRestore();
-    expect(upload?.querySelector<HTMLLabelElement>('.dropzone')?.htmlFor).toBe('epub-file-input');
-    expect(hero?.querySelectorAll('.home-feature')).toHaveLength(3);
-    expect(root.querySelector('.workspace .upload-panel')).toBeNull();
-    expect(root.querySelectorAll('.editorial-path')).toHaveLength(0);
+    expect(upload?.querySelector<HTMLLabelElement>('.dropzone')?.htmlFor)
+      .toBe('epub-file-input');
     expect(root.querySelector('#app-workspace')).not.toBeNull();
-    expect(root.querySelector('.hero-preview')).toBeNull();
-    expect(root.querySelector('.editorial-benefits')).toBeNull();
+    expect(root.querySelectorAll('.editorial-path')).toHaveLength(0);
 
-    const files = ['home-scene.svg', 'home-waves.svg', 'home-upload-cloud.svg'];
-    for (const asset of files) {
-      expect(readFileSync(`public/${asset}`, 'utf8')).toContain('<svg');
-    }
-    expect(hero?.querySelectorAll('.home-scene')).toHaveLength(1);
-    expect(hero?.querySelector('.home-floating-paper')).toBeNull();
-    expect(hero?.querySelector('.home-art-orbit')).toBeNull();
-    const svgScene = readFileSync('public/home-scene.svg', 'utf8');
-    expect(svgScene).toContain('viewBox="0 0 680 620"');
-    expect(svgScene).toContain('linearGradient');
     const css = readFileSync('src/styles/homeShowcase.css', 'utf8');
-    expect(css).toContain('.hero.editorial-hero.epub-home');
-    expect(css).toContain('.epub-home .home-showcase');
-    expect(css).toContain('.epub-home .home-upload-wrap > .panel.upload-panel');
-    expect(css).toContain(':root[data-theme="dark"] .hero.epub-home');
-    expect(css).toContain('@media (min-width: 761px) and (max-height: 800px)');
-    expect(css).toContain('height: min(59dvh, 29rem)');
-    expect(css).toContain('height: clamp(21rem, min(43vw, 66dvh), 34rem)');
+    expect(css).toContain('object-fit: contain');
+    expect(css).toContain('max-height: 100%');
+    expect(css).toContain('font-style: italic');
+    expect(css).toContain('.epub-home .home-title-accent');
+    expect(css).toContain('.epub-home .home-action-converter');
     expect(css).toContain('@media (max-width: 760px)');
-    expect(css).toContain('@media (max-width: 480px)');
+    expect(css).toContain('@media (max-width: 440px)');
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(css).not.toContain('.app-header');
+    expect(css).not.toContain('.mobile-navigation');
+    const blob = readFileSync('public/home-peach-blob.svg', 'utf8');
+    expect(blob).toContain('viewBox="0 0 680 780"');
+    expect(blob).toContain('#F8DCCB');
     expect(readFileSync('src/main.ts', 'utf8'))
       .toContain("import './styles/homeShowcase.css';");
     expect(root.querySelector<HTMLImageElement>('.brand-mark .brand-icon')?.getAttribute('src'))
