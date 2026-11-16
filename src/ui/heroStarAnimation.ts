@@ -64,7 +64,7 @@ export function startHeroStarAnimation(hero: HTMLElement): void {
 
     schedule(() => {
       selection.forEach(star => star.classList.remove('is-visible'));
-      schedule(next, randomBetween(1450, 2400));
+      schedule(next, randomBetween(1900, 2800));
     }, randomBetween(2300, 3300));
   };
 

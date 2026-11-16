@@ -15,12 +15,16 @@ describe('Identidade editorial no EPUB Repair', () => {
     const hero = root.querySelector<HTMLElement>('.hero.editorial-hero.epub-home');
     expect(hero).not.toBeNull();
     expect(hero?.querySelector('.home-showcase')?.children).toHaveLength(2);
+    expect(hero?.children).toHaveLength(2);
 
     const lumina = hero?.querySelector<HTMLImageElement>('.home-mascot');
     expect(lumina?.getAttribute('src')).toBe('/lumina-hero.svg');
     expect(lumina?.getAttribute('width')).toBe('820');
     expect(lumina?.getAttribute('height')).toBe('1089');
-    expect(hero?.querySelectorAll('.home-star')).toHaveLength(8);
+    expect(hero?.querySelectorAll('.home-star')).toHaveLength(14);
+    expect(hero?.querySelector('.home-star-field')?.parentElement).toBe(hero);
+    expect(hero?.querySelector('.home-art .home-star')).toBeNull();
+    expect(hero?.querySelector('.home-star-field')?.getAttribute('aria-hidden')).toBe('true');
     expect(hero?.querySelector('svg.home-coffee-steam')).toBeNull();
     expect(hero?.querySelector('.home-steam-wisp')).toBeNull();
     expect(hero?.querySelector('img.home-mascot')?.nextElementSibling).toBeNull();
@@ -88,7 +92,7 @@ describe('Identidade editorial no EPUB Repair', () => {
     const entrypoint = readFileSync('src/main.ts', 'utf8');
 
     expect(desktop).toMatch(/^@media \(min-width: 761px\)/u);
-    expect(desktop.match(/@media\s*\(/gu)).toHaveLength(3);
+    expect(desktop.match(/@media\s*\(/gu)).toHaveLength(4);
     expect(desktop).toContain('@media (min-width: 761px) and (max-width: 1100px)');
     expect(desktop).toContain('@media (min-width: 761px) and (max-height: 760px)');
     expect(desktop).toContain('grid-template-columns: minmax(0, .97fr) minmax(0, 1.03fr)');
@@ -125,13 +129,19 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(motion).toContain('translate3d(0, -5px, 0) rotate(.2deg)');
     expect(motion).toContain('home-lumina-breathe 7.8s ease-in-out infinite');
     expect(motion).toContain('@media (min-width: 761px)');
-    expect(motion).toContain('.home-star-8 { width: clamp(.89rem, 1.7vw, 1.29rem); }');
-    expect(motion).toContain('.home-star-2 { width: clamp(1.15rem, 2.3vw, 1.76rem); }');
+    expect(motion).toContain('.home-star-14 { width: clamp(1.17rem, 1.92vw, 1.6rem); }');
+    expect(motion).toContain('.home-star-9 { width: clamp(1.27rem, 2.15vw, 1.84rem); }');
+    expect(motion).toContain('.epub-home .home-star-field');
+    expect(motion).toContain('inset: 0');
     expect(desktop).toContain("content: '↗'");
-    expect(desktop).toContain('.epub-home .home-action-converter::after');
-    expect(desktop).toContain('background: #f8eadf');
-    expect(desktop).toContain('background: #184a3b');
+    expect(desktop).toContain('.epub-home .home-action::before');
+    expect(desktop).toContain('transform: translateX(-101%)');
+    expect(desktop).toContain('.epub-home .home-action strong::after');
+    expect(desktop).toContain("border-radius: .96rem .96rem .96rem .38rem");
+    expect(desktop).toContain('background: #b8613e');
+    expect(desktop).toContain('background: #194d3d');
     expect(desktop).toContain(':root[data-theme="dark"] .epub-home .home-action-converter');
+    expect(desktop).toContain('@media (min-width: 761px) and (prefers-reduced-motion: reduce)');
     expect(desktop).toContain('@media (min-width: 761px) and (prefers-reduced-motion: reduce)');
     expect(desktop).toContain('gap: clamp(.98rem, 2.1vh, 1.26rem)');
     expect(desktop).toContain('gap: clamp(.88rem, 1.95vh, 1.14rem)');
@@ -141,11 +151,13 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(motion).not.toContain('.mobile-navigation');
     const scheduler = readFileSync('src/ui/heroStarAnimation.ts', 'utf8');
     expect(scheduler).toContain('const countOptions = [1, 2, 2, 3, 3, 4, 5];');
+    expect(scheduler).toContain('randomBetween(1000, 1650)');
+    expect(scheduler).toContain('randomBetween(1900, 2800)');
     expect(scheduler).toContain('const fresh = stars.filter(star => !lastShown.has(star));');
     expect(scheduler).toContain('const previous = stars.filter(star => lastShown.has(star));');
     expect(scheduler).toContain('while (selection.length < count && pool.length > 0)');
     expect(scheduler).not.toContain('cycle++ % 2');
-    expect(scheduler).toContain('randomBetween(1450, 2400)');
+    expect(scheduler).toContain('randomBetween(1900, 2800)');
     expect(scheduler).toContain('randomBetween(2300, 3300)');
     expect(scheduler).toContain("('(prefers-reduced-motion: reduce)')");
     expect(scheduler).toContain("document.addEventListener('visibilitychange', updatePreference)");

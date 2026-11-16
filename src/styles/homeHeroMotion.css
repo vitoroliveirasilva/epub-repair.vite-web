@@ -1,3 +1,21 @@
+.hero.epub-home {
+  position: relative;
+}
+
+.epub-home .home-showcase {
+  position: relative;
+  z-index: 2;
+}
+
+.epub-home .home-star-field {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
 .epub-home .home-star {
   opacity: 0;
   transform: scale(.65);
@@ -17,14 +35,20 @@
   transform: scale(1);
 }
 
-.epub-home .home-star-1 { top: 13%; left: 9%; width: clamp(.7rem, 1.5vw, 1.1rem); }
-.epub-home .home-star-2 { top: 7%; right: 17%; width: clamp(.85rem, 1.7vw, 1.3rem); }
-.epub-home .home-star-3 { top: 28%; right: 5%; width: clamp(.65rem, 1.3vw, 1rem); }
-.epub-home .home-star-4 { top: 43%; left: 4%; width: clamp(.75rem, 1.4vw, 1.1rem); }
-.epub-home .home-star-5 { top: 59%; right: 4%; width: clamp(.7rem, 1.5vw, 1.1rem); }
-.epub-home .home-star-6 { top: 73%; left: 9%; width: clamp(.65rem, 1.2vw, .95rem); }
-.epub-home .home-star-7 { top: 80%; right: 15%; width: clamp(.65rem, 1.25vw, 1rem); }
-.epub-home .home-star-8 { top: 30%; left: 5%; width: clamp(.65rem, 1.25vw, .95rem); }
+.epub-home .home-star-1 { top: 13%; left: 3.5%; width: clamp(.83rem, 1.55vw, 1.2rem); }
+.epub-home .home-star-2 { top: 5%; left: 23%; width: clamp(1.02rem, 1.8vw, 1.4rem); }
+.epub-home .home-star-3 { top: 19%; left: 44%; width: clamp(.74rem, 1.3vw, 1.08rem); }
+.epub-home .home-star-4 { top: 38%; left: 2%; width: clamp(.86rem, 1.55vw, 1.16rem); }
+.epub-home .home-star-5 { top: 52%; left: 46%; width: clamp(.83rem, 1.52vw, 1.14rem); }
+.epub-home .home-star-6 { top: 73%; left: 7%; width: clamp(.74rem, 1.45vw, 1.12rem); }
+.epub-home .home-star-7 { top: 91%; left: 34%; width: clamp(.77rem, 1.42vw, 1.1rem); }
+.epub-home .home-star-8 { top: 80%; left: 52%; width: clamp(.86rem, 1.5vw, 1.2rem); }
+.epub-home .home-star-9 { top: 7%; right: 8%; width: clamp(.97rem, 1.8vw, 1.43rem); }
+.epub-home .home-star-10 { top: 19%; right: 27%; width: clamp(.77rem, 1.38vw, 1.12rem); }
+.epub-home .home-star-11 { top: 38%; right: 2.5%; width: clamp(.79rem, 1.45vw, 1.12rem); }
+.epub-home .home-star-12 { top: 57%; right: 6%; width: clamp(.84rem, 1.55vw, 1.18rem); }
+.epub-home .home-star-13 { top: 81%; right: 19%; width: clamp(.77rem, 1.4vw, 1.1rem); }
+.epub-home .home-star-14 { top: 93%; right: 3%; width: clamp(.89rem, 1.55vw, 1.26rem); }
 
 .epub-home .home-mascot {
   animation: home-lumina-breathe 7.8s ease-in-out infinite;
@@ -38,14 +62,20 @@
 
 
 @media (min-width: 761px) {
-  .epub-home .home-star-1 { width: clamp(.96rem, 2.02vw, 1.49rem); }
-  .epub-home .home-star-2 { width: clamp(1.15rem, 2.3vw, 1.76rem); }
-  .epub-home .home-star-3 { width: clamp(.89rem, 1.76vw, 1.36rem); }
-  .epub-home .home-star-4 { width: clamp(1.02rem, 1.9vw, 1.49rem); }
-  .epub-home .home-star-5 { width: clamp(.96rem, 2.02vw, 1.49rem); }
-  .epub-home .home-star-6 { width: clamp(.89rem, 1.63vw, 1.29rem); }
-  .epub-home .home-star-7 { width: clamp(.89rem, 1.7vw, 1.36rem); }
-  .epub-home .home-star-8 { width: clamp(.89rem, 1.7vw, 1.29rem); }
+  .epub-home .home-star-1 { width: clamp(1.12rem, 1.9vw, 1.57rem); }
+  .epub-home .home-star-2 { width: clamp(1.34rem, 2.25vw, 1.9rem); }
+  .epub-home .home-star-3 { width: clamp(.98rem, 1.65vw, 1.36rem); }
+  .epub-home .home-star-4 { width: clamp(1.12rem, 1.88vw, 1.54rem); }
+  .epub-home .home-star-5 { width: clamp(1.08rem, 1.82vw, 1.51rem); }
+  .epub-home .home-star-6 { width: clamp(.98rem, 1.68vw, 1.39rem); }
+  .epub-home .home-star-7 { width: clamp(1rem, 1.7vw, 1.37rem); }
+  .epub-home .home-star-8 { width: clamp(1.09rem, 1.8vw, 1.47rem); }
+  .epub-home .home-star-9 { width: clamp(1.27rem, 2.15vw, 1.84rem); }
+  .epub-home .home-star-10 { width: clamp(1rem, 1.7vw, 1.4rem); }
+  .epub-home .home-star-11 { width: clamp(1.04rem, 1.73vw, 1.4rem); }
+  .epub-home .home-star-12 { width: clamp(1.11rem, 1.88vw, 1.52rem); }
+  .epub-home .home-star-13 { width: clamp(.99rem, 1.66vw, 1.38rem); }
+  .epub-home .home-star-14 { width: clamp(1.17rem, 1.92vw, 1.6rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {

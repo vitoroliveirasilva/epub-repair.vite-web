@@ -123,101 +123,124 @@
 
   .epub-home .home-action {
     position: relative;
-    display: flex;
+    isolation: isolate;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: clamp(3.65rem, 4.6vw, 4.2rem);
-    padding: .84rem 3.2rem .84rem 1.15rem;
+    min-height: clamp(3.7rem, 4.6vw, 4.3rem);
+    overflow: hidden;
+    padding: .82rem 3rem .82rem 1.25rem;
     border: 1.5px solid transparent;
-    border-radius: 1rem;
+    border-radius: .96rem .96rem .96rem .38rem;
     box-shadow: none;
-    letter-spacing: -.012em;
-    transition: background-color 200ms ease, border-color 200ms ease,
-      box-shadow 200ms ease, transform 200ms ease;
+    text-decoration: none;
+    transition: transform 240ms cubic-bezier(.2, .8, .25, 1),
+      border-color 240ms ease, color 260ms ease;
   }
 
   .epub-home .home-action strong {
+    position: relative;
+    z-index: 2;
+    display: inline-block;
+    color: inherit;
     font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
-    font-size: clamp(1.06rem, 1.35vw, 1.3rem);
+    font-size: clamp(1.04rem, 1.35vw, 1.26rem);
     font-weight: 700;
     letter-spacing: -.024em;
+    white-space: nowrap;
+    transition: transform 300ms cubic-bezier(.2, .8, .25, 1);
+  }
+
+  .epub-home .home-action strong::after {
+    position: absolute;
+    right: 0;
+    bottom: -.42rem;
+    left: 0;
+    height: 1.5px;
+    background: currentColor;
+    content: '';
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 340ms cubic-bezier(.2, .8, .25, 1);
+  }
+
+  .epub-home .home-action::before {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    background: var(--home-action-sweep);
+    content: '';
+    transform: translateX(-101%);
+    transition: transform 520ms cubic-bezier(.23, .76, .24, 1);
+    pointer-events: none;
   }
 
   .epub-home .home-action::after {
     position: absolute;
+    z-index: 2;
     top: 50%;
-    right: .85rem;
-    display: grid;
-    place-items: center;
-    width: 2.05rem;
-    height: 2.05rem;
-    border: 1px solid rgba(255, 255, 255, .25);
-    border-radius: .65rem;
-    background: rgba(255, 255, 255, .13);
+    right: 1.18rem;
     color: inherit;
     content: '↗';
     font-family: Arial, sans-serif;
-    font-size: 1.25rem;
+    font-size: 1.55rem;
     font-weight: 400;
     line-height: 1;
     transform: translateY(-50%);
-    transition: background-color 200ms ease, transform 200ms ease;
+    transition: transform 310ms cubic-bezier(.2, .8, .25, 1);
+    pointer-events: none;
   }
 
   .epub-home .home-action-repair {
-    border-color: #184a3b;
-    background: #184a3b;
-    color: #fff8ef;
+    --home-action-sweep: #26674f;
+    border-color: #194d3d;
+    background: #194d3d;
+    color: #fff9f1;
   }
 
   .epub-home .home-action-converter {
-    border-color: #c2704b;
-    background: #f8eadf;
-    color: #a54b2c;
+    --home-action-sweep: #c97450;
+    border-color: #b8613e;
+    background: #b8613e;
+    color: #fff9f1;
   }
 
-  .epub-home .home-action-converter::after {
-    border-color: #e7c6b5;
-    background: #f1d8c8;
-    color: #a54b2c;
+  .epub-home .home-action:is(:hover, :focus-visible)::before {
+    transform: translateX(0);
   }
 
-  .epub-home .home-action-repair:hover {
-    border-color: #23614c;
-    background: #23614c;
-    box-shadow: 0 7px 20px rgba(20, 62, 48, .12);
+  .epub-home .home-action:is(:hover, :focus-visible) {
+    transform: translateY(-2px);
   }
 
-  .epub-home .home-action-converter:hover {
-    border-color: #b8603d;
-    background: #f3dccb;
-    box-shadow: 0 7px 20px rgba(150, 76, 45, .09);
+  .epub-home .home-action:is(:hover, :focus-visible) strong {
+    transform: translateX(-3px);
   }
 
-  .epub-home .home-action:hover::after {
-    transform: translate(2px, -50%);
+  .epub-home .home-action:is(:hover, :focus-visible) strong::after {
+    transform: scaleX(1);
+  }
+
+  .epub-home .home-action:is(:hover, :focus-visible)::after {
+    transform: translate(4px, calc(-50% - 2px));
   }
 
   .epub-home .home-action:focus-visible {
     outline: 3px solid #d99a76;
-    outline-offset: 3px;
+    outline-offset: 4px;
+  }
+
+  :root[data-theme="dark"] .epub-home .home-action-repair {
+    --home-action-sweep: #2b7358;
+    border-color: #3e8367;
+    background: #215b46;
   }
 
   :root[data-theme="dark"] .epub-home .home-action-converter {
-    border-color: #cc8a65;
-    background: #342a26;
-    color: #f1bc9d;
-  }
-
-  :root[data-theme="dark"] .epub-home .home-action-converter::after {
-    border-color: #865c48;
-    background: #4a342c;
-    color: #f1bc9d;
-  }
-
-  :root[data-theme="dark"] .epub-home .home-action-converter:hover {
-    background: #4a3028;
-    border-color: #e0a27e;
+    --home-action-sweep: #bb714e;
+    border-color: #cb8968;
+    background: #985235;
+    color: #fff5ec;
   }
 }
 
@@ -246,9 +269,9 @@
   }
 
   .epub-home .home-action {
-    min-height: 3.25rem;
-    padding: .65rem 2.75rem .65rem .75rem;
-    border-radius: .85rem;
+    min-height: 3.28rem;
+    padding: .65rem 2.35rem .65rem .7rem;
+    border-radius: .78rem .78rem .78rem .34rem;
   }
 
   .epub-home .home-action strong {
@@ -256,11 +279,8 @@
   }
 
   .epub-home .home-action::after {
-    right: .57rem;
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: .52rem;
-    font-size: 1.1rem;
+    right: .69rem;
+    font-size: 1.18rem;
   }
 }
 
@@ -282,16 +302,20 @@
 
 @media (min-width: 761px) and (prefers-reduced-motion: reduce) {
   .epub-home .home-action,
-  .epub-home .home-action::after {
+  .epub-home .home-action::before,
+  .epub-home .home-action::after,
+  .epub-home .home-action strong,
+  .epub-home .home-action strong::after {
     transition: none;
   }
 
-  .epub-home .home-action:hover,
-  .epub-home .home-action:hover::after {
+  .epub-home .home-action:is(:hover, :focus-visible),
+  .epub-home .home-action:is(:hover, :focus-visible) strong,
+  .epub-home .home-action:is(:hover, :focus-visible)::after {
     transform: none;
   }
 
   .epub-home .home-action::after {
-    transform: translateY(-50%);
+    transform: translateY(-50%) !important;
   }
 }

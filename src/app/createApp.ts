@@ -349,6 +349,15 @@ function renderHero(): HTMLElement {
     attrs: { id: 'top', 'aria-label': 'EPUB Repair' },
     children: [
       el('div', {
+        className: 'home-star-field',
+        attrs: { 'aria-hidden': 'true' },
+        children: Array.from({ length: 14 }, (_, index) =>
+          el('span', {
+            className: `home-star home-star-${index + 1}`,
+            attrs: { 'aria-hidden': 'true' },
+          })),
+      }),
+      el('div', {
         className: 'home-showcase',
         children: [
           el('div', {
@@ -358,11 +367,6 @@ function renderHero(): HTMLElement {
                 className: 'home-art-halo',
                 attrs: { 'aria-hidden': 'true' },
               }),
-              ...Array.from({ length: 8 }, (_, index) =>
-                el('span', {
-                  className: `home-star home-star-${index + 1}`,
-                  attrs: { 'aria-hidden': 'true' },
-                })),
               el('img', {
                 className: 'home-mascot',
                 attrs: {
