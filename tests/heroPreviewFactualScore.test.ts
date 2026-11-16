@@ -79,6 +79,33 @@ describe('Identidade editorial no EPUB Repair', () => {
     root.remove();
   });
 
+  it('ajusta somente o desktop, mantendo as regras mobile e a navbar originais', () => {
+    const desktop = readFileSync('src/styles/homeDesktopLayout.css', 'utf8');
+    const original = readFileSync('src/styles/homeShowcase.css', 'utf8');
+    const entrypoint = readFileSync('src/main.ts', 'utf8');
+
+    expect(desktop).toMatch(/^@media \(min-width: 761px\)/u);
+    expect(desktop.match(/@media\s*\(/gu)).toHaveLength(3);
+    expect(desktop).toContain('@media (min-width: 761px) and (max-width: 1100px)');
+    expect(desktop).toContain('@media (min-width: 761px) and (max-height: 760px)');
+    expect(desktop).toContain('grid-template-columns: minmax(0, .97fr) minmax(0, 1.03fr)');
+    expect(desktop).toContain('width: min(1240px, calc(100% - clamp(3rem, 6vw, 6rem)))');
+    expect(desktop).toContain('object-fit: contain');
+    expect(desktop).toContain('width: min(100%, 37rem)');
+    expect(desktop).toContain('width: min(100%, 35rem)');
+    expect(desktop).not.toContain('.app-header');
+    expect(desktop).not.toContain('.header-nav');
+    expect(desktop).not.toContain('.mobile-navigation');
+    expect(original).toContain('@media (max-width: 760px)');
+    expect(original).toContain('@media (max-width: 440px)');
+
+    const baseImport = entrypoint.indexOf("import './styles/homeShowcase.css';");
+    const desktopImport = entrypoint.indexOf("import './styles/homeDesktopLayout.css';");
+    expect(baseImport).toBeGreaterThan(-1);
+    expect(desktopImport).toBeGreaterThan(baseImport);
+    expect(readFileSync('src/styles/mobileNavigation.css', 'utf8')).toContain('.mobile-navigation');
+  });
+
   it('usa o mesmo ícone de livros na navbar do conversor e na aba do navegador', () => {
     const root = document.createElement('div');
     document.body.append(root);

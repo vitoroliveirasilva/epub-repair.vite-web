@@ -1,0 +1,179 @@
+@media (min-width: 761px) {
+  .hero.editorial-hero.epub-home {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: clamp(32rem, calc(100svh - 7.35rem), 52rem);
+    padding: clamp(.65rem, 2.2vh, 1.3rem) 0 clamp(1rem, 3.5vh, 2rem);
+    overflow: visible;
+  }
+
+  .epub-home .home-showcase {
+    display: grid;
+    grid-template-columns: minmax(0, .97fr) minmax(0, 1.03fr);
+    align-items: center;
+    justify-content: center;
+    gap: clamp(1.75rem, 4.1vw, 4.5rem);
+    width: min(1240px, calc(100% - clamp(3rem, 6vw, 6rem)));
+    max-width: 1240px;
+    min-width: 0;
+    margin: 0 auto;
+  }
+
+  .epub-home .home-art {
+    position: relative;
+    justify-self: center;
+    align-self: center;
+    width: min(100%, 33rem);
+    height: min(69svh, 34rem);
+    min-height: 0;
+    max-height: 34rem;
+    overflow: visible;
+  }
+
+  .epub-home .home-art-halo {
+    top: 50%;
+    right: auto;
+    bottom: auto;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    background-position: center;
+    background-size: contain;
+    transform: translate(-50%, -50%);
+  }
+
+  .epub-home .home-mascot {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    object-position: center;
+    transform: none;
+  }
+
+  .epub-home .home-star-primary {
+    top: 12%;
+    right: 8%;
+    width: clamp(1.25rem, 2vw, 1.85rem);
+  }
+
+  .epub-home .home-star-secondary {
+    top: 22%;
+    right: 3.5%;
+    width: clamp(.75rem, 1.2vw, 1.05rem);
+  }
+
+  .epub-home .home-content {
+    justify-self: start;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    width: min(100%, 37rem);
+    max-width: 37rem;
+    min-width: 0;
+    padding: 0;
+    text-align: left;
+  }
+
+  .epub-home .home-content > h1 {
+    display: block;
+    width: 100%;
+    margin: 0;
+    font-size: clamp(2.8rem, 4.1vw, 4.3rem);
+    line-height: 1.08;
+    letter-spacing: -.052em;
+    white-space: normal;
+    text-align: left;
+    text-wrap: nowrap;
+  }
+
+  .epub-home .home-title-row {
+    display: block;
+    white-space: nowrap;
+  }
+
+  .epub-home .home-subtitle {
+    max-width: 34rem;
+    margin: clamp(.9rem, 2.5vh, 1.45rem) 0 0;
+    font-size: clamp(.96rem, 1.1vw, 1.1rem);
+    line-height: 1.58;
+    text-align: left;
+  }
+
+  .epub-home .home-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-self: stretch;
+    gap: clamp(.65rem, 1.2vw, 1rem);
+    width: min(100%, 35rem);
+    margin: clamp(1.65rem, 4.5vh, 2.7rem) 0 0;
+  }
+
+  .epub-home .home-action {
+    min-height: clamp(3.2rem, 4vw, 3.75rem);
+    padding: .65rem 1.1rem;
+    border-radius: .8rem;
+  }
+
+  .epub-home .home-action strong {
+    font-size: clamp(1rem, 1.35vw, 1.25rem);
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+  .epub-home .home-showcase {
+    grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
+    gap: clamp(1.2rem, 2.6vw, 2rem);
+    width: calc(100% - 3rem);
+  }
+
+  .epub-home .home-art {
+    width: min(100%, 29rem);
+    height: min(64svh, 30rem);
+  }
+
+  .epub-home .home-content > h1 {
+    font-size: clamp(2.05rem, 4.15vw, 3.15rem);
+  }
+
+  .epub-home .home-subtitle {
+    font-size: clamp(.91rem, 1.25vw, 1rem);
+  }
+
+  .epub-home .home-actions {
+    margin-top: clamp(1.2rem, 3.2vh, 2rem);
+  }
+
+  .epub-home .home-action {
+    min-height: 3.2rem;
+    padding-inline: .65rem;
+  }
+
+  .epub-home .home-action strong {
+    font-size: clamp(.89rem, 1.5vw, 1.08rem);
+  }
+}
+
+@media (min-width: 761px) and (max-height: 760px) {
+  .hero.editorial-hero.epub-home {
+    min-height: calc(100svh - 7.2rem);
+    padding: .5rem 0 1rem;
+  }
+
+  .epub-home .home-art {
+    height: min(67svh, 30rem);
+  }
+
+  .epub-home .home-subtitle {
+    margin-top: .9rem;
+  }
+
+  .epub-home .home-actions {
+    margin-top: 1.6rem;
+  }
+}
