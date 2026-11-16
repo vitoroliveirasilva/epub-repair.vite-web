@@ -125,7 +125,14 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(motion).toContain('translate3d(0, -5px, 0) rotate(.2deg)');
     expect(motion).toContain('home-lumina-breathe 7.8s ease-in-out infinite');
     expect(motion).toContain('@media (min-width: 761px)');
-    expect(motion).toContain('.home-star-8 { width: clamp(.77rem, 1.48vw, 1.12rem); }');
+    expect(motion).toContain('.home-star-8 { width: clamp(.89rem, 1.7vw, 1.29rem); }');
+    expect(motion).toContain('.home-star-2 { width: clamp(1.15rem, 2.3vw, 1.76rem); }');
+    expect(desktop).toContain("content: '↗'");
+    expect(desktop).toContain('.epub-home .home-action-converter::after');
+    expect(desktop).toContain('background: #f8eadf');
+    expect(desktop).toContain('background: #184a3b');
+    expect(desktop).toContain(':root[data-theme="dark"] .epub-home .home-action-converter');
+    expect(desktop).toContain('@media (min-width: 761px) and (prefers-reduced-motion: reduce)');
     expect(desktop).toContain('gap: clamp(.98rem, 2.1vh, 1.26rem)');
     expect(desktop).toContain('gap: clamp(.88rem, 1.95vh, 1.14rem)');
     expect(desktop).toContain('margin: clamp(.6rem, 1.5vh, .95rem) 0 0;');

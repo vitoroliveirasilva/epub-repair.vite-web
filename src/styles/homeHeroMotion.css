@@ -38,14 +38,14 @@
 
 
 @media (min-width: 761px) {
-  .epub-home .home-star-1 { width: clamp(.83rem, 1.76vw, 1.3rem); }
-  .epub-home .home-star-2 { width: clamp(1rem, 2vw, 1.53rem); }
-  .epub-home .home-star-3 { width: clamp(.77rem, 1.53vw, 1.18rem); }
-  .epub-home .home-star-4 { width: clamp(.89rem, 1.65vw, 1.3rem); }
-  .epub-home .home-star-5 { width: clamp(.83rem, 1.76vw, 1.3rem); }
-  .epub-home .home-star-6 { width: clamp(.77rem, 1.42vw, 1.12rem); }
-  .epub-home .home-star-7 { width: clamp(.77rem, 1.48vw, 1.18rem); }
-  .epub-home .home-star-8 { width: clamp(.77rem, 1.48vw, 1.12rem); }
+  .epub-home .home-star-1 { width: clamp(.96rem, 2.02vw, 1.49rem); }
+  .epub-home .home-star-2 { width: clamp(1.15rem, 2.3vw, 1.76rem); }
+  .epub-home .home-star-3 { width: clamp(.89rem, 1.76vw, 1.36rem); }
+  .epub-home .home-star-4 { width: clamp(1.02rem, 1.9vw, 1.49rem); }
+  .epub-home .home-star-5 { width: clamp(.96rem, 2.02vw, 1.49rem); }
+  .epub-home .home-star-6 { width: clamp(.89rem, 1.63vw, 1.29rem); }
+  .epub-home .home-star-7 { width: clamp(.89rem, 1.7vw, 1.36rem); }
+  .epub-home .home-star-8 { width: clamp(.89rem, 1.7vw, 1.29rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {
