@@ -352,24 +352,15 @@ function renderHero(uploader: HTMLElement): HTMLElement {
             children: [
               el('span', { className: 'home-art-halo', attrs: { 'aria-hidden': 'true' } }),
               el('img', {
-                className: 'home-art-orbit',
-                attrs: { src: '/home-orbits.svg', alt: '', width: '700', height: '740', 'aria-hidden': 'true', decoding: 'async' },
-              }),
-              el('img', {
-                className: 'home-floating-paper',
-                attrs: { src: '/home-paper.svg', alt: '', width: '110', height: '130', 'aria-hidden': 'true', decoding: 'async' },
-              }),
-              el('img', {
-                className: 'home-floating-book',
-                attrs: { src: '/home-open-book.svg', alt: '', width: '150', height: '130', 'aria-hidden': 'true', decoding: 'async' },
-              }),
-              el('img', {
-                className: 'home-leaves',
-                attrs: { src: '/home-leaves.svg', alt: '', width: '175', height: '230', 'aria-hidden': 'true', decoding: 'async' },
-              }),
-              el('img', {
-                className: 'home-stacked-books',
-                attrs: { src: '/home-stacked-books.svg', alt: '', width: '205', height: '142', 'aria-hidden': 'true', decoding: 'async' },
+                className: 'home-scene',
+                attrs: {
+                  src: '/home-scene.svg',
+                  alt: '',
+                  width: '680',
+                  height: '620',
+                  'aria-hidden': 'true',
+                  decoding: 'async',
+                },
               }),
               el('img', {
                 className: 'home-mascot',

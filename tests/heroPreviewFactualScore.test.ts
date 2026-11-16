@@ -47,16 +47,24 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(root.querySelector('.hero-preview')).toBeNull();
     expect(root.querySelector('.editorial-benefits')).toBeNull();
 
-    const files = ['home-orbits.svg', 'home-open-book.svg', 'home-paper.svg',
-      'home-leaves.svg', 'home-stacked-books.svg', 'home-waves.svg', 'home-upload-cloud.svg'];
+    const files = ['home-scene.svg', 'home-waves.svg', 'home-upload-cloud.svg'];
     for (const asset of files) {
       expect(readFileSync(`public/${asset}`, 'utf8')).toContain('<svg');
     }
+    expect(hero?.querySelectorAll('.home-scene')).toHaveLength(1);
+    expect(hero?.querySelector('.home-floating-paper')).toBeNull();
+    expect(hero?.querySelector('.home-art-orbit')).toBeNull();
+    const svgScene = readFileSync('public/home-scene.svg', 'utf8');
+    expect(svgScene).toContain('viewBox="0 0 680 620"');
+    expect(svgScene).toContain('linearGradient');
     const css = readFileSync('src/styles/homeShowcase.css', 'utf8');
     expect(css).toContain('.hero.editorial-hero.epub-home');
     expect(css).toContain('.epub-home .home-showcase');
     expect(css).toContain('.epub-home .home-upload-wrap > .panel.upload-panel');
     expect(css).toContain(':root[data-theme="dark"] .hero.epub-home');
+    expect(css).toContain('@media (min-width: 761px) and (max-height: 800px)');
+    expect(css).toContain('height: min(59dvh, 29rem)');
+    expect(css).toContain('height: clamp(21rem, min(43vw, 66dvh), 34rem)');
     expect(css).toContain('@media (max-width: 760px)');
     expect(css).toContain('@media (max-width: 480px)');
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
