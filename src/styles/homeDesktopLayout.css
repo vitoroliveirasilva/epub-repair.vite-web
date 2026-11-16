@@ -77,6 +77,12 @@
     width: min(100%, 37rem);
     max-width: 37rem;
     min-width: 0;
+    height: min(69svh, 34rem);
+    max-height: 34rem;
+    display: grid;
+    grid-template-rows: auto auto auto;
+    align-content: space-between;
+    row-gap: clamp(1.1rem, 2.5vh, 1.8rem);
     padding: 0;
     text-align: left;
   }
@@ -100,7 +106,7 @@
 
   .epub-home .home-subtitle {
     max-width: 34rem;
-    margin: clamp(.9rem, 2.5vh, 1.45rem) 0 0;
+    margin: 0;
     font-size: clamp(.96rem, 1.1vw, 1.1rem);
     line-height: 1.58;
     text-align: left;
@@ -111,7 +117,7 @@
     align-self: stretch;
     gap: clamp(.65rem, 1.2vw, 1rem);
     width: min(100%, 35rem);
-    margin: clamp(1.65rem, 4.5vh, 2.7rem) 0 0;
+    margin: 0;
   }
 
   .epub-home .home-action {
@@ -136,6 +142,11 @@
     width: min(100%, 29rem);
     height: min(64svh, 30rem);
   }
+  
+  .epub-home .home-content {
+    height: min(64svh, 30rem);
+    max-height: 30rem;
+  }
 
   .epub-home .home-content > h1 {
     font-size: clamp(2.05rem, 4.15vw, 3.15rem);
@@ -143,10 +154,6 @@
 
   .epub-home .home-subtitle {
     font-size: clamp(.91rem, 1.25vw, 1rem);
-  }
-
-  .epub-home .home-actions {
-    margin-top: clamp(1.2rem, 3.2vh, 2rem);
   }
 
   .epub-home .home-action {
@@ -168,12 +175,10 @@
   .epub-home .home-art {
     height: min(67svh, 30rem);
   }
-
-  .epub-home .home-subtitle {
-    margin-top: .9rem;
+  
+  .epub-home .home-content {
+    height: min(67svh, 30rem);
+    max-height: 30rem;
   }
 
-  .epub-home .home-actions {
-    margin-top: 1.6rem;
-  }
 }

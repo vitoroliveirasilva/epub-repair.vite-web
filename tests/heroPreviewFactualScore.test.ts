@@ -21,6 +21,11 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(lumina?.getAttribute('width')).toBe('820');
     expect(lumina?.getAttribute('height')).toBe('1089');
     expect(hero?.querySelectorAll('.home-star')).toHaveLength(2);
+    const steam = hero?.querySelector<SVGSVGElement>('svg.home-coffee-steam');
+    expect(steam?.getAttribute('viewBox')).toBe('0 0 820 1089');
+    expect(steam?.getAttribute('aria-hidden')).toBe('true');
+    expect(steam?.querySelectorAll('path.home-steam-wisp')).toHaveLength(2);
+    expect(hero?.querySelector('img.home-mascot')?.nextElementSibling).toBe(steam);
     expect(hero?.querySelector('.home-art-halo')).not.toBeNull();
     expect(hero?.querySelector('.home-scene')).toBeNull();
     expect(hero?.querySelector('.home-bottom-waves')).toBeNull();
@@ -91,6 +96,11 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(desktop).toContain('grid-template-columns: minmax(0, .97fr) minmax(0, 1.03fr)');
     expect(desktop).toContain('width: min(1240px, calc(100% - clamp(3rem, 6vw, 6rem)))');
     expect(desktop).toContain('object-fit: contain');
+    expect(desktop).toContain('grid-template-rows: auto auto auto');
+    expect(desktop).toContain('align-content: space-between');
+    expect(desktop).toContain('height: min(69svh, 34rem)');
+    expect(desktop).toContain('height: min(64svh, 30rem)');
+    expect(desktop).toContain('height: min(67svh, 30rem)');
     expect(desktop).toContain('width: min(100%, 37rem)');
     expect(desktop).toContain('width: min(100%, 35rem)');
     expect(desktop).not.toContain('.app-header');
@@ -103,6 +113,17 @@ describe('Identidade editorial no EPUB Repair', () => {
     const desktopImport = entrypoint.indexOf("import './styles/homeDesktopLayout.css';");
     expect(baseImport).toBeGreaterThan(-1);
     expect(desktopImport).toBeGreaterThan(baseImport);
+    const motionImport = entrypoint.indexOf("import './styles/homeHeroMotion.css';");
+    expect(motionImport).toBeGreaterThan(desktopImport);
+    const motion = readFileSync('src/styles/homeHeroMotion.css', 'utf8');
+    expect(motion).toContain('.epub-home .home-coffee-steam');
+    expect(motion).toContain('.epub-home .home-steam-wisp-2');
+    expect(motion).toContain('@keyframes home-coffee-vapor');
+    expect(motion).toContain('@keyframes home-star-soft-glimmer');
+    expect(motion).toContain('animation-delay: -3s');
+    expect(motion).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(motion).not.toContain('.app-header');
+    expect(motion).not.toContain('.mobile-navigation');
     expect(readFileSync('src/styles/mobileNavigation.css', 'utf8')).toContain('.mobile-navigation');
   });
 

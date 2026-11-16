@@ -340,6 +340,29 @@ function renderAppHeader(): HTMLElement {
   });
 }
 
+function renderCoffeeSteam(): SVGSVGElement {
+  const svgNamespace = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNamespace, 'svg');
+  svg.setAttribute('class', 'home-coffee-steam');
+  svg.setAttribute('viewBox', '0 0 820 1089');
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+
+  const wisps = [
+    'M260 652 C246 634 274 620 259 600 C243 583 278 567 269 548',
+    'M286 650 C303 632 281 616 291 595 C303 575 286 561 297 544',
+  ];
+  wisps.forEach((shape, index) => {
+    const path = document.createElementNS(svgNamespace, 'path');
+    path.setAttribute('class', `home-steam-wisp home-steam-wisp-${index + 1}`);
+    path.setAttribute('d', shape);
+    svg.append(path);
+  });
+
+  return svg;
+}
+
 function renderHero(): HTMLElement {
   return el('section', {
     className: 'hero editorial-hero epub-home',
@@ -374,6 +397,7 @@ function renderHero(): HTMLElement {
                   fetchpriority: 'high',
                 },
               }),
+              renderCoffeeSteam(),
             ],
           }),
           el('div', {
