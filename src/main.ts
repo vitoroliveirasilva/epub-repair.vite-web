@@ -10,6 +10,7 @@ import './styles/editorialIdentity.css';
 import './styles/navbarRefinement.css';
 import './styles/desktopNavbar.css';
 import './styles/mobileNavigation.css';
+import './styles/homeShowcase.css';
 
 const root = document.querySelector<HTMLElement>('#app');
 

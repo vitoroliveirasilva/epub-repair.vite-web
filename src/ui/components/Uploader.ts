@@ -29,12 +29,12 @@ export function renderUploader(
     children: [
       renderDropIcon(),
       el('strong', {
-        text: state.payload ? 'EPUB carregado com segurança' : 'Arraste um ou vários EPUBs aqui',
+        text: state.payload ? 'EPUB carregado' : 'Arraste um arquivo EPUB para aqui',
       }),
       el('p', {
         text: state.payload
-          ? 'Você pode analisar novamente, reparar ou adicionar outros arquivos em lote'
-          : 'ou clique para escolher um ou vários arquivos',
+          ? 'Você pode escolher outro arquivo ou prosseguir com o reparo'
+          : 'ou clique para escolher',
       }),
     ],
   });
@@ -75,13 +75,12 @@ export function renderUploader(
       el('div', {
         className: 'section-heading',
         children: [
-          el('p', { className: 'eyebrow', text: 'Upload' }),
           el('h2', {
-            text: 'Escolha um ou vários EPUBs',
+            text: 'Escolha seu EPUB',
             attrs: { id: 'upload-title' },
           }),
           el('p', {
-            className: 'muted',
+            className: 'muted visually-hidden',
             attrs: { id: 'upload-help' },
             text: 'Um EPUB abre o fluxo individual (até 250 MB); dois ou mais abrem o ' +
               'processamento em lote, com correção opcional (até 6 EPUBs e 80 MB somados).',

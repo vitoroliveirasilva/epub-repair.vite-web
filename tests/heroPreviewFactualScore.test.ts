@@ -7,25 +7,66 @@ import { buildKindleIssueEpub } from './helpers/syntheticEpub';
 afterEach(() => { document.body.replaceChildren(); });
 
 describe('Identidade editorial no EPUB Repair', () => {
-  it('mostra Lumina à esquerda, navegação horizontal e apenas as ações principais', () => {
+  it('reproduz a proposta aprovada e conecta o seletor real de EPUB à seção principal', () => {
     const root = document.createElement('div');
     document.body.append(root);
     createApp(root);
-    const hero = root.querySelector<HTMLElement>('.editorial-hero');
+
+    const hero = root.querySelector<HTMLElement>('section.epub-home');
+    const upload = hero?.querySelector<HTMLElement>('#upload');
+    const input = upload?.querySelector<HTMLInputElement>('#epub-file-input');
     expect(hero).not.toBeNull();
-    expect(hero?.firstElementChild?.classList.contains('hero-illustration')).toBe(true);
-    expect(hero?.querySelector<HTMLImageElement>('.hero-mascot')?.getAttribute('src'))
+    expect(hero?.querySelector('.home-showcase')?.children).toHaveLength(2);
+    expect(hero?.querySelector('.home-art')).not.toBeNull();
+    expect(hero?.querySelector<HTMLImageElement>('.home-mascot')?.getAttribute('src'))
       .toBe('/lumina-hero.svg');
-    expect(hero?.querySelector('h1')?.textContent).toContain('Prepare seus livros digitais com qualidade');
-    expect(hero?.querySelector('.eyebrow')).toBeNull();
-    expect(hero?.querySelector('.hero-copy')).toBeNull();
+    expect(hero?.querySelector('h1')?.textContent).toBe('Seus livros,em ordem.');
+    expect(hero?.querySelector('p.home-subtitle')?.textContent)
+      .toBe('Organize, valide e prepare o seu EPUB com facilidade.');
+    expect(hero?.querySelector<HTMLAnchorElement>('.home-action-repair')?.getAttribute('href'))
+      .toBe('#upload');
+    expect(hero?.querySelector<HTMLAnchorElement>('.home-action-converter')?.getAttribute('href'))
+      .toBe('/converter');
+
+    expect(upload?.querySelector('#upload-title')?.textContent).toBe('Escolha seu EPUB');
+    expect(root.querySelectorAll('#upload')).toHaveLength(1);
+    expect(root.querySelectorAll('#epub-file-input')).toHaveLength(1);
+    expect(input?.getAttribute('accept')).toContain('.epub');
+    expect(input?.hasAttribute('multiple')).toBe(true);
+    const filePicker = vi.spyOn(input!, 'click').mockImplementation(() => {});
+    const repairLink = hero?.querySelector<HTMLAnchorElement>('.home-action-repair');
+    expect(repairLink?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })))
+      .toBe(false);
+    expect(filePicker).toHaveBeenCalledTimes(1);
+    filePicker.mockRestore();
+    expect(upload?.querySelector<HTMLLabelElement>('.dropzone')?.htmlFor).toBe('epub-file-input');
+    expect(hero?.querySelectorAll('.home-feature')).toHaveLength(3);
+    expect(root.querySelector('.workspace .upload-panel')).toBeNull();
+    expect(root.querySelectorAll('.editorial-path')).toHaveLength(0);
+    expect(root.querySelector('#app-workspace')).not.toBeNull();
     expect(root.querySelector('.hero-preview')).toBeNull();
     expect(root.querySelector('.editorial-benefits')).toBeNull();
-    expect(root.querySelectorAll('.editorial-path')).toHaveLength(2);
+
+    const files = ['home-orbits.svg', 'home-open-book.svg', 'home-paper.svg',
+      'home-leaves.svg', 'home-stacked-books.svg', 'home-waves.svg', 'home-upload-cloud.svg'];
+    for (const asset of files) {
+      expect(readFileSync(`public/${asset}`, 'utf8')).toContain('<svg');
+    }
+    const css = readFileSync('src/styles/homeShowcase.css', 'utf8');
+    expect(css).toContain('.hero.editorial-hero.epub-home');
+    expect(css).toContain('.epub-home .home-showcase');
+    expect(css).toContain('.epub-home .home-upload-wrap > .panel.upload-panel');
+    expect(css).toContain(':root[data-theme="dark"] .hero.epub-home');
+    expect(css).toContain('@media (max-width: 760px)');
+    expect(css).toContain('@media (max-width: 480px)');
+    expect(css).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(readFileSync('src/main.ts', 'utf8'))
+      .toContain("import './styles/homeShowcase.css';");
     expect(root.querySelector<HTMLImageElement>('.brand-mark .brand-icon')?.getAttribute('src'))
       .toBe('/favicon.svg');
     expect(root.querySelector<HTMLImageElement>('.footer-brand .brand-icon')?.getAttribute('src'))
       .toBe('/favicon.svg');
+    root.remove();
   });
 
   it('usa o mesmo ícone de livros na navbar do conversor e na aba do navegador', () => {

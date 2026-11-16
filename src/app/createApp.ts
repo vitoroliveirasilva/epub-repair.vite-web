@@ -91,8 +91,17 @@ function render(
 ): void {
   root.replaceChildren(
     renderAppHeader(),
-    renderHero(),
-    renderEditorialPaths(),
+    renderHero(renderUploader(state, (file) => {
+      enqueue('Carregar e analisar EPUB', (ctx) =>
+        loadAndAnalyzeCandidate(file, state, ctx));
+    }, (files) => {
+      openBatchWithFiles(state, files);
+      rerender();
+      requestAnimationFrame(() =>
+        document.querySelector('.optional-tools')?.scrollIntoView({
+          behavior: 'smooth', block: 'start',
+        }));
+    })),
     el('main', {
       className: 'layout',
       attrs: { id: 'app-workspace', tabindex: '-1' },
@@ -100,17 +109,6 @@ function render(
         el('div', {
           className: 'workspace',
           children: [
-            renderUploader(state, (file) => {
-              enqueue('Carregar e analisar EPUB', (ctx) =>
-                loadAndAnalyzeCandidate(file, state, ctx));
-            }, (files) => {
-              openBatchWithFiles(state, files);
-              rerender();
-              requestAnimationFrame(() =>
-                document.querySelector('.optional-tools')?.scrollIntoView({
-                  behavior: 'smooth', block: 'start',
-                }));
-            }),
             renderControls(state, {
               analyze: () => {
                 enqueue('Verificar EPUB', (ctx) => analyzeCurrentFile(state, ctx));
@@ -341,83 +339,121 @@ function renderAppHeader(): HTMLElement {
   });
 }
 
-function renderHero(): HTMLElement {
-  return el('section', {
-    className: 'hero editorial-hero',
+function renderHero(uploader: HTMLElement): HTMLElement {
+  const hero = el('section', {
+    className: 'hero editorial-hero epub-home',
     attrs: { id: 'top', 'aria-label': 'EPUB Repair' },
     children: [
       el('div', {
-        className: 'hero-illustration',
+        className: 'home-showcase',
         children: [
-          el('span', { className: 'hero-illustration-shape', attrs: { 'aria-hidden': 'true' } }),
-          el('img', {
-            className: 'hero-mascot',
-            attrs: {
-              src: '/lumina-hero.svg',
-              width: '410',
-              height: '545',
-              alt: 'Lumina, mascote do EPUB Repair, lendo um livro',
-              fetchpriority: 'high',
-              decoding: 'async',
-            },
-          }),
-        ],
-      }),
-      el('div', {
-        className: 'hero-content',
-        children: [
-          el('h1', { children: [
-            'Prepare seus livros digitais com ',
-            el('span', { className: 'hero-emphasis', text: 'qualidade' }),
-          ] }),
           el('div', {
-            className: 'hero-actions',
+            className: 'home-art',
             children: [
-              el('a', {
-                className: 'btn btn-primary btn-large',
-                text: 'Reparar EPUB',
-                attrs: { href: '#upload' },
+              el('span', { className: 'home-art-halo', attrs: { 'aria-hidden': 'true' } }),
+              el('img', {
+                className: 'home-art-orbit',
+                attrs: { src: '/home-orbits.svg', alt: '', width: '700', height: '740', 'aria-hidden': 'true', decoding: 'async' },
               }),
-              el('a', {
-                className: 'btn btn-ghost btn-large',
-                text: 'PDF → EPUB',
-                attrs: { href: '/converter' },
+              el('img', {
+                className: 'home-floating-paper',
+                attrs: { src: '/home-paper.svg', alt: '', width: '110', height: '130', 'aria-hidden': 'true', decoding: 'async' },
+              }),
+              el('img', {
+                className: 'home-floating-book',
+                attrs: { src: '/home-open-book.svg', alt: '', width: '150', height: '130', 'aria-hidden': 'true', decoding: 'async' },
+              }),
+              el('img', {
+                className: 'home-leaves',
+                attrs: { src: '/home-leaves.svg', alt: '', width: '175', height: '230', 'aria-hidden': 'true', decoding: 'async' },
+              }),
+              el('img', {
+                className: 'home-stacked-books',
+                attrs: { src: '/home-stacked-books.svg', alt: '', width: '205', height: '142', 'aria-hidden': 'true', decoding: 'async' },
+              }),
+              el('img', {
+                className: 'home-mascot',
+                attrs: {
+                  src: '/lumina-hero.svg',
+                  width: '820',
+                  height: '1089',
+                  alt: 'Lumina, mascote do EPUB Repair, sentada, lendo um livro e segurando uma xícara',
+                  fetchpriority: 'high',
+                  decoding: 'async',
+                },
+              }),
+            ],
+          }),
+          el('div', {
+            className: 'home-content',
+            children: [
+              el('span', { className: 'home-title-rule', attrs: { 'aria-hidden': 'true' } }),
+              el('h1', {
+                children: [
+                  el('span', { text: 'Seus livros,' }),
+                  el('em', { text: 'em ordem.' }),
+                ],
+              }),
+              el('p', {
+                className: 'home-subtitle',
+                text: 'Organize, valide e prepare o seu EPUB com facilidade.',
+              }),
+              el('nav', {
+                className: 'home-actions',
+                attrs: { 'aria-label': 'Ações principais' },
+                children: [
+                  el('a', {
+                    className: 'home-action home-action-repair',
+                    attrs: { href: '#upload' },
+                    children: [
+                      el('span', { className: 'home-action-symbol home-action-symbol-book', attrs: { 'aria-hidden': 'true' } }),
+                      el('strong', { text: 'Reparar EPUB' }),
+                      el('span', { className: 'home-action-arrow', attrs: { 'aria-hidden': 'true' }, text: '↗' }),
+                    ],
+                  }),
+                  el('a', {
+                    className: 'home-action home-action-converter',
+                    attrs: { href: '/converter' },
+                    children: [
+                      el('span', { className: 'home-action-symbol home-action-symbol-convert', attrs: { 'aria-hidden': 'true' } }),
+                      el('strong', { text: 'Converter PDF' }),
+                      el('span', { className: 'home-action-arrow', attrs: { 'aria-hidden': 'true' }, text: '↗' }),
+                    ],
+                  }),
+                ],
+              }),
+              el('div', { className: 'home-upload-wrap', children: [uploader] }),
+              el('div', {
+                className: 'home-feature-tags',
+                attrs: { 'aria-label': 'Recursos do reparador' },
+                children: [
+                  el('span', { className: 'home-feature home-feature-structure', text: 'Estrutura' }),
+                  el('span', { className: 'home-feature home-feature-cover', text: 'Capa' }),
+                  el('span', { className: 'home-feature home-feature-toc', text: 'Sumário' }),
+                ],
               }),
             ],
           }),
         ],
       }),
+      el('img', {
+        className: 'home-bottom-waves',
+        attrs: { src: '/home-waves.svg', alt: '', width: '1600', height: '160', decoding: 'async', 'aria-hidden': 'true' },
+      }),
     ],
   });
-}
 
-function renderEditorialPaths(): HTMLElement {
-  return el('nav', {
-    className: 'editorial-paths',
-    attrs: { 'aria-label': 'Escolha sua ferramenta' },
-    children: [
-      el('a', {
-        className: 'editorial-path editorial-path-repair',
-        attrs: { href: '#upload' },
-        children: [
-          el('span', { className: 'editorial-path-label', text: 'EPUB' }),
-          el('strong', { text: 'Reparar EPUB' }),
-          el('span', { text: 'Corrija a estrutura e prepare seu livro para leitura.' }),
-          el('span', { className: 'editorial-path-arrow', text: '↗', attrs: { 'aria-hidden': 'true' } }),
-        ],
-      }),
-      el('a', {
-        className: 'editorial-path editorial-path-pdf',
-        attrs: { href: '/converter' },
-        children: [
-          el('span', { className: 'editorial-path-label', text: 'PDF → EPUB' }),
-          el('strong', { text: 'Converter PDF em EPUB' }),
-          el('span', { text: 'Transforme documentos em livros digitais organizados.' }),
-          el('span', { className: 'editorial-path-arrow', text: '↗', attrs: { 'aria-hidden': 'true' } }),
-        ],
-      }),
-    ],
+  const fileInput = uploader.querySelector<HTMLInputElement>('#epub-file-input');
+  hero.querySelector<HTMLAnchorElement>('.home-action-repair')?.addEventListener('click', (event) => {
+    if (!fileInput || fileInput.disabled) return;
+    event.preventDefault();
+    if (uploader.querySelector('.file-pill')) {
+      document.getElementById('app-workspace')?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      fileInput.click();
+    }
   });
+  return hero;
 }
 
 function renderEmptyState(): HTMLElement {
