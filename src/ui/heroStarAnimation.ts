@@ -4,7 +4,6 @@ export function startHeroStarAnimation(hero: HTMLElement): void {
 
   const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)');
   let timer: number | undefined;
-  let cycle = 0;
   let lastShown = new Set<HTMLElement>();
   let stopped = false;
   let detachObserver: MutationObserver | undefined;
@@ -46,11 +45,15 @@ export function startHeroStarAnimation(hero: HTMLElement): void {
       return;
     }
     clearStars();
-    const count = cycle++ % 2 === 0 ? 2 : 1;
-    const pool = stars.filter(star => !lastShown.has(star));
+    const countOptions = [1, 2, 2, 3, 3, 4, 5];
+    const count = countOptions[Math.floor(Math.random() * countOptions.length)] ?? 2;
+    const fresh = stars.filter(star => !lastShown.has(star));
+    const previous = stars.filter(star => lastShown.has(star));
     const selection: HTMLElement[] = [];
-    while (selection.length < count && pool.length) {
-      selection.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]!);
+    for (const pool of [fresh, previous]) {
+      while (selection.length < count && pool.length > 0) {
+        selection.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]!);
+      }
     }
     lastShown = new Set(selection);
 
