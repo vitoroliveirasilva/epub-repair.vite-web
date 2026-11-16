@@ -27,13 +27,25 @@
 .epub-home .home-star-8 { top: 30%; left: 5%; width: clamp(.65rem, 1.25vw, .95rem); }
 
 .epub-home .home-mascot {
-  animation: home-lumina-breathe 8.5s ease-in-out infinite;
+  animation: home-lumina-breathe 7.8s ease-in-out infinite;
   transform-origin: 50% 83%;
 }
 
 @keyframes home-lumina-breathe {
   0%, 100% { transform: translate3d(0, 0, 0) rotate(0); }
-  50% { transform: translate3d(0, -3px, 0) rotate(.12deg); }
+  50% { transform: translate3d(0, -5px, 0) rotate(.2deg); }
+}
+
+
+@media (min-width: 761px) {
+  .epub-home .home-star-1 { width: clamp(.83rem, 1.76vw, 1.3rem); }
+  .epub-home .home-star-2 { width: clamp(1rem, 2vw, 1.53rem); }
+  .epub-home .home-star-3 { width: clamp(.77rem, 1.53vw, 1.18rem); }
+  .epub-home .home-star-4 { width: clamp(.89rem, 1.65vw, 1.3rem); }
+  .epub-home .home-star-5 { width: clamp(.83rem, 1.76vw, 1.3rem); }
+  .epub-home .home-star-6 { width: clamp(.77rem, 1.42vw, 1.12rem); }
+  .epub-home .home-star-7 { width: clamp(.77rem, 1.48vw, 1.18rem); }
+  .epub-home .home-star-8 { width: clamp(.77rem, 1.48vw, 1.12rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {

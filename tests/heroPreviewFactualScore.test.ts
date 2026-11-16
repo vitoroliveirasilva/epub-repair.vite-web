@@ -96,7 +96,7 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(desktop).toContain('object-fit: contain');
     expect(desktop).not.toContain('grid-template-rows: auto auto auto');
     expect(desktop).not.toContain('align-content: space-between');
-    expect(desktop).toContain('gap: clamp(.7rem, 1.65vh, 1.05rem)');
+    expect(desktop).toContain('gap: clamp(.95rem, 2.2vh, 1.4rem)');
     expect(desktop).toContain('height: auto');
     expect(desktop).toContain('height: min(69svh, 34rem)');
     expect(desktop).toContain('height: min(64svh, 30rem)');
@@ -122,6 +122,13 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(motion).toContain('.epub-home .home-star.is-visible');
     expect(motion).toContain('.epub-home .home-star-8');
     expect(motion).toContain('@keyframes home-lumina-breathe');
+    expect(motion).toContain('translate3d(0, -5px, 0) rotate(.2deg)');
+    expect(motion).toContain('home-lumina-breathe 7.8s ease-in-out infinite');
+    expect(motion).toContain('@media (min-width: 761px)');
+    expect(motion).toContain('.home-star-8 { width: clamp(.77rem, 1.48vw, 1.12rem); }');
+    expect(desktop).toContain('gap: clamp(.83rem, 1.9vh, 1.12rem)');
+    expect(desktop).toContain('gap: clamp(.75rem, 1.8vh, 1rem)');
+    expect(desktop).toContain('margin: clamp(.45rem, 1.35vh, .85rem) 0 0;');
     expect(motion).toContain('@media (prefers-reduced-motion: reduce)');
     expect(motion).not.toContain('.app-header');
     expect(motion).not.toContain('.mobile-navigation');

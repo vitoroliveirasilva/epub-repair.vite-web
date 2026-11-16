@@ -83,7 +83,7 @@
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
-    gap: clamp(.7rem, 1.65vh, 1.05rem);
+    gap: clamp(.95rem, 2.2vh, 1.4rem);
     padding: 0;
     text-align: left;
   }
@@ -118,7 +118,7 @@
     align-self: stretch;
     gap: clamp(.65rem, 1.2vw, 1rem);
     width: min(100%, 35rem);
-    margin: clamp(.3rem, 1.1vh, .7rem) 0 0;
+    margin: clamp(.45rem, 1.35vh, .85rem) 0 0;
   }
 
   .epub-home .home-action {
@@ -145,7 +145,7 @@
   }
   
   .epub-home .home-content {
-    gap: clamp(.65rem, 1.5vh, .9rem);
+    gap: clamp(.83rem, 1.9vh, 1.12rem);
   }
 
   .epub-home .home-content > h1 {
@@ -177,7 +177,7 @@
   }
   
   .epub-home .home-content {
-    gap: clamp(.6rem, 1.5vh, .85rem);
+    gap: clamp(.75rem, 1.8vh, 1rem);
   }
 
 }
