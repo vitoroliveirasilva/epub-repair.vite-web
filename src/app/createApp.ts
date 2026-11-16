@@ -19,6 +19,7 @@ import { renderOptionsPanel } from '../ui/components/OptionsPanel';
 import { renderRepairSummary } from '../ui/components/RepairSummary';
 import { renderUploader } from '../ui/components/Uploader';
 import { button, downloadBlob, el } from '../ui/dom';
+import { startHeroStarAnimation } from '../ui/heroStarAnimation';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
 import { renderDesktopNavigation } from '../ui/desktopNavigation';
 import { renderBrandName } from '../ui/brand';
@@ -185,6 +186,8 @@ function render(
     renderSupportSections(),
     renderFooter(),
   );
+  const hero = root.querySelector<HTMLElement>('.epub-home');
+  if (hero) startHeroStarAnimation(hero);
 }
 
 
@@ -340,29 +343,6 @@ function renderAppHeader(): HTMLElement {
   });
 }
 
-function renderCoffeeSteam(): SVGSVGElement {
-  const svgNamespace = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(svgNamespace, 'svg');
-  svg.setAttribute('class', 'home-coffee-steam');
-  svg.setAttribute('viewBox', '0 0 820 1089');
-  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.setAttribute('focusable', 'false');
-
-  const wisps = [
-    'M260 652 C246 634 274 620 259 600 C243 583 278 567 269 548',
-    'M286 650 C303 632 281 616 291 595 C303 575 286 561 297 544',
-  ];
-  wisps.forEach((shape, index) => {
-    const path = document.createElementNS(svgNamespace, 'path');
-    path.setAttribute('class', `home-steam-wisp home-steam-wisp-${index + 1}`);
-    path.setAttribute('d', shape);
-    svg.append(path);
-  });
-
-  return svg;
-}
-
 function renderHero(): HTMLElement {
   return el('section', {
     className: 'hero editorial-hero epub-home',
@@ -378,14 +358,11 @@ function renderHero(): HTMLElement {
                 className: 'home-art-halo',
                 attrs: { 'aria-hidden': 'true' },
               }),
-              el('span', {
-                className: 'home-star home-star-primary',
-                attrs: { 'aria-hidden': 'true' },
-              }),
-              el('span', {
-                className: 'home-star home-star-secondary',
-                attrs: { 'aria-hidden': 'true' },
-              }),
+              ...Array.from({ length: 8 }, (_, index) =>
+                el('span', {
+                  className: `home-star home-star-${index + 1}`,
+                  attrs: { 'aria-hidden': 'true' },
+                })),
               el('img', {
                 className: 'home-mascot',
                 attrs: {
@@ -397,7 +374,6 @@ function renderHero(): HTMLElement {
                   fetchpriority: 'high',
                 },
               }),
-              renderCoffeeSteam(),
             ],
           }),
           el('div', {

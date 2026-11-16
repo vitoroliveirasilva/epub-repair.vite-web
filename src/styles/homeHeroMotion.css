@@ -1,79 +1,48 @@
-.epub-home .home-coffee-steam {
-  position: absolute;
-  z-index: 4;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  pointer-events: none;
-  user-select: none;
-}
-
-.epub-home .home-steam-wisp {
-  fill: none;
-  stroke: #be865f;
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 0;
-  animation: home-coffee-vapor 5.8s ease-in-out infinite;
-  transform-box: fill-box;
-  transform-origin: center bottom;
-}
-
-.epub-home .home-steam-wisp-2 {
-  stroke-width: 2.5;
-  animation-delay: -2.9s;
-}
-
-@keyframes home-coffee-vapor {
-  0%, 100% {
-    opacity: 0;
-    transform: translateY(9px) scale(.97);
-  }
-  28% {
-    opacity: .34;
-  }
-  58% {
-    opacity: .42;
-    transform: translateY(-6px) scale(1);
-  }
-  82% {
-    opacity: 0;
-    transform: translateY(-17px) scale(1.035);
-  }
-}
-
 .epub-home .home-star {
-  animation: home-star-soft-glimmer 6s ease-in-out infinite;
+  opacity: 0;
+  transform: scale(.65);
+  animation: none;
+  transition:
+    opacity var(--star-fade-ms, 1200ms) ease-in-out,
+    transform var(--star-fade-ms, 1200ms) cubic-bezier(.2, .65, .3, 1);
 }
 
-.epub-home .home-star-secondary {
-  animation-delay: -3s;
+.epub-home .home-star.is-visible {
+  opacity: .9;
+  transform: scale(1);
 }
 
-@keyframes home-star-soft-glimmer {
-  0%, 30%, 75%, 100% {
-    opacity: .7;
-    transform: scale(.95);
-  }
-  46%, 54% {
-    opacity: 1;
-    transform: scale(1.07);
-  }
+.epub-home .home-star.is-static {
+  opacity: .7;
+  transform: scale(1);
+}
+
+.epub-home .home-star-1 { top: 13%; left: 9%; width: clamp(.7rem, 1.5vw, 1.1rem); }
+.epub-home .home-star-2 { top: 7%; right: 17%; width: clamp(.85rem, 1.7vw, 1.3rem); }
+.epub-home .home-star-3 { top: 28%; right: 5%; width: clamp(.65rem, 1.3vw, 1rem); }
+.epub-home .home-star-4 { top: 43%; left: 4%; width: clamp(.75rem, 1.4vw, 1.1rem); }
+.epub-home .home-star-5 { top: 59%; right: 4%; width: clamp(.7rem, 1.5vw, 1.1rem); }
+.epub-home .home-star-6 { top: 73%; left: 9%; width: clamp(.65rem, 1.2vw, .95rem); }
+.epub-home .home-star-7 { top: 80%; right: 15%; width: clamp(.65rem, 1.25vw, 1rem); }
+.epub-home .home-star-8 { top: 30%; left: 5%; width: clamp(.65rem, 1.25vw, .95rem); }
+
+.epub-home .home-mascot {
+  animation: home-lumina-breathe 8.5s ease-in-out infinite;
+  transform-origin: 50% 83%;
+}
+
+@keyframes home-lumina-breathe {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0); }
+  50% { transform: translate3d(0, -3px, 0) rotate(.12deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .epub-home .home-coffee-steam .home-steam-wisp {
-    animation: none;
-    opacity: .23;
-    transform: none;
-  }
-
+  .epub-home .home-mascot,
   .epub-home .home-star {
     animation: none;
-    opacity: .82;
-    transform: none;
+    transition: none;
   }
+
+  .epub-home .home-mascot { transform: none; }
+  .epub-home .home-star { transform: scale(1); }
 }
