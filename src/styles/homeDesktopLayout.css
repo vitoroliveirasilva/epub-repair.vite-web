@@ -122,36 +122,30 @@
   }
 
   .epub-home .home-action {
-    --home-action-base: #194d3d;
-    --home-action-deep: #10372c;
-    --home-action-glow: rgba(25, 77, 61, .34);
+    --home-action-bg: #194d3d;
+    --home-action-ink: #fff9f1;
+    --home-action-border: #10372c;
+    --home-action-detail: #d9825d;
+    --home-action-shadow: #d9825d;
+    --home-action-tilt: -.45deg;
     position: relative;
-    isolation: isolate;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: clamp(3.8rem, 4.8vw, 4.4rem);
+    min-height: clamp(3.75rem, 4.7vw, 4.35rem);
     overflow: hidden;
-    padding: .88rem 3.65rem .88rem 1.35rem;
-    border: 1px solid color-mix(in srgb, var(--home-action-base) 64%, white);
-    border-radius: 1.08rem 1.08rem 1.08rem .38rem;
-    background:
-      linear-gradient(145deg,
-        color-mix(in srgb, var(--home-action-base) 90%, white) 0%,
-        var(--home-action-base) 48%,
-        var(--home-action-deep) 100%);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, .24),
-      inset 0 -1px 0 rgba(0, 0, 0, .16),
-      0 .48rem 1.1rem color-mix(in srgb, var(--home-action-glow) 72%, transparent);
-    color: #fff9f1;
+    padding: .85rem 3.2rem .85rem 1.35rem;
+    border: 2px solid var(--home-action-border);
+    border-radius: .38rem .95rem .38rem .95rem;
+    background: var(--home-action-bg);
+    box-shadow: 5px 5px 0 var(--home-action-shadow);
+    color: var(--home-action-ink);
     text-decoration: none;
-    transform: translateZ(0);
+    transform: translate(0, 0) rotate(0);
+    transform-origin: center;
     transition:
-      transform 420ms cubic-bezier(.16, 1, .3, 1),
-      border-color 300ms ease,
-      box-shadow 420ms cubic-bezier(.16, 1, .3, 1),
-      filter 300ms ease;
+      transform 280ms cubic-bezier(.2, .8, .2, 1),
+      box-shadow 280ms cubic-bezier(.2, .8, .2, 1);
   }
 
   .epub-home .home-action strong {
@@ -164,149 +158,127 @@
     font-weight: 700;
     letter-spacing: -.024em;
     white-space: nowrap;
-    transform: translateX(-.1rem);
     transition:
-      transform 420ms cubic-bezier(.16, 1, .3, 1),
-      letter-spacing 320ms ease;
+      letter-spacing 260ms ease,
+      transform 280ms cubic-bezier(.2, .8, .2, 1);
   }
 
   .epub-home .home-action strong::after {
     position: absolute;
-    right: 0;
-    bottom: -.43rem;
+    bottom: -.42rem;
     left: 0;
-    height: 1.5px;
+    width: 1.35rem;
+    height: 2px;
     border-radius: 999px;
-    background: linear-gradient(90deg, transparent, currentColor 18% 82%, transparent);
+    background: currentColor;
     content: '';
-    opacity: .34;
-    transform: scaleX(.18);
-    transform-origin: center;
+    opacity: .72;
+    transform-origin: left;
     transition:
-      opacity 320ms ease,
-      transform 460ms cubic-bezier(.16, 1, .3, 1);
+      opacity 240ms ease,
+      width 320ms cubic-bezier(.2, .8, .2, 1);
   }
 
   .epub-home .home-action::before {
     position: absolute;
-    z-index: 1;
-    top: -80%;
-    bottom: -80%;
-    left: -42%;
-    width: 34%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .32), transparent);
+    top: .68rem;
+    bottom: .68rem;
+    left: .58rem;
+    width: 4px;
+    border-radius: 999px;
+    background: var(--home-action-detail);
     content: '';
-    opacity: 0;
-    transform: translateX(-160%) rotate(14deg);
+    opacity: .9;
+    transform: scaleY(.52);
     transition:
-      opacity 220ms ease,
-      transform 760ms cubic-bezier(.16, 1, .3, 1);
+      opacity 240ms ease,
+      transform 320ms cubic-bezier(.2, .8, .2, 1);
     pointer-events: none;
   }
 
   .epub-home .home-action::after {
     position: absolute;
-    z-index: 2;
     top: 50%;
-    right: .72rem;
-    display: grid;
-    width: 2.35rem;
-    height: 2.35rem;
-    place-items: center;
-    border: 1px solid rgba(255, 255, 255, .3);
-    border-radius: 50%;
-    background: rgba(255, 255, 255, .12);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, .2),
-      0 .3rem .65rem rgba(0, 0, 0, .12);
-    color: inherit;
-    content: '↗';
-    font-family: Arial, sans-serif;
-    font-size: 1.22rem;
+    right: 1.02rem;
+    color: var(--home-action-detail);
+    content: '→';
+    font-family: Georgia, "Iowan Old Style", serif;
+    font-size: 1.55rem;
     font-weight: 400;
     line-height: 1;
-    transform: translateY(-50%);
+    transform: translateY(-52%);
     transition:
-      color 320ms ease,
-      background-color 320ms ease,
-      border-color 320ms ease,
-      box-shadow 380ms ease,
-      transform 460ms cubic-bezier(.16, 1, .3, 1);
+      color 240ms ease,
+      transform 320ms cubic-bezier(.2, .8, .2, 1);
     pointer-events: none;
   }
 
   .epub-home .home-action-repair {
-    --home-action-base: #194d3d;
-    --home-action-deep: #0f352a;
-    --home-action-glow: rgba(25, 77, 61, .4);
+    --home-action-bg: #194d3d;
+    --home-action-ink: #fff9f1;
+    --home-action-border: #10372c;
+    --home-action-detail: #efad83;
+    --home-action-shadow: #cf7956;
+    --home-action-tilt: -.45deg;
   }
 
   .epub-home .home-action-converter {
-    --home-action-base: #b8613e;
-    --home-action-deep: #8f442b;
-    --home-action-glow: rgba(184, 97, 62, .4);
+    --home-action-bg: #f4eadc;
+    --home-action-ink: #194d3d;
+    --home-action-border: #b8613e;
+    --home-action-detail: #b8613e;
+    --home-action-shadow: #194d3d;
+    --home-action-tilt: .45deg;
   }
 
   .epub-home .home-action:is(:hover, :focus-visible) {
-    border-color: color-mix(in srgb, var(--home-action-base) 38%, white);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, .3),
-      inset 0 -1px 0 rgba(0, 0, 0, .14),
-      0 .95rem 1.75rem color-mix(in srgb, var(--home-action-glow) 86%, transparent),
-      0 .22rem .5rem rgba(0, 0, 0, .14);
-    filter: saturate(1.08);
-    transform: translateY(-4px) scale(1.014);
+    box-shadow: 8px 8px 0 var(--home-action-shadow);
+    transform: translate(-2px, -4px) rotate(var(--home-action-tilt));
   }
 
   .epub-home .home-action:is(:hover, :focus-visible)::before {
     opacity: 1;
-    transform: translateX(520%) rotate(14deg);
+    transform: scaleY(1);
   }
 
   .epub-home .home-action:is(:hover, :focus-visible) strong {
-    letter-spacing: -.012em;
-    transform: translateX(-.28rem);
+    letter-spacing: -.01em;
+    transform: translateX(-2px);
   }
 
   .epub-home .home-action:is(:hover, :focus-visible) strong::after {
-    opacity: .86;
-    transform: scaleX(1);
+    width: 100%;
+    opacity: 1;
   }
 
   .epub-home .home-action:is(:hover, :focus-visible)::after {
-    border-color: rgba(255, 255, 255, .72);
-    background: #fff9f1;
-    box-shadow:
-      0 .48rem .9rem rgba(0, 0, 0, .18),
-      0 0 0 .26rem rgba(255, 255, 255, .1);
-    color: var(--home-action-base);
-    transform: translate(2px, -50%) rotate(8deg) scale(1.08);
+    transform: translate(5px, -52%);
   }
 
   .epub-home .home-action:active {
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, .2),
-      0 .3rem .7rem color-mix(in srgb, var(--home-action-glow) 68%, transparent);
-    transform: translateY(-1px) scale(.992);
-    transition-duration: 100ms;
+    box-shadow: 2px 2px 0 var(--home-action-shadow);
+    transform: translate(3px, 3px) rotate(0);
+    transition-duration: 90ms;
   }
 
   .epub-home .home-action:focus-visible {
     outline: 3px solid #d99a76;
-    outline-offset: 4px;
+    outline-offset: 5px;
   }
 
   :root[data-theme="dark"] .epub-home .home-action-repair {
-    --home-action-base: #236249;
-    --home-action-deep: #153f31;
-    --home-action-glow: rgba(43, 115, 88, .46);
+    --home-action-bg: #215b46;
+    --home-action-border: #78a78e;
+    --home-action-detail: #f1b18c;
+    --home-action-shadow: #a95e40;
   }
 
   :root[data-theme="dark"] .epub-home .home-action-converter {
-    --home-action-base: #a85d3d;
-    --home-action-deep: #743821;
-    --home-action-glow: rgba(203, 137, 104, .4);
-    color: #fff5ec;
+    --home-action-bg: #eadcc9;
+    --home-action-ink: #153f31;
+    --home-action-border: #cb8968;
+    --home-action-detail: #985235;
+    --home-action-shadow: #347057;
   }
 }
 
