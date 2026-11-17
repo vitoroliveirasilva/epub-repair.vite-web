@@ -227,21 +227,31 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(tools.querySelector('.workbench-stage')).not.toBeNull();
     const summaryAction = tools.querySelector<HTMLElement>('.optional-studio-summary-action')!;
     expect(summaryAction.textContent).toBe('Explorar');
+    const toggle = summaryAction.querySelector('.workbench-toggle-icon')!;
+    expect(toggle.querySelectorAll('.workbench-toggle-line')).toHaveLength(2);
     tools.open = true;
     tools.dispatchEvent(new Event('toggle'));
     expect(summaryAction.textContent).toBe('Recolher');
+    expect(summaryAction.querySelector('.workbench-toggle-icon')).toBe(toggle);
     tools.open = false;
     tools.dispatchEvent(new Event('toggle'));
     expect(summaryAction.textContent).toBe('Explorar');
+    expect(summaryAction.querySelector('.workbench-toggle-icon')).toBe(toggle);
     expect(tools.querySelectorAll('[aria-label="Preparar Kindle"]')).toHaveLength(0);
-    expect(tools.querySelector('.optional-studio-heading')?.textContent)
-      .toContain('preparo para Kindle já faz parte do reparo');
+    expect(tools.querySelector('.optional-studio-heading small')?.textContent)
+      .toBe('Leia, compare versões e edite metadados.');
+    expect(tools.querySelectorAll('.workbench-tab-number')).toHaveLength(3);
     expect(tools.querySelector<HTMLButtonElement>('.optional-studio-tab-active')
       ?.getAttribute('aria-pressed')).toBe('true');
     expect(tools.querySelector('.optional-studio-tool-head')).not.toBeNull();
     const actions = Array.from(tools.querySelectorAll<HTMLButtonElement>('button'));
-    const openReader = actions.find(button => button.textContent === 'Abrir leitura local');
-    expect(openReader?.disabled).toBe(true);
+    expect(actions.find(button => button.textContent === 'Abrir leitura local'))
+      .toBeUndefined();
+    expect(tools.querySelector('.workbench-reader-launch')).toBeNull();
+    expect(tools.textContent).not.toContain('Selecione um EPUB na área de envio para começar.');
+    expect(tools.textContent).not.toContain('Leia capítulos, confira imagens');
+    expect(tools.querySelector('.optional-studio-disclaimer')?.textContent)
+      .toContain('Prévia segura: apenas estilos selecionados');
     actions.find(button => button.getAttribute('aria-label') === 'Metadados')!.click();
     const changed = root.querySelector('.optional-studio')!;
     expect(changed.querySelector('.optional-studio-tab-active')?.getAttribute('aria-label'))
@@ -339,7 +349,7 @@ describe('Estúdio de restauração e escolha de modo', () => {
 
     const expectations = [
       { label: 'Ler EPUB', kicker: '01 / LEITURA NO NAVEGADOR',
-        title: 'Seu livro, antes de baixar', action: 'Abrir leitura local' },
+        title: 'Seu livro, antes de baixar', action: null },
       { label: 'Antes e depois', kicker: '02 / COMPARAÇÃO EDITORIAL',
         title: 'Veja o que realmente mudou', action: 'Comparar versões' },
       { label: 'Metadados', kicker: '03 / DADOS DA OBRA',
@@ -355,8 +365,13 @@ describe('Estúdio de restauração e escolha de modo', () => {
       expect(intro.querySelector('.optional-studio-tool-kicker')?.textContent)
         .toBe(item.kicker);
       expect(intro.querySelector('h4')?.textContent).toBe(item.title);
-      expect(Array.from(intro.querySelectorAll('button')).some(button =>
-        button.textContent === item.action && button.disabled)).toBe(true);
+      if (item.action) {
+        expect(Array.from(intro.querySelectorAll('button')).some(button =>
+          button.textContent === item.action && button.disabled)).toBe(true);
+      } else {
+        expect(intro.querySelector('button')).toBeNull();
+        expect(intro.querySelector('.workbench-panel-copy p')).toBeNull();
+      }
       expect(root.querySelector('.optional-studio-tab-active')?.getAttribute('aria-label'))
         .toBe(item.label);
       expect(Array.from(root.querySelectorAll('.optional-studio-tab')).filter(button =>
@@ -365,6 +380,27 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(root.querySelector('.workbench-safety-notes summary')?.textContent)
       .toBe('Como tratamos os metadados');
     expect(root.querySelector('.optional-workbench')?.textContent).toContain('EPUB original');
+  });
+
+  it('permite iniciar a leitura depois de enviar um EPUB, sem botão textual redundante', () => {
+    const state = createInitialState();
+    state.payload = {
+      file: new File(['teste'], 'teste.epub', { type: 'application/epub+zip' }),
+      bytes: new Uint8Array([1, 2, 3]),
+    };
+    const queued: string[] = [];
+    const view = renderOptionalEpubTools(state, () => {}, (label) => {
+      queued.push(label);
+    });
+    const launch = view.querySelector<HTMLButtonElement>('.workbench-reader-launch')!;
+    expect(launch).not.toBeNull();
+    expect(launch.disabled).toBe(false);
+    expect(launch.getAttribute('aria-label')).toBe('Abrir leitura local');
+    expect(launch.getAttribute('title')).toBe('Abrir leitura local');
+    expect(launch.textContent).toBe('');
+    expect(launch.querySelector('.workbench-reader-launch-symbol')).not.toBeNull();
+    launch.click();
+    expect(queued).toEqual(['Preparar prévia EPUB']);
   });
 
 });

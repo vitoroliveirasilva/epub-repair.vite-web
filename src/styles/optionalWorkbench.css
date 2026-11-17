@@ -643,3 +643,292 @@
     transition: none !important;
   }
 }
+
+
+#app .optional-workbench > summary .workbench-disclosure {
+  gap: .65rem;
+  border: none;
+  padding-right: 0;
+  background: transparent;
+}
+
+#app .optional-workbench > summary .workbench-disclosure::after {
+  display: none;
+  content: none;
+}
+
+#app .optional-workbench .workbench-toggle-icon {
+  position: relative;
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 2.35rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-accent-strong);
+  transform: rotate(0deg);
+  transition:
+    transform 480ms cubic-bezier(.16, 1, .3, 1),
+    background-color 300ms ease,
+    border-color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+#app .optional-workbench .workbench-toggle-line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  border-radius: 9px;
+  background: currentColor;
+  transform: translate(-50%, -50%);
+}
+
+#app .optional-workbench .workbench-toggle-horizontal {
+  width: .9rem;
+  height: 2px;
+}
+
+#app .optional-workbench .workbench-toggle-vertical {
+  width: 2px;
+  height: .9rem;
+}
+
+#app .optional-workbench[open] .workbench-toggle-icon {
+  transform: rotate(45deg);
+}
+
+#app .optional-workbench[open] > summary .workbench-toggle-icon {
+  border-color: color-mix(in srgb, var(--color-accent) 43%, var(--color-border));
+}
+
+#app .optional-workbench .workbench-disclosure-label {
+  display: inline-block;
+  min-width: 4.5rem;
+  text-align: right;
+  transition: color 250ms ease;
+}
+
+#app .layout#app-workspace .optional-workbench .workbench-navigation .optional-studio-tab.btn {
+  isolation: isolate;
+  gap: .76rem;
+  min-height: 5.15rem;
+  transition:
+    background-color 260ms ease,
+    color 260ms ease;
+}
+
+#app .layout#app-workspace .optional-workbench .workbench-navigation .optional-studio-tab.btn::before {
+  position: absolute;
+  top: 0;
+  right: clamp(.35rem, 1vw, 1.05rem);
+  z-index: 0;
+  display: block;
+  width: .78rem;
+  height: 1.55rem;
+  border: none;
+  border-radius: 0;
+  background: var(--studio-copper);
+  box-shadow: none;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 77%, 0 100%);
+  content: '';
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-.68rem) rotate(-8deg);
+  transform-origin: center top;
+  transition:
+    opacity 260ms ease,
+    transform 470ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .layout#app-workspace .optional-workbench .workbench-navigation .optional-studio-tab-active.btn::before {
+  opacity: 1;
+  transform: translateY(0) rotate(0deg);
+}
+
+#app .optional-workbench .workbench-navigation .workbench-tab-number {
+  display: inline-block;
+  min-width: 2ch;
+  color: var(--studio-copper);
+  font-size: 1.12rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.045em;
+  rotate: -7deg;
+  translate: 0 0;
+  transition:
+    rotate 380ms cubic-bezier(.16, 1, .3, 1),
+    translate 380ms cubic-bezier(.16, 1, .3, 1),
+    scale 380ms cubic-bezier(.16, 1, .3, 1),
+    color 280ms ease;
+}
+
+#app .optional-workbench .workbench-navigation .workbench-tab-label {
+  gap: .14rem;
+  transform-origin: left center;
+  transition:
+    scale 360ms cubic-bezier(.16, 1, .3, 1),
+    translate 360ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .optional-workbench .workbench-navigation .workbench-tab-label strong {
+  font-size: clamp(.86rem, 1.25vw, 1rem);
+  font-weight: 780;
+  letter-spacing: -.018em;
+}
+
+#app .optional-workbench .workbench-navigation .optional-studio-tab-active .workbench-tab-number {
+  color: var(--color-accent-strong);
+  rotate: -12deg;
+  scale: 1.1;
+}
+
+#app .optional-workbench .workbench-navigation .optional-studio-tab-active .workbench-tab-label strong {
+  color: var(--color-accent-strong);
+}
+
+#app .layout#app-workspace .optional-workbench .optional-studio-reader .workbench-panel-intro {
+  justify-content: space-between;
+}
+
+#app .layout#app-workspace .optional-workbench .optional-studio-reader .workbench-footnote {
+  display: block;
+  max-width: 74ch;
+  margin: 0 auto;
+  padding: clamp(1rem, 2.4vw, 1.35rem) .25rem 0;
+  border-top: 1px solid var(--workbench-rule);
+  text-align: center;
+  text-wrap: pretty;
+  line-height: 1.75;
+}
+
+#app .optional-workbench .optional-studio-reader .workbench-footnote::before {
+  display: none;
+  content: none;
+}
+
+#app .optional-workbench .workbench-panel-action:has(.workbench-reader-launch) {
+  flex: 0 0 auto;
+  min-width: 0;
+  width: auto;
+  justify-items: end;
+}
+
+#app .layout#app-workspace .optional-workbench .workbench-panel-action .btn.workbench-reader-launch {
+  display: grid;
+  width: 2.8rem;
+  min-width: 2.8rem;
+  height: 2.8rem;
+  min-height: 2.8rem;
+  padding: 0;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 1rem;
+}
+
+#app .optional-workbench .workbench-reader-launch-symbol::before {
+  content: '↗';
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 650;
+  line-height: 1;
+  transition: transform 300ms cubic-bezier(.16, 1, .3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #app .optional-workbench > summary:hover .workbench-toggle-icon,
+  #app .optional-workbench > summary:focus-visible .workbench-toggle-icon {
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface));
+    box-shadow: 0 .3rem .9rem color-mix(in srgb, var(--color-accent) 10%, transparent);
+    transform: rotate(12deg);
+  }
+
+  #app .optional-workbench[open] > summary:hover .workbench-toggle-icon,
+  #app .optional-workbench[open] > summary:focus-visible .workbench-toggle-icon {
+    transform: rotate(56deg);
+  }
+
+  #app .layout#app-workspace .optional-workbench .workbench-navigation .optional-studio-tab.btn:not(:disabled):hover {
+    color: var(--color-accent-strong);
+    background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface));
+  }
+
+  #app .optional-workbench .workbench-navigation .optional-studio-tab:hover .workbench-tab-number {
+    rotate: -18deg;
+    translate: 0 -.15rem;
+    scale: 1.12;
+  }
+
+  #app .optional-workbench .workbench-navigation .optional-studio-tab:hover .workbench-tab-label {
+    scale: 1.045;
+    translate: .1rem 0;
+  }
+
+  #app .layout#app-workspace .optional-workbench .workbench-panel-action .btn.workbench-reader-launch:not(:disabled):hover .workbench-reader-launch-symbol::before {
+    transform: translate(.12rem, -.12rem);
+  }
+}
+
+@media (max-width: 720px) {
+  #app .optional-workbench > summary .workbench-disclosure {
+    display: grid;
+    padding: 0;
+  }
+
+  #app .optional-workbench .workbench-disclosure-label {
+    display: none;
+  }
+
+  #app .optional-workbench .workbench-toggle-icon {
+    width: 2.2rem;
+    height: 2.2rem;
+    flex-basis: 2.2rem;
+  }
+
+  #app .optional-workbench .workbench-navigation .workbench-tab-number {
+    font-size: .95rem;
+  }
+
+  #app .optional-workbench .workbench-navigation .workbench-tab-label strong {
+    font-size: .82rem;
+  }
+
+  #app .layout#app-workspace .optional-workbench .workbench-navigation .optional-studio-tab.btn {
+    gap: .46rem;
+  }
+}
+
+@media (max-width: 430px) {
+  #app .optional-workbench .workbench-navigation .workbench-tab-number {
+    font-size: .83rem;
+  }
+
+  #app .optional-workbench .workbench-navigation .workbench-tab-label strong {
+    font-size: .74rem;
+  }
+
+  #app .layout#app-workspace .optional-workbench .workbench-navigation .optional-studio-tab.btn {
+    gap: .36rem;
+    min-height: 4.1rem;
+    padding-inline: .26rem;
+  }
+
+  #app .layout#app-workspace .optional-workbench .workbench-navigation .optional-studio-tab.btn::before {
+    right: .25rem;
+    width: .56rem;
+    height: 1.15rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .optional-workbench .workbench-toggle-icon,
+  #app .optional-workbench .workbench-reader-launch-symbol::before,
+  #app .optional-workbench .workbench-navigation .optional-studio-tab.btn::before,
+  #app .optional-workbench .workbench-navigation .workbench-tab-number,
+  #app .optional-workbench .workbench-navigation .workbench-tab-label {
+    transition: none !important;
+  }
+}

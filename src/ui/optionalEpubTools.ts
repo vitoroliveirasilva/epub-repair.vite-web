@@ -272,19 +272,19 @@ export function readerCard(
 }
 
 function renderWorkbenchIntro(
-  kicker: string, title: string, description: string,
-  action: HTMLButtonElement, hint?: string,
+  kicker: string, title: string, description?: string,
+  action?: HTMLButtonElement, hint?: string,
 ): HTMLElement {
   return el('div', { className: 'optional-studio-tool-head workbench-panel-intro', children: [
     el('div', { className: 'optional-studio-tool-copy workbench-panel-copy', children: [
       el('span', { className: 'optional-studio-tool-kicker', text: kicker }),
       el('h4', { text: title }),
-      el('p', { text: description }),
+      description ? el('p', { text: description }) : undefined,
     ] }),
-    el('div', { className: 'optional-studio-tool-action workbench-panel-action', children: [
+    action ? el('div', { className: 'optional-studio-tool-action workbench-panel-action', children: [
       action,
       hint ? el('small', { text: hint }) : undefined,
-    ] }),
+    ] }) : undefined,
   ] });
 }
 
@@ -300,6 +300,11 @@ function renderPreview(state: AppState, s: Session, rerender: () => void, enqueu
         : 'Nenhum texto compatível foi recuperado para pré-visualização.';
     });
   });
+  control.classList.add('workbench-reader-launch');
+  control.setAttribute('aria-label', 'Abrir leitura local');
+  control.setAttribute('title', 'Abrir leitura local');
+  control.replaceChildren(el('span', { className: 'workbench-reader-launch-symbol',
+    attrs: { 'aria-hidden': 'true' } }));
   const view = s.preview;
   const scale = el('input', {
     attrs: { type: 'range', min: '14', max: '28', step: '2', value: String(s.fontSize),
@@ -341,8 +346,7 @@ function renderPreview(state: AppState, s: Session, rerender: () => void, enqueu
   return el('div', { className: 'optional-tool-content optional-studio-reader workbench-tool-pane', children: [
     renderWorkbenchIntro(
       '01 / LEITURA NO NAVEGADOR', 'Seu livro, antes de baixar',
-      'Leia capítulos, confira imagens, tabelas e notas em uma prévia local segura.',
-      control, !state.payload ? 'Selecione um EPUB na área de envio para começar.' : undefined,
+      undefined, state.payload ? control : undefined,
     ),
     el('p', { className: 'optional-studio-disclaimer workbench-footnote',
       text: 'Prévia segura: apenas estilos selecionados são reproduzidos, sem executar o CSS original. A apresentação no Kindle ou em outros leitores pode variar.' }),
@@ -1061,10 +1065,17 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
           el('span', { className: 'optional-studio-eyebrow',
             text: 'RECURSOS COMPLEMENTARES / 03 FERRAMENTAS' }),
           el('strong', { text: 'Ferramentas extras' }),
-          el('small', { text: 'Leia, compare versões e edite metadados. O preparo para Kindle já faz parte do reparo.' }),
+          el('small', { text: 'Leia, compare versões e edite metadados.' }),
         ] }),
         el('span', { className: 'optional-studio-summary-action workbench-disclosure',
-          attrs: { 'aria-hidden': 'true' }, text: s.expanded ? 'Recolher' : 'Explorar' }),
+          attrs: { 'aria-hidden': 'true' }, children: [
+            el('span', { className: 'workbench-disclosure-label',
+              text: s.expanded ? 'Recolher' : 'Explorar' }),
+            el('span', { className: 'workbench-toggle-icon', children: [
+              el('span', { className: 'workbench-toggle-line workbench-toggle-horizontal' }),
+              el('span', { className: 'workbench-toggle-line workbench-toggle-vertical' }),
+            ] }),
+          ] }),
       ] }),
       el('div', { className: 'optional-tools-inner optional-studio-inner workbench-body', children: [
         el('div', { className: 'optional-tablist optional-studio-tabs workbench-navigation',
@@ -1108,7 +1119,7 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
   details.addEventListener('toggle', () => {
     if (!details.isConnected) return;
     s.expanded = details.open;
-    const label = details.querySelector<HTMLElement>('.optional-studio-summary-action');
+    const label = details.querySelector<HTMLElement>('.workbench-disclosure-label');
     if (label) label.textContent = details.open ? 'Recolher' : 'Explorar';
   });
   return details;
