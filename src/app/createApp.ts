@@ -253,42 +253,19 @@ function renderWorkflowModeSelector(
 }
 
 function renderWorkspaceIntro(): HTMLElement {
-  const signals = [
-    ['01', 'Escolha', 'Um arquivo abre o fluxo individual; vários abrem o lote'],
-    ['02', 'Diagnostique', 'Estrutura, segurança, navegação, capa e compatibilidade'],
-    ['03', 'Baixe', 'Uma nova cópia e relatórios separados, sem alterar o original'],
-  ] as const;
-
   return el('section', {
-    className: 'workspace-intro',
+    className: 'workspace-intro workspace-intro-compact',
     attrs: { 'aria-labelledby': 'workspace-intro-title' },
     children: [
       el('div', {
         className: 'workspace-intro-copy',
         children: [
-          el('p', { className: 'eyebrow', text: 'Estúdio de restauração' }),
+          el('span', { className: 'eyebrow', text: 'Estúdio de restauração' }),
           el('h2', {
             text: 'Do arquivo problemático ao EPUB pronto para leitura',
             attrs: { id: 'workspace-intro-title' },
           }),
-          el('p', {
-            text: 'Um fluxo guiado para diagnosticar, corrigir, conferir e exportar. ' +
-              'Tudo acontece localmente no navegador.',
-          }),
         ],
-      }),
-      el('ol', {
-        className: 'workspace-signals',
-        attrs: { 'aria-label': 'Etapas resumidas do reparo' },
-        children: signals.map(([number, title, description]) =>
-          el('li', {
-            children: [
-              el('span', { text: number, attrs: { 'aria-hidden': 'true' } }),
-              el('div', {
-                children: [el('strong', { text: title }), el('small', { text: description })],
-              }),
-            ],
-          })),
       }),
     ],
   });

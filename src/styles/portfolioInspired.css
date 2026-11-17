@@ -901,3 +901,47 @@
     transform: none;
   }
 }
+
+/* Cabeçalho resumido: a escolha de um ou vários EPUBs é apresentada logo abaixo. */
+#app .workspace-intro.workspace-intro-compact {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 0;
+  padding: 0 0 clamp(1rem, 2.5vw, 1.65rem);
+}
+
+#app .workspace-intro-compact .workspace-intro-copy {
+  display: grid;
+  justify-items: start;
+  gap: .6rem;
+  width: 100%;
+}
+
+#app .workspace-intro-compact .workspace-intro-copy > .eyebrow {
+  margin: 0;
+  color: var(--studio-copper);
+  font-size: .7rem;
+  font-weight: 850;
+  line-height: 1.45;
+  letter-spacing: .15em;
+}
+
+#app .workspace-intro-compact .workspace-intro-copy h2 {
+  max-width: 36ch;
+  margin: 0;
+  font-size: clamp(1.55rem, 2.65vw, 2.35rem);
+  line-height: 1.15;
+  letter-spacing: -.04em;
+  text-wrap: balance;
+}
+
+@media (max-width: 760px) {
+  #app .workspace-intro.workspace-intro-compact {
+    padding-bottom: 1.15rem;
+  }
+  #app .workspace-intro-compact .workspace-intro-copy h2 {
+    max-width: 23ch;
+    font-size: clamp(1.4rem, 5.6vw, 1.9rem);
+    line-height: 1.18;
+  }
+}
