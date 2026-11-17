@@ -1,5 +1,3 @@
-/* Motion accents for the diagnosis, optional tools, repair settings and footer.
-   All motion is decorative; default states keep controls accessible. */
 #app .layout#app-workspace .report-welcome {
   transition:
     border-color 300ms ease,
@@ -84,7 +82,6 @@
   transition-delay: 0ms;
 }
 
-/* The disclosures stay native HTML details; opening never changes scroll position. */
 #app .layout#app-workspace .optional-studio,
 #app .layout#app-workspace .advanced-settings {
   transition:
@@ -178,7 +175,6 @@
   }
 }
 
-/* The footer receives only entry motion, not a redesign or endless animation. */
 #app .editorial-footer-content > .scroll-reveal-element,
 #app .editorial-footer-wave.scroll-reveal-element {
   transition:
