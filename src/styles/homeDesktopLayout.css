@@ -283,22 +283,41 @@
   }
 
   :root[data-theme="dark"] .epub-home .home-action-shell-repair {
-    --home-action-bg: #215b46;
-    --home-action-border: #65a58a;
-    --home-action-inner: rgba(255, 245, 236, .58);
-    --home-action-bookmark: #fff0dd;
-    --home-action-page: #b96749;
-    --home-action-page-border: #d99a76;
+    --home-action-bg: #245d49;
+    --home-action-ink: #fff6ea;
+    --home-action-border: #76ad93;
+    --home-action-inner: rgba(255, 246, 234, .48);
+    --home-action-bookmark: #f6e7d5;
+    --home-action-page: #9f543d;
+    --home-action-page-border: #d18765;
   }
 
   :root[data-theme="dark"] .epub-home .home-action-shell-converter {
-    --home-action-bg: #efe2d3;
-    --home-action-ink: #173d30;
-    --home-action-border: #cb8968;
-    --home-action-inner: rgba(25, 77, 61, .18);
-    --home-action-bookmark: #b8613e;
-    --home-action-page: #347057;
-    --home-action-page-border: #65a58a;
+    --home-action-bg: #1a2923;
+    --home-action-ink: #f4e7d8;
+    --home-action-border: #c87554;
+    --home-action-inner: rgba(200, 117, 84, .24);
+    --home-action-bookmark: #c87554;
+    --home-action-page: #326a53;
+    --home-action-page-border: #70a58d;
+  }
+
+  :root[data-theme="dark"] .epub-home .home-action-shell-repair .home-action-repair,
+  :root[data-theme="dark"] .epub-home .home-action-shell-converter .home-action-converter {
+    border-color: var(--home-action-border);
+    background: var(--home-action-bg);
+    color: var(--home-action-ink);
+  }
+
+  :root[data-theme="dark"] .epub-home .home-action-shell-repair:is(:hover, :focus-within) .home-action-repair,
+  :root[data-theme="dark"] .epub-home .home-action-shell-converter:is(:hover, :focus-within) .home-action-converter {
+    border-color: var(--home-action-border);
+    background: var(--home-action-bg);
+    color: var(--home-action-ink);
+  }
+
+  :root[data-theme="dark"] .epub-home .home-action:focus-visible {
+    outline-color: #d18765;
   }
 }
 
