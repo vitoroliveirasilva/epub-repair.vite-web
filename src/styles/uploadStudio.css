@@ -208,13 +208,12 @@
 #app .upload-studio-lines {
   position: absolute;
   z-index: 1;
-  top: 1.45rem;
-  left: 1.8rem;
+  top: 1.3rem;
+  left: .8rem;
   width: 2rem;
   height: 1.9rem;
   background: repeating-linear-gradient(180deg, var(--upload-tone) 0 2px, transparent 2px 9px);
   opacity: .43;
-  transform: rotate(-7deg);
   pointer-events: none;
 }
 

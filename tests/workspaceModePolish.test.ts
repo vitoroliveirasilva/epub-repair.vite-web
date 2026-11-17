@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app/createApp';
+import { createConverterApp } from '../src/converter/createConverterApp';
 
 afterEach(() => document.body.replaceChildren());
 
@@ -68,4 +69,32 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(steps.every((item) => Boolean(item.querySelector('small')?.textContent)))
       .toBe(true);
   });
+  it('mantém o desenho preso à folha animada nos uploads EPUB, PDF e imagem da capa', () => {
+    const epubRoot = document.createElement('div');
+    epubRoot.id = 'app';
+    document.body.append(epubRoot);
+    createApp(epubRoot);
+
+    const epub = epubRoot.querySelector('.upload-studio-graphic-epub')!;
+    expect(epub.querySelector('.upload-studio-sheet-front > .upload-studio-lines'))
+      .not.toBeNull();
+    expect(epub.querySelectorAll('.upload-studio-lines')).toHaveLength(1);
+
+    const cover = epubRoot.querySelector('.cover-upload-illustration')!;
+    expect(cover.querySelector('.cover-upload-sheet-front > .cover-upload-sun'))
+      .not.toBeNull();
+    expect(cover.querySelector('.cover-upload-sheet-front > .cover-upload-mountain'))
+      .not.toBeNull();
+
+    const pdfRoot = document.createElement('div');
+    pdfRoot.id = 'pdf-app';
+    document.body.append(pdfRoot);
+    createConverterApp(pdfRoot);
+
+    const pdf = pdfRoot.querySelector('.upload-studio-graphic-pdf')!;
+    expect(pdf.querySelector('.upload-studio-sheet-front > .upload-studio-lines'))
+      .not.toBeNull();
+    expect(pdf.querySelectorAll('.upload-studio-lines')).toHaveLength(1);
+  });
+
 });

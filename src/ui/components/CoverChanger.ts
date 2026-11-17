@@ -68,9 +68,12 @@ export function renderCoverChanger(
         attrs: { 'aria-hidden': 'true' },
         children: [
           el('span', { className: 'cover-upload-sheet cover-upload-sheet-back' }),
-          el('span', { className: 'cover-upload-sheet cover-upload-sheet-front' }),
-          el('span', { className: 'cover-upload-sun' }),
-          el('span', { className: 'cover-upload-mountain' }),
+          el('span', { className: 'cover-upload-sheet cover-upload-sheet-front',
+            children: [
+              el('span', { className: 'cover-upload-sun' }),
+              el('span', { className: 'cover-upload-mountain' }),
+            ],
+          }),
         ],
       }),
       el('span', {

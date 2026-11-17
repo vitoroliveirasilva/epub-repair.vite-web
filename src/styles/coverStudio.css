@@ -246,25 +246,23 @@
 #app .cover-upload-sun {
   position: absolute;
   z-index: 1;
-  top: 1.18rem;
-  left: 2.48rem;
+  top: 1rem;
+  left: 1.93rem;
   width: .75rem;
   height: .75rem;
   border-radius: 50%;
   background: var(--studio-copper, #c57450);
-  transform: rotate(-8deg);
 }
 
 #app .cover-upload-mountain {
   position: absolute;
   z-index: 1;
-  top: 2.3rem;
-  left: 1.35rem;
+  top: 2.12rem;
+  left: .8rem;
   width: 2.25rem;
   height: 1.55rem;
   background: color-mix(in srgb, var(--color-accent) 75%, transparent);
   clip-path: polygon(0 100%, 38% 25%, 60% 62%, 77% 42%, 100% 100%);
-  transform: rotate(-8deg);
 }
 
 #app .cover-upload-text {

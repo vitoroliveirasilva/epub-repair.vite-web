@@ -189,8 +189,11 @@ function renderUploader(state: ConverterState, rerender: () => void): HTMLElemen
       el('span', { className: 'upload-studio-graphic upload-studio-graphic-pdf',
         attrs: { 'aria-hidden': 'true' }, children: [
           el('span', { className: 'upload-studio-sheet upload-studio-sheet-back' }),
-          el('span', { className: 'upload-studio-sheet upload-studio-sheet-front' }),
-          el('span', { className: 'upload-studio-lines' }),
+          el('span', { className: 'upload-studio-sheet upload-studio-sheet-front',
+            children: [
+              el('span', { className: 'upload-studio-lines' }),
+            ],
+          }),
           el('span', { className: 'upload-studio-graphic-tag', text: 'PDF' }),
         ] }),
       el('span', { className: 'upload-studio-content', children: [
