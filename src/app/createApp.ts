@@ -79,8 +79,11 @@ export function createApp(root: HTMLElement): void {
     rerender();
   };
   const rerender = (): void => {
+    const scrollPosition = root.querySelector<HTMLElement>('.batch-studio-file-scroll')?.scrollTop ?? 0;
     const restoreFocus = captureFocusForRerender(root);
     render(root, state, rerender, enqueue, cancelAll);
+    const fileList = root.querySelector<HTMLElement>('.batch-studio-file-scroll');
+    if (fileList && scrollPosition > 0) fileList.scrollTop = scrollPosition;
     restoreFocus();
   };
   render(root, state, rerender, enqueue, cancelAll);

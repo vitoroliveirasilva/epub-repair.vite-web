@@ -1,7 +1,7 @@
 import type { AppState, ProcessingProgress } from '../app/state';
 import type { ValidationReport } from '../epub';
 import { processEpubBatch, MAX_BATCH_BYTES, MAX_BATCH_FILES,
-  type BatchMode } from '../epub/tools/batchProcessor';
+  type BatchMode, type BatchEntry, type BatchFileProgress } from '../epub/tools/batchProcessor';
 import { addBatchSelection } from '../epub/tools/batchSelection';
 import { button, downloadBlob, el, formatBytes } from './dom';
 import {
@@ -36,7 +36,11 @@ interface Session {
   batchFiles: File[];
   batchMode: BatchMode;
   batchZip?: Blob | undefined;
-  batchStatus: string[];
+  batchProgress: Array<BatchFileProgress | undefined>;
+  batchEntries: BatchEntry[];
+  batchCompleted: number;
+  batchStarted: boolean;
+  batchExpandedDetails: number[];
   batchError: boolean;
   chapter: number;
   compareChapter: number;
@@ -56,7 +60,9 @@ function sessionFor(state: AppState): Session {
   if (!current) {
     current = { expanded: false, tab: 'preview', batchWorkspaceActive: false,
       batchFiles: [], batchMode: 'repair',
-      batchStatus: [], batchError: false, chapter: 0, compareChapter: 0, fontSize: 18,
+      batchProgress: [], batchEntries: [], batchCompleted: 0,
+      batchStarted: false, batchExpandedDetails: [], batchError: false,
+      chapter: 0, compareChapter: 0, fontSize: 18,
       syncScroll: true, message: '' };
     sessions.set(state, current);
   }
@@ -629,6 +635,16 @@ function renderKindle(state: AppState): HTMLElement {
   ] });
 }
 
+
+function resetBatchOutput(s: Session): void {
+  s.batchZip = undefined;
+  s.batchProgress = [];
+  s.batchEntries = [];
+  s.batchStarted = false;
+  s.batchCompleted = 0;
+  s.batchExpandedDetails = [];
+}
+
 function selectBatchFiles(s: Session, files: readonly File[]): void {
   const selection = addBatchSelection(s.batchFiles, files);
   if (selection.error) {
@@ -638,16 +654,11 @@ function selectBatchFiles(s: Session, files: readonly File[]): void {
   }
   s.batchError = false;
   s.batchFiles = selection.files;
-  s.batchStatus = [];
-  s.batchZip = undefined;
-  const count = selection.files.length;
-  s.message = !selection.added
-    ? 'Os arquivos escolhidos já estão nesta lista.'
-    : count + (count === 1 ? ' livro selecionado.' : ' livros selecionados.') +
-      ' Escolha como deseja processar e confirme abaixo.';
-  if (selection.ignored) s.message += ' ' + selection.ignored +
-    (selection.ignored === 1 ? ' arquivo incompatível foi ignorado.' :
-      ' arquivos incompatíveis foram ignorados.');
+  resetBatchOutput(s);
+  s.message = selection.ignored
+    ? selection.ignored + (selection.ignored === 1
+      ? ' arquivo incompatível foi ignorado.' : ' arquivos incompatíveis foram ignorados.')
+    : '';
 }
 
 export function isBatchWorkspaceActive(state: AppState): boolean {
@@ -667,58 +678,75 @@ export function openBatchWithFiles(state: AppState, files: readonly File[]): voi
   selectBatchFiles(session, files);
 }
 
+function batchProgressLabel(progress?: BatchFileProgress): string {
+  if (!progress) return 'Na fila';
+  switch (progress.stage) {
+    case 'reading': return 'Lendo';
+    case 'validating': return 'Verificando';
+    case 'repairing': return 'Corrigindo';
+    case 'optimizing': return 'Otimizando';
+    case 'packing': return 'Finalizando';
+    case 'completed': return progress.status ?? 'Concluído';
+    case 'failed': return progress.status ?? 'Falhou';
+  }
+}
+
+function batchResultTone(entry?: BatchEntry, progress?: BatchFileProgress): string {
+  const status = entry?.status ?? progress?.status;
+  if (status === 'recusado' || status === 'falhou') return 'error';
+  if (status === 'revisão manual') return 'warning';
+  if (entry || progress?.stage === 'completed') return 'success';
+  if (progress && progress.stage !== 'failed') return 'working';
+  return 'queued';
+}
+
 export function renderBatchWorkspace(
   state: AppState, rerender: () => void, enqueue: Queue,
   cancelAll: () => void,
 ): HTMLElement {
-  const session = sessionFor(state);
+  const s = sessionFor(state);
+  const count = s.batchFiles.length;
+  const totalBytes = s.batchFiles.reduce((sum, file) => sum + file.size, 0);
   return el('section', {
-    className: 'panel batch-workspace',
-    attrs: {
-      id: 'batch-workspace',
-      tabindex: '-1',
-      'aria-labelledby': 'batch-workspace-title',
-    },
+    className: 'panel batch-workspace batch-studio',
+    attrs: { id: 'batch-workspace', tabindex: '-1',
+      'aria-labelledby': 'batch-workspace-title' },
     children: [
-      el('header', { className: 'batch-workspace-heading', children: [
-        el('span', { className: 'batch-workspace-eyebrow', text: 'PROCESSAMENTO EM LOTE' }),
-        el('h2', { text: 'Cuide de vários livros de uma vez',
-          attrs: { id: 'batch-workspace-title' } }),
-        el('p', { text: 'Selecione seus EPUBs, escolha o que fazer e baixe tudo em um ZIP. ' +
-          'Cada livro recebe seu próprio relatório; os originais são preservados.' }),
+      el('header', { className: 'batch-studio-header', children: [
+        el('div', { className: 'batch-studio-intro', children: [
+          el('span', { className: 'batch-studio-eyebrow', text: 'PROCESSAMENTO EM LOTE' }),
+          el('h2', { text: 'Vários livros. Um só fluxo.',
+            attrs: { id: 'batch-workspace-title' } }),
+          el('p', { text: 'Organize os EPUBs, escolha a operação e baixe tudo em um ZIP.' }),
+        ] }),
+        el('div', { className: 'batch-studio-counter',
+          attrs: { 'aria-label': count + ' de ' + MAX_BATCH_FILES + ' arquivos selecionados' },
+          children: [
+            el('strong', { text: String(count).padStart(2, '0') }),
+            el('span', { text: '/ ' + String(MAX_BATCH_FILES).padStart(2, '0') }),
+            el('small', { text: 'LIVROS' }),
+          ],
+        }),
       ] }),
-      el('ol', { className: 'batch-workspace-steps', children: [
-        el('li', { children: [
-          el('span', { text: '01' }), el('strong', { text: 'Escolha os livros' }),
-        ] }),
-        el('li', { children: [
-          el('span', { text: '02' }), el('strong', { text: 'Defina a ação' }),
-        ] }),
-        el('li', { children: [
-          el('span', { text: '03' }), el('strong', { text: 'Baixe o resultado' }),
-        ] }),
-      ] }),
-      renderBatch(state, session, rerender, enqueue, cancelAll),
+      renderBatch(state, s, rerender, enqueue, cancelAll, totalBytes),
     ],
   });
 }
 
 function renderBatch(
   state: AppState, s: Session, rerender: () => void,
-  enqueue: Queue, cancelAll: () => void,
+  enqueue: Queue, cancelAll: () => void, totalBytes: number,
 ): HTMLElement {
   const count = s.batchFiles.length;
-  const totalBytes = s.batchFiles.reduce((sum, file) => sum + file.size, 0);
   const hasFiles = count > 0;
+  const completed = s.batchZip ? count : s.batchCompleted;
+  const inProgress = state.busy && s.batchStarted;
+  const outputReady = Boolean(s.batchZip);
   const input = el('input', {
     className: 'visually-hidden',
-    attrs: {
-      id: 'batch-epub-input',
-      type: 'file',
-      accept: '.epub,application/epub+zip',
-      multiple: 'multiple',
-      'aria-label': 'Adicionar EPUBs ao lote',
-    },
+    attrs: { id: 'batch-epub-input', type: 'file',
+      accept: '.epub,application/epub+zip', multiple: 'multiple',
+      'aria-label': 'Adicionar EPUBs ao lote' },
   });
   input.disabled = state.busy;
   const addFiles = (files: readonly File[]): void => {
@@ -727,28 +755,26 @@ function renderBatch(
     rerender();
   };
   input.addEventListener('change', () => addFiles(Array.from(input.files ?? [])));
+
   const zone = el('label', {
-    className: 'optional-batch-dropzone batch-workspace-upload' +
-      (hasFiles ? ' batch-workspace-upload-compact' : ''),
+    className: 'optional-batch-dropzone batch-workspace-upload batch-studio-upload',
     attrs: {
       for: 'batch-epub-input',
       tabindex: state.busy ? '-1' : '0',
       role: 'button',
-      'aria-label': hasFiles ? 'Adicionar mais arquivos EPUB à seleção'
-        : 'Escolher ou arrastar arquivos EPUB para processar em lote',
+      'aria-label': 'Adicionar livros EPUB à seleção',
       'aria-disabled': String(state.busy),
     },
     children: [
-      el('span', { className: 'upload-studio-batch-icon',
-        attrs: { 'aria-hidden': 'true' }, text: 'EPUB' }),
-      el('strong', { text: hasFiles ? 'Adicionar mais livros' : 'Arraste seus EPUBs aqui' }),
-      el('span', { text: hasFiles
-        ? 'Você também pode clicar para escolher outros arquivos'
-        : 'Ou escolha vários livros de uma vez no seu dispositivo' }),
-      el('span', { className: 'upload-studio-batch-action', text: hasFiles
-        ? '+ Adicionar EPUBs' : 'Escolher EPUBs' }),
-      el('small', { text: 'De 1 a ' + MAX_BATCH_FILES + ' arquivos · até ' +
-        formatBytes(MAX_BATCH_BYTES) + ' somados' }),
+      el('span', { className: 'batch-studio-upload-icon',
+        attrs: { 'aria-hidden': 'true' }, text: '+' }),
+      el('span', { className: 'batch-studio-upload-copy', children: [
+        el('strong', { text: hasFiles ? 'Adicionar mais livros' : 'Arraste seus EPUBs aqui' }),
+        el('small', { text: hasFiles ? 'Arraste mais arquivos ou selecione no dispositivo'
+          : 'Escolha arquivos do seu dispositivo ou solte-os nesta área' }),
+      ] }),
+      el('span', { className: 'batch-studio-upload-action',
+        text: hasFiles ? 'Adicionar EPUBs' : 'Escolher arquivos' }),
       input,
     ],
   });
@@ -757,8 +783,8 @@ function renderBatch(
     event.preventDefault();
     input.click();
   });
-  for (const eventName of ['dragenter', 'dragover']) {
-    zone.addEventListener(eventName, (event) => {
+  for (const type of ['dragenter', 'dragover']) {
+    zone.addEventListener(type, (event) => {
       event.preventDefault();
       if (!state.busy) zone.classList.add('optional-batch-dragging');
     });
@@ -774,16 +800,133 @@ function renderBatch(
     addFiles(Array.from(event.dataTransfer?.files ?? []));
   });
 
-  const choices = el('fieldset', {
-    className: 'optional-batch-mode batch-workspace-modes',
+  const clear = button('Limpar', 'btn btn-ghost btn-small batch-studio-clear', () => {
+    s.batchFiles = [];
+    resetBatchOutput(s);
+    s.batchError = false;
+    s.message = '';
+    rerender();
+  });
+  clear.disabled = !hasFiles || state.busy;
+
+  const fileRows = s.batchFiles.map((file, index) => {
+    const progress = s.batchProgress[index];
+    const result = s.batchEntries[index];
+    const tone = batchResultTone(result, progress);
+    const statusText = result?.status ?? batchProgressLabel(progress);
+    const remove = button('Remover', 'btn btn-ghost btn-small batch-studio-remove', () => {
+      s.batchFiles.splice(index, 1);
+      resetBatchOutput(s);
+      s.batchError = false;
+      s.message = '';
+      rerender();
+    });
+    remove.disabled = state.busy;
+    remove.setAttribute('aria-label', 'Remover ' + file.name + ' do lote');
+    const detail = result ? el('details', {
+      className: 'batch-studio-result-detail',
+      children: [
+        el('summary', { text: 'Ver resultado deste livro' }),
+        el('div', { children: [
+          el('p', { text: result.detail }),
+          el('small', { text: result.output
+            ? 'EPUB exportado: ' + result.output + ' · Relatório: ' + result.report
+            : 'Relatório: ' + result.report }),
+        ] }),
+      ],
+    }) : undefined;
+    if (detail) {
+      detail.open = s.batchExpandedDetails.includes(index);
+      detail.addEventListener('toggle', () => {
+        if (!detail.isConnected) return;
+        const expanded = s.batchExpandedDetails.includes(index);
+        if (detail.open && !expanded) s.batchExpandedDetails.push(index);
+        if (!detail.open && expanded) {
+          s.batchExpandedDetails = s.batchExpandedDetails.filter((item) => item !== index);
+        }
+      });
+    }
+    return el('li', { className: 'batch-studio-file-row', children: [
+      el('div', { className: 'batch-studio-file-main', children: [
+        el('span', { className: 'batch-studio-file-number',
+          attrs: { 'aria-hidden': 'true' }, text: String(index + 1).padStart(2, '0') }),
+        el('div', { className: 'batch-studio-file-meta', children: [
+          el('strong', { text: file.name, attrs: { title: file.name } }),
+          el('small', { text: formatBytes(file.size) }),
+        ] }),
+        el('span', { className: 'batch-studio-file-status batch-studio-status-' + tone,
+          attrs: { title: progress?.detail ?? result?.detail ?? statusText },
+          text: statusText }),
+        remove,
+      ] }),
+      detail,
+    ] });
+  });
+  const fileList = el('div', {
+    className: 'batch-studio-file-scroll',
+    attrs: { tabindex: '0', role: 'region',
+      'aria-label': 'Lista de arquivos EPUB selecionados' },
+    children: hasFiles
+      ? [el('ul', { className: 'optional-batch-files batch-workspace-files',
+          children: fileRows })]
+      : [el('div', { className: 'batch-studio-empty', children: [
+          el('strong', { text: 'Nenhum livro na lista' }),
+          el('small', { text: 'Adicione entre 1 e ' + MAX_BATCH_FILES +
+            ' EPUBs para começar. O limite total é de ' +
+            formatBytes(MAX_BATCH_BYTES) + '.' }),
+        ] })],
+  });
+
+  const message = s.batchError || (!state.busy && state.error && s.batchStarted && !s.batchZip)
+    ? el('p', { className: 'batch-studio-alert',
+        attrs: { role: 'alert' },
+        text: s.batchError ? s.message : state.error ?? '' })
+    : s.message
+      ? el('p', { className: 'batch-studio-notice',
+          attrs: { role: 'status' }, text: s.message })
+      : undefined;
+
+  const uploadSide = el('section', {
+    className: 'batch-studio-library',
+    attrs: { 'aria-label': 'Arquivos do processamento em lote' },
     children: [
-      el('legend', { text: 'O que você quer fazer com os livros?' }),
+      el('header', { className: 'batch-studio-section-heading', children: [
+        el('div', { children: [
+          el('span', { className: 'batch-studio-section-index', text: '01 / ARQUIVOS' }),
+          el('h3', { text: 'Sua biblioteca' }),
+        ] }),
+        hasFiles ? clear : undefined,
+      ] }),
+      zone,
+      el('div', { className: 'batch-studio-file-heading', children: [
+        el('strong', { text: count + (count === 1 ? ' EPUB selecionado'
+          : ' EPUBs selecionados') }),
+        el('small', { text: formatBytes(totalBytes) + ' de ' +
+          formatBytes(MAX_BATCH_BYTES) }),
+      ] }),
+      fileList,
+      el('div', { className: 'batch-studio-capacity', children: [
+        el('div', { children: [
+          el('span', { text: 'Espaço utilizado' }),
+          el('strong', { text: Math.round(totalBytes / MAX_BATCH_BYTES * 100) + '%' }),
+        ] }),
+        el('progress', { attrs: { max: String(MAX_BATCH_BYTES),
+          value: String(totalBytes), 'aria-label': 'Espaço total de EPUBs utilizado' } }),
+        el('small', { text: 'Até ' + MAX_BATCH_FILES + ' livros · ' +
+          formatBytes(MAX_BATCH_BYTES) + ' no total' }),
+      ] }),
+      message,
+    ],
+  });
+
+  const choices = el('fieldset', {
+    className: 'optional-batch-mode batch-workspace-modes batch-studio-modes',
+    children: [
+      el('legend', { text: 'Escolha o tipo de processamento' }),
       ...([
-        ['repair', 'Corrigir e melhorar',
-          'Faz os reparos e ajustes seguros automaticamente, criando novos EPUBs.'],
-        ['validate', 'Apenas verificar',
-          'Analisa cada arquivo e gera relatórios, sem modificar nenhum livro.'],
-      ] as const).map(([mode, label, description]) => {
+        ['repair', 'Corrigir e melhorar', 'Reparos e melhorias seguras. Gera novos EPUBs.'],
+        ['validate', 'Somente verificar', 'Apenas diagnósticos, sem alterar os livros.'],
+      ] as const).map(([mode, title, description]) => {
         const radio = el('input', { attrs: {
           type: 'radio', name: 'optional-batch-mode', value: mode,
           ...(s.batchMode === mode ? { checked: 'checked' } : {}),
@@ -792,168 +935,120 @@ function renderBatch(
         radio.addEventListener('change', () => {
           if (!radio.checked || state.busy) return;
           s.batchMode = mode;
-          s.batchZip = undefined;
-          s.batchStatus = [];
-          s.message = '';
+          resetBatchOutput(s);
           s.batchError = false;
+          s.message = '';
           rerender();
         });
-        return el('label', {
-          className: 'optional-batch-choice batch-workspace-choice',
-          children: [
-            radio,
-            el('span', { children: [
-              el('strong', { text: label }),
-              el('small', { text: description }),
-            ] }),
-          ],
+        return el('label', { className: 'optional-batch-choice batch-studio-choice',
+          children: [radio, el('span', { children: [
+            el('strong', { text: title }), el('small', { text: description }),
+          ] })],
         });
       }),
     ],
   });
 
-  const clear = button('Limpar lista', 'btn btn-ghost btn-small batch-workspace-clear', () => {
-    s.batchFiles = [];
-    s.batchZip = undefined;
-    s.batchStatus = [];
-    s.message = 'Lista limpa. Adicione EPUBs para começar.';
-    s.batchError = false;
-    rerender();
-  });
-  clear.disabled = !hasFiles || state.busy;
-
   const start = button(
     s.batchMode === 'repair' ? 'Corrigir ' + count + (count === 1 ? ' EPUB' : ' EPUBs')
       : 'Verificar ' + count + (count === 1 ? ' EPUB' : ' EPUBs'),
-    'btn btn-primary batch-workspace-start',
+    'btn btn-primary batch-workspace-start batch-studio-primary',
     () => {
+      if (!s.batchFiles.length || state.busy) return;
       const files = [...s.batchFiles];
       const mode = s.batchMode;
-      s.batchStatus = files.map((file) => file.name + ': aguardando');
-      s.batchZip = undefined;
-      s.message = '';
+      resetBatchOutput(s);
+      s.batchStarted = true;
+      s.batchProgress = files.map(() => undefined);
       s.batchError = false;
+      s.message = '';
       enqueue(mode === 'repair' ? 'Corrigir lote de EPUBs' : 'Verificar lote de EPUBs',
         async ({ signal, onProgress }) => {
           const processed = await processEpubBatch(files, signal,
-            (phase, completed, total, detail) => {
+            (phase, done, total, detail) => {
               if (detail && detail.source !== 'ZIP final') {
-                s.batchStatus[detail.index] = detail.source + ': ' + detail.detail;
+                s.batchProgress[detail.index] = detail;
+                if (detail.stage === 'completed' || detail.stage === 'failed') {
+                  s.batchCompleted = done;
+                }
               }
-              onProgress({ phase, completed, total });
+              onProgress({ phase, completed: done, total });
             }, { mode, includeOptimizations: true });
           s.batchZip = processed.zip;
-          s.batchStatus = processed.entries.map((entry) =>
-            entry.source + ': ' + entry.status + ' · ' + entry.detail +
-            ' Relatório: ' + entry.report);
-          const changed = processed.entries.filter((entry) => entry.changed).length;
-          const available = processed.entries.filter((entry) => entry.output).length;
-          s.message = mode === 'repair'
-            ? 'Concluído: ' + changed + ' de ' + files.length + ' livro(s) tiveram alterações. ' +
-              available + ' EPUB(s) disponíveis no ZIP, junto com os relatórios.'
-            : 'Concluído: ' + files.length +
-              ' livro(s) verificados. O ZIP contém os relatórios individuais.';
+          s.batchEntries = processed.entries;
+          s.batchCompleted = files.length;
+          s.message = '';
         });
     },
   );
   start.disabled = !hasFiles || state.busy;
 
-  const fileList = hasFiles ? el('section', {
-    className: 'batch-workspace-selection',
-    attrs: { 'aria-label': 'Arquivos selecionados para o lote' },
-    children: [
-      el('div', { className: 'batch-workspace-selection-header', children: [
-        el('div', { children: [
-          el('span', { className: 'batch-workspace-section-label', text: 'SEUS LIVROS' }),
-          el('strong', { text: count + (count === 1
-            ? ' EPUB selecionado' : ' EPUBs selecionados') }),
-        ] }),
-        el('span', { className: 'batch-workspace-total', text:
-          formatBytes(totalBytes) + ' / ' + formatBytes(MAX_BATCH_BYTES) }),
-      ] }),
-      el('ul', { className: 'optional-batch-files batch-workspace-files',
-        children: s.batchFiles.map((file, index) => {
-          const remove = button('Remover', 'btn btn-ghost btn-small', () => {
-            s.batchFiles.splice(index, 1);
-            s.batchStatus = [];
-            s.batchZip = undefined;
-            s.message = 'Livro removido da lista.';
-            s.batchError = false;
-            rerender();
-          });
-          remove.disabled = state.busy;
-          remove.setAttribute('aria-label', 'Remover ' + file.name + ' do lote');
-          return el('li', { children: [
-            el('span', { className: 'batch-workspace-file-icon', text: 'EPUB',
-              attrs: { 'aria-hidden': 'true' } }),
-            el('div', { className: 'batch-workspace-file-copy', children: [
-              el('strong', { text: file.name }),
-              el('small', { text: formatBytes(file.size) }),
-            ] }),
-            remove,
-          ] });
-        }),
-      }),
-      clear,
-    ],
-  }) : undefined;
+  const download = outputReady ? button(
+    s.batchMode === 'repair' ? 'Baixar EPUBs e relatórios' : 'Baixar relatórios',
+    'btn btn-primary batch-workspace-download-button batch-studio-primary',
+    () => downloadBlob(s.batchZip!, 'epub-repair-lote.zip'),
+  ) : undefined;
 
-  const status = s.message ? el('p', {
-    className: 'batch-workspace-message' +
-      (s.batchError ? ' batch-workspace-message-error' : ''),
-    attrs: { role: s.batchError ? 'alert' : 'status', 'aria-live': 'polite' },
-    text: s.message,
-  }) : undefined;
-
-  const progress = s.batchStatus.length ? el('section', {
-    className: 'batch-workspace-progress',
-    attrs: { 'aria-label': 'Andamento do processamento' },
-    children: [
-      el('strong', { text: state.busy ? 'Processando seus EPUBs' : 'Resultado por arquivo' }),
-      el('ol', { className: 'optional-batch-progress',
-        attrs: { 'aria-label': 'Andamento de cada EPUB', 'aria-live': 'polite' },
-        children: s.batchStatus.map((message) => el('li', { text: message })),
-      }),
-    ],
-  }) : undefined;
-
-  const download = s.batchZip ? el('section', {
-    className: 'batch-workspace-download',
-    attrs: { role: 'status' },
-    children: [
+  const aside = el('aside', { className: 'batch-studio-console', children: [
+    el('header', { className: 'batch-studio-section-heading', children: [
       el('div', { children: [
-        el('strong', { text: 'Seus arquivos estão prontos' }),
-        el('p', { text: s.batchMode === 'repair'
-          ? 'O pacote reúne os EPUBs disponíveis e os relatórios de cada livro.'
-          : 'O pacote contém os relatórios de verificação de cada livro.' }),
+        el('span', { className: 'batch-studio-section-index', text: '02 / AÇÃO' }),
+        el('h3', { text: 'O que fazer?' }),
       ] }),
-      button(s.batchMode === 'repair' ? 'Baixar EPUBs e relatórios (ZIP)'
-        : 'Baixar relatórios (ZIP)',
-      'btn btn-primary batch-workspace-download-button',
-      () => downloadBlob(s.batchZip!, 'epub-repair-lote.zip')),
-    ],
-  }) : undefined;
-
-  return el('div', {
-    className: 'optional-tool-content batch-workspace-content',
-    children: [
-      zone,
-      fileList,
-      status,
-      el('div', { className: 'batch-workspace-decision', children: [
-        choices,
-        el('div', { className: 'batch-workspace-submit', children: [
-          start,
-          state.busy ? button('Cancelar processamento',
-            'btn btn-secondary batch-workspace-cancel', cancelAll) : undefined,
-          el('small', { text: 'Sem alterar seus arquivos originais. ' +
-            'Você receberá um único ZIP ao final.' }),
+    ] }),
+    choices,
+    el('div', { className: 'batch-studio-action-area', children: [
+      el('div', { className: 'batch-studio-summary', children: [
+        el('span', { text: 'RESUMO DA OPERAÇÃO' }),
+        el('strong', { text: count + (count === 1 ? ' livro' : ' livros') +
+          ' · ' + (s.batchMode === 'repair' ? 'Correção' : 'Verificação') }),
+        el('small', { text: hasFiles ? formatBytes(totalBytes) +
+          ' selecionados · arquivos originais preservados'
+          : 'Adicione arquivos para habilitar a operação' }),
+      ] }),
+      s.batchStarted ? el('div', { className: 'batch-studio-job-progress',
+        attrs: { role: 'status', 'aria-live': 'polite' },
+        children: [
+          el('div', { children: [
+            el('strong', { text: outputReady ? 'Processamento concluído'
+              : inProgress ? 'Processando livros' : 'Processamento interrompido' }),
+            el('span', { text: completed + ' / ' + count }),
+          ] }),
+          el('progress', { attrs: { max: String(Math.max(1, count)),
+            value: String(completed), 'aria-label': 'Progresso do lote' } }),
+        ],
+      }) : undefined,
+      outputReady ? el('div', { className: 'batch-studio-ready', children: [
+        el('span', { className: 'batch-studio-ready-marker',
+          attrs: { 'aria-hidden': 'true' }, text: '✓' }),
+        el('div', { children: [
+          el('strong', { text: 'Seu pacote está pronto' }),
+          el('small', { text: s.batchMode === 'repair'
+            ? s.batchEntries.filter((entry) => entry.changed).length +
+              ' livro(s) melhorados · ' +
+              s.batchEntries.filter((entry) => entry.output).length +
+              ' EPUB(s) no ZIP'
+            : s.batchEntries.length + ' relatórios individuais no ZIP' }),
         ] }),
-      ] }),
-      progress,
-      download,
-    ],
-  });
+      ] }) : undefined,
+      download ?? (s.batchStarted && !state.busy
+        ? button('Processar novamente', 'btn btn-primary batch-studio-primary',
+          () => start.click()) : start),
+      inProgress ? button('Cancelar processamento',
+        'btn btn-secondary batch-workspace-cancel batch-studio-cancel', cancelAll) : undefined,
+      outputReady ? button('Processar novamente',
+        'btn btn-ghost batch-studio-repeat', () => {
+          resetBatchOutput(s);
+          s.message = '';
+          rerender();
+        }) : undefined,
+      el('p', { className: 'batch-studio-reassurance',
+        text: 'Tudo é processado no navegador. Seus arquivos originais não são alterados.' }),
+    ] }),
+  ] });
+
+  return el('div', { className: 'optional-tool-content batch-workspace-content batch-studio-layout',
+    children: [uploadSide, aside] });
 }
 
 export function renderOptionalEpubTools(state: AppState, rerender: () => void, enqueue: Queue): HTMLElement {

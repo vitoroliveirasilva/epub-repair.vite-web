@@ -10,7 +10,7 @@ import {
   isBatchWorkspaceActive, openBatchWithFiles, renderBatchWorkspace,
   setBatchWorkspaceActive,
 } from '../src/ui/optionalEpubTools';
-import { createInitialState } from '../src/app/state';
+import { createInitialState, type ProcessingProgress } from '../src/app/state';
 
 vi.setConfig({ testTimeout: 30_000 });
 beforeAll(() => vi.stubGlobal('Blob', NodeBlob));
@@ -306,5 +306,65 @@ describe('Lotes limitados e isolados', () => {
     expect(host.querySelector('[role="alert"]')?.textContent).toContain('6 EPUBs');
     expect(host.querySelectorAll('.batch-workspace-files li')).toHaveLength(1);
   });
+
+  it('concentra os resultados na lista, sem repetir blocos e sem expandir o card a cada arquivo', async () => {
+    const state = createInitialState();
+    const files = [
+      new File(['não é um ZIP'], 'quebrado-a.epub'),
+      new File(['não é um ZIP'], 'quebrado-b.epub'),
+    ];
+    const pending: Array<(ctx: {
+      signal: AbortSignal;
+      onProgress: (progress: ProcessingProgress) => void;
+    }) => Promise<void>> = [];
+    const host = document.createElement('div');
+    const rerender = (): void => {
+      host.replaceChildren(renderBatchWorkspace(state, rerender,
+        (_label, task) => { pending.push(task); }, () => {}));
+    };
+    openBatchWithFiles(state, files);
+    rerender();
+    expect(host.querySelector('.batch-studio-layout')).not.toBeNull();
+    expect(host.querySelector('.batch-studio-library')).not.toBeNull();
+    expect(host.querySelector('.batch-studio-console')).not.toBeNull();
+    expect(host.querySelector('.batch-studio-file-scroll')).not.toBeNull();
+    expect(host.querySelectorAll('.batch-workspace-files li')).toHaveLength(2);
+    expect(host.querySelector('.optional-batch-progress')).toBeNull();
+
+    const start = Array.from(host.querySelectorAll<HTMLButtonElement>('button'))
+      .find((item) => item.textContent === 'Corrigir 2 EPUBs');
+    start?.click();
+    expect(pending).toHaveLength(1);
+    await pending[0]!({ signal: new AbortController().signal, onProgress: () => {} });
+    rerender();
+
+    expect(host.querySelectorAll('.batch-workspace-files li')).toHaveLength(2);
+    expect(host.querySelectorAll('.batch-studio-result-detail')).toHaveLength(2);
+    expect((host.querySelector('.batch-studio-result-detail') as HTMLDetailsElement).open).toBe(false);
+    expect(host.querySelectorAll('.optional-batch-progress')).toHaveLength(0);
+    expect(host.querySelector('.batch-studio-ready')).not.toBeNull();
+    expect(host.textContent).toContain('Baixar EPUBs e relatórios');
+    const details = host.querySelector<HTMLDetailsElement>('.batch-studio-result-detail')!;
+    details.open = true;
+    expect(details.textContent).toContain('Relatório:');
+  });
+
+  it('tem lista e opções responsivas sem dependência da seção de ferramentas extras', () => {
+    const state = createInitialState();
+    const host = document.createElement('div');
+    const rerender = (): void => {
+      host.replaceChildren(renderBatchWorkspace(state, rerender, () => {}, () => {}));
+    };
+    openBatchWithFiles(state, [new File(['a'], 'meu-livro.epub')]);
+    rerender();
+    expect(host.querySelector('.optional-tools')).toBeNull();
+    expect(host.querySelector('.batch-studio-file-scroll[role="region"]')).not.toBeNull();
+    expect(host.querySelector('.batch-studio-primary')).not.toBeNull();
+    expect(host.querySelector('.batch-studio-counter')?.getAttribute('aria-label'))
+      .toContain('1 de 6');
+    expect(host.querySelector('.batch-studio-file-meta strong')?.getAttribute('title'))
+      .toBe('meu-livro.epub');
+  });
+
 
 });

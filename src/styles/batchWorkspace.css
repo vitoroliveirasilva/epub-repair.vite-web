@@ -1,815 +1,1040 @@
-#app .workflow-mode-selector {
+#app .layout#app-workspace .batch-studio {
+  --batch-accent: #255844;
+  --batch-accent-dark: #183e31;
+  --batch-copper: var(--studio-copper, #c57450);
+  --batch-line: color-mix(in srgb, var(--color-border) 78%, transparent);
+  position: relative;
   display: grid;
-  gap: .95rem;
+  gap: clamp(1.25rem, 2.6vw, 2.15rem);
   width: 100%;
-  margin: .2rem 0 clamp(1rem, 2.5vw, 1.6rem);
-  padding: clamp(1rem, 2.1vw, 1.35rem);
-  border: 1px solid var(--color-border);
-  border-radius: 1.25rem;
-  background: color-mix(in srgb, var(--color-surface) 96%, var(--color-surface-2));
+  min-width: 0;
+  height: auto;
+  padding: clamp(1.2rem, 2.8vw, 2.3rem);
+  overflow: visible;
+  border: 1px solid var(--batch-line);
+  border-radius: clamp(1.2rem, 2vw, 1.65rem);
+  background:
+    radial-gradient(ellipse at 96% 0, color-mix(in srgb, var(--batch-copper) 9%, transparent), transparent 29rem),
+    var(--color-surface);
+  box-shadow: 0 1.15rem 3rem color-mix(in srgb, var(--color-text) 6%, transparent);
 }
 
-#app .workflow-mode-heading {
+#app .batch-studio:focus { outline: none; }
+
+#app .batch-studio-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: .3rem 1rem;
-}
-
-#app .workflow-mode-heading strong {
-  color: var(--color-text);
-  font-family: var(--font-serif);
-  font-size: clamp(1.04rem, 1.65vw, 1.25rem);
-  letter-spacing: -.025em;
-}
-
-#app .workflow-mode-heading small {
-  color: var(--color-text-muted);
-  font-size: .76rem;
-  line-height: 1.5;
-}
-
-#app .workflow-mode-options {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: .7rem;
-}
-
-#app .workflow-mode-card {
-  display: grid;
-  grid-template-columns: 2.55rem minmax(0, 1fr);
-  grid-template-rows: auto auto;
-  gap: .18rem .9rem;
-  min-height: 5.75rem;
-  align-content: center;
-  align-items: center;
-  width: 100%;
-  padding: .95rem 1.05rem;
-  border: 1px solid var(--color-border);
-  border-radius: .95rem;
-  background: var(--color-surface);
-  color: var(--color-text);
-  font: inherit;
-  font-size: .96rem;
-  font-weight: 800;
-  line-height: 1.25;
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 180ms ease, background-color 180ms ease, box-shadow 200ms ease;
-}
-
-#app .workflow-mode-card:not(:disabled):hover,
-#app .workflow-mode-card:focus-visible {
-  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
-  background: color-mix(in srgb, var(--color-accent) 4%, var(--color-surface));
-}
-
-#app .workflow-mode-card:focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-#app .workflow-mode-card-active,
-#app .workflow-mode-card-active:not(:disabled):hover {
-  border-color: color-mix(in srgb, var(--color-accent) 64%, var(--color-border));
-  background: color-mix(in srgb, var(--color-accent) 9%, var(--color-surface));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 25%, transparent);
-}
-
-#app .workflow-mode-card:disabled {
-  cursor: progress;
-}
-
-#app .workflow-mode-icon {
-  display: grid;
-  grid-column: 1;
-  grid-row: 1 / span 2;
-  width: 2.55rem;
-  height: 2.8rem;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 25%, var(--color-border));
-  border-radius: .65rem;
-  background: var(--color-surface-2);
-  color: var(--color-accent-strong);
-  font-size: .83rem;
-  font-weight: 900;
-}
-
-#app .workflow-mode-card-active .workflow-mode-icon {
-  border-color: #285c46;
-  background: #265a44;
-  color: #fff7e9;
-}
-
-#app .workflow-mode-description {
-  grid-column: 2;
-  grid-row: 2;
-  color: var(--color-text-muted);
-  font-size: .73rem;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-#app .layout#app-workspace .batch-workspace {
-  display: grid;
-  align-content: start;
-  gap: clamp(1.2rem, 2vw, 1.75rem);
-  width: 100%;
+  gap: 1.5rem;
   min-width: 0;
-  padding: clamp(1.25rem, 3.15vw, 2.55rem);
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 24%, var(--color-border));
-  border-radius: 1.65rem;
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent) 9%, transparent), transparent 22rem),
-    var(--color-surface);
-  box-shadow: 0 1.4rem 3.4rem color-mix(in srgb, var(--color-text) 6%, transparent);
+  padding-bottom: clamp(.95rem, 2vw, 1.5rem);
+  border-bottom: 1px solid var(--batch-line);
 }
 
-#app .batch-workspace:focus {
-  outline: none;
-}
-
-#app .batch-workspace-heading {
+#app .batch-studio-intro {
   display: grid;
-  gap: .62rem;
-  max-width: 47rem;
+  justify-items: start;
+  gap: .44rem;
+  min-width: 0;
 }
 
-#app .batch-workspace-eyebrow,
-#app .batch-workspace-section-label {
-  color: var(--studio-copper, #bd7050);
-  font-size: .69rem;
+#app .batch-studio-eyebrow,
+#app .batch-studio-section-index {
+  color: var(--batch-copper);
+  font-size: .68rem;
   font-weight: 850;
-  letter-spacing: .14em;
-  line-height: 1.5;
+  line-height: 1.35;
+  letter-spacing: .15em;
 }
 
-#app .batch-workspace-heading h2 {
-  margin: 0;
-  color: var(--color-text);
+#app .batch-studio-intro h2 {
+  max-width: 30ch;
+  margin: .05rem 0 0;
   font-family: var(--font-serif);
-  font-size: clamp(2rem, 3.35vw, 3.15rem);
+  font-size: clamp(1.8rem, 3vw, 2.65rem);
   font-weight: 750;
+  line-height: 1.12;
   letter-spacing: -.05em;
-  line-height: 1.08;
+  color: var(--color-text);
   text-wrap: balance;
 }
 
-#app .batch-workspace-heading p {
-  max-width: 42rem;
-  margin: 0;
+#app .batch-studio-intro p {
+  max-width: 46rem;
+  margin: .05rem 0 0;
   color: var(--color-text-muted);
-  font-size: .93rem;
-  line-height: 1.65;
+  font-size: .87rem;
+  line-height: 1.6;
   text-wrap: pretty;
 }
 
-#app .batch-workspace-steps {
+#app .batch-studio-counter {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: .6rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-#app .batch-workspace-steps li {
-  display: flex;
-  align-items: center;
-  gap: .65rem;
-  min-width: 0;
-  padding: .75rem .85rem;
-  border-radius: .78rem;
-  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface));
-}
-
-#app .batch-workspace-steps li span {
-  flex: 0 0 auto;
-  color: var(--studio-copper, #bd7050);
-  font-family: var(--font-serif);
-  font-size: 1.1rem;
-  font-weight: 800;
-}
-
-#app .batch-workspace-steps li strong {
-  min-width: 0;
-  color: var(--color-text);
-  font-size: .76rem;
-  line-height: 1.35;
-}
-
-#app .batch-workspace-content {
-  display: grid;
-  width: 100%;
-  min-width: 0;
-  gap: 1.2rem;
-}
-
-#app .batch-workspace-upload.optional-batch-dropzone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto auto;
+  align-items: baseline;
   justify-content: center;
-  min-height: 13.5rem;
-  gap: .48rem;
-  width: 100%;
-  padding: 1.35rem 1.5rem;
-  border: 1.5px dashed color-mix(in srgb, var(--color-accent) 51%, var(--color-border));
-  border-radius: 1.1rem;
-  background:
-    radial-gradient(circle, color-mix(in srgb, var(--color-accent) 15%, transparent) .7px, transparent 1px) 0 0 / 22px 22px,
-    color-mix(in srgb, var(--color-surface) 85%, var(--color-accent-soft));
-  box-shadow: inset 0 0 0 5px color-mix(in srgb, var(--color-surface) 67%, transparent);
-  color: var(--color-text);
-  text-align: center;
-  cursor: pointer;
-  transition: border-color 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
+  gap: 0 .22rem;
+  min-width: 6.7rem;
+  min-height: 6.3rem;
+  padding: .85rem 1rem;
+  border: 1px solid color-mix(in srgb, #a5bdab 35%, transparent);
+  border-radius: 1.05rem;
+  background: linear-gradient(145deg, #235740, #183c30);
+  color: #fff9ed;
 }
 
-#app .batch-workspace-upload.optional-batch-dropzone:is(:hover, :focus-visible, .optional-batch-dragging) {
-  border-color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface));
-  box-shadow: inset 0 0 0 5px color-mix(in srgb, var(--color-surface) 64%, transparent),
-    0 .65rem 1.5rem color-mix(in srgb, var(--color-accent) 10%, transparent);
-}
-
-#app .batch-workspace-upload.optional-batch-dropzone:focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 3px;
-}
-
-#app .batch-workspace-upload.optional-batch-dropzone[aria-disabled="true"] {
-  cursor: progress;
-  opacity: .65;
-}
-
-#app .batch-workspace-upload .upload-studio-batch-icon {
-  width: 2.8rem;
-  height: 3.2rem;
-  margin-bottom: .2rem;
-  border-radius: .46rem .65rem .5rem .46rem;
-  font-size: .6rem;
-}
-
-#app .batch-workspace-upload > strong {
+#app .batch-studio-counter strong {
   font-family: var(--font-serif);
-  font-size: clamp(1.2rem, 2.2vw, 1.55rem);
-  letter-spacing: -.036em;
-  line-height: 1.28;
-}
-
-#app .batch-workspace-upload > span:not(.upload-studio-batch-icon):not(.upload-studio-batch-action) {
-  max-width: 28rem;
-  color: var(--color-text-muted);
-  font-size: .83rem;
-  line-height: 1.5;
-}
-
-#app .batch-workspace-upload > .upload-studio-batch-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.5rem;
-  padding: .65rem 1.1rem;
-  border-radius: .65rem;
-  background: #245e48;
-  border: 1px solid #245e48;
-  color: #fff7ed !important;
-  font-size: .82rem !important;
-  font-weight: 800;
-}
-
-#app .batch-workspace-upload > small {
-  color: var(--color-text-muted);
-  font-size: .71rem;
-  line-height: 1.5;
-}
-
-#app .batch-workspace-upload-compact.optional-batch-dropzone {
-  display: grid;
-  grid-template-columns: 3.35rem minmax(0, 1fr) auto;
-  grid-template-rows: auto auto auto;
-  gap: .13rem 1rem;
-  align-items: center;
-  justify-items: start;
-  min-height: 0;
-  padding: 1rem 1.2rem;
-  text-align: left;
-}
-
-#app .batch-workspace-upload-compact .upload-studio-batch-icon {
-  grid-column: 1;
-  grid-row: 1 / span 3;
-  margin: 0;
-}
-
-#app .batch-workspace-upload-compact > strong {
-  grid-column: 2;
-  grid-row: 1;
-  font-size: 1.12rem;
-}
-
-#app .batch-workspace-upload-compact > span:not(.upload-studio-batch-icon):not(.upload-studio-batch-action) {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-#app .batch-workspace-upload-compact > small {
-  grid-column: 2;
-  grid-row: 3;
-}
-
-#app .batch-workspace-upload-compact > .upload-studio-batch-action {
-  grid-column: 3;
-  grid-row: 1 / span 3;
-  white-space: nowrap;
-}
-
-#app .batch-workspace-selection {
-  display: grid;
-  gap: .85rem;
-}
-
-#app .batch-workspace-selection-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: .55rem 1rem;
-}
-
-#app .batch-workspace-selection-header > div {
-  display: grid;
-  gap: .23rem;
-}
-
-#app .batch-workspace-selection-header strong {
-  color: var(--color-text);
-  font-family: var(--font-serif);
-  font-size: clamp(1.25rem, 2vw, 1.6rem);
-  letter-spacing: -.025em;
-}
-
-#app .batch-workspace-total {
-  padding: .42rem .62rem;
-  border: 1px solid var(--color-border);
-  border-radius: .55rem;
-  background: var(--color-surface-2);
-  color: var(--color-text-muted);
-  font-size: .72rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-#app .batch-workspace-files.optional-batch-files {
-  display: grid;
-  gap: .55rem;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-#app .batch-workspace-files li {
-  display: flex;
-  align-items: center;
-  gap: .82rem;
-  min-height: 4.15rem;
-  min-width: 0;
-  padding: .7rem .85rem;
-  border: 1px solid color-mix(in srgb, var(--color-border) 88%, transparent);
-  border-radius: .9rem;
-  background: color-mix(in srgb, var(--color-surface) 93%, var(--color-surface-2));
-}
-
-#app .batch-workspace-file-icon {
-  display: grid;
-  flex: 0 0 2.55rem;
-  width: 2.55rem;
-  height: 2.85rem;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
-  border-radius: .52rem;
-  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
-  color: var(--color-accent-strong);
-  font-size: .6rem;
-  font-weight: 900;
-  letter-spacing: .04em;
-}
-
-#app .batch-workspace-file-copy {
-  display: grid;
-  flex: 1 1 auto;
-  min-width: 0;
-  gap: .22rem;
-}
-
-#app .batch-workspace-file-copy strong {
-  display: block;
-  overflow: hidden;
-  max-width: 100%;
-  color: var(--color-text);
-  font-size: .84rem;
+  font-size: 2.7rem;
   font-weight: 750;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1;
+  letter-spacing: -.07em;
 }
 
-#app .batch-workspace-file-copy small {
-  color: var(--color-text-muted);
-  font-size: .72rem;
+#app .batch-studio-counter > span {
+  color: #bed7c7;
+  font-family: var(--font-serif);
+  font-size: 1.03rem;
 }
 
-#app .batch-workspace-files .btn {
-  flex: 0 0 auto;
-  min-height: 2.25rem;
-  padding: .5rem .73rem;
-  border: 1px solid var(--color-border);
+#app .batch-studio-counter small {
+  grid-column: 1 / -1;
+  padding-top: .45rem;
+  color: #f0c2a3;
+  font-size: .59rem;
+  font-weight: 850;
+  line-height: 1.2;
+  letter-spacing: .16em;
+  text-align: center;
+}
+
+#app .batch-studio-layout.batch-workspace-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.24fr) minmax(17rem, .76fr);
+  align-items: start;
+  gap: clamp(.9rem, 2vw, 1.45rem);
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+#app .batch-studio-library,
+#app .batch-studio-console {
+  display: grid;
+  align-content: start;
+  min-width: 0;
+  gap: .95rem;
+  border-radius: 1.12rem;
+}
+
+#app .batch-studio-library {
+  padding: clamp(1rem, 2vw, 1.45rem);
+  border: 1px solid var(--batch-line);
+  background: color-mix(in srgb, var(--color-surface) 95%, var(--color-surface-2));
+}
+
+#app .batch-studio-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: .6rem;
+  min-width: 0;
+}
+
+#app .batch-studio-section-heading > div {
+  display: grid;
+  gap: .3rem;
+  min-width: 0;
+}
+
+#app .batch-studio-section-heading h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.28rem, 2vw, 1.62rem);
+  line-height: 1.2;
+  letter-spacing: -.035em;
+}
+
+#app .batch-studio-clear.btn {
+  min-height: 2.2rem;
+  padding: .4rem .65rem;
+  border: 1px solid var(--batch-line);
   border-radius: .6rem;
   background: var(--color-surface);
   color: var(--color-text-muted);
   font-size: .72rem;
   font-weight: 750;
+  white-space: nowrap;
 }
 
-#app .batch-workspace-clear {
-  justify-self: end;
-  padding: .35rem .6rem;
-  border: 0;
-  color: var(--color-text-muted);
-  background: transparent;
-  font-size: .72rem;
-  font-weight: 650;
-}
-
-#app .batch-workspace-message {
-  margin: -.3rem 0 0;
-  padding: .75rem 1rem;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 18%, var(--color-border));
-  border-radius: .8rem;
-  background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
-  color: var(--color-text);
-  font-size: .8rem;
-  line-height: 1.55;
-}
-
-#app .batch-workspace-message-error {
-  border-color: color-mix(in srgb, var(--color-danger) 35%, var(--color-border));
-  background: color-mix(in srgb, var(--severity-error-soft) 60%, var(--color-surface));
+#app .batch-studio-clear.btn:not(:disabled):hover {
+  border-color: var(--batch-copper);
   color: var(--color-text);
 }
 
-#app .batch-workspace-decision {
+#app .batch-studio-upload.optional-batch-dropzone {
   display: grid;
-  gap: 1rem;
-  padding-top: .4rem;
-  border-top: 1px solid var(--color-border);
-}
-
-#app .batch-workspace-modes.optional-batch-mode {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: .75rem;
-  min-width: 0;
-  border: none;
-  padding: 0;
-  margin: 0;
-}
-
-#app .batch-workspace-modes legend {
-  grid-column: 1 / -1;
+  grid-template-columns: 3rem minmax(0, 1fr) auto;
+  align-items: center;
+  justify-items: stretch;
+  gap: .8rem;
   width: 100%;
-  margin: 0 0 .85rem;
-  padding: 0;
-  color: var(--color-text);
-  font-family: var(--font-serif);
-  font-size: clamp(1.17rem, 2.2vw, 1.47rem);
-  font-weight: 750;
-  letter-spacing: -.035em;
-  line-height: 1.25;
-}
-
-#app .batch-workspace-choice.optional-batch-choice {
-  display: flex;
-  align-items: flex-start;
-  gap: .72rem;
   min-width: 0;
+  min-height: 6.4rem;
   margin: 0;
-  padding: 1.05rem;
-  border: 1.5px solid var(--color-border);
-  border-radius: .95rem;
-  background: var(--color-surface);
+  padding: 1rem;
+  border: 1.5px dashed color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+  border-radius: .85rem;
+  background:
+    radial-gradient(circle at 0 0, color-mix(in srgb, var(--color-accent) 11%, transparent), transparent 13rem),
+    var(--color-surface);
+  box-shadow: none;
+  text-align: left;
   cursor: pointer;
-  transition: border-color 180ms ease, background-color 180ms ease;
+  transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
 }
 
-#app .batch-workspace-choice.optional-batch-choice:has(input:checked) {
+#app .batch-studio-upload.optional-batch-dropzone:is(:hover, .optional-batch-dragging, :focus-visible) {
   border-color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface));
+  box-shadow: 0 .65rem 1.45rem color-mix(in srgb, var(--color-accent) 9%, transparent);
 }
 
-#app .batch-workspace-choice input {
-  width: 1.1rem;
-  height: 1.1rem;
-  flex: 0 0 auto;
-  margin: .15rem 0 0;
-  accent-color: var(--color-accent);
+#app .batch-studio-upload.optional-batch-dropzone:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
 }
 
-#app .batch-workspace-choice > span {
+#app .batch-studio-upload.optional-batch-dropzone[aria-disabled="true"] {
+  cursor: wait;
+  opacity: .6;
+}
+
+#app .batch-studio-upload-icon {
   display: grid;
-  min-width: 0;
-  gap: .4rem;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 26%, var(--color-border));
+  border-radius: .85rem;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+  font-family: var(--font-serif);
+  font-size: 2.05rem;
+  font-weight: 500;
+  line-height: 1;
 }
 
-#app .batch-workspace-choice strong {
+#app .batch-studio-upload-copy {
+  display: grid;
+  gap: .23rem;
+  min-width: 0;
+}
+
+#app .batch-studio-upload-copy strong {
   color: var(--color-text);
   font-size: .87rem;
   font-weight: 850;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
-#app .batch-workspace-choice small {
+#app .batch-studio-upload-copy small {
   color: var(--color-text-muted);
-  font-size: .75rem;
-  line-height: 1.55;
-}
-
-#app .batch-workspace-submit {
-  display: grid;
-  justify-items: center;
-  gap: .58rem;
-  padding: clamp(1rem, 2.2vw, 1.35rem);
-  border: 1px solid color-mix(in srgb, var(--color-accent) 24%, var(--color-border));
-  border-radius: 1rem;
-  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface));
-  text-align: center;
-}
-
-#app .batch-workspace-start.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: min(100%, 23rem);
-  min-height: 3.3rem;
-  padding: .85rem 1.2rem;
-  border: 1px solid #204a39;
-  border-radius: .78rem;
-  background: #235c45;
-  box-shadow: 0 .23rem 0 rgba(12, 40, 28, .24);
-  color: #fff8ed;
-  font-size: .96rem;
-  font-weight: 850;
-  letter-spacing: -.01em;
-}
-
-#app .batch-workspace-start.btn:not(:disabled):hover {
-  background: #2b6f52;
-  transform: translateY(-1px);
-}
-
-#app .batch-workspace-start.btn:disabled {
-  border-color: var(--color-border);
-  background: var(--color-surface-2);
-  box-shadow: none;
-  color: var(--color-text-muted);
-  cursor: not-allowed;
-  opacity: .8;
-}
-
-#app .batch-workspace-submit small {
-  max-width: 31rem;
-  color: var(--color-text-muted);
-  font-size: .73rem;
+  font-size: .72rem;
   line-height: 1.5;
 }
 
-#app .batch-workspace-progress {
+#app .batch-studio-upload-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: .6rem .8rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 43%, var(--color-border));
+  border-radius: .63rem;
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+  color: var(--color-accent-strong);
+  font-size: .75rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+#app .batch-studio-file-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .35rem .8rem;
+  padding-top: .15rem;
+}
+
+#app .batch-studio-file-heading strong {
+  color: var(--color-text);
+  font-size: .78rem;
+  font-weight: 850;
+}
+
+#app .batch-studio-file-heading small {
+  color: var(--color-text-muted);
+  font-size: .7rem;
+  font-weight: 650;
+}
+
+#app .batch-studio-file-scroll {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 9.4rem;
+  max-height: clamp(15.5rem, 34vh, 21rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-accent) 38%, var(--color-border)) transparent;
+  border: 1px solid var(--batch-line);
+  border-radius: .82rem;
+  background: var(--color-surface);
+}
+
+#app .batch-studio-file-scroll:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+#app .batch-studio-file-scroll .batch-workspace-files.optional-batch-files {
   display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+}
+
+#app .batch-studio-file-row {
+  display: block;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--color-surface);
+}
+
+#app .batch-studio-file-row + .batch-studio-file-row {
+  border-top: 1px solid var(--batch-line);
+}
+
+#app .batch-studio-file-main {
+  display: flex;
+  align-items: center;
   gap: .65rem;
   min-width: 0;
-  padding: 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: .95rem;
+  min-height: 4.45rem;
+  padding: .77rem .8rem;
+}
+
+#app .batch-studio-file-number {
+  display: grid;
+  width: 2.15rem;
+  height: 2.45rem;
+  flex: 0 0 2.15rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 27%, var(--color-border));
+  border-radius: .55rem;
+  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface));
+  color: var(--batch-copper);
+  font-family: var(--font-serif);
+  font-size: .85rem;
+  font-weight: 850;
+}
+
+#app .batch-studio-file-meta {
+  display: grid;
+  flex: 1 1 auto;
+  gap: .23rem;
+  min-width: 0;
+}
+
+#app .batch-studio-file-meta strong {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: .78rem;
+  font-weight: 780;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#app .batch-studio-file-meta small {
+  color: var(--color-text-muted);
+  font-size: .7rem;
+  line-height: 1.3;
+}
+
+#app .batch-studio-file-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .32rem;
+  max-width: 7.3rem;
+  min-height: 1.8rem;
+  flex: 0 1 auto;
+  padding: .32rem .48rem;
+  border: 1px solid transparent;
+  border-radius: .5rem;
+  font-size: .66rem;
+  font-weight: 800;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#app .batch-studio-file-status::before {
+  display: block;
+  width: .37rem;
+  height: .37rem;
+  flex: 0 0 .37rem;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+}
+
+#app .batch-studio-status-queued {
+  border-color: var(--batch-line);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+
+#app .batch-studio-status-working {
+  border-color: color-mix(in srgb, var(--color-info) 20%, var(--color-border));
+  background: var(--severity-info-soft);
+  color: var(--color-info);
+}
+
+#app .batch-studio-status-success {
+  border-color: color-mix(in srgb, var(--color-success) 20%, var(--color-border));
+  background: var(--severity-success-soft);
+  color: var(--color-success);
+}
+
+#app .batch-studio-status-warning {
+  border-color: color-mix(in srgb, var(--color-warning) 24%, var(--color-border));
+  background: var(--severity-warning-soft);
+  color: var(--color-warning);
+}
+
+#app .batch-studio-status-error {
+  border-color: color-mix(in srgb, var(--color-danger) 24%, var(--color-border));
+  background: var(--severity-error-soft);
+  color: var(--color-danger);
+}
+
+#app .batch-studio-remove.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.8rem;
+  flex: 0 0 auto;
+  min-height: 1.8rem;
+  margin: 0;
+  padding: .32rem .45rem;
+  border: 1px solid transparent;
+  border-radius: .5rem;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: .67rem;
+  font-weight: 750;
+}
+
+#app .batch-studio-remove.btn:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--color-danger) 24%, var(--color-border));
+  background: var(--severity-error-soft);
+  color: var(--color-danger);
+}
+
+#app .batch-studio-result-detail {
+  display: block;
+  min-width: 0;
+  margin: -.18rem .8rem .6rem 3.6rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+#app .batch-studio-result-detail summary {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .3rem .1rem;
+  border: 0;
+  color: var(--color-accent-strong);
+  background: transparent;
+  font-size: .7rem;
+  font-weight: 750;
+  cursor: pointer;
+  list-style: revert;
+}
+
+#app .batch-studio-result-detail summary:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+#app .batch-studio-result-detail > div {
+  display: grid;
+  min-width: 0;
+  gap: .32rem;
+  margin-top: .25rem;
+  padding: .75rem .9rem;
+  border-left: 2px solid var(--batch-copper);
+  border-radius: .32rem .6rem .6rem .32rem;
   background: var(--color-surface-2);
 }
 
-#app .batch-workspace-progress > strong {
+#app .batch-studio-result-detail p {
+  margin: 0;
   color: var(--color-text);
-  font-family: var(--font-serif);
-  font-size: 1.2rem;
+  font-size: .74rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
-#app .batch-workspace-progress .optional-batch-progress {
+#app .batch-studio-result-detail small {
+  color: var(--color-text-muted);
+  font-size: .69rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+#app .batch-studio-empty {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: .4rem;
+  min-height: 9.4rem;
+  padding: 1.5rem 1rem;
+  text-align: center;
+}
+
+#app .batch-studio-empty strong {
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+}
+
+#app .batch-studio-empty small {
+  max-width: 23rem;
+  color: var(--color-text-muted);
+  font-size: .75rem;
+  line-height: 1.5;
+}
+
+#app .batch-studio-capacity {
   display: grid;
   gap: .4rem;
-  margin: 0;
-  padding: 0 0 0 1.2rem;
+  min-width: 0;
+}
+
+#app .batch-studio-capacity > div,
+#app .batch-studio-job-progress > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6rem;
   color: var(--color-text-muted);
+  font-size: .72rem;
+  line-height: 1.35;
+}
+
+#app .batch-studio-capacity strong {
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+#app .batch-studio-capacity progress,
+#app .batch-studio-job-progress progress {
+  display: block;
+  width: 100%;
+  height: .4rem;
+  appearance: none;
+  border: 0;
+  border-radius: 100px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-accent) 15%, var(--color-surface-2));
+}
+
+#app .batch-studio-capacity progress::-webkit-progress-bar,
+#app .batch-studio-job-progress progress::-webkit-progress-bar {
+  background: color-mix(in srgb, var(--color-accent) 15%, var(--color-surface-2));
+  border-radius: 100px;
+}
+
+#app .batch-studio-capacity progress::-webkit-progress-value,
+#app .batch-studio-job-progress progress::-webkit-progress-value {
+  border-radius: 100px;
+  background: var(--batch-copper);
+}
+
+#app .batch-studio-capacity progress::-moz-progress-bar,
+#app .batch-studio-job-progress progress::-moz-progress-bar {
+  border-radius: 100px;
+  background: var(--batch-copper);
+}
+
+#app .batch-studio-capacity small {
+  color: var(--color-text-muted);
+  font-size: .68rem;
+  line-height: 1.5;
+}
+
+#app .batch-studio-alert,
+#app .batch-studio-notice {
+  margin: 0;
+  padding: .75rem .85rem;
+  border: 1px solid var(--batch-line);
+  border-radius: .65rem;
+  color: var(--color-text);
+  background: var(--color-surface-2);
   font-size: .77rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
 
-#app .batch-workspace-download {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
+#app .batch-studio-alert {
+  border-color: color-mix(in srgb, var(--color-danger) 35%, var(--color-border));
+  background: color-mix(in srgb, var(--severity-error-soft) 67%, var(--color-surface));
+}
+
+#app .batch-studio-console {
+  position: sticky;
+  top: 1rem;
+  gap: 1.1rem;
+  padding: clamp(1rem, 2vw, 1.45rem);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 23%, var(--color-border));
+  background:
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--color-accent) 7%, transparent), transparent 15rem),
+    var(--color-surface);
+}
+
+#app .batch-studio-modes.optional-batch-mode {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: .55rem;
   min-width: 0;
-  padding: clamp(1.1rem, 2.4vw, 1.5rem);
-  border: 1px solid color-mix(in srgb, var(--color-success) 44%, var(--color-border));
-  border-radius: 1rem;
-  background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface));
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
-#app .batch-workspace-download > div {
-  flex: 1 1 15rem;
-}
-
-#app .batch-workspace-download strong {
+#app .batch-studio-modes legend {
+  width: 100%;
+  margin: 0 0 .7rem;
+  padding: 0;
   color: var(--color-text);
-  font-family: var(--font-serif);
-  font-size: 1.28rem;
-  line-height: 1.2;
+  font-size: .76rem;
+  font-weight: 800;
+  line-height: 1.35;
 }
 
-#app .batch-workspace-download p {
-  margin: .28rem 0 0;
+#app .batch-studio-choice.optional-batch-choice {
+  display: flex;
+  gap: .73rem;
+  align-items: center;
+  min-width: 0;
+  min-height: 4.7rem;
+  margin: 0;
+  padding: .85rem .9rem;
+  border: 1px solid var(--batch-line);
+  border-radius: .75rem;
+  background: var(--color-surface);
+  transition: border-color 180ms ease, background-color 180ms ease;
+  cursor: pointer;
+}
+
+#app .batch-studio-choice.optional-batch-choice:has(input:checked) {
+  border-color: color-mix(in srgb, var(--color-accent) 65%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 18%, transparent);
+}
+
+#app .batch-studio-choice input {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: 0 0 1.05rem;
+  margin: 0;
+  accent-color: var(--color-accent);
+}
+
+#app .batch-studio-choice > span {
+  display: grid;
+  min-width: 0;
+  gap: .23rem;
+}
+
+#app .batch-studio-choice strong {
+  color: var(--color-text);
+  font-size: .84rem;
+  font-weight: 850;
+  line-height: 1.3;
+}
+
+#app .batch-studio-choice small {
   color: var(--color-text-muted);
-  font-size: .8rem;
+  font-size: .73rem;
   line-height: 1.5;
 }
 
-#app .batch-workspace-download-button {
-  min-height: 3.15rem;
-  flex: 0 1 auto;
-  padding: .8rem 1.05rem;
-  border: 1px solid #285d43;
-  border-radius: .75rem;
-  background: #245e48;
-  color: #fff9ed;
+#app .batch-studio-action-area {
+  display: grid;
+  gap: .7rem;
+  min-width: 0;
+  margin-top: .1rem;
+  padding-top: .9rem;
+  border-top: 1px solid var(--batch-line);
+}
+
+#app .batch-studio-summary {
+  display: grid;
+  gap: .25rem;
+  min-width: 0;
+  padding: .85rem 1rem;
+  border-radius: .8rem;
+  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface));
+}
+
+#app .batch-studio-summary > span {
+  color: var(--batch-copper);
+  font-size: .61rem;
+  font-weight: 900;
+  line-height: 1.3;
+  letter-spacing: .1em;
+}
+
+#app .batch-studio-summary strong {
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: 1.16rem;
+  line-height: 1.25;
+}
+
+#app .batch-studio-summary small {
+  color: var(--color-text-muted);
+  font-size: .69rem;
+  line-height: 1.5;
+}
+
+#app .batch-studio-job-progress {
+  display: grid;
+  gap: .45rem;
+  padding: .25rem 0 .4rem;
+}
+
+#app .batch-studio-job-progress strong {
+  color: var(--color-text);
+  font-size: .75rem;
+  font-weight: 850;
+}
+
+#app .batch-studio-job-progress span {
+  color: var(--color-text-muted);
+  font-weight: 750;
+}
+
+#app .batch-studio-job-progress progress::-webkit-progress-value {
+  background: var(--color-accent);
+}
+#app .batch-studio-job-progress progress::-moz-progress-bar {
+  background: var(--color-accent);
+}
+
+#app .batch-studio-ready {
+  display: flex;
+  gap: .65rem;
+  align-items: center;
+  padding: .63rem .7rem;
+  border-radius: .68rem;
+  background: color-mix(in srgb, var(--color-success) 8%, var(--color-surface));
+}
+
+#app .batch-studio-ready-marker {
+  display: grid;
+  flex: 0 0 1.7rem;
+  width: 1.7rem;
+  height: 1.7rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-success);
+  color: #fff;
   font-size: .84rem;
-  font-weight: 800;
-  white-space: normal;
+  font-weight: 900;
+}
+
+#app .batch-studio-ready > div {
+  display: grid;
+  gap: .16rem;
+  min-width: 0;
+}
+
+#app .batch-studio-ready strong {
+  color: var(--color-text);
+  font-size: .77rem;
+  font-weight: 850;
+}
+
+#app .batch-studio-ready small {
+  color: var(--color-text-muted);
+  font-size: .69rem;
+  line-height: 1.4;
+}
+
+#app .batch-studio-primary.btn {
+  display: flex;
+  width: 100%;
+  min-height: 3.15rem;
+  align-items: center;
+  justify-content: center;
+  padding: .78rem .9rem;
+  margin: 0;
+  border: 1px solid var(--batch-accent-dark);
+  border-radius: .73rem;
+  background: var(--batch-accent);
+  box-shadow: 0 .17rem 0 color-mix(in srgb, #0e2e24 38%, transparent);
+  color: #fffaf2;
+  font-size: .9rem;
+  font-weight: 850;
+  line-height: 1.35;
   text-align: center;
+  white-space: normal;
+  transition: background-color 170ms ease, transform 170ms ease;
 }
 
-:root[data-theme="dark"] #app .workflow-mode-card-active .workflow-mode-icon {
-  border-color: #80b89b;
-  background: #5e9a79;
-  color: #10271d;
+#app .batch-studio-primary.btn:not(:disabled):hover {
+  background: #306a51;
+  transform: translateY(-1px);
 }
 
-:root[data-theme="dark"] #app .batch-workspace-start.btn:not(:disabled),
-:root[data-theme="dark"] #app .batch-workspace-download-button {
-  border-color: #7bb39b;
-  background: #6bac8c;
-  color: #10271d;
+#app .batch-studio-primary.btn:disabled {
+  border-color: var(--color-border);
+  background: var(--color-surface-2);
+  box-shadow: none;
+  color: var(--color-text-muted);
+  opacity: .72;
+  cursor: not-allowed;
 }
 
-:root[data-theme="dark"] #app .batch-workspace-start.btn:not(:disabled):hover {
-  background: #82c29c;
+#app .batch-studio-cancel.btn,
+#app .batch-studio-repeat.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.7rem;
+  margin: 0;
+  padding: .65rem;
+  border: 1px solid var(--batch-line);
+  border-radius: .66rem;
+  background: transparent;
+  color: var(--color-text);
+  font-size: .76rem;
+  font-weight: 750;
 }
 
-@media (max-width: 800px) {
-  #app .batch-workspace-steps li {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: .28rem;
+#app .batch-studio-cancel.btn:hover,
+#app .batch-studio-repeat.btn:hover {
+  border-color: var(--color-accent);
+  background: var(--color-surface-2);
+}
+
+#app .batch-studio-reassurance {
+  display: flex;
+  align-items: flex-start;
+  gap: .45rem;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: .69rem;
+  line-height: 1.5;
+}
+
+#app .batch-studio-reassurance::before {
+  display: block;
+  width: .44rem;
+  height: .44rem;
+  flex: 0 0 .44rem;
+  margin-top: .3rem;
+  border-radius: 50%;
+  background: var(--batch-copper);
+  content: "";
+}
+
+:root[data-theme="dark"] #app .batch-studio {
+  --batch-accent: #6aa88a;
+  --batch-accent-dark: #93c9ab;
+}
+
+:root[data-theme="dark"] #app .batch-studio-counter {
+  border-color: rgba(205, 227, 211, .18);
+  background: linear-gradient(145deg, #284c3d, #19372f);
+}
+
+:root[data-theme="dark"] #app .batch-studio-primary.btn:not(:disabled) {
+  color: #0d251a;
+}
+
+:root[data-theme="dark"] #app .batch-studio-upload-action {
+  color: var(--color-accent-strong);
+}
+
+@media (max-width: 1000px) {
+  #app .batch-studio-layout.batch-workspace-content {
+    grid-template-columns: minmax(0, 1.1fr) minmax(16rem, .9fr);
   }
-
-  #app .batch-workspace-upload-compact.optional-batch-dropzone {
-    grid-template-columns: 3.35rem minmax(0, 1fr);
+  #app .batch-studio-upload.optional-batch-dropzone {
+    grid-template-columns: 3rem minmax(0, 1fr);
   }
-
-  #app .batch-workspace-upload-compact > .upload-studio-batch-action {
+  #app .batch-studio-upload-action {
     grid-column: 2;
-    grid-row: 4;
-    margin-top: .45rem;
+    justify-self: start;
+    margin-top: .3rem;
   }
 }
 
-@media (max-width: 640px) {
-  #app .workflow-mode-selector {
-    gap: .65rem;
-    padding: .85rem;
-    border-radius: 1rem;
-  }
-
-  #app .workflow-mode-options {
-    grid-template-columns: 1fr;
-    gap: .5rem;
-  }
-
-  #app .workflow-mode-card {
-    min-height: 4.8rem;
-    padding: .8rem;
-  }
-
-  #app .workflow-mode-heading strong {
-    font-size: 1.1rem;
-  }
-
-  #app .layout#app-workspace .batch-workspace {
-    padding: 1.1rem .9rem;
-    gap: 1.15rem;
+@media (max-width: 760px) {
+  #app .layout#app-workspace .batch-studio {
+    gap: 1.1rem;
+    padding: 1.15rem;
     border-radius: 1.2rem;
   }
-
-  #app .batch-workspace-heading h2 {
-    font-size: clamp(1.9rem, 8vw, 2.4rem);
+  #app .batch-studio-layout.batch-workspace-content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .85rem;
   }
-
-  #app .batch-workspace-heading p {
-    font-size: .84rem;
+  #app .batch-studio-console {
+    position: static;
+    top: auto;
   }
-
-  #app .batch-workspace-steps {
-    gap: .33rem;
+  #app .batch-studio-header {
+    gap: .85rem;
   }
-
-  #app .batch-workspace-steps li {
-    padding: .55rem .48rem;
-    border-radius: .65rem;
+  #app .batch-studio-intro h2 {
+    font-size: clamp(1.65rem, 5.9vw, 2.2rem);
   }
-
-  #app .batch-workspace-steps li span {
-    font-size: .87rem;
+  #app .batch-studio-counter {
+    min-width: 5.25rem;
+    min-height: 5.4rem;
+    padding: .65rem .7rem;
   }
-
-  #app .batch-workspace-steps li strong {
-    font-size: .66rem;
-    line-height: 1.3;
+  #app .batch-studio-counter strong {
+    font-size: 2.18rem;
   }
-
-  #app .batch-workspace-modes.optional-batch-mode {
-    grid-template-columns: 1fr;
-    gap: .55rem;
+  #app .batch-studio-counter small {
+    font-size: .55rem;
   }
-
-  #app .batch-workspace-choice.optional-batch-choice {
-    padding: .9rem;
+  #app .batch-studio-library,
+  #app .batch-studio-console {
+    padding: 1rem;
   }
-
-  #app .batch-workspace-upload.optional-batch-dropzone {
-    min-height: 12rem;
-    padding: 1.1rem .75rem;
+  #app .batch-studio-file-scroll {
+    max-height: 16.5rem;
   }
+}
 
-  #app .batch-workspace-upload-compact.optional-batch-dropzone {
-    min-height: 0;
-    padding: .95rem .8rem;
-    grid-template-columns: 2.65rem minmax(0, 1fr);
-    gap: .18rem .7rem;
+@media (max-width: 470px) {
+  #app .layout#app-workspace .batch-studio {
+    padding: .9rem .7rem;
+    gap: .85rem;
   }
-
-  #app .batch-workspace-upload-compact .upload-studio-batch-icon {
-    width: 2.6rem;
-    height: 3rem;
+  #app .batch-studio-header {
+    padding: .2rem .2rem 1rem;
+    gap: .65rem;
   }
-
-  #app .batch-workspace-files li {
-    gap: .55rem;
-    padding: .65rem;
+  #app .batch-studio-intro {
+    gap: .3rem;
   }
-
-  #app .batch-workspace-file-icon {
-    width: 2.2rem;
-    flex-basis: 2.2rem;
+  #app .batch-studio-intro h2 {
+    font-size: clamp(1.45rem, 6.9vw, 1.8rem);
   }
-
-  #app .batch-workspace-files .btn {
-    padding: .5rem .55rem;
-    font-size: .68rem;
+  #app .batch-studio-intro p {
+    font-size: .75rem;
   }
-
-  #app .batch-workspace-submit {
+  #app .batch-studio-counter {
+    min-width: 4.55rem;
+    min-height: 4.75rem;
+    padding: .6rem .5rem;
+    border-radius: .7rem;
+  }
+  #app .batch-studio-counter strong {
+    font-size: 1.82rem;
+  }
+  #app .batch-studio-counter > span {
+    font-size: .8rem;
+  }
+  #app .batch-studio-counter small {
+    font-size: .5rem;
+  }
+  #app .batch-studio-library,
+  #app .batch-studio-console {
+    padding: .86rem;
+    gap: .78rem;
+    border-radius: .9rem;
+  }
+  #app .batch-studio-upload.optional-batch-dropzone {
+    grid-template-columns: 2.55rem minmax(0, 1fr);
+    gap: .4rem .7rem;
     padding: .85rem;
   }
-
-  #app .batch-workspace-download {
-    display: grid;
-    grid-template-columns: 1fr;
+  #app .batch-studio-upload-icon {
+    width: 2.55rem;
+    height: 2.55rem;
+    border-radius: .68rem;
+    font-size: 1.6rem;
   }
-
-  #app .batch-workspace-download-button {
+  #app .batch-studio-upload-action {
+    grid-column: 1 / -1;
     width: 100%;
+    margin: .25rem 0 0;
+  }
+  #app .batch-studio-file-main {
+    gap: .45rem;
+    min-height: 4rem;
+    padding: .65rem .6rem;
+  }
+  #app .batch-studio-file-number {
+    width: 1.8rem;
+    height: 2.15rem;
+    flex-basis: 1.8rem;
+    font-size: .7rem;
+  }
+  #app .batch-studio-file-status {
+    max-width: 5.3rem;
+    padding: .25rem .3rem;
+    font-size: .58rem;
+  }
+  #app .batch-studio-remove.btn {
+    min-width: 2.8rem;
+    padding: .27rem .18rem;
+    font-size: .58rem;
+  }
+  #app .batch-studio-file-meta strong {
+    font-size: .72rem;
+  }
+  #app .batch-studio-result-detail {
+    margin-left: 2.7rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #app .workflow-mode-card,
-  #app .batch-workspace-upload.optional-batch-dropzone,
-  #app .batch-workspace-choice.optional-batch-choice,
-  #app .batch-workspace-start.btn {
+  #app .batch-studio-upload.optional-batch-dropzone,
+  #app .batch-studio-choice.optional-batch-choice,
+  #app .batch-studio-primary.btn {
     transition: none;
   }
-
-  #app .batch-workspace-start.btn:hover {
+  #app .batch-studio-primary.btn:hover {
     transform: none;
   }
 }
