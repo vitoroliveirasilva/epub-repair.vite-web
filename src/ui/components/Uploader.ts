@@ -5,7 +5,9 @@ export function renderUploader(
   state: AppState, onFile: (file: File) => void,
   onFiles?: (files: File[]) => void,
 ): HTMLElement {
+  const loadedFile = state.payload?.file;
   const input = el('input', {
+    className: 'visually-hidden',
     attrs: {
       type: 'file',
       accept: '.epub,application/epub+zip',
@@ -14,28 +16,50 @@ export function renderUploader(
       'aria-describedby': 'upload-help',
     },
   });
-  input.className = 'visually-hidden';
   input.disabled = state.busy;
 
   const dropzone = el('label', {
-    className: 'dropzone',
+    className: 'dropzone upload-studio-zone upload-studio-zone-epub' +
+      (loadedFile ? ' upload-studio-loaded' : '') +
+      (state.busy ? ' upload-studio-busy' : ''),
     attrs: {
       for: 'epub-file-input',
       tabindex: '0',
       role: 'button',
-      'aria-label': 'Escolher ou arrastar um ou vários EPUBs para análise local',
+      'aria-label': loadedFile
+        ? 'Escolher outro EPUB ou vários EPUBs para processamento em lote'
+        : 'Escolher ou arrastar um ou vários EPUBs para análise local',
       'aria-disabled': String(state.busy),
     },
     children: [
-      renderDropIcon(),
-      el('strong', {
-        text: state.payload ? 'EPUB carregado' : 'Arraste um arquivo EPUB para aqui',
-      }),
-      el('p', {
-        text: state.payload
-          ? 'Você pode escolher outro arquivo ou prosseguir com o reparo'
-          : 'ou clique para escolher',
-      }),
+      el('span', { className: 'upload-studio-kicker', children: [
+        el('span', { className: 'upload-studio-dot', attrs: { 'aria-hidden': 'true' } }),
+        el('span', { text: state.busy ? 'Processamento em andamento' :
+          loadedFile ? 'Arquivo recebido' : 'Seu arquivo, sua leitura' }),
+      ] }),
+      el('span', { className: 'upload-studio-graphic upload-studio-graphic-epub',
+        attrs: { 'aria-hidden': 'true' }, children: [
+          el('span', { className: 'upload-studio-sheet upload-studio-sheet-back' }),
+          el('span', { className: 'upload-studio-sheet upload-studio-sheet-front' }),
+          el('span', { className: 'upload-studio-lines' }),
+          el('span', { className: 'upload-studio-graphic-tag', text: 'EPUB' }),
+        ] }),
+      el('span', { className: 'upload-studio-content', children: [
+        el('strong', { className: 'upload-studio-title', text: loadedFile
+          ? 'Seu livro está pronto para conferir'
+          : 'Solte seu EPUB aqui' }),
+        el('span', { className: 'upload-studio-subtitle', text: loadedFile
+          ? 'Você pode continuar com a análise ou escolher outro arquivo.'
+          : 'Ou selecione o arquivo no seu dispositivo para começar.' }),
+      ] }),
+      el('span', { className: 'upload-studio-action', children: [
+        el('span', { text: state.busy ? 'Processando arquivo…' :
+          loadedFile ? 'Escolher outro arquivo' : 'Selecionar EPUB' }),
+        el('span', { className: 'upload-studio-action-arrow',
+          attrs: { 'aria-hidden': 'true' }, text: '↗' }),
+      ] }),
+      el('span', { className: 'upload-studio-formats',
+        text: 'EPUB até 250 MB  ·  selecione vários para processar em lote' }),
     ],
   });
 
@@ -44,75 +68,54 @@ export function renderUploader(
     if (files.length === 1) onFile(files[0]!);
     else onFiles?.(files);
   };
-  input.addEventListener('change', () => {
-    submitFiles(Array.from(input.files ?? []));
+  input.addEventListener('change', () => submitFiles(Array.from(input.files ?? [])));
+  for (const eventName of ['dragenter', 'dragover']) {
+    dropzone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      if (!state.busy) dropzone.classList.add('dropzone-active');
+    });
+  }
+  dropzone.addEventListener('dragleave', (event) => {
+    if (!dropzone.contains(event.relatedTarget as Node | null))
+      dropzone.classList.remove('dropzone-active');
   });
-
-  dropzone.addEventListener('dragover', (event) => {
-    event.preventDefault();
-    if (state.busy) return;
-    dropzone.classList.add('dropzone-active');
-  });
-  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dropzone-active'));
   dropzone.addEventListener('drop', (event) => {
     event.preventDefault();
-    if (state.busy) return;
     dropzone.classList.remove('dropzone-active');
     submitFiles(Array.from(event.dataTransfer?.files ?? []));
   });
   dropzone.addEventListener('keydown', (event) => {
-    if (state.busy) return;
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      input.click();
-    }
+    if (state.busy || (event.key !== 'Enter' && event.key !== ' ')) return;
+    event.preventDefault();
+    input.click();
   });
 
   return el('section', {
-    className: 'panel upload-panel',
+    className: 'panel upload-panel upload-studio-panel',
     attrs: { id: 'upload', 'aria-labelledby': 'upload-title' },
     children: [
-      el('div', {
-        className: 'section-heading',
-        children: [
-          el('h2', {
-            text: 'Escolha seu EPUB',
-            attrs: { id: 'upload-title' },
-          }),
-          el('p', {
-            className: 'muted visually-hidden',
-            attrs: { id: 'upload-help' },
-            text: 'Um EPUB abre o fluxo individual (até 250 MB); dois ou mais abrem o ' +
-              'processamento em lote, com correção opcional (até 6 EPUBs e 80 MB somados).',
-          }),
-        ],
-      }),
+      el('div', { className: 'section-heading upload-studio-heading', children: [
+        el('p', { className: 'eyebrow', text: '01 / ARQUIVO EPUB' }),
+        el('h2', { text: 'Escolha seu EPUB', attrs: { id: 'upload-title' } }),
+        el('p', { className: 'muted', text:
+          'Envie um livro para verificar ou selecione vários para trabalhar em lote. Tudo fica no navegador.' }),
+        el('p', { className: 'visually-hidden', attrs: { id: 'upload-help' },
+          text: 'Um EPUB abre o fluxo individual (até 250 MB). Dois ou mais iniciam ' +
+            'o processamento em lote, com até 6 arquivos e 80 MB somados.' }),
+      ] }),
       input,
       dropzone,
-      state.payload
-        ? el('div', {
-            className: 'file-pill',
-            attrs: { role: 'status' },
-            children: [
-              el('span', { text: state.payload.file.name }),
-              el('strong', { text: formatBytes(state.payload.file.size) }),
-            ],
-          })
-        : undefined,
-    ],
-  });
-}
-
-function renderDropIcon(): HTMLElement {
-  return el('span', {
-    className: 'drop-icon',
-    attrs: { 'aria-hidden': 'true' },
-    children: [
-      el('span', { className: 'drop-page' }),
-      el('span', { className: 'drop-line drop-line-1' }),
-      el('span', { className: 'drop-line drop-line-2' }),
-      el('span', { className: 'drop-line drop-line-3' }),
-      el('span', { className: 'drop-check' }),
+      loadedFile ? el('div', { className: 'file-pill upload-studio-file',
+        attrs: { role: 'status' }, children: [
+          el('span', { className: 'upload-studio-file-symbol', text: 'EPUB',
+            attrs: { 'aria-hidden': 'true' } }),
+          el('span', { className: 'upload-studio-file-copy', children: [
+            el('strong', { className: 'upload-studio-file-name', text: loadedFile.name }),
+            el('small', { text: 'Arquivo selecionado no dispositivo' }),
+          ] }),
+          el('strong', { className: 'upload-studio-file-size',
+            text: formatBytes(loadedFile.size) }),
+        ] }) : undefined,
     ],
   });
 }

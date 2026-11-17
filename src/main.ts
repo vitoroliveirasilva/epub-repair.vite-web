@@ -15,6 +15,7 @@ import './styles/homeDesktopLayout.css';
 import './styles/homeHeroMotion.css';
 import './styles/homeWorkspace.css';
 import './styles/portfolioInspired.css';
+import './styles/uploadStudio.css';
 
 const root = document.querySelector<HTMLElement>('#app');
 

@@ -667,9 +667,14 @@ function renderBatch(state: AppState, s: Session, rerender: () => void, enqueue:
       'aria-label': 'Arraste um ou vários EPUBs ou pressione Enter para selecionar arquivos',
       'aria-disabled': String(state.busy) },
     children: [
-      el('strong', { text: 'Arraste seus EPUBs aqui' }),
-      el('span', { text: 'Ou clique para selecionar um ou vários livros · até ' +
-        MAX_BATCH_FILES + ' EPUBs, ' + formatBytes(MAX_BATCH_BYTES) + ' somados' }),
+      el('span', { className: 'upload-studio-batch-icon',
+        attrs: { 'aria-hidden': 'true' }, text: 'EPUB' }),
+      el('strong', { text: 'Adicione os livros ao lote' }),
+      el('span', { text: 'Arraste os arquivos para cá ou escolha no dispositivo' }),
+      el('span', { className: 'upload-studio-batch-action',
+        text: 'Selecionar EPUBs' }),
+      el('small', { text: 'Até ' + MAX_BATCH_FILES + ' EPUBs · ' +
+        formatBytes(MAX_BATCH_BYTES) + ' no total' }),
       input,
     ],
   });

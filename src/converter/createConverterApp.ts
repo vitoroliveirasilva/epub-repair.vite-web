@@ -169,51 +169,79 @@ function renderUploader(state: ConverterState, rerender: () => void): HTMLElemen
     if (file) void loadAndAnalyze(file, state, rerender);
   });
   const dropzone = el('label', {
-    className: `converter-dropzone ${state.file ? 'converter-dropzone-loaded' : ''} ${state.busy ? 'converter-dropzone-busy' : ''}`,
-    attrs: { for: 'pdf-file-input' },
+    className: 'converter-dropzone upload-studio-zone upload-studio-zone-pdf' +
+      (state.file ? ' converter-dropzone-loaded upload-studio-loaded' : '') +
+      (state.busy ? ' converter-dropzone-busy upload-studio-busy' : ''),
+    attrs: {
+      for: 'pdf-file-input',
+      tabindex: '0',
+      role: 'button',
+      'aria-label': state.file ? 'Substituir documento PDF selecionado'
+        : 'Escolher ou arrastar documento PDF',
+      'aria-disabled': String(state.busy),
+    },
     children: [
-      el('div', { className: 'converter-drop-icon', attrs: { 'aria-hidden': 'true' }, text: 'PDF' }),
-      el('div', { children: [
-        state.file ? el('span', { className: 'converter-file-badge', text: state.busy ? 'Processando agora' : 'PDF carregado' }) : undefined,
-        el('strong', { className: 'converter-file-name', text: state.file ? state.file.name : 'Escolha ou arraste um PDF' }),
-        el('p', {
-          className: 'muted',
-          text: state.file
-            ? `${formatBytes(state.file.size)} · processado somente neste navegador`
-            : 'PDFs de até 250 MB com texto, páginas digitalizadas ou conteúdo misto',
-        }),
-        el('span', {
-          className: `btn ${state.file ? 'btn-ghost' : 'btn-primary'}`,
-          text: state.busy ? 'Processando arquivo…' : state.file ? 'Trocar PDF' : 'Selecionar PDF',
-        }),
+      el('span', { className: 'upload-studio-kicker', children: [
+        el('span', { className: 'upload-studio-dot', attrs: { 'aria-hidden': 'true' } }),
+        el('span', { text: state.busy ? 'Preparando seu documento' :
+          state.file ? 'PDF recebido' : 'Documento de origem' }),
       ] }),
+      el('span', { className: 'upload-studio-graphic upload-studio-graphic-pdf',
+        attrs: { 'aria-hidden': 'true' }, children: [
+          el('span', { className: 'upload-studio-sheet upload-studio-sheet-back' }),
+          el('span', { className: 'upload-studio-sheet upload-studio-sheet-front' }),
+          el('span', { className: 'upload-studio-lines' }),
+          el('span', { className: 'upload-studio-graphic-tag', text: 'PDF' }),
+        ] }),
+      el('span', { className: 'upload-studio-content', children: [
+        el('strong', { className: 'upload-studio-title converter-file-name',
+          text: state.file ? state.file.name : 'Solte seu PDF aqui' }),
+        el('span', { className: 'upload-studio-subtitle',
+          text: state.file ? formatBytes(state.file.size) +
+            ' · Este documento continua no seu dispositivo.'
+            : 'Ou escolha um arquivo para transformar em um livro digital.' }),
+      ] }),
+      el('span', { className: 'upload-studio-action', children: [
+        el('span', { text: state.busy ? 'Analisando documento…' :
+          state.file ? 'Trocar PDF' : 'Selecionar PDF' }),
+        el('span', { className: 'upload-studio-action-arrow',
+          attrs: { 'aria-hidden': 'true' }, text: '↗' }),
+      ] }),
+      el('span', { className: 'upload-studio-formats',
+        text: 'PDF até 250 MB  ·  texto, digitalizações e imagens' }),
       input,
     ],
   });
   for (const eventName of ['dragenter', 'dragover']) {
     dropzone.addEventListener(eventName, (event) => {
       event.preventDefault();
-      dropzone.classList.add('converter-dropzone-active');
+      if (!state.busy) dropzone.classList.add('converter-dropzone-active');
     });
   }
-  for (const eventName of ['dragleave', 'drop']) {
-    dropzone.addEventListener(eventName, (event) => {
-      event.preventDefault();
+  dropzone.addEventListener('dragleave', (event) => {
+    if (!dropzone.contains(event.relatedTarget as Node | null))
       dropzone.classList.remove('converter-dropzone-active');
-    });
-  }
+  });
   dropzone.addEventListener('drop', (event) => {
+    event.preventDefault();
+    dropzone.classList.remove('converter-dropzone-active');
     const file = event.dataTransfer?.files[0];
     if (file && !state.busy) void loadAndAnalyze(file, state, rerender);
   });
+  dropzone.addEventListener('keydown', (event) => {
+    if (state.busy || (event.key !== 'Enter' && event.key !== ' ')) return;
+    event.preventDefault();
+    input.click();
+  });
   return el('section', {
-    className: 'panel converter-upload-panel',
+    className: 'panel converter-upload-panel upload-studio-panel',
     attrs: { id: 'pdf-upload', 'aria-label': 'Selecionar PDF para converter' },
     children: [
-      el('div', { className: 'section-heading', children: [
-        el('p', { className: 'eyebrow', text: '1. Documento' }),
+      el('div', { className: 'section-heading upload-studio-heading', children: [
+        el('p', { className: 'eyebrow', text: '01 / ARQUIVO PDF' }),
         el('h2', { text: state.file ? 'Documento selecionado' : 'Carregue o PDF' }),
-        el('p', { className: 'muted', text: 'O arquivo permanece no dispositivo durante análise, leitura de imagens, prévia e geração do EPUB.' }),
+        el('p', { className: 'muted',
+          text: 'A reconstrução e a prévia acontecem localmente, sem enviar o documento para servidores.' }),
       ] }),
       dropzone,
     ],
