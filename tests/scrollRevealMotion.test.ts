@@ -7,7 +7,7 @@ class FakeIntersectionObserver {
   static instances: FakeIntersectionObserver[] = [];
 
   readonly observed: Element[] = [];
-  readonly options?: IntersectionObserverInit;
+  readonly options: IntersectionObserverInit | undefined;
   disconnected = false;
 
   constructor(private readonly callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
