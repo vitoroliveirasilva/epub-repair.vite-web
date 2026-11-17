@@ -8,6 +8,7 @@ import { renderOptionalEpubTools } from '../src/ui/optionalEpubTools';
 import { renderFileSummary } from '../src/ui/components/FileSummary';
 import { renderControls } from '../src/ui/components/Controls';
 import { renderOptionsPanel } from '../src/ui/components/OptionsPanel';
+import { renderStatusMessage } from '../src/ui/components/ErrorPanel';
 import { buildKindleIssueEpub } from './helpers/syntheticEpub';
 import { inspectEpub } from '../src/epub/validation/validateEpub';
 import { buildKindleChecks } from '../src/epub/tools/bookTools';
@@ -296,6 +297,32 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(kindle.textContent).toContain('Nenhum arquivo é enviado automaticamente');
     expect(kindle.querySelector('.kindle-readiness-counts')?.textContent)
       .toContain('para revisar');
+  });
+
+  it('apresenta a conclusão com o mesmo texto e sem perder a região de status acessível', () => {
+    const success = renderStatusMessage('Análise concluída no navegador.');
+    expect(success).toBeDefined();
+    expect(success?.classList.contains('status-ok')).toBe(true);
+    expect(success?.classList.contains('status-panel')).toBe(true);
+    expect(success?.getAttribute('role')).toBe('status');
+    expect(success?.querySelector('.status-icon')?.getAttribute('aria-hidden'))
+      .toBe('true');
+    expect(success?.querySelector('.status-panel-copy strong')?.textContent)
+      .toBe('Concluído com sucesso');
+    expect(success?.querySelector('.status-panel-copy p')?.textContent)
+      .toBe('Análise concluída no navegador.');
+  });
+
+  it('preserva o estilo e a semântica de erros, sem transformar erros em sucesso', () => {
+    const error = renderStatusMessage(undefined, 'Arquivo EPUB inválido.');
+    expect(error?.classList.contains('status-error')).toBe(true);
+    expect(error?.classList.contains('status-ok')).toBe(false);
+    expect(error?.getAttribute('role')).toBe('alert');
+    expect(error?.querySelector('.status-panel-copy strong')?.textContent)
+      .toBe('Não foi possível concluir');
+    expect(error?.querySelector('.status-panel-copy p')?.textContent)
+      .toBe('Arquivo EPUB inválido.');
+    expect(renderStatusMessage()).toBeUndefined();
   });
 
 });
