@@ -247,17 +247,22 @@ function renderCoverPreviewCard(state: AppState): HTMLElement {
         className: 'cover-preview-stage cover-studio-preview-stage',
         children: [
           previewDataUrl
-            ? el('figure', {
-                className: 'cover-new-preview',
+            ? el('div', {
+                className: 'cover-preview-tilt',
                 children: [
-                  el('img', {
-                    attrs: {
-                      src: previewDataUrl,
-                      alt: selectedCover ? 'Prévia da nova imagem de capa selecionada'
-                        : 'Prévia da capa original do EPUB',
-                      loading: 'lazy',
-                      decoding: 'async',
-                    },
+                  el('figure', {
+                    className: 'cover-new-preview',
+                    children: [
+                      el('img', {
+                        attrs: {
+                          src: previewDataUrl,
+                          alt: selectedCover ? 'Prévia da nova imagem de capa selecionada'
+                            : 'Prévia da capa original do EPUB',
+                          loading: 'lazy',
+                          decoding: 'async',
+                        },
+                      }),
+                    ],
                   }),
                 ],
               })

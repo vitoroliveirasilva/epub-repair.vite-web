@@ -12,6 +12,7 @@ import { buildRepairConsentMessage } from './repairConsent';
 import { buildJsonReport, buildTextReport, createReportEvidence, makeReportFileName } from '../ui/copyReport';
 import { renderControls } from '../ui/components/Controls';
 import { renderCoverChanger } from '../ui/components/CoverChanger';
+import { enableCoverPreviewTilt } from '../ui/coverPreviewTilt';
 import { renderStatusMessage } from '../ui/components/ErrorPanel';
 import { renderFileSummary } from '../ui/components/FileSummary';
 import { renderIssueList } from '../ui/components/IssueList';
@@ -208,6 +209,7 @@ function render(
   );
   const hero = root.querySelector<HTMLElement>('.epub-home');
   if (hero) startHeroStarAnimation(hero);
+  enableCoverPreviewTilt(root);
 }
 
 function renderWorkflowModeSelector(

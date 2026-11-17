@@ -772,3 +772,21 @@
     transform: none;
   }
 }
+
+
+#app .layout#app-workspace .cover-studio-preview-stage .cover-preview-tilt {
+  display: grid;
+  width: min(100%, 13.5rem);
+  place-items: center;
+  transform-origin: center center;
+}
+
+#app .layout#app-workspace .cover-studio-preview-stage .cover-preview-tilt > .cover-new-preview {
+  width: 100%;
+}
+
+@media (max-width: 760px) {
+  #app .layout#app-workspace .cover-studio-preview-stage .cover-preview-tilt {
+    width: min(100%, 11rem);
+  }
+}

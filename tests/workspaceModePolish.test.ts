@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app/createApp';
 import { createConverterApp } from '../src/converter/createConverterApp';
+import { renderCoverChanger } from '../src/ui/components/CoverChanger';
+import { createInitialState } from '../src/app/state';
+import { enableCoverPreviewTilt } from '../src/ui/coverPreviewTilt';
 
 afterEach(() => document.body.replaceChildren());
 
@@ -95,6 +98,86 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(pdf.querySelector('.upload-studio-sheet-front > .upload-studio-lines'))
       .not.toBeNull();
     expect(pdf.querySelectorAll('.upload-studio-lines')).toHaveLength(1);
+  });
+
+  it('preserva a prévia da capa e aplica o tilt somente no invólucro', () => {
+    const state = createInitialState();
+    state.coverImage = {
+      fileName: 'nova-capa.png',
+      mediaType: 'image/png',
+      bytes: new Uint8Array([137, 80, 78, 71]),
+      previewDataUrl: 'data:image/png;base64,AAAA',
+    } as NonNullable<typeof state.coverImage>;
+    const root = document.createElement('div');
+    root.id = 'app';
+    document.body.append(root);
+    const actions = {
+      selectCoverImage: () => {},
+      clearCoverImage: () => {},
+      applyCoverReplacement: () => {},
+    };
+    const render = (): void => root.replaceChildren(renderCoverChanger(state, actions));
+    render();
+
+    const cover = root.querySelector<HTMLElement>('.cover-preview-tilt')!;
+    const figure = cover.querySelector<HTMLElement>('figure.cover-new-preview')!;
+    expect(figure.querySelector('img')?.getAttribute('src')).toBe(state.coverImage.previewDataUrl);
+    expect(figure.style.transform).toBe('');
+    expect(root.querySelector('.cover-studio-preview-copy strong')?.textContent)
+      .toBe('Sua nova capa');
+    const savedMatchMedia = window.matchMedia;
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: (query: string) => ({
+        matches: query.includes('hover: hover'),
+        media: query,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => true,
+      }),
+    });
+    try {
+      enableCoverPreviewTilt(root);
+      expect(cover.style.transform).toContain('perspective(1200px)');
+      expect(figure.style.transform).toBe('');
+
+      render();
+      enableCoverPreviewTilt(root);
+      expect(root.querySelector<HTMLElement>('.cover-preview-tilt')?.style.transform)
+        .toContain('perspective(1200px)');
+
+      Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+        value: (query: string) => ({
+          matches: query.includes('reduced-motion'),
+          media: query,
+        }),
+      });
+      enableCoverPreviewTilt(root);
+      expect(root.querySelector<HTMLElement>('.cover-preview-tilt')?.style.transform).toBe('');
+    } finally {
+      Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+        value: savedMatchMedia,
+      });
+    }
+  });
+
+  it('não aplica a inclinação quando ainda não existe uma imagem de capa', () => {
+    const state = createInitialState();
+    const root = document.createElement('div');
+    root.id = 'app';
+    document.body.append(root);
+    root.append(renderCoverChanger(state, {
+      selectCoverImage: () => {},
+      clearCoverImage: () => {},
+      applyCoverReplacement: () => {},
+    }));
+    expect(root.querySelector('.cover-preview-tilt')).toBeNull();
+    expect(root.querySelector('.cover-new-preview-empty')).not.toBeNull();
+    enableCoverPreviewTilt(root);
   });
 
 });
