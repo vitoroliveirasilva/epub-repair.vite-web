@@ -7,6 +7,7 @@ import { renderMobileNavigation } from '../ui/mobileNavigation';
 import { renderDesktopNavigation } from '../ui/desktopNavigation';
 import { renderBrandName } from '../ui/brand';
 import { renderEditorialFooter } from '../ui/footer';
+import { setupScrollReveals } from '../ui/scrollReveals';
 import { buildReviewAudit, exportReviewAudit, reviewFindingKey,
   normalizeSectionSpaces, type ReviewFinding } from './reviewSuggestions';
 
@@ -16,7 +17,10 @@ const MAX_PDF_SIZE = 250 * 1024 * 1024;
 export function createConverterApp(root: HTMLElement): void {
   initializeTheme();
   const state = createInitialConverterState();
-  const rerender = (): void => render(root, state, rerender);
+  const rerender = (): void => {
+    render(root, state, rerender);
+    setupScrollReveals(root);
+  };
   rerender();
 }
 

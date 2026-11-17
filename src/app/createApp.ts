@@ -21,6 +21,7 @@ import { renderRepairSummary } from '../ui/components/RepairSummary';
 import { renderUploader } from '../ui/components/Uploader';
 import { button, downloadBlob, el } from '../ui/dom';
 import { startHeroStarAnimation } from '../ui/heroStarAnimation';
+import { setupScrollReveals } from '../ui/scrollReveals';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
 import { renderDesktopNavigation } from '../ui/desktopNavigation';
 import { renderBrandName } from '../ui/brand';
@@ -86,8 +87,10 @@ export function createApp(root: HTMLElement): void {
     const fileList = root.querySelector<HTMLElement>('.batch-studio-file-scroll');
     if (fileList && scrollPosition > 0) fileList.scrollTop = scrollPosition;
     restoreFocus();
+    setupScrollReveals(root);
   };
   render(root, state, rerender, enqueue, cancelAll);
+  setupScrollReveals(root);
 }
 
 function render(

@@ -102,6 +102,7 @@ typographyPreservation99
 w3cExternalCorpus
 workflowAndScore99
 workspaceModePolish
+scrollRevealMotion
 xmlDtdSecurity99
 xmlPrologPreservation99
 zipBuildWorker99

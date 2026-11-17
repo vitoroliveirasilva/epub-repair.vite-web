@@ -20,6 +20,7 @@ import './styles/coverStudio.css';
 import './styles/batchWorkspace.css';
 import './styles/workspaceModePolish.css';
 import './styles/pageAtmosphere.css';
+import './styles/scrollReveals.css';
 
 const root = document.querySelector<HTMLElement>('#app');
 
