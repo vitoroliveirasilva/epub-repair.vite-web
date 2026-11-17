@@ -214,11 +214,11 @@ function renderWorkflowModeSelector(
   batchActive: boolean, state: AppState, rerender: () => void,
 ): HTMLElement {
   const buildChoice = (
-    batch: boolean, symbol: string, title: string, description: string,
+    batch: boolean, number: string, title: string, description: string,
   ): HTMLButtonElement => {
     const selected = batch === batchActive;
     const choice = button(
-      title,
+      '',
       'workflow-mode-card' + (selected ? ' workflow-mode-card-active' : ''),
       () => {
         if (state.busy || selected) return;
@@ -229,28 +229,40 @@ function renderWorkflowModeSelector(
     choice.disabled = state.busy;
     choice.setAttribute('aria-pressed', String(selected));
     choice.setAttribute('aria-label', title + '. ' + description);
-    choice.prepend(el('span', {
-      className: 'workflow-mode-icon',
-      attrs: { 'aria-hidden': 'true' },
-      text: symbol,
-    }));
-    choice.append(el('span', { className: 'workflow-mode-description', text: description }));
+    choice.append(
+      el('span', { className: 'workflow-mode-icon',
+        attrs: { 'aria-hidden': 'true' }, text: number }),
+      el('span', { className: 'workflow-mode-content', children: [
+        el('strong', { className: 'workflow-mode-title', text: title }),
+        el('small', { className: 'workflow-mode-description', text: description }),
+      ] }),
+      el('span', {
+        className: 'workflow-mode-indicator',
+        attrs: { 'aria-hidden': 'true' },
+        text: selected ? 'Selecionado' : 'Selecionar',
+      }),
+    );
     return choice;
   };
+
   return el('section', {
     className: 'workflow-mode-selector',
-    attrs: { 'aria-label': 'Escolha como deseja trabalhar com seus EPUBs' },
+    attrs: { 'aria-labelledby': 'workflow-mode-heading-title' },
     children: [
       el('div', { className: 'workflow-mode-heading', children: [
-        el('strong', { text: 'Quantos livros vamos cuidar?' }),
-        el('small', { text: 'Escolha um modo para ver só as opções necessárias' }),
+        el('h3', { text: 'Quantos livros vamos cuidar?',
+          attrs: { id: 'workflow-mode-heading-title' } }),
+        el('p', { text: 'Escolha um modo para ver só as opções necessárias' }),
       ] }),
-      el('div', { className: 'workflow-mode-options', children: [
-        buildChoice(false, '01', 'Um EPUB',
-          'Análise detalhada, capa e reparos individuais'),
-        buildChoice(true, '02+', 'Vários EPUBs',
-          'Selecione até 6 livros, processe juntos e baixe um ZIP'),
-      ] }),
+      el('div', { className: 'workflow-mode-options',
+        attrs: { role: 'group', 'aria-label': 'Modo de trabalho' },
+        children: [
+          buildChoice(false, '01', 'Um EPUB',
+            'Análise detalhada, capa e reparos individuais'),
+          buildChoice(true, '02+', 'Vários EPUBs',
+            'Selecione até 6 livros, processe juntos e baixe um ZIP'),
+        ],
+      }),
     ],
   });
 }
@@ -260,16 +272,10 @@ function renderWorkspaceIntro(): HTMLElement {
     className: 'workspace-intro workspace-intro-compact',
     attrs: { 'aria-labelledby': 'workspace-intro-title' },
     children: [
-      el('div', {
-        className: 'workspace-intro-copy',
-        children: [
-          el('span', { className: 'eyebrow', text: 'Estúdio de restauração' }),
-          el('h2', {
-            text: 'Do arquivo problemático ao EPUB pronto para leitura',
-            attrs: { id: 'workspace-intro-title' },
-          }),
-        ],
-      }),
+      el('div', { className: 'workspace-intro-copy', children: [
+        el('h2', { text: 'Estúdio de restauração',
+          attrs: { id: 'workspace-intro-title' } }),
+      ] }),
     ],
   });
 }

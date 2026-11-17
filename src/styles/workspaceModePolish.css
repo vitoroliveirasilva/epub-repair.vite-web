@@ -1,0 +1,401 @@
+#app .layout#app-workspace .workspace-intro.workspace-intro-compact {
+  display: block;
+  padding: 0 0 clamp(1.1rem, 2.5vw, 1.8rem);
+  border-bottom: 1px solid var(--studio-line);
+}
+
+#app .workspace-intro-compact .workspace-intro-copy {
+  display: block;
+  width: 100%;
+}
+
+#app .workspace-intro-compact .workspace-intro-copy h2 {
+  max-width: none;
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(2.15rem, 4.4vw, 4rem);
+  font-weight: 750;
+  letter-spacing: -.055em;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+#app .layout#app-workspace .workflow-mode-selector {
+  display: grid;
+  gap: clamp(.9rem, 1.5vw, 1.25rem);
+  width: 100%;
+  padding: clamp(1.1rem, 2.2vw, 1.55rem);
+  border: 1px solid var(--studio-line);
+  border-radius: 1.35rem;
+  background:
+    radial-gradient(circle at top left,
+      color-mix(in srgb, var(--studio-copper) 6%, transparent),
+      transparent 25rem),
+    var(--color-surface);
+}
+
+#app .workflow-mode-heading {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: .32rem;
+  min-width: 0;
+}
+
+#app .workflow-mode-heading h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+
+#app .workflow-mode-heading p {
+  max-width: 42rem;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
+#app .workflow-mode-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+  min-width: 0;
+}
+
+#app .workflow-mode-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3.2rem minmax(0, 1fr) auto;
+  grid-template-rows: auto;
+  align-items: center;
+  justify-items: stretch;
+  gap: .9rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 7rem;
+  padding: 1.1rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
+  border-radius: .95rem;
+  background: color-mix(in srgb, var(--color-surface) 94%, var(--color-surface-2));
+  color: var(--color-text);
+  box-shadow: 0 .3rem 1rem color-mix(in srgb, var(--color-text) 3%, transparent);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 190ms ease, background-color 190ms ease,
+    transform 190ms ease, box-shadow 190ms ease;
+}
+
+#app .workflow-mode-card::before {
+  position: absolute;
+  top: .8rem;
+  bottom: .8rem;
+  left: 0;
+  width: 3px;
+  border-radius: 0 999px 999px 0;
+  background: transparent;
+  content: "";
+  transition: background-color 190ms ease;
+}
+
+#app .workflow-mode-card:not(:disabled):hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-accent) 50%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
+  box-shadow: 0 .65rem 1.6rem color-mix(in srgb, var(--color-text) 7%, transparent);
+}
+
+#app .workflow-mode-card:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+#app .workflow-mode-card.workflow-mode-card-active,
+#app .workflow-mode-card.workflow-mode-card-active:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--color-accent) 65%, var(--color-border));
+  background:
+    linear-gradient(120deg,
+      color-mix(in srgb, var(--color-accent) 10%, var(--color-surface)),
+      color-mix(in srgb, var(--color-accent) 4%, var(--color-surface)));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 20%, transparent);
+  transform: none;
+}
+
+#app .workflow-mode-card.workflow-mode-card-active::before {
+  background: var(--studio-copper);
+}
+
+#app .workflow-mode-card:disabled {
+  cursor: progress;
+  opacity: .72;
+}
+
+#app .workflow-mode-card .workflow-mode-icon {
+  display: grid;
+  grid-column: 1;
+  grid-row: 1;
+  width: 3.2rem;
+  height: 3.55rem;
+  margin: 0;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 24%, var(--color-border));
+  border-radius: .8rem;
+  background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface));
+  color: var(--color-accent-strong);
+  font-family: var(--font-serif);
+  font-size: 1.04rem;
+  font-weight: 850;
+  letter-spacing: -.04em;
+  line-height: 1;
+}
+
+#app .workflow-mode-card-active .workflow-mode-icon {
+  border-color: #285f49;
+  background: #245b45;
+  color: #fff8ef;
+}
+
+#app .workflow-mode-content {
+  display: grid;
+  grid-column: 2;
+  grid-row: 1;
+  align-content: center;
+  gap: .3rem;
+  min-width: 0;
+}
+
+#app .workflow-mode-card .workflow-mode-title {
+  display: block;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.03rem, 1.55vw, 1.25rem);
+  font-weight: 750;
+  line-height: 1.22;
+  letter-spacing: -.026em;
+}
+
+#app .workflow-mode-card .workflow-mode-description {
+  display: block;
+  grid-column: auto;
+  grid-row: auto;
+  max-width: 38ch;
+  color: var(--color-text-muted);
+  font-size: .76rem;
+  font-weight: 500;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+#app .workflow-mode-indicator {
+  display: inline-flex;
+  grid-column: 3;
+  grid-row: 1;
+  align-items: center;
+  justify-content: center;
+  gap: .32rem;
+  padding: .42rem .65rem;
+  border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: .65rem;
+  font-weight: 800;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+#app .workflow-mode-card-active .workflow-mode-indicator {
+  border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 11%, var(--color-surface));
+  color: var(--color-accent-strong);
+}
+
+#app .workflow-mode-card-active .workflow-mode-indicator::before {
+  content: "✓";
+  font-size: .77rem;
+  font-weight: 900;
+}
+
+#app .workspace-core .controls-panel .flow-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  justify-items: stretch;
+  gap: .7rem;
+  margin-top: 1.1rem;
+}
+
+#app .workspace-core .controls-panel .flow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .65rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 10.35rem;
+  height: 100%;
+  padding: 1.05rem .85rem;
+  border-radius: .95rem;
+  text-align: center;
+}
+
+#app .workspace-core .controls-panel .flow-step .flow-step-number {
+  display: grid;
+  width: 2.55rem;
+  height: 2.55rem;
+  flex: 0 0 2.55rem;
+  margin: 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  font-family: var(--font-serif);
+  font-size: .95rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
+#app .workspace-core .controls-panel .flow-step > div {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: .4rem;
+  width: 100%;
+  min-width: 0;
+}
+
+#app .workspace-core .controls-panel .flow-step strong {
+  display: block;
+  max-width: 100%;
+  margin: 0;
+  color: var(--color-text);
+  font-size: .83rem;
+  font-weight: 850;
+  line-height: 1.35;
+  text-align: center;
+  text-wrap: balance;
+}
+
+#app .workspace-core .controls-panel .flow-step small {
+  display: block;
+  max-width: 25ch;
+  margin: 0 auto;
+  color: var(--color-text-muted);
+  font-size: .71rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+:root[data-theme="dark"] #app .workflow-mode-card-active .workflow-mode-icon {
+  border-color: #8fbd9d;
+  background: #6caa88;
+  color: #11291e;
+}
+
+@media (max-width: 1100px) {
+  #app .workflow-mode-card {
+    grid-template-columns: 2.9rem minmax(0, 1fr);
+    gap: .75rem;
+  }
+  #app .workflow-mode-card .workflow-mode-icon {
+    width: 2.9rem;
+    height: 3.2rem;
+  }
+  #app .workflow-mode-content {
+    grid-column: 2;
+  }
+  #app .workflow-mode-indicator {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+    padding: .32rem .56rem;
+  }
+}
+
+@media (max-width: 720px) {
+  #app .layout#app-workspace .workflow-mode-selector {
+    gap: .85rem;
+    padding: 1rem;
+    border-radius: 1.05rem;
+  }
+  #app .workflow-mode-options {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .55rem;
+  }
+  #app .workflow-mode-card {
+    grid-template-columns: 3rem minmax(0, 1fr) auto;
+    min-height: 5.75rem;
+    padding: .85rem;
+  }
+  #app .workflow-mode-card .workflow-mode-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+  #app .workflow-mode-indicator {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: auto;
+  }
+  #app .workspace-core .controls-panel .flow-steps {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .55rem;
+  }
+  #app .workspace-core .controls-panel .flow-step {
+    min-height: 8rem;
+    padding: .95rem 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  #app .workspace-intro-compact .workspace-intro-copy h2 {
+    font-size: clamp(2.1rem, 8vw, 2.7rem);
+    line-height: 1.12;
+  }
+  #app .workflow-mode-heading h3 {
+    font-size: 1.28rem;
+  }
+  #app .workflow-mode-heading p {
+    font-size: .76rem;
+  }
+  #app .workflow-mode-card {
+    grid-template-columns: 2.55rem minmax(0, 1fr);
+    gap: .7rem;
+    min-height: 5.6rem;
+  }
+  #app .workflow-mode-card .workflow-mode-icon {
+    width: 2.55rem;
+    height: 3rem;
+    font-size: .89rem;
+  }
+  #app .workflow-mode-card .workflow-mode-title {
+    font-size: 1.08rem;
+  }
+  #app .workflow-mode-card .workflow-mode-description {
+    font-size: .72rem;
+  }
+  #app .workflow-mode-indicator {
+    display: none;
+  }
+  #app .workspace-core .controls-panel .flow-step {
+    min-height: 7.85rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .workflow-mode-card,
+  #app .workflow-mode-card::before {
+    transition: none;
+  }
+  #app .workflow-mode-card:not(:disabled):hover {
+    transform: none;
+  }
+}
