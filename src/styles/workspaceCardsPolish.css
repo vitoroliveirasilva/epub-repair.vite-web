@@ -300,7 +300,7 @@
 
 #app .layout#app-workspace .optional-studio .optional-tablist.optional-studio-tabs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
   gap: .6rem;
   width: 100%;
@@ -604,7 +604,7 @@
   }
 
   #app .layout#app-workspace .optional-studio .optional-tablist.optional-studio-tabs {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: .45rem;
   }
 
@@ -634,6 +634,363 @@
 @media (prefers-reduced-motion: reduce) {
   #app .report-welcome-link span,
   #app .optional-studio .optional-studio-tab {
+    transition: none;
+  }
+}
+
+#app .controls-panel .kindle-safe-main-option {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  width: 100%;
+  margin: .2rem 0 .7rem;
+  padding: .85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 21%, var(--color-border));
+  border-radius: .85rem;
+  background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
+  cursor: pointer;
+}
+
+#app .controls-panel .kindle-safe-main-option:has(input:focus-visible) {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+#app .kindle-safe-main-option > input {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 1.1rem;
+  margin: 0;
+  accent-color: var(--color-accent);
+}
+
+#app .kindle-safe-main-option-copy {
+  display: grid;
+  flex: 1 1 auto;
+  gap: .24rem;
+  min-width: 0;
+}
+
+#app .kindle-safe-main-option-copy strong {
+  color: var(--color-text);
+  font-size: .81rem;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+#app .kindle-safe-main-option-copy small {
+  color: var(--color-text-muted);
+  font-size: .7rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+#app .kindle-safe-main-chip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: .35rem .6rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 25%, var(--color-border));
+  border-radius: 999px;
+  color: var(--color-accent-strong);
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+  font-size: .68rem;
+  font-weight: 850;
+}
+
+#app .kindle-safe-main-option:has(input:not(:checked)) .kindle-safe-main-chip {
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+  background: var(--color-surface-2);
+}
+
+#app .report-panel .kindle-readiness-inline {
+  display: grid;
+  gap: .8rem;
+  min-width: 0;
+  margin-top: clamp(.9rem, 1.8vw, 1.3rem);
+  padding: clamp(1rem, 2vw, 1.5rem) 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-accent) 22%, var(--color-border));
+  border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 17%, var(--color-border));
+}
+
+#app .kindle-readiness-overview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .7rem 1.5rem;
+  min-width: 0;
+}
+
+#app .kindle-readiness-overview-copy {
+  display: grid;
+  gap: .3rem;
+  min-width: 0;
+  flex: 1 1 15rem;
+}
+
+#app .kindle-readiness-kicker {
+  color: var(--studio-copper);
+  font-size: .63rem;
+  font-weight: 850;
+  letter-spacing: .12em;
+  line-height: 1.4;
+}
+
+#app .kindle-readiness-overview h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.22rem, 2vw, 1.6rem);
+  font-weight: 750;
+  letter-spacing: -.035em;
+  line-height: 1.2;
+}
+
+#app .kindle-readiness-overview p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: .76rem;
+  line-height: 1.5;
+}
+
+#app .kindle-readiness-status {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: .48rem .76rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: .69rem;
+  font-weight: 820;
+  line-height: 1.35;
+  text-align: center;
+}
+
+#app .kindle-readiness-ready .kindle-readiness-status {
+  border-color: color-mix(in srgb, var(--color-success) 25%, var(--color-border));
+  background: color-mix(in srgb, var(--color-success) 8%, var(--color-surface));
+  color: var(--color-success);
+}
+
+#app .kindle-readiness-review .kindle-readiness-status {
+  border-color: color-mix(in srgb, var(--color-warning) 24%, var(--color-border));
+  background: color-mix(in srgb, var(--color-warning) 9%, var(--color-surface));
+  color: var(--color-text);
+}
+
+#app .kindle-readiness-blocked .kindle-readiness-status {
+  border-color: color-mix(in srgb, var(--color-danger) 25%, var(--color-border));
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
+  color: var(--color-danger);
+}
+
+#app .kindle-readiness-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem .85rem;
+  color: var(--color-text-muted);
+  font-size: .7rem;
+  line-height: 1.5;
+}
+
+#app .kindle-readiness-counts span + span::before {
+  content: "·";
+  margin-right: .85rem;
+  color: var(--studio-copper);
+}
+
+#app .kindle-readiness-details {
+  margin: 0;
+  border: 0;
+}
+
+#app .kindle-readiness-details > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .8rem;
+  width: 100%;
+  padding: .7rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 78%, transparent);
+  color: var(--color-accent-strong);
+  font-size: .76rem;
+  font-weight: 840;
+  line-height: 1.4;
+  cursor: pointer;
+  list-style: none;
+}
+
+#app .kindle-readiness-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+#app .kindle-readiness-details > summary:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: .3rem;
+}
+
+#app .kindle-readiness-chevron {
+  display: grid;
+  width: 1.7rem;
+  height: 1.7rem;
+  flex: 0 0 1.7rem;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: .4rem;
+  color: var(--color-accent-strong);
+  font-size: 1.2rem;
+  font-weight: 600;
+  transition: transform 170ms ease;
+}
+
+#app .kindle-readiness-details[open] .kindle-readiness-chevron {
+  transform: rotate(45deg);
+}
+
+#app .kindle-readiness-expanded {
+  display: grid;
+  gap: .9rem;
+  min-width: 0;
+  padding: .4rem 0 .7rem;
+}
+
+#app .kindle-readiness-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .4rem .9rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#app .kindle-readiness-item {
+  min-width: 0;
+  padding: .7rem .75rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 76%, transparent);
+}
+
+#app .kindle-readiness-item-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .3rem .7rem;
+}
+
+#app .kindle-readiness-item-heading strong {
+  color: var(--color-text);
+  font-size: .78rem;
+  font-weight: 820;
+  line-height: 1.35;
+}
+
+#app .kindle-readiness-item-heading span {
+  color: var(--color-text-muted);
+  font-size: .65rem;
+  font-weight: 780;
+}
+
+#app .kindle-readiness-item-review .kindle-readiness-item-heading span {
+  color: var(--color-warning);
+}
+
+#app .kindle-readiness-item-blocked .kindle-readiness-item-heading span {
+  color: var(--color-danger);
+}
+
+#app .kindle-readiness-item p,
+#app .kindle-readiness-item small {
+  display: block;
+  margin: .33rem 0 0;
+  color: var(--color-text-muted);
+  font-size: .68rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+#app .kindle-readiness-item small {
+  color: var(--color-text);
+}
+
+#app .kindle-readiness-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+}
+
+#app .kindle-readiness-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  margin: 0;
+  padding: .65rem .9rem;
+  border-radius: .63rem;
+  font-size: .73rem;
+}
+
+#app .kindle-readiness-limit {
+  max-width: 70ch;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: .7rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 760px) {
+  #app .kindle-readiness-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #app .controls-panel .kindle-safe-main-option {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    padding: .8rem;
+  }
+
+  #app .kindle-safe-main-chip {
+    margin-left: 1.9rem;
+  }
+
+  #app .layout#app-workspace .optional-studio .optional-tablist.optional-studio-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 430px) {
+  #app .layout#app-workspace .optional-studio .optional-tablist .optional-studio-tab.btn {
+    justify-content: center;
+    padding: .55rem .33rem;
+    min-height: 3.3rem;
+    gap: 0;
+  }
+
+  #app .optional-studio-tab-index,
+  #app .optional-studio-tab-text small {
+    display: none;
+  }
+
+  #app .optional-studio-tab-text strong {
+    font-size: .67rem;
+    text-align: center;
+  }
+
+  #app .kindle-readiness-counts {
+    gap: .24rem .55rem;
+  }
+
+  #app .kindle-readiness-counts span + span::before {
+    margin-right: .55rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .kindle-readiness-chevron {
     transition: none;
   }
 }

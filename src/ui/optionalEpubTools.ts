@@ -5,7 +5,6 @@ import { processEpubBatch, MAX_BATCH_BYTES, MAX_BATCH_FILES,
 import { addBatchSelection } from '../epub/tools/batchSelection';
 import { button, downloadBlob, el, formatBytes } from './dom';
 import {
-  buildKindleChecks, summarizeKindleChecks, exportKindleReadiness,
   readBookMetadata, readBookPreview, writeBookMetadata,
   type BookMetadata, type BookPreview, type BookSection,
 } from '../epub/tools/bookTools';
@@ -15,7 +14,7 @@ import type { InlineRun } from '../epub/tools/readerInline';
 import type { ReaderPresentation } from '../epub/tools/readerPresentation';
 import { metadataChanges, metadataChangeCount } from '../epub/tools/metadataDraft';
 
-type ExtraTab = 'preview' | 'compare' | 'metadata' | 'kindle';
+type ExtraTab = 'preview' | 'compare' | 'metadata';
 type Queue = (
   label: string,
   task: (ctx: { signal: AbortSignal; onProgress: (p: ProcessingProgress) => void }) => Promise<void>,
@@ -52,7 +51,6 @@ interface Session {
 const sessions = new WeakMap<AppState, Session>();
 const TABS: Array<[ExtraTab, string]> = [
   ['preview', 'Ler EPUB'], ['compare', 'Antes e depois'], ['metadata', 'Metadados'],
-  ['kindle', 'Preparar Kindle'],
 ];
 
 function sessionFor(state: AppState): Session {
@@ -611,44 +609,6 @@ function renderMetadata(state: AppState, s: Session, rerender: () => void, enque
   ] });
 }
 
-function renderKindle(state: AppState): HTMLElement {
-  const report = state.report;
-  const checks = report ? buildKindleChecks(report) : [];
-  const summary = summarizeKindleChecks(checks);
-  const statusNames = {
-    ready: 'Verificado',
-    review: 'Precisa de conferência',
-    blocked: 'Bloqueio detectado',
-  };
-  const result = report ? el('div', { className: 'optional-kindle-summary', children: [
-    el('strong', { text: summary.blocked
-      ? summary.blocked + ' bloqueio(s) detectado(s) na verificação'
-      : summary.review
-        ? summary.review + ' ponto(s) para revisar antes de enviar'
-        : 'Nenhum problema detectado nas verificações disponíveis' }),
-    paragraph(summary.ready + ' item(ns) verificado(s) · ' + summary.review +
-      ' ponto(s) para revisar · ' + summary.blocked + ' bloqueio(s).'),
-  ] }) : paragraph('Valide o EPUB primeiro para receber recomendações sobre capa, navegação, metadados, arquivos ausentes e recursos externos.');
-  return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Verificação local orientativa de estrutura, capa, navegação, segurança, ' +
-      'acessibilidade, metadados, layout e tamanho. O serviço da Amazon ainda pode ' +
-      'recusar o arquivo, e a aparência pode mudar no Kindle. Não há envio automático.'),
-    result,
-    ...checks.map((check) => el('div', { className: 'optional-check', children: [
-      el('strong', { text: check.label + ' · ' + statusNames[check.status] }),
-      el('p', { className: 'muted', text: check.detail }),
-      !check.ok ? el('p', { className: 'optional-kindle-action', text: 'O que fazer: ' + check.action })
-        : undefined,
-    ] })),
-    report ? button('Baixar diagnóstico Kindle (JSON)', 'btn btn-secondary btn-small',
-      () => downloadBlob(new Blob([exportKindleReadiness(report)],
-        { type: 'application/json' }), 'diagnostico-kindle.json')) : undefined,
-    el('a', { className: 'btn btn-secondary btn-small', text: 'Abrir Send to Kindle oficial',
-      attrs: { href: 'https://www.amazon.com/sendtokindle', target: '_blank', rel: 'noopener noreferrer' } }),
-  ] });
-}
-
-
 function resetBatchOutput(s: Session): void {
   s.batchZip = undefined;
   s.batchProgress = [];
@@ -1077,7 +1037,7 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
           el('span', { className: 'optional-studio-eyebrow',
             text: 'RECURSOS COMPLEMENTARES' }),
           el('strong', { text: 'Ferramentas extras' }),
-          el('small', { text: 'Leia, compare, edite metadados e prepare seu livro para o Kindle.' }),
+          el('small', { text: 'Leia seu EPUB, compare versões e edite metadados. O Kindle já faz parte da verificação principal.' }),
         ] }),
         el('span', { className: 'optional-studio-summary-action',
           attrs: { 'aria-hidden': 'true' }, text: 'Explorar' }),
@@ -1105,7 +1065,6 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
                   preview: 'Leitura local',
                   compare: 'Mudanças no livro',
                   metadata: 'Dados da obra',
-                  kindle: 'Compatibilidade',
                 }[key] }),
               ] }),
             );
@@ -1114,7 +1073,6 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
         s.tab === 'preview' ? renderPreview(state, s, rerender, enqueue) : undefined,
         s.tab === 'compare' ? renderCompare(state, s, rerender, enqueue) : undefined,
         s.tab === 'metadata' ? renderMetadata(state, s, rerender, enqueue) : undefined,
-        s.tab === 'kindle' ? renderKindle(state) : undefined,
         s.message ? el('p', { className: 'optional-studio-message',
           attrs: { role: 'status' }, text: s.message }) : undefined,
       ] }),

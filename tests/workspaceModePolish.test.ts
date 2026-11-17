@@ -5,6 +5,12 @@ import { renderCoverChanger } from '../src/ui/components/CoverChanger';
 import { createInitialState } from '../src/app/state';
 import { enableCoverPreviewTilt } from '../src/ui/coverPreviewTilt';
 import { renderOptionalEpubTools } from '../src/ui/optionalEpubTools';
+import { renderFileSummary } from '../src/ui/components/FileSummary';
+import { renderControls } from '../src/ui/components/Controls';
+import { renderOptionsPanel } from '../src/ui/components/OptionsPanel';
+import { buildKindleIssueEpub } from './helpers/syntheticEpub';
+import { inspectEpub } from '../src/epub/validation/validateEpub';
+import { buildKindleChecks } from '../src/epub/tools/bookTools';
 
 afterEach(() => document.body.replaceChildren());
 
@@ -196,7 +202,7 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(root.querySelector('#upload')).not.toBeNull();
   });
 
-  it('organiza quatro ferramentas extras sem incluir lote e mantém a seleção ativa', () => {
+  it('mantém três ferramentas extras sem separar Kindle ou lote', () => {
     const state = createInitialState();
     const root = document.createElement('div');
     document.body.append(root);
@@ -207,7 +213,10 @@ describe('Estúdio de restauração e escolha de modo', () => {
     const tools = root.querySelector<HTMLDetailsElement>('.optional-studio')!;
     expect(tools.open).toBe(false);
     expect(tools.querySelector('.optional-studio-heading')?.textContent).not.toContain('lote');
-    expect(tools.querySelectorAll('.optional-studio-tab')).toHaveLength(4);
+    expect(tools.querySelectorAll('.optional-studio-tab')).toHaveLength(3);
+    expect(tools.querySelectorAll('[aria-label="Preparar Kindle"]')).toHaveLength(0);
+    expect(tools.querySelector('.optional-studio-heading')?.textContent)
+      .toContain('Kindle já faz parte da verificação principal');
     expect(tools.querySelector<HTMLButtonElement>('.optional-studio-tab-active')
       ?.getAttribute('aria-pressed')).toBe('true');
     expect(tools.querySelector('.optional-studio-tool-head')).not.toBeNull();
@@ -218,6 +227,62 @@ describe('Estúdio de restauração e escolha de modo', () => {
     const changed = root.querySelector('.optional-studio')!;
     expect(changed.querySelector('.optional-studio-tab-active')?.getAttribute('aria-label'))
       .toBe('Metadados');
+  });
+
+  it('configura Kindle Safe no fluxo principal e mantém o padrão ligado', () => {
+    const state = createInitialState();
+    expect(state.options.kindleSafeMode).toBe(true);
+    const changes: boolean[] = [];
+    const actions = {
+      analyze: () => {}, repair: () => {}, copy: () => {},
+      downloadTextReport: () => {}, downloadJsonReport: () => {},
+      onKindleSafeChange: (enabled: boolean) => {
+        changes.push(enabled);
+        state.options.kindleSafeMode = enabled;
+      },
+    };
+    let card = renderControls(state, actions);
+    const setting = card.querySelector<HTMLInputElement>('#kindle-safe-main')!;
+    expect(setting.checked).toBe(true);
+    expect(card.textContent).toContain('Preparar para Kindle durante o reparo');
+    expect(card.textContent).toContain('Ativo');
+
+    setting.click();
+    expect(changes).toEqual([false]);
+    expect(state.options.kindleSafeMode).toBe(false);
+    card = renderControls(state, actions);
+    expect(card.querySelector<HTMLInputElement>('#kindle-safe-main')?.checked).toBe(false);
+    expect(card.textContent).toContain('Desativado');
+
+    const options = renderOptionsPanel(state, () => {});
+    expect(options.querySelector('#kindleSafeMode')).toBeNull();
+
+    state.busy = true;
+    card = renderControls(state, actions);
+    expect(card.querySelector<HTMLInputElement>('#kindle-safe-main')?.disabled).toBe(true);
+  });
+
+  it('inclui a auditoria Kindle no diagnóstico com detalhes e ações originais', async () => {
+    const bytes = await buildKindleIssueEpub();
+    const report = await inspectEpub('integracao-kindle.epub', bytes);
+    const summary = renderFileSummary(report);
+    const kindle = summary.querySelector<HTMLElement>('.kindle-readiness-inline')!;
+    expect(kindle).not.toBeNull();
+    expect(kindle.textContent).toContain('Conferência para Kindle');
+    expect(kindle.querySelector('.kindle-readiness-details')).not.toBeNull();
+    expect(kindle.querySelectorAll('.kindle-readiness-item'))
+      .toHaveLength(buildKindleChecks(report).length);
+    expect(kindle.querySelector('a[href="https://www.amazon.com/sendtokindle"]'))
+      .not.toBeNull();
+    expect(Array.from(kindle.querySelectorAll('button')).some(button =>
+      button.textContent === 'Baixar diagnóstico Kindle')).toBe(true);
+    expect((kindle.querySelector('.kindle-readiness-details') as HTMLDetailsElement).open)
+      .toBe(false);
+    expect(summary.querySelector('.score-breakdown')).not.toBeNull();
+    expect(summary.querySelector('.cover-summary')).not.toBeNull();
+    expect(kindle.textContent).toContain('Nenhum arquivo é enviado automaticamente');
+    expect(kindle.querySelector('.kindle-readiness-counts')?.textContent)
+      .toContain('para revisar');
   });
 
 });
