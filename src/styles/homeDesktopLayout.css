@@ -283,23 +283,23 @@
   }
 
   :root[data-theme="dark"] .epub-home .home-action-shell-repair {
-    --home-action-bg: #214f40;
+    --home-action-bg: #2b6651;
     --home-action-ink: #fff4e7;
-    --home-action-border: #6f9f89;
-    --home-action-inner: rgba(255, 244, 231, .28);
-    --home-action-bookmark: #f3e2cf;
-    --home-action-page: #a95e44;
-    --home-action-page-border: #d39172;
+    --home-action-border: #80b89f;
+    --home-action-inner: rgba(255, 244, 231, .24);
+    --home-action-bookmark: #f2dfcb;
+    --home-action-page: #c97a58;
+    --home-action-page-border: #e0a181;
   }
 
   :root[data-theme="dark"] .epub-home .home-action-shell-converter {
-    --home-action-bg: #29241f;
-    --home-action-ink: #f4eadf;
-    --home-action-border: #c87b5b;
-    --home-action-inner: rgba(200, 123, 91, .2);
-    --home-action-bookmark: #cf7958;
-    --home-action-page: #416f5d;
-    --home-action-page-border: #79a18f;
+    --home-action-bg: #a85e43;
+    --home-action-ink: #fff4e7;
+    --home-action-border: #d99a76;
+    --home-action-inner: rgba(255, 244, 231, .22);
+    --home-action-bookmark: #f2dfcb;
+    --home-action-page: #3c745d;
+    --home-action-page-border: #82b59e;
   }
 
   :root[data-theme="dark"] .epub-home .home-action-shell-repair .home-action-repair,
