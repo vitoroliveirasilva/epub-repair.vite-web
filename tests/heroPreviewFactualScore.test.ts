@@ -247,6 +247,28 @@ describe('Identidade editorial no EPUB Repair', () => {
       .toContain("import './styles/navbarRefinement.css';");
   });
 
+  it('usa no desktop os mesmos SVGs de sol e lua do mobile', () => {
+    const desktop = readFileSync('src/styles/desktopNavbar.css', 'utf8');
+    const mobile = readFileSync('src/styles/mobileNavigation.css', 'utf8');
+
+    for (const name of ['sun', 'moon']) {
+      const svgPath = `/theme-${name}.svg`;
+      const svgMask = `url('${svgPath}')`;
+      expect(desktop).toContain(svgMask);
+      expect(mobile).toContain(svgMask);
+      expect(readFileSync(`public/theme-${name}.svg`, 'utf8'))
+        .toContain('viewBox="0 0 24 24"');
+    }
+
+    expect(desktop).not.toContain('content: "☀"');
+    expect(desktop).not.toContain('content: "☾"');
+    expect(desktop).toContain('background: #b75c35;');
+    expect(desktop).toContain('background: #d8b08b;');
+    expect(desktop).toContain('flex: 0 0 2.02rem;');
+    expect(desktop).toContain('width: 2.02rem;');
+    expect(desktop).toContain('height: 2.02rem;');
+  });
+
   it('sinaliza a ferramenta atual em cobre nas duas páginas sem selecionar destinos secundários', () => {
     for (const { build, href, count } of [
       { build: createApp, href: '/', count: 5 },

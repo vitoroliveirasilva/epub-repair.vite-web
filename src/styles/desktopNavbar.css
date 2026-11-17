@@ -268,14 +268,15 @@
     width: 2.02rem;
     height: 2.02rem;
     place-items: center;
-    border: 1px solid color-mix(in srgb, var(--desktop-nav-copper) 12%, transparent);
-    border-radius: 0.68rem;
-    background: color-mix(in srgb, #f8e4cd 66%, var(--color-surface));
-    color: #a0522c;
-    content: "☀";
-    font-family: system-ui, sans-serif;
-    font-size: 1.16rem;
-    line-height: 1;
+    border: 0;
+    border-radius: 0;
+    background: #b75c35;
+    color: transparent;
+    content: "";
+    font-size: 0;
+    line-height: 0;
+    -webkit-mask: url('/theme-sun.svg') center / 1.36rem 1.36rem no-repeat;
+    mask: url('/theme-sun.svg') center / 1.36rem 1.36rem no-repeat;
     transition: transform 400ms cubic-bezier(0.2, 0.8, 0.2, 1),
       background-color 200ms ease;
   }
@@ -304,11 +305,11 @@
   }
 
   :root[data-theme="dark"] .app-header .nav-theme-toggle::before {
-    content: "☾";
-    color: #f0d7a9;
-    background: color-mix(in srgb, #66543d 55%, var(--color-surface));
-    border-color: color-mix(in srgb, #e2b980 15%, transparent);
-    font-size: 1.25rem;
+    content: "";
+    color: transparent;
+    background: #d8b08b;
+    -webkit-mask: url('/theme-moon.svg') center / 1.36rem 1.36rem no-repeat;
+    mask: url('/theme-moon.svg') center / 1.36rem 1.36rem no-repeat;
   }
 
   :root[data-theme="dark"] .app-header .nav-theme-toggle:hover::before {
