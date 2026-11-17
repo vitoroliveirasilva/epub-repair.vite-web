@@ -278,6 +278,7 @@ function renderCapabilityShowcase(): HTMLElement {
         children: capabilities.map(([number, title, description]) =>
           el('article', {
             className: 'capability-entry',
+            attrs: { 'data-sequence': number },
             children: [
               el('span', { className: 'capability-number', text: number }),
               el('div', {
