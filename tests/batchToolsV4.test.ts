@@ -303,7 +303,7 @@ describe('Lotes limitados e isolados', () => {
       new File(['x'], 'outro-' + i + '.epub'));
     openBatchWithFiles(state, tooMany);
     rerender();
-    expect(host.querySelector('[role="alert"]')?.textContent).toContain('até');
+    expect(host.querySelector('[role="alert"]')?.textContent).toContain('6 EPUBs');
     expect(host.querySelectorAll('.batch-workspace-files li')).toHaveLength(1);
   });
 

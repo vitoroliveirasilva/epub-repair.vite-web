@@ -15,7 +15,7 @@ import type { InlineRun } from '../epub/tools/readerInline';
 import type { ReaderPresentation } from '../epub/tools/readerPresentation';
 import { metadataChanges, metadataChangeCount } from '../epub/tools/metadataDraft';
 
-type ExtraTab = 'preview' | 'compare' | 'metadata' | 'kindle' | 'batch';
+type ExtraTab = 'preview' | 'compare' | 'metadata' | 'kindle';
 type Queue = (
   label: string,
   task: (ctx: { signal: AbortSignal; onProgress: (p: ProcessingProgress) => void }) => Promise<void>,
