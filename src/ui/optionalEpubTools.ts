@@ -271,6 +271,23 @@ export function readerCard(
   ] });
 }
 
+function renderWorkbenchIntro(
+  kicker: string, title: string, description: string,
+  action: HTMLButtonElement, hint?: string,
+): HTMLElement {
+  return el('div', { className: 'optional-studio-tool-head workbench-panel-intro', children: [
+    el('div', { className: 'optional-studio-tool-copy workbench-panel-copy', children: [
+      el('span', { className: 'optional-studio-tool-kicker', text: kicker }),
+      el('h4', { text: title }),
+      el('p', { text: description }),
+    ] }),
+    el('div', { className: 'optional-studio-tool-action workbench-panel-action', children: [
+      action,
+      hint ? el('small', { text: hint }) : undefined,
+    ] }),
+  ] });
+}
+
 function renderPreview(state: AppState, s: Session, rerender: () => void, enqueue: Queue): HTMLElement {
   const control = toolButton('Abrir leitura local', Boolean(state.payload) && !state.busy, () => {
     const payload = state.payload;
@@ -321,22 +338,14 @@ function renderPreview(state: AppState, s: Session, rerender: () => void, enqueu
       });
     },
   };
-  return el('div', { className: 'optional-tool-content optional-studio-reader', children: [
-    el('div', { className: 'optional-studio-tool-head', children: [
-      el('div', { className: 'optional-studio-tool-copy', children: [
-        el('span', { className: 'optional-studio-tool-kicker', text: 'LEITURA NO NAVEGADOR' }),
-        el('h4', { text: 'Seu livro, antes de baixar' }),
-        el('p', { text: 'Explore capítulos, imagens, tabelas e notas em uma prévia local segura.' }),
-      ] }),
-      el('div', { className: 'optional-studio-tool-action', children: [
-        control,
-        !state.payload
-          ? el('small', { text: 'Escolha um EPUB para habilitar a leitura' })
-          : undefined,
-      ] }),
-    ] }),
-    el('p', { className: 'optional-studio-disclaimer',
-      text: 'A prévia reproduz apenas estilos seguros selecionados, sem executar o CSS original. A aparência no Kindle ou em outros leitores pode ser diferente.' }),
+  return el('div', { className: 'optional-tool-content optional-studio-reader workbench-tool-pane', children: [
+    renderWorkbenchIntro(
+      '01 / LEITURA NO NAVEGADOR', 'Seu livro, antes de baixar',
+      'Leia capítulos, confira imagens, tabelas e notas em uma prévia local segura.',
+      control, !state.payload ? 'Selecione um EPUB na área de envio para começar.' : undefined,
+    ),
+    el('p', { className: 'optional-studio-disclaimer workbench-footnote',
+      text: 'Prévia segura: apenas estilos selecionados são reproduzidos, sem executar o CSS original. A apresentação no Kindle ou em outros leitores pode variar.' }),
     view ? paragraph(`${view.sections.length} seção(ões) carregada(s)${view.omitted ? `, ${view.omitted} omitida(s)` : ''}.${view.fixedLayout ? ' EPUB de layout fixo: esta é uma prévia simplificada, não uma reprodução da página.' : ''}`) : undefined,
     view?.sections.length ? el('div', { className: 'optional-reader-controls', children: [
       toolButton('Anterior', s.chapter > 0, () => { s.chapter -= 1; rerender(); }),
@@ -453,10 +462,14 @@ function renderCompare(state: AppState, s: Session, rerender: () => void, enqueu
     added: 'Seção adicionada',
     removed: 'Seção removida',
   };
-  return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Comparação editorial local: texto, organização, tabelas, notas, imagens e mudanças de estilo. Os dois painéis reproduzem apenas propriedades visuais seguras selecionadas. Não equivale a comparar pixels, fontes incorporadas ou a paginação de um Kindle.'),
-    run,
-    !hasChanged ? paragraph('Depois de reparar ou editar metadados, a comparação ficará disponível aqui.') : undefined,
+  return el('div', { className: 'optional-tool-content workbench-tool-pane', children: [
+    renderWorkbenchIntro(
+      '02 / COMPARAÇÃO EDITORIAL', 'Veja o que realmente mudou',
+      'Compare organização, texto, imagens e estilos do EPUB original com a nova versão.',
+      run, !hasChanged ? 'Disponível após reparar ou editar o EPUB.' : undefined,
+    ),
+    el('p', { className: 'workbench-footnote',
+      text: 'Comparação local e orientativa. Não reproduz pixels, fontes incorporadas nem a paginação dos leitores.' }),
     rows.length ? paragraph(comparisonSummary(rows)) : undefined,
     rows.length && ((s.sourcePreview?.omitted ?? 0) > 0 ||
       (s.editedPreview?.omitted ?? 0) > 0 ||
@@ -590,13 +603,19 @@ function renderMetadata(state: AppState, s: Session, rerender: () => void, enque
     s.message = 'Alterações descartadas. Os valores originais foram restaurados.';
     rerender();
   });
-  return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Edite apenas o necessário. Campos vazios preservam informações. ' +
-      'Ao reorganizar os autores, seus vínculos editoriais acompanham cada nome. ' +
-      'Funções MARC opcionais usam uma linha por autor adicional; uma função ' +
-      'existente não é apagada por uma linha vazia. Autores vinculados não podem ' +
-      'ser excluídos silenciosamente. EPUBs assinados não são editados.'),
-    load,
+  return el('div', { className: 'optional-tool-content workbench-tool-pane', children: [
+    renderWorkbenchIntro(
+      '03 / DADOS DA OBRA', 'Metadados sob seu controle',
+      'Revise título, autoria, idioma e informações editoriais, preservando o EPUB original.',
+      load, !state.payload ? 'Selecione um EPUB na área de envio para começar.' : undefined,
+    ),
+    el('details', { className: 'workbench-safety-notes', children: [
+      el('summary', { text: 'Como tratamos os metadados' }),
+      el('p', { text: 'Campos vazios preservam os dados originais. Ao reorganizar autores, ' +
+        'seus vínculos editoriais acompanham cada nome. Funções MARC opcionais usam uma ' +
+        'linha por autor adicional; uma linha vazia não apaga a função existente. ' +
+        'Autores vinculados não são removidos silenciosamente e EPUBs assinados não são editados.' }),
+    ] }),
     original && draft ? el('div', { className: 'optional-metadata-grid', children: inputs }) : undefined,
     original && draft ? changedLabel : undefined,
     original && draft ? el('div', { className: 'optional-metadata-actions', children: [
@@ -1027,33 +1046,28 @@ function renderBatch(
 export function renderOptionalEpubTools(state: AppState, rerender: () => void, enqueue: Queue): HTMLElement {
   const s = sessionFor(state);
   const details = el('details', {
-    className: 'panel optional-tools optional-studio',
+    className: 'panel optional-tools optional-studio optional-workbench',
     attrs: { id: 'optional-tools' },
     children: [
       el('summary', { children: [
-        el('span', { className: 'optional-studio-symbol', attrs: { 'aria-hidden': 'true' },
+        el('span', { className: 'workbench-book-mark', attrs: { 'aria-hidden': 'true' },
           children: [
-            el('span', { className: 'optional-studio-icon-sheet optional-studio-icon-sheet-back' }),
-            el('span', { className: 'optional-studio-icon-sheet optional-studio-icon-sheet-front',
-              children: [
-                el('span', { className: 'optional-studio-icon-line' }),
-                el('span', { className: 'optional-studio-icon-line optional-studio-icon-line-short' }),
-              ],
-            }),
-            el('span', { className: 'optional-studio-icon-seal' }),
+            el('span', { className: 'workbench-book-left' }),
+            el('span', { className: 'workbench-book-right' }),
+            el('span', { className: 'workbench-book-spine' }),
           ],
         }),
-        el('span', { className: 'optional-studio-heading', children: [
+        el('span', { className: 'optional-studio-heading workbench-heading', children: [
           el('span', { className: 'optional-studio-eyebrow',
-            text: 'RECURSOS COMPLEMENTARES' }),
+            text: 'RECURSOS COMPLEMENTARES / 03 FERRAMENTAS' }),
           el('strong', { text: 'Ferramentas extras' }),
-          el('small', { text: 'Leia seu EPUB, compare versões e edite metadados. O Kindle já faz parte da verificação principal.' }),
+          el('small', { text: 'Leia, compare versões e edite metadados. O preparo para Kindle já faz parte do reparo.' }),
         ] }),
-        el('span', { className: 'optional-studio-summary-action',
+        el('span', { className: 'optional-studio-summary-action workbench-disclosure',
           attrs: { 'aria-hidden': 'true' }, text: s.expanded ? 'Recolher' : 'Explorar' }),
       ] }),
-      el('div', { className: 'optional-tools-inner optional-studio-inner', children: [
-        el('div', { className: 'optional-tablist optional-studio-tabs',
+      el('div', { className: 'optional-tools-inner optional-studio-inner workbench-body', children: [
+        el('div', { className: 'optional-tablist optional-studio-tabs workbench-navigation',
           attrs: { role: 'group', 'aria-label': 'Selecionar ferramenta opcional' },
           children: TABS.map(([key, label], index) => {
             const active = s.tab === key;
@@ -1066,10 +1080,10 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
             tab.setAttribute('aria-pressed', String(active));
             tab.setAttribute('aria-label', label);
             tab.append(
-              el('span', { className: 'optional-studio-tab-index',
+              el('span', { className: 'optional-studio-tab-index workbench-tab-number',
                 attrs: { 'aria-hidden': 'true' },
                 text: String(index + 1).padStart(2, '0') }),
-              el('span', { className: 'optional-studio-tab-text', children: [
+              el('span', { className: 'optional-studio-tab-text workbench-tab-label', children: [
                 el('strong', { text: label }),
                 el('small', { text: {
                   preview: 'Leitura local',
@@ -1080,11 +1094,13 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
             );
             return tab;
           }) }),
-        s.tab === 'preview' ? renderPreview(state, s, rerender, enqueue) : undefined,
-        s.tab === 'compare' ? renderCompare(state, s, rerender, enqueue) : undefined,
-        s.tab === 'metadata' ? renderMetadata(state, s, rerender, enqueue) : undefined,
-        s.message ? el('p', { className: 'optional-studio-message',
-          attrs: { role: 'status' }, text: s.message }) : undefined,
+        el('div', { className: 'workbench-stage', children: [
+          s.tab === 'preview' ? renderPreview(state, s, rerender, enqueue) : undefined,
+          s.tab === 'compare' ? renderCompare(state, s, rerender, enqueue) : undefined,
+          s.tab === 'metadata' ? renderMetadata(state, s, rerender, enqueue) : undefined,
+          s.message ? el('p', { className: 'optional-studio-message',
+            attrs: { role: 'status' }, text: s.message }) : undefined,
+        ] }),
       ] }),
     ],
   });

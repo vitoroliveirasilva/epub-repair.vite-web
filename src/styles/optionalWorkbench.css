@@ -1,0 +1,645 @@
+#app .layout#app-workspace .optional-tools.optional-studio.optional-workbench {
+  --workbench-rule: color-mix(in srgb, var(--color-text) 12%, transparent);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 20%, var(--color-border));
+  border-radius: clamp(1.1rem, 2.1vw, 1.55rem);
+  background: var(--color-surface);
+  box-shadow: 0 .8rem 2.5rem color-mix(in srgb, var(--color-text) 5%, transparent);
+  backdrop-filter: none;
+  transition: border-color 300ms ease, box-shadow 320ms ease;
+}
+
+#app .layout#app-workspace .optional-workbench > summary.workbench-heading-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(.85rem, 2.1vw, 1.3rem);
+  width: 100%;
+  min-height: 7.4rem;
+  margin: 0;
+  padding: clamp(1.3rem, 2.7vw, 1.8rem) clamp(1.25rem, 3vw, 2rem);
+  border: none;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: border-color 240ms ease;
+}
+
+#app .layout#app-workspace .optional-workbench > summary.workbench-heading-row::before,
+#app .layout#app-workspace .optional-workbench > summary.workbench-heading-row::after {
+  display: none;
+  content: none;
+}
+
+#app .layout#app-workspace .optional-workbench[open] > summary.workbench-heading-row {
+  border-bottom-color: var(--workbench-rule);
+}
+
+#app .optional-workbench > summary.workbench-heading-row > * {
+  position: relative;
+  z-index: 1;
+}
+
+#app .optional-workbench .workbench-book-mark {
+  position: relative;
+  display: block;
+  width: 3rem;
+  height: 3.1rem;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  transform: none;
+}
+
+#app .optional-workbench .workbench-book-left,
+#app .optional-workbench .workbench-book-right {
+  position: absolute;
+  top: .68rem;
+  width: 1.13rem;
+  height: 1.65rem;
+  border: 1.6px solid var(--color-accent-strong);
+  background: var(--color-surface);
+  transition: rotate 380ms cubic-bezier(.16, 1, .3, 1), translate 380ms ease;
+}
+
+#app .optional-workbench .workbench-book-left {
+  left: .28rem;
+  border-radius: .42rem .13rem .12rem .28rem;
+  rotate: -6deg;
+  transform-origin: right bottom;
+}
+
+#app .optional-workbench .workbench-book-right {
+  right: .28rem;
+  border-radius: .13rem .42rem .28rem .12rem;
+  rotate: 6deg;
+  transform-origin: left bottom;
+}
+
+#app .optional-workbench .workbench-book-left::before,
+#app .optional-workbench .workbench-book-right::before {
+  position: absolute;
+  top: .57rem;
+  left: .23rem;
+  width: .55rem;
+  height: .4rem;
+  background: repeating-linear-gradient(180deg,
+    color-mix(in srgb, var(--color-accent) 48%, transparent) 0 1px,
+    transparent 1px 5px);
+  content: '';
+}
+
+#app .optional-workbench .workbench-book-spine {
+  position: absolute;
+  top: .73rem;
+  bottom: .7rem;
+  left: calc(50% - .8px);
+  width: 1.6px;
+  border-radius: 99px;
+  background: var(--studio-copper);
+}
+
+#app .optional-workbench .workbench-heading {
+  display: grid;
+  align-content: center;
+  gap: .32rem;
+  min-width: 0;
+}
+
+#app .optional-workbench .workbench-heading .optional-studio-eyebrow {
+  color: var(--studio-copper);
+  font-size: .65rem;
+  font-weight: 800;
+  line-height: 1.4;
+  letter-spacing: .12em;
+}
+
+#app .layout#app-workspace .optional-workbench > summary .workbench-heading strong {
+  width: fit-content;
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.48rem, 2.45vw, 2.05rem);
+  font-weight: 740;
+  letter-spacing: -.052em;
+  line-height: 1.13;
+  transition: color 220ms ease;
+}
+
+#app .optional-workbench .workbench-heading strong::after {
+  display: none;
+  content: none;
+}
+
+#app .layout#app-workspace .optional-workbench > summary .workbench-heading small {
+  max-width: 62ch;
+  color: var(--color-text-muted);
+  font-size: .82rem;
+  font-weight: 440;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+#app .optional-workbench > summary .workbench-disclosure {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .67rem;
+  min-height: 2.4rem;
+  padding: .4rem 0 .4rem .7rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-accent-strong);
+  font-size: .76rem;
+  font-weight: 800;
+  line-height: 1.4;
+  transition: color 220ms ease;
+}
+
+#app .optional-workbench > summary .workbench-disclosure::after {
+  display: grid;
+  width: 1.9rem;
+  height: 1.9rem;
+  flex: 0 0 1.9rem;
+  place-items: center;
+  border: 1px solid var(--workbench-rule);
+  border-radius: 50%;
+  content: '⌄';
+  font-family: var(--font-sans);
+  font-size: 1.22rem;
+  font-weight: 500;
+  line-height: 1;
+  translate: 0 -.09rem;
+  rotate: 0deg;
+  transition: rotate 350ms cubic-bezier(.16, 1, .3, 1), border-color 250ms ease;
+}
+
+#app .optional-workbench[open] > summary .workbench-disclosure::after {
+  rotate: 180deg;
+}
+
+#app .layout#app-workspace .optional-workbench .optional-tools-inner.workbench-body {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0 clamp(1.25rem, 3vw, 2rem) clamp(1.35rem, 3vw, 2rem);
+  border: none;
+  background: var(--color-surface);
+}
+
+#app .layout#app-workspace .optional-workbench .optional-tablist.workbench-navigation {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  width: 100%;
+  gap: 0;
+  margin: 0;
+  border-bottom: 1px solid var(--workbench-rule);
+}
+
+#app .layout#app-workspace .optional-workbench .optional-tablist .optional-studio-tab.btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem;
+  min-width: 0;
+  min-height: 4.9rem;
+  margin: 0;
+  padding: .92rem .7rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--color-text-muted);
+  text-align: left;
+  translate: 0 0;
+  transform: none;
+  transition: color 220ms ease, background-color 240ms ease;
+}
+
+#app .optional-workbench .workbench-navigation .optional-studio-tab.btn::before {
+  display: none;
+  content: none;
+}
+
+#app .optional-workbench .workbench-navigation .optional-studio-tab.btn::after {
+  position: absolute;
+  right: .55rem;
+  bottom: -1px;
+  left: .55rem;
+  height: 2.5px;
+  border-radius: 99px 99px 0 0;
+  background: var(--color-accent);
+  content: '';
+  opacity: 0;
+  transform: scaleX(.45);
+  transform-origin: center;
+  transition: transform 280ms cubic-bezier(.16, 1, .3, 1), opacity 240ms ease;
+}
+
+#app .optional-workbench .workbench-navigation .optional-studio-tab > span {
+  position: relative;
+  z-index: 1;
+}
+
+#app .optional-workbench .workbench-navigation .workbench-tab-number {
+  display: inline;
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--studio-copper);
+  font-family: var(--font-serif);
+  font-size: .78rem;
+  font-weight: 700;
+  line-height: 1.5;
+  rotate: 0deg;
+}
+
+#app .optional-workbench .workbench-navigation .workbench-tab-label {
+  display: grid;
+  gap: .13rem;
+  min-width: 0;
+  translate: 0 0;
+}
+
+#app .optional-workbench .workbench-navigation .workbench-tab-label strong {
+  color: inherit;
+  font-size: .84rem;
+  font-weight: 760;
+  letter-spacing: -.014em;
+  line-height: 1.3;
+}
+
+#app .optional-workbench .workbench-navigation .workbench-tab-label small {
+  color: var(--color-text-muted);
+  font-size: .67rem;
+  font-weight: 480;
+  line-height: 1.4;
+}
+
+#app .layout#app-workspace .optional-workbench .workbench-navigation .optional-studio-tab-active.btn {
+  color: var(--color-accent-strong);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+#app .optional-workbench .workbench-navigation .optional-studio-tab-active.btn::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+#app .optional-workbench .workbench-navigation .optional-studio-tab:focus-visible {
+  z-index: 2;
+  outline: 2px solid var(--color-focus);
+  outline-offset: -5px;
+  border-radius: .42rem;
+}
+
+#app .optional-workbench .workbench-stage {
+  min-width: 0;
+  animation: workbench-enter 360ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+#app .layout#app-workspace .optional-workbench .optional-tool-content.workbench-tool-pane {
+  display: grid;
+  justify-items: stretch;
+  gap: clamp(.95rem, 2vw, 1.25rem);
+  min-width: 0;
+}
+
+#app .layout#app-workspace .optional-workbench .workbench-panel-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  gap: 1rem 2.2rem;
+  margin: 0;
+  padding: clamp(1.45rem, 3vw, 2.2rem) 0 .15rem;
+  border: none;
+}
+
+#app .optional-workbench .workbench-panel-copy {
+  display: grid;
+  flex: 1 1 17rem;
+  gap: .45rem;
+  min-width: 0;
+}
+
+#app .optional-workbench .workbench-panel-copy .optional-studio-tool-kicker {
+  color: var(--studio-copper);
+  font-size: .66rem;
+  font-weight: 790;
+  letter-spacing: .12em;
+}
+
+#app .optional-workbench .workbench-panel-copy h4 {
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.3rem, 2.15vw, 1.72rem);
+  font-weight: 740;
+  letter-spacing: -.044em;
+  line-height: 1.22;
+}
+
+#app .optional-workbench .workbench-panel-copy p {
+  max-width: 51ch;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: .81rem;
+  line-height: 1.62;
+}
+
+#app .optional-workbench .workbench-panel-action {
+  display: grid;
+  flex: 0 1 13.5rem;
+  align-items: center;
+  justify-items: stretch;
+  gap: .55rem;
+  min-width: min(100%, 12rem);
+  width: auto;
+}
+
+#app .layout#app-workspace .optional-workbench .workbench-panel-action .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.9rem;
+  width: 100%;
+  margin: 0;
+  padding: .65rem 1rem;
+  border: 1px solid var(--color-accent-strong);
+  border-radius: .67rem;
+  background: var(--color-accent-strong);
+  color: var(--color-surface);
+  box-shadow: none;
+  font-size: .79rem;
+  font-weight: 780;
+  line-height: 1.36;
+  translate: 0 0;
+  transition: background-color 220ms ease, border-color 220ms ease,
+    color 220ms ease, box-shadow 220ms ease;
+}
+
+#app .layout#app-workspace .optional-workbench .workbench-panel-action .btn:disabled {
+  opacity: 1;
+  border: 1px solid var(--workbench-rule);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+#app .optional-workbench .workbench-panel-action > small {
+  color: var(--color-text-muted);
+  font-size: .7rem;
+  font-weight: 450;
+  line-height: 1.5;
+  text-align: center;
+}
+
+#app .layout#app-workspace .optional-workbench .workbench-footnote {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: .65rem;
+  width: 100%;
+  margin: 0;
+  padding: .92rem 0 0;
+  border: none;
+  border-top: 1px solid var(--workbench-rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: .72rem;
+  line-height: 1.62;
+}
+
+#app .optional-workbench .workbench-footnote::before {
+  display: grid;
+  width: 1.07rem;
+  height: 1.07rem;
+  flex: 0 0 1.07rem;
+  place-items: center;
+  margin-top: .08rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 32%, var(--color-border));
+  border-radius: 50%;
+  color: var(--color-accent-strong);
+  content: 'i';
+  font-family: var(--font-serif);
+  font-size: .69rem;
+  font-style: italic;
+  font-weight: 750;
+  line-height: 1;
+}
+
+#app .optional-workbench .workbench-safety-notes {
+  width: 100%;
+  margin: 0;
+  border-top: 1px solid var(--workbench-rule);
+}
+
+#app .optional-workbench .workbench-safety-notes > summary {
+  padding: .9rem 0 .45rem;
+  color: var(--color-accent-strong);
+  font-size: .76rem;
+  font-weight: 740;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+#app .optional-workbench .workbench-safety-notes > summary:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+#app .optional-workbench .workbench-safety-notes > p {
+  max-width: 72ch;
+  margin: .35rem 0 .6rem;
+  color: var(--color-text-muted);
+  font-size: .75rem;
+  line-height: 1.7;
+}
+
+#app .optional-workbench .optional-metadata-grid,
+#app .optional-workbench .optional-compare-grid {
+  min-width: 0;
+}
+
+#app .optional-workbench .optional-reader-card {
+  border-color: var(--workbench-rule);
+  background: color-mix(in srgb, var(--color-surface) 91%, var(--color-bg));
+}
+
+#app .optional-workbench .optional-studio-message {
+  border: none;
+  border-top: 1px solid var(--workbench-rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text);
+  padding: .9rem 0 0;
+  font-size: .76rem;
+}
+
+@keyframes workbench-enter {
+  from { opacity: .4; translate: 0 .35rem; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .optional-workbench:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 34%, var(--color-border));
+    box-shadow: 0 1rem 2.8rem color-mix(in srgb, var(--color-text) 6%, transparent);
+  }
+
+  #app .layout#app-workspace .optional-workbench > summary.workbench-heading-row:hover {
+    background: var(--color-surface);
+  }
+
+  #app .optional-workbench > summary:hover .workbench-book-left {
+    rotate: -16deg;
+    translate: -.15rem -.06rem;
+  }
+
+  #app .optional-workbench > summary:hover .workbench-book-right {
+    rotate: 16deg;
+    translate: .15rem -.06rem;
+  }
+
+  #app .layout#app-workspace .optional-workbench .optional-tablist .optional-studio-tab.btn:hover {
+    color: var(--color-accent-strong);
+    background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
+    border: none;
+    box-shadow: none;
+    translate: 0 0;
+  }
+
+  #app .optional-workbench .optional-studio-tab:not(:disabled):hover::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  #app .optional-workbench .optional-studio-tab:hover .workbench-tab-number {
+    rotate: 0deg;
+  }
+
+  #app .optional-workbench .optional-studio-tab:hover .workbench-tab-label {
+    translate: 0 0;
+  }
+
+  #app .layout#app-workspace .optional-workbench .workbench-panel-action .btn:not(:disabled):hover {
+    translate: 0 0;
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: var(--color-surface);
+    box-shadow: 0 .35rem .9rem color-mix(in srgb, var(--color-accent) 19%, transparent);
+  }
+}
+
+@media (max-width: 720px) {
+  #app .layout#app-workspace .optional-workbench > summary.workbench-heading-row {
+    grid-template-columns: 2.3rem minmax(0, 1fr) auto;
+    gap: .75rem;
+    padding: 1.15rem 1rem;
+    min-height: 7.2rem;
+  }
+
+  #app .optional-workbench .workbench-book-mark {
+    width: 2.3rem;
+    height: 2.5rem;
+  }
+
+  #app .optional-workbench .workbench-book-left,
+  #app .optional-workbench .workbench-book-right {
+    top: .58rem;
+    width: .9rem;
+    height: 1.36rem;
+  }
+
+  #app .optional-workbench .workbench-book-left { left: .23rem; }
+  #app .optional-workbench .workbench-book-right { right: .23rem; }
+  #app .optional-workbench .workbench-book-spine { top: .62rem; bottom: .58rem; }
+
+  #app .optional-workbench > summary .workbench-disclosure {
+    display: grid;
+    padding: 0;
+    font-size: 0;
+  }
+
+  #app .optional-workbench .workbench-disclosure::after {
+    width: 1.8rem;
+    height: 1.8rem;
+    font-size: 1.16rem;
+  }
+
+  #app .layout#app-workspace .optional-workbench .optional-tools-inner.workbench-body {
+    padding-inline: 1rem;
+    padding-bottom: 1.3rem;
+  }
+
+  #app .layout#app-workspace .optional-workbench .optional-tablist .optional-studio-tab.btn {
+    min-height: 4.2rem;
+    padding: .68rem .35rem;
+    gap: .43rem;
+  }
+
+  #app .optional-workbench .workbench-navigation .workbench-tab-label small {
+    display: none;
+  }
+
+  #app .optional-workbench .workbench-panel-action {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  #app .layout#app-workspace .optional-workbench .workbench-panel-intro {
+    padding-top: 1.4rem;
+  }
+}
+
+@media (max-width: 430px) {
+  #app .optional-workbench .workbench-heading .optional-studio-eyebrow {
+    font-size: .56rem;
+    letter-spacing: .085em;
+  }
+
+  #app .layout#app-workspace .optional-workbench > summary .workbench-heading strong {
+    font-size: 1.32rem;
+  }
+
+  #app .layout#app-workspace .optional-workbench .optional-tablist .optional-studio-tab.btn {
+    min-height: 3.8rem;
+    gap: .3rem;
+    padding: .68rem .24rem;
+  }
+
+  #app .optional-workbench .workbench-navigation .workbench-tab-number { font-size: .62rem; }
+  #app .optional-workbench .workbench-navigation .workbench-tab-label strong { font-size: .7rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .optional-workbench,
+  #app .optional-workbench *,
+  #app .optional-workbench *::before,
+  #app .optional-workbench *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

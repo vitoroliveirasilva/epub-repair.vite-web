@@ -215,11 +215,16 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(tools.open).toBe(false);
     expect(tools.querySelector('.optional-studio-heading')?.textContent).not.toContain('lote');
     expect(tools.querySelectorAll('.optional-studio-tab')).toHaveLength(3);
-    const icon = tools.querySelector('.optional-studio-symbol')!;
+    const icon = tools.querySelector('.workbench-book-mark')!;
     expect(icon.getAttribute('aria-hidden')).toBe('true');
     expect(icon.textContent).toBe('');
-    expect(icon.querySelectorAll('.optional-studio-icon-sheet')).toHaveLength(2);
-    expect(icon.querySelectorAll('.optional-studio-icon-line')).toHaveLength(2);
+    expect(icon.querySelectorAll('.workbench-book-left, .workbench-book-right'))
+      .toHaveLength(2);
+    expect(icon.querySelector('.workbench-book-spine')).not.toBeNull();
+    expect(tools.classList.contains('optional-workbench')).toBe(true);
+    expect(tools.querySelector('.workbench-navigation')).not.toBeNull();
+    expect(tools.querySelectorAll('.workbench-tab-number')).toHaveLength(3);
+    expect(tools.querySelector('.workbench-stage')).not.toBeNull();
     const summaryAction = tools.querySelector<HTMLElement>('.optional-studio-summary-action')!;
     expect(summaryAction.textContent).toBe('Explorar');
     tools.open = true;
@@ -230,7 +235,7 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(summaryAction.textContent).toBe('Explorar');
     expect(tools.querySelectorAll('[aria-label="Preparar Kindle"]')).toHaveLength(0);
     expect(tools.querySelector('.optional-studio-heading')?.textContent)
-      .toContain('Kindle já faz parte da verificação principal');
+      .toContain('preparo para Kindle já faz parte do reparo');
     expect(tools.querySelector<HTMLButtonElement>('.optional-studio-tab-active')
       ?.getAttribute('aria-pressed')).toBe('true');
     expect(tools.querySelector('.optional-studio-tool-head')).not.toBeNull();
@@ -323,6 +328,43 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(error?.querySelector('.status-panel-copy p')?.textContent)
       .toBe('Arquivo EPUB inválido.');
     expect(renderStatusMessage()).toBeUndefined();
+  });
+
+  it('apresenta leitura, comparação e metadados com a mesma estrutura visual', () => {
+    const state = createInitialState();
+    const root = document.createElement('div');
+    document.body.append(root);
+    const render = (): void => root.replaceChildren(renderOptionalEpubTools(state, render, () => {}));
+    render();
+
+    const expectations = [
+      { label: 'Ler EPUB', kicker: '01 / LEITURA NO NAVEGADOR',
+        title: 'Seu livro, antes de baixar', action: 'Abrir leitura local' },
+      { label: 'Antes e depois', kicker: '02 / COMPARAÇÃO EDITORIAL',
+        title: 'Veja o que realmente mudou', action: 'Comparar versões' },
+      { label: 'Metadados', kicker: '03 / DADOS DA OBRA',
+        title: 'Metadados sob seu controle', action: 'Carregar metadados' },
+    ];
+    for (const item of expectations) {
+      const tab = root.querySelector<HTMLButtonElement>(
+        '.optional-studio-tab[aria-label="' + item.label + '"]',
+      )!;
+      tab.click();
+      const stage = root.querySelector('.workbench-stage')!;
+      const intro = stage.querySelector('.workbench-panel-intro')!;
+      expect(intro.querySelector('.optional-studio-tool-kicker')?.textContent)
+        .toBe(item.kicker);
+      expect(intro.querySelector('h4')?.textContent).toBe(item.title);
+      expect(Array.from(intro.querySelectorAll('button')).some(button =>
+        button.textContent === item.action && button.disabled)).toBe(true);
+      expect(root.querySelector('.optional-studio-tab-active')?.getAttribute('aria-label'))
+        .toBe(item.label);
+      expect(Array.from(root.querySelectorAll('.optional-studio-tab')).filter(button =>
+        button.getAttribute('aria-pressed') === 'true')).toHaveLength(1);
+    }
+    expect(root.querySelector('.workbench-safety-notes summary')?.textContent)
+      .toBe('Como tratamos os metadados');
+    expect(root.querySelector('.optional-workbench')?.textContent).toContain('EPUB original');
   });
 
 });
