@@ -17,6 +17,7 @@ import './styles/homeWorkspace.css';
 import './styles/portfolioInspired.css';
 import './styles/uploadStudio.css';
 import './styles/coverStudio.css';
+import './styles/batchWorkspace.css';
 
 const root = document.querySelector<HTMLElement>('#app');
 

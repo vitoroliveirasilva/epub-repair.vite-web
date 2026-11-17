@@ -24,7 +24,13 @@ import { renderMobileNavigation } from '../ui/mobileNavigation';
 import { renderDesktopNavigation } from '../ui/desktopNavigation';
 import { renderBrandName } from '../ui/brand';
 import { renderEditorialFooter } from '../ui/footer';
-import { openBatchWithFiles, renderOptionalEpubTools } from '../ui/optionalEpubTools';
+import {
+  isBatchWorkspaceActive,
+  openBatchWithFiles,
+  renderBatchWorkspace,
+  renderOptionalEpubTools,
+  setBatchWorkspaceActive,
+} from '../ui/optionalEpubTools';
 import { abortProcessingError } from './zipWorkerClient';
 import { SerialTaskQueue } from './taskQueue';
 
@@ -91,6 +97,7 @@ function render(
   ) => void,
   cancelAll: () => void,
 ): void {
+  const batchActive = isBatchWorkspaceActive(state);
   root.replaceChildren(
     renderAppHeader(),
     renderHero(),
@@ -102,7 +109,8 @@ function render(
           className: 'workspace',
           children: [
             renderWorkspaceIntro(),
-            el('div', {
+            renderWorkflowModeSelector(batchActive, state, rerender),
+            batchActive ? renderBatchWorkspace(state, rerender, enqueue, cancelAll) : el('div', {
               className: 'workspace-core',
               children: [
                 renderUploader(state, (file) => {
@@ -112,7 +120,7 @@ function render(
               openBatchWithFiles(state, files);
               rerender();
               requestAnimationFrame(() =>
-                document.querySelector('.optional-tools')?.scrollIntoView({
+                root.querySelector<HTMLElement>('#batch-workspace')?.scrollIntoView({
                   behavior: 'smooth', block: 'start',
                 }));
                 }),
@@ -144,6 +152,7 @@ function render(
                 }),
               ],
             }),
+            ...(!batchActive ? [
             renderCoverChanger(state, {
               selectCoverImage: (file) => {
                 enqueue('Selecionar capa', (ctx) =>
@@ -185,6 +194,7 @@ function render(
               : undefined,
             renderOptionalEpubTools(state, rerender, enqueue),
             renderOptionsPanel(state, rerender),
+            ] : []),
           ],
         }),
       ],
@@ -195,6 +205,51 @@ function render(
   );
   const hero = root.querySelector<HTMLElement>('.epub-home');
   if (hero) startHeroStarAnimation(hero);
+}
+
+function renderWorkflowModeSelector(
+  batchActive: boolean, state: AppState, rerender: () => void,
+): HTMLElement {
+  const buildChoice = (
+    batch: boolean, symbol: string, title: string, description: string,
+  ): HTMLButtonElement => {
+    const selected = batch === batchActive;
+    const choice = button(
+      title,
+      'workflow-mode-card' + (selected ? ' workflow-mode-card-active' : ''),
+      () => {
+        if (state.busy || selected) return;
+        setBatchWorkspaceActive(state, batch);
+        rerender();
+      },
+    );
+    choice.disabled = state.busy;
+    choice.setAttribute('aria-pressed', String(selected));
+    choice.setAttribute('aria-label', title + '. ' + description);
+    choice.prepend(el('span', {
+      className: 'workflow-mode-icon',
+      attrs: { 'aria-hidden': 'true' },
+      text: symbol,
+    }));
+    choice.append(el('span', { className: 'workflow-mode-description', text: description }));
+    return choice;
+  };
+  return el('section', {
+    className: 'workflow-mode-selector',
+    attrs: { 'aria-label': 'Escolha como deseja trabalhar com seus EPUBs' },
+    children: [
+      el('div', { className: 'workflow-mode-heading', children: [
+        el('strong', { text: 'Quantos livros vamos cuidar?' }),
+        el('small', { text: 'Escolha um modo para ver só as opções necessárias' }),
+      ] }),
+      el('div', { className: 'workflow-mode-options', children: [
+        buildChoice(false, '01', 'Um EPUB',
+          'Análise detalhada, capa e reparos individuais'),
+        buildChoice(true, '02+', 'Vários EPUBs',
+          'Selecione até 6 livros, processe juntos e baixe um ZIP'),
+      ] }),
+    ],
+  });
 }
 
 function renderWorkspaceIntro(): HTMLElement {

@@ -6,7 +6,10 @@ import { processEpubBatch, MAX_BATCH_FILES, MAX_BATCH_BYTES,
   type BatchFileProgress } from '../src/epub/tools/batchProcessor';
 import { addBatchSelection } from '../src/epub/tools/batchSelection';
 import { renderUploader } from '../src/ui/components/Uploader';
-import { openBatchWithFiles, renderOptionalEpubTools } from '../src/ui/optionalEpubTools';
+import {
+  isBatchWorkspaceActive, openBatchWithFiles, renderBatchWorkspace,
+  setBatchWorkspaceActive,
+} from '../src/ui/optionalEpubTools';
 import { createInitialState } from '../src/app/state';
 
 vi.setConfig({ testTimeout: 30_000 });
@@ -245,35 +248,63 @@ describe('Lotes limitados e isolados', () => {
     expect(multiples[1]).toEqual(['dois.epub', 'um.epub']);
   });
 
-  it('abre o lote automaticamente, aceita arrastar mais um e alterna modos explicitamente', () => {
+  it('abre os vários EPUBs na área principal e mantém a lista ao alternar o modo', () => {
     const state = createInitialState();
     const one = new File(['a'], 'um.epub');
     const two = new File(['b'], 'dois.epub');
     const host = document.createElement('div');
     const rerender = (): void => {
-      host.replaceChildren(renderOptionalEpubTools(state, rerender, () => {}));
+      host.replaceChildren(renderBatchWorkspace(state, rerender, () => {}, () => {}));
     };
     openBatchWithFiles(state, [one]);
     rerender();
-    expect((host.querySelector('.optional-tools') as HTMLDetailsElement).open).toBe(true);
-    expect(host.textContent).toContain('1 EPUB(s) selecionado(s)');
+    expect(isBatchWorkspaceActive(state)).toBe(true);
+    expect(host.querySelector('.batch-workspace')).not.toBeNull();
+    expect(host.textContent).toContain('1 EPUB selecionado');
     expect(host.querySelector<HTMLInputElement>('input[value="repair"]')?.checked).toBe(true);
-    const dropZone = host.querySelector<HTMLElement>('.optional-batch-dropzone')!;
+    const dropZone = host.querySelector<HTMLElement>('.batch-workspace-upload')!;
     const drop = new Event('drop', { bubbles: true, cancelable: true });
     Object.defineProperty(drop, 'dataTransfer', { value: { files: [two] } });
     dropZone.dispatchEvent(drop);
-    expect(host.textContent).toContain('2 EPUB(s) selecionado(s)');
+    expect(host.textContent).toContain('2 EPUBs selecionados');
+    expect(host.textContent).toContain('Corrigir 2 EPUBs');
+    expect(host.querySelectorAll('.batch-workspace-files li')).toHaveLength(2);
     const radios = host.querySelectorAll<HTMLInputElement>('input[name="optional-batch-mode"]');
     expect(radios).toHaveLength(2);
     const validate = host.querySelector<HTMLInputElement>('input[value="validate"]')!;
     validate.checked = true;
     validate.dispatchEvent(new Event('change'));
-    expect(host.textContent).toContain('Verificar EPUB(s)');
+    expect(host.textContent).toContain('Verificar 2 EPUBs');
     expect(host.querySelector<HTMLInputElement>('input[value="validate"]')?.checked).toBe(true);
-    const remove = Array.from(host.querySelectorAll<HTMLButtonElement>(
-      '.optional-batch-files button')).find((button) => button.textContent === 'Remover');
+    const remove = host.querySelector<HTMLButtonElement>(
+      '.batch-workspace-files button[aria-label="Remover um.epub do lote"]');
     remove?.click();
-    expect(host.textContent).toContain('1 EPUB(s) selecionado(s)');
+    expect(host.textContent).toContain('1 EPUB selecionado');
+    setBatchWorkspaceActive(state, false);
+    expect(isBatchWorkspaceActive(state)).toBe(false);
+    setBatchWorkspaceActive(state, true);
+    rerender();
+    expect(host.textContent).toContain('1 EPUB selecionado');
+  });
+
+  it('mostra alertas claros para seleção inválida e mantém os livros aceitos', () => {
+    const state = createInitialState();
+    const one = new File(['a'], 'um.epub');
+    const host = document.createElement('div');
+    const rerender = (): void => {
+      host.replaceChildren(renderBatchWorkspace(state, rerender, () => {}, () => {}));
+    };
+    openBatchWithFiles(state, [one]);
+    openBatchWithFiles(state, [new File(['b'], 'imagem.png')]);
+    rerender();
+    expect(host.textContent).toContain('1 EPUB selecionado');
+    expect(host.querySelector('[role="alert"]')?.textContent).toContain('Nenhum EPUB válido');
+    const tooMany = Array.from({ length: MAX_BATCH_FILES }, (_, i) =>
+      new File(['x'], 'outro-' + i + '.epub'));
+    openBatchWithFiles(state, tooMany);
+    rerender();
+    expect(host.querySelector('[role="alert"]')?.textContent).toContain('até');
+    expect(host.querySelectorAll('.batch-workspace-files li')).toHaveLength(1);
   });
 
 });
