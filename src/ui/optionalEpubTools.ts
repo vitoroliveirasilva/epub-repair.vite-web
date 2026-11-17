@@ -1032,7 +1032,17 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
     children: [
       el('summary', { children: [
         el('span', { className: 'optional-studio-symbol', attrs: { 'aria-hidden': 'true' },
-          text: '✳' }),
+          children: [
+            el('span', { className: 'optional-studio-icon-sheet optional-studio-icon-sheet-back' }),
+            el('span', { className: 'optional-studio-icon-sheet optional-studio-icon-sheet-front',
+              children: [
+                el('span', { className: 'optional-studio-icon-line' }),
+                el('span', { className: 'optional-studio-icon-line optional-studio-icon-line-short' }),
+              ],
+            }),
+            el('span', { className: 'optional-studio-icon-seal' }),
+          ],
+        }),
         el('span', { className: 'optional-studio-heading', children: [
           el('span', { className: 'optional-studio-eyebrow',
             text: 'RECURSOS COMPLEMENTARES' }),
@@ -1040,7 +1050,7 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
           el('small', { text: 'Leia seu EPUB, compare versões e edite metadados. O Kindle já faz parte da verificação principal.' }),
         ] }),
         el('span', { className: 'optional-studio-summary-action',
-          attrs: { 'aria-hidden': 'true' }, text: 'Explorar' }),
+          attrs: { 'aria-hidden': 'true' }, text: s.expanded ? 'Recolher' : 'Explorar' }),
       ] }),
       el('div', { className: 'optional-tools-inner optional-studio-inner', children: [
         el('div', { className: 'optional-tablist optional-studio-tabs',
@@ -1080,7 +1090,10 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
   });
   details.open = s.expanded;
   details.addEventListener('toggle', () => {
-    if (details.isConnected) s.expanded = details.open;
+    if (!details.isConnected) return;
+    s.expanded = details.open;
+    const label = details.querySelector<HTMLElement>('.optional-studio-summary-action');
+    if (label) label.textContent = details.open ? 'Recolher' : 'Explorar';
   });
   return details;
 }

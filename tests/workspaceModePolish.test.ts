@@ -214,6 +214,19 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(tools.open).toBe(false);
     expect(tools.querySelector('.optional-studio-heading')?.textContent).not.toContain('lote');
     expect(tools.querySelectorAll('.optional-studio-tab')).toHaveLength(3);
+    const icon = tools.querySelector('.optional-studio-symbol')!;
+    expect(icon.getAttribute('aria-hidden')).toBe('true');
+    expect(icon.textContent).toBe('');
+    expect(icon.querySelectorAll('.optional-studio-icon-sheet')).toHaveLength(2);
+    expect(icon.querySelectorAll('.optional-studio-icon-line')).toHaveLength(2);
+    const summaryAction = tools.querySelector<HTMLElement>('.optional-studio-summary-action')!;
+    expect(summaryAction.textContent).toBe('Explorar');
+    tools.open = true;
+    tools.dispatchEvent(new Event('toggle'));
+    expect(summaryAction.textContent).toBe('Recolher');
+    tools.open = false;
+    tools.dispatchEvent(new Event('toggle'));
+    expect(summaryAction.textContent).toBe('Explorar');
     expect(tools.querySelectorAll('[aria-label="Preparar Kindle"]')).toHaveLength(0);
     expect(tools.querySelector('.optional-studio-heading')?.textContent)
       .toContain('Kindle já faz parte da verificação principal');

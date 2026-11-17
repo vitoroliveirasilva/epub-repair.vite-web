@@ -64,8 +64,6 @@
 #app .report-welcome-highlights span {
   transition:
     translate 350ms cubic-bezier(.16, 1, .3, 1),
-    border-color 350ms ease,
-    background-color 350ms ease,
     opacity 420ms ease;
 }
 
@@ -122,10 +120,6 @@
     transform 390ms cubic-bezier(.2, .8, .2, 1),
     border-color 300ms ease,
     background-color 300ms ease;
-}
-
-#app .optional-studio[open] .optional-studio-symbol {
-  transform: rotate(30deg);
 }
 
 #app .optional-studio .optional-studio-tab {
@@ -226,25 +220,10 @@
     transform: translate(.15rem, -.32rem) rotate(4deg);
   }
 
-  #app .report-welcome-highlights span:hover {
-    translate: 0 -.14rem;
-    border-color: color-mix(in srgb, var(--studio-copper) 32%, var(--color-border));
-    background: color-mix(in srgb, var(--studio-copper) 5%, var(--color-surface));
-  }
-
   #app .layout#app-workspace .optional-studio:hover,
   #app .layout#app-workspace .advanced-settings:hover {
     border-color: color-mix(in srgb, var(--color-accent) 39%, var(--color-border));
     box-shadow: 0 .85rem 2rem color-mix(in srgb, var(--color-text) 5%, transparent);
-  }
-
-  #app .optional-studio > summary:hover .optional-studio-symbol {
-    transform: rotate(16deg) scale(1.06);
-    border-color: color-mix(in srgb, var(--color-accent) 44%, var(--color-border));
-  }
-
-  #app .optional-studio[open] > summary:hover .optional-studio-symbol {
-    transform: rotate(37deg) scale(1.05);
   }
 
   #app .optional-studio > summary:hover .optional-studio-summary-action {
@@ -304,5 +283,410 @@
   #app .editorial-footer-content > .scroll-reveal-element,
   #app .editorial-footer-wave.scroll-reveal-element {
     opacity: 1 !important;
+  }
+}
+
+#app .optional-studio > summary {
+  isolation: isolate;
+}
+
+#app .optional-studio > summary::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse 13rem 9rem at 6% 50%,
+      color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 85%),
+    linear-gradient(102deg,
+      color-mix(in srgb, var(--studio-copper) 5%, transparent),
+      transparent 68%);
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 420ms ease;
+}
+
+#app .optional-studio > summary > * {
+  position: relative;
+  z-index: 1;
+}
+
+#app .layout#app-workspace .optional-studio > summary:is(:hover, :focus-visible)::before,
+#app .layout#app-workspace .optional-studio[open] > summary::before {
+  opacity: 1;
+}
+
+#app .optional-studio > summary .optional-studio-symbol {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--color-accent) 15%, var(--color-surface)),
+    color-mix(in srgb, var(--studio-copper) 8%, var(--color-surface)));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 55%, transparent);
+  transform: none;
+}
+
+#app .optional-studio-icon-sheet {
+  position: absolute;
+  display: block;
+  width: 1.33rem;
+  height: 1.68rem;
+  border: 1.5px solid var(--color-accent-strong);
+  border-radius: .22rem;
+  background: var(--color-surface);
+  box-shadow: 0 .2rem .4rem color-mix(in srgb, var(--color-text) 9%, transparent);
+  transform-origin: 50% 85%;
+  transition:
+    rotate 580ms cubic-bezier(.16, 1, .3, 1),
+    translate 580ms cubic-bezier(.16, 1, .3, 1),
+    box-shadow 380ms ease;
+}
+
+#app .optional-studio-icon-sheet-back {
+  z-index: 1;
+  top: .72rem;
+  left: .74rem;
+  rotate: -16deg;
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+}
+
+#app .optional-studio-icon-sheet-front {
+  z-index: 2;
+  top: .7rem;
+  left: 1.08rem;
+  rotate: 8deg;
+  padding-top: .53rem;
+}
+
+#app .optional-studio-icon-line {
+  display: block;
+  width: 65%;
+  height: 1.5px;
+  margin: .13rem auto 0;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--color-accent) 65%, transparent);
+}
+
+#app .optional-studio-icon-line-short {
+  width: 46%;
+  margin-left: 17%;
+}
+
+#app .optional-studio-icon-seal {
+  position: absolute;
+  z-index: 3;
+  right: .41rem;
+  bottom: .39rem;
+  width: .53rem;
+  height: .53rem;
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--studio-copper);
+  box-shadow: 0 .15rem .4rem color-mix(in srgb, var(--color-text) 11%, transparent);
+  transition:
+    translate 500ms cubic-bezier(.16, 1, .3, 1),
+    scale 500ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .optional-studio[open] > summary .optional-studio-icon-sheet-back {
+  rotate: -21deg;
+  translate: -.13rem -.12rem;
+}
+
+#app .optional-studio[open] > summary .optional-studio-icon-sheet-front {
+  rotate: 11deg;
+  translate: .11rem -.11rem;
+}
+
+#app .optional-studio > summary .optional-studio-summary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.15rem;
+  padding: .37rem .66rem;
+  gap: .3rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 24%, var(--color-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface));
+  transition:
+    translate 300ms cubic-bezier(.16, 1, .3, 1),
+    color 260ms ease,
+    background-color 320ms ease,
+    border-color 320ms ease;
+}
+
+#app .optional-studio-summary-action::after {
+  content: '↗';
+  display: inline-block;
+  font-size: .95rem;
+  font-weight: 800;
+  transition: rotate 340ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .optional-studio[open] .optional-studio-summary-action::after {
+  rotate: 90deg;
+}
+
+#app .layout#app-workspace .optional-studio > summary::after {
+  transition:
+    transform 440ms cubic-bezier(.16, 1, .3, 1),
+    border-color 320ms ease,
+    background-color 320ms ease,
+    box-shadow 320ms ease;
+}
+
+#app .layout#app-workspace .optional-studio .optional-studio-tab {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-color: color-mix(in srgb, var(--color-accent) 19%, var(--color-border));
+  transition:
+    translate 330ms cubic-bezier(.16, 1, .3, 1),
+    background-color 300ms ease,
+    border-color 300ms ease,
+    box-shadow 360ms ease;
+}
+
+#app .optional-studio .optional-studio-tab::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse at 0% 0%,
+      color-mix(in srgb, var(--color-accent) 13%, transparent), transparent 80%),
+    linear-gradient(140deg, transparent,
+      color-mix(in srgb, var(--studio-copper) 7%, transparent));
+  opacity: 0;
+  content: '';
+  pointer-events: none;
+  transition: opacity 340ms ease;
+}
+
+#app .optional-studio .optional-studio-tab::after {
+  position: absolute;
+  right: .82rem;
+  bottom: .32rem;
+  left: .82rem;
+  height: 2px;
+  border-radius: 99px;
+  background: var(--studio-copper);
+  content: '';
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 430ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .optional-studio .optional-studio-tab > span {
+  position: relative;
+  z-index: 1;
+}
+
+#app .optional-studio .optional-studio-tab .optional-studio-tab-index {
+  transition:
+    color 280ms ease,
+    border-color 280ms ease,
+    background-color 280ms ease,
+    rotate 400ms cubic-bezier(.16, 1, .3, 1),
+    box-shadow 320ms ease;
+}
+
+#app .optional-studio .optional-studio-tab .optional-studio-tab-text {
+  transition: translate 330ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .optional-studio .optional-studio-tab-active::before {
+  opacity: .55;
+}
+
+#app .optional-studio .optional-studio-tab-active::after {
+  transform: scaleX(1);
+  background: var(--color-accent);
+}
+
+#app .optional-studio .optional-studio-tab:focus-visible::before,
+#app .optional-studio .optional-studio-tab:focus-visible::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+#app .optional-studio .optional-studio-tab-active .optional-studio-tab-index {
+  box-shadow: 0 .2rem .5rem color-mix(in srgb, var(--color-accent) 14%, transparent);
+}
+
+#app .optional-studio .optional-studio-tool-action .btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    translate 330ms cubic-bezier(.16, 1, .3, 1),
+    background-color 320ms ease,
+    border-color 320ms ease,
+    box-shadow 380ms ease,
+    color 300ms ease;
+}
+
+#app .optional-studio .optional-studio-tool-action .btn:not(:disabled)::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(112deg,
+    transparent 30%,
+    color-mix(in srgb, white 21%, transparent) 49%,
+    transparent 68%);
+  content: '';
+  pointer-events: none;
+  translate: -140% 0;
+  transition: translate 650ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .optional-studio .optional-studio-tool-action .btn:disabled {
+  box-shadow: none;
+  translate: 0 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .optional-studio > summary:hover .optional-studio-symbol {
+    transform: none;
+    border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+    background: linear-gradient(145deg,
+      color-mix(in srgb, var(--color-accent) 20%, var(--color-surface)),
+      color-mix(in srgb, var(--studio-copper) 11%, var(--color-surface)));
+  }
+
+  #app .optional-studio > summary:hover .optional-studio-icon-sheet-back {
+    rotate: -27deg;
+    translate: -.28rem -.26rem;
+  }
+
+  #app .optional-studio > summary:hover .optional-studio-icon-sheet-front {
+    rotate: 15deg;
+    translate: .21rem -.22rem;
+    box-shadow: 0 .4rem .85rem color-mix(in srgb, var(--color-accent) 20%, transparent);
+  }
+
+  #app .optional-studio > summary:hover .optional-studio-icon-seal {
+    translate: .04rem -.13rem;
+    scale: 1.12;
+  }
+
+  #app .optional-studio > summary:hover .optional-studio-heading strong {
+    color: var(--color-accent-strong);
+  }
+
+  #app .optional-studio > summary:hover .optional-studio-summary-action {
+    border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+    background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+    translate: .1rem 0;
+  }
+
+  #app .optional-studio > summary:hover .optional-studio-summary-action::after {
+    rotate: 45deg;
+  }
+
+  #app .optional-studio[open] > summary:hover .optional-studio-summary-action::after {
+    rotate: 120deg;
+  }
+
+  #app .layout#app-workspace .optional-studio > summary:hover::after {
+    border-color: color-mix(in srgb, var(--color-accent) 54%, var(--color-border));
+    background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+    box-shadow: 0 .35rem 1rem color-mix(in srgb, var(--color-accent) 10%, transparent);
+  }
+
+  #app .layout#app-workspace .optional-studio .optional-studio-tab:not(:disabled):hover {
+    translate: 0 -.18rem;
+    border-color: color-mix(in srgb, var(--color-accent) 63%, var(--color-border));
+    box-shadow: 0 .55rem 1.25rem color-mix(in srgb, var(--color-accent) 13%, transparent);
+  }
+
+  #app .optional-studio .optional-studio-tab:not(:disabled):hover::before {
+    opacity: 1;
+  }
+
+  #app .optional-studio .optional-studio-tab:not(:disabled):hover::after {
+    transform: scaleX(1);
+  }
+
+  #app .optional-studio .optional-studio-tab:not(:disabled):hover .optional-studio-tab-index {
+    rotate: -5deg;
+    border-color: color-mix(in srgb, var(--color-accent) 44%, var(--color-border));
+  }
+
+  #app .optional-studio .optional-studio-tab:not(:disabled):hover .optional-studio-tab-text {
+    translate: .12rem 0;
+  }
+
+  #app .optional-studio .optional-studio-tool-action .btn:not(:disabled):hover {
+    translate: 0 -.18rem;
+    background: #327154;
+    border-color: #327154;
+    box-shadow: 0 .55rem 1.25rem rgba(30, 95, 67, .22);
+  }
+
+  #app .optional-studio .optional-studio-tool-action .btn:not(:disabled):hover::before {
+    translate: 140% 0;
+  }
+
+  #app .optional-studio .optional-studio-tool-head:has(.btn:not(:disabled):hover) h4 {
+    color: var(--color-accent-strong);
+  }
+}
+
+#app .optional-studio > summary:focus-visible .optional-studio-icon-sheet-back {
+  rotate: -25deg;
+  translate: -.24rem -.22rem;
+}
+
+#app .optional-studio > summary:focus-visible .optional-studio-icon-sheet-front {
+  rotate: 14deg;
+  translate: .18rem -.2rem;
+}
+
+#app .optional-studio > summary:focus-visible .optional-studio-summary-action {
+  border-color: var(--color-accent-strong);
+}
+
+#app .optional-studio .optional-studio-tool-head h4 {
+  transition: color 260ms ease;
+}
+
+@media (max-width: 720px) {
+  #app .optional-studio-icon-sheet-back {
+    left: .42rem;
+    top: .49rem;
+  }
+
+  #app .optional-studio-icon-sheet-front {
+    left: .77rem;
+    top: .5rem;
+  }
+
+  #app .optional-studio-icon-seal {
+    right: .24rem;
+    bottom: .28rem;
+  }
+
+  #app .optional-studio > summary .optional-studio-summary-action {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .optional-studio > summary::before,
+  #app .optional-studio-icon-sheet,
+  #app .optional-studio-icon-seal,
+  #app .optional-studio-summary-action::after,
+  #app .optional-studio .optional-studio-tab,
+  #app .optional-studio .optional-studio-tab::before,
+  #app .optional-studio .optional-studio-tab::after,
+  #app .optional-studio .optional-studio-tab .optional-studio-tab-index,
+  #app .optional-studio .optional-studio-tab .optional-studio-tab-text,
+  #app .optional-studio .optional-studio-tool-action .btn,
+  #app .optional-studio .optional-studio-tool-action .btn::before,
+  #app .optional-studio .optional-studio-tool-head h4 {
+    animation: none !important;
+    transition: none !important;
+    translate: 0 0 !important;
   }
 }
