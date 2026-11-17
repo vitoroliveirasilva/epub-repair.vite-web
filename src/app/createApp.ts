@@ -588,23 +588,36 @@ function renderHero(): HTMLElement {
 
 function renderEmptyState(): HTMLElement {
   return el('section', {
-    className: 'panel empty-state',
+    className: 'panel empty-state report-welcome',
+    attrs: { 'aria-labelledby': 'report-welcome-title' },
     children: [
-      el('div', {
-        className: 'empty-illustration',
-        attrs: { 'aria-hidden': 'true' },
-        children: [el('span'), el('span'), el('span')],
-      }),
-      el('div', {
-        children: [
-          el('p', { className: 'eyebrow', text: 'Relatório' }),
-          el('h2', { text: 'Envie um EPUB para começar' }),
-          el('p', {
-            className: 'muted',
-            text: 'O diagnóstico aparecerá aqui com score Kindle, severidades, arquivos afetados e detalhes técnicos recolhidos para não poluir a leitura.',
-          }),
-        ],
-      }),
+      el('div', { className: 'report-welcome-art', attrs: { 'aria-hidden': 'true' }, children: [
+        el('span', { className: 'report-welcome-art-ring' }),
+        el('div', { className: 'empty-illustration', children: [
+          el('span'), el('span'), el('span'),
+        ] }),
+        el('span', { className: 'report-welcome-art-stamp', text: 'EPUB' }),
+      ] }),
+      el('div', { className: 'report-welcome-copy', children: [
+        el('span', { className: 'report-welcome-kicker', text: '03 / DIAGNÓSTICO' }),
+        el('h2', { text: 'Envie um EPUB para começar',
+          attrs: { id: 'report-welcome-title' } }),
+        el('p', { className: 'report-welcome-description',
+          text: 'Depois da verificação, você encontrará aqui um relatório claro, com o que está certo e o que merece atenção.' }),
+        el('div', { className: 'report-welcome-highlights',
+          attrs: { 'aria-label': 'Informações disponíveis no relatório' },
+          children: [
+            el('span', { text: 'Score Kindle' }),
+            el('span', { text: 'Prioridades de correção' }),
+            el('span', { text: 'Arquivos afetados' }),
+          ],
+        }),
+        el('a', { className: 'report-welcome-link', text: 'Escolher um EPUB',
+          attrs: { href: '#upload' }, children: [
+            el('span', { attrs: { 'aria-hidden': 'true' }, text: '↗' }),
+          ],
+        }),
+      ] }),
     ],
   });
 }

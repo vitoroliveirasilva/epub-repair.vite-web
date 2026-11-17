@@ -1,0 +1,639 @@
+#app .layout#app-workspace .empty-state.report-welcome {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(7.5rem, .24fr) minmax(0, 1fr);
+  align-items: center;
+  justify-items: stretch;
+  gap: clamp(1.25rem, 3.4vw, 2.8rem);
+  min-height: 13.6rem;
+  margin: 0;
+  padding: clamp(1.3rem, 2.8vw, 2rem) clamp(1.3rem, 3vw, 2.4rem);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 23%, var(--color-border));
+  border-radius: clamp(1.1rem, 2vw, 1.5rem);
+  background:
+    radial-gradient(ellipse at 0% 20%, color-mix(in srgb, var(--color-accent) 11%, transparent), transparent 31rem),
+    radial-gradient(ellipse at 100% 100%, color-mix(in srgb, var(--studio-copper) 7%, transparent), transparent 24rem),
+    color-mix(in srgb, var(--color-surface) 92%, var(--color-bg));
+  box-shadow: 0 .85rem 2.5rem color-mix(in srgb, var(--color-text) 4%, transparent);
+}
+
+#app .report-welcome-art {
+  position: relative;
+  display: grid;
+  width: min(100%, 10.5rem);
+  min-height: 10.5rem;
+  place-items: center;
+  isolation: isolate;
+}
+
+#app .report-welcome-art-ring {
+  position: absolute;
+  inset: .35rem;
+  z-index: -1;
+  border: 1px dashed color-mix(in srgb, var(--color-accent) 25%, var(--color-border));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+}
+
+#app .layout#app-workspace .report-welcome .empty-illustration {
+  position: relative;
+  display: block;
+  width: 6.4rem;
+  height: 7.1rem;
+  margin: 0;
+  transform: none;
+  transform-origin: center;
+}
+
+#app .report-welcome .empty-illustration span {
+  border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
+  border-radius: .65rem;
+  background: var(--color-surface);
+  box-shadow: 0 .65rem 1.25rem color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+#app .report-welcome .empty-illustration span:nth-child(1) {
+  transform: rotate(-12deg) translate(-.25rem, -.1rem);
+}
+
+#app .report-welcome .empty-illustration span:nth-child(2) {
+  transform: rotate(8deg) translate(.2rem, .05rem);
+}
+
+#app .report-welcome .empty-illustration span:nth-child(3) {
+  background:
+    repeating-linear-gradient(180deg,
+      color-mix(in srgb, var(--color-accent) 30%, transparent) 0 2px,
+      transparent 2px 11px) 1.1rem 1.7rem / 2.5rem 2.6rem no-repeat,
+    var(--color-surface);
+  transform: rotate(-4deg);
+}
+
+#app .report-welcome-art-stamp {
+  position: absolute;
+  right: -.05rem;
+  bottom: 1rem;
+  padding: .36rem .57rem;
+  border: 2px solid var(--color-surface);
+  border-radius: .52rem;
+  background: #255b44;
+  color: #fffaf1;
+  box-shadow: 0 .25rem .65rem rgba(20, 63, 47, .18);
+  font-size: .62rem;
+  font-weight: 900;
+  line-height: 1.3;
+  letter-spacing: .045em;
+}
+
+#app .report-welcome-copy {
+  display: grid;
+  justify-items: start;
+  align-content: center;
+  gap: .55rem;
+  min-width: 0;
+}
+
+#app .report-welcome-kicker {
+  color: var(--studio-copper);
+  font-size: .67rem;
+  font-weight: 850;
+  letter-spacing: .145em;
+  line-height: 1.45;
+}
+
+#app .layout#app-workspace .report-welcome h2 {
+  max-width: 34ch;
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.55rem, 2.5vw, 2.2rem);
+  font-weight: 750;
+  letter-spacing: -.044em;
+  line-height: 1.16;
+  text-wrap: balance;
+}
+
+#app .layout#app-workspace .report-welcome .report-welcome-description {
+  max-width: 54ch;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: .83rem;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+#app .report-welcome-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .45rem;
+  margin-top: .4rem;
+}
+
+#app .report-welcome-highlights span {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .42rem .65rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 18%, var(--color-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
+  color: var(--color-text);
+  font-size: .7rem;
+  font-weight: 750;
+  line-height: 1.3;
+}
+
+#app .report-welcome-highlights span::before {
+  width: .33rem;
+  height: .33rem;
+  flex: 0 0 .33rem;
+  border-radius: 50%;
+  background: var(--studio-copper);
+  content: '';
+}
+
+#app .report-welcome-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  margin-top: .35rem;
+  padding: .3rem 0;
+  color: var(--color-accent-strong);
+  font-size: .78rem;
+  font-weight: 850;
+  line-height: 1.45;
+  text-decoration: none;
+  text-underline-offset: .2rem;
+}
+
+#app .report-welcome-link:hover {
+  text-decoration: underline;
+}
+
+#app .report-welcome-link:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 4px;
+  border-radius: .35rem;
+}
+
+#app .report-welcome-link span {
+  display: inline-block;
+  font-size: .95rem;
+  transition: transform 180ms ease;
+}
+
+#app .report-welcome-link:hover span {
+  transform: translate(.17rem, -.17rem);
+}
+
+#app .layout#app-workspace .optional-tools.optional-studio {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 25%, var(--color-border));
+  border-radius: clamp(1.1rem, 2vw, 1.5rem);
+  background:
+    radial-gradient(ellipse at 5% 0%, color-mix(in srgb, var(--color-accent) 7%, transparent), transparent 29rem),
+    var(--color-surface);
+  box-shadow: 0 .65rem 1.9rem color-mix(in srgb, var(--color-text) 3%, transparent);
+}
+
+#app .layout#app-workspace .optional-studio > summary {
+  display: grid;
+  grid-template-columns: 3.1rem minmax(0, 1fr) auto;
+  align-items: center;
+  justify-content: stretch;
+  gap: clamp(.85rem, 1.8vw, 1.2rem);
+  min-height: 7.1rem;
+  padding: 1.35rem 4.5rem 1.35rem clamp(1rem, 2.2vw, 1.6rem);
+  cursor: pointer;
+}
+
+#app .optional-studio > summary::-webkit-details-marker {
+  display: none;
+}
+
+#app .optional-studio > summary::after {
+  right: 1.3rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-color: color-mix(in srgb, var(--color-accent) 22%, var(--color-border));
+  border-radius: .72rem;
+  font-size: 1.35rem;
+}
+
+#app .optional-studio > summary:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -4px;
+}
+
+#app .optional-studio-symbol {
+  display: grid;
+  width: 3.1rem;
+  height: 3.3rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 20%, var(--color-border));
+  border-radius: .95rem;
+  background: color-mix(in srgb, var(--color-accent) 9%, var(--color-surface));
+  color: var(--color-accent-strong);
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+#app .optional-studio-heading {
+  display: grid;
+  align-content: center;
+  gap: .23rem;
+  min-width: 0;
+}
+
+#app .optional-studio-eyebrow {
+  color: var(--studio-copper);
+  font-size: .64rem;
+  font-weight: 850;
+  letter-spacing: .14em;
+  line-height: 1.3;
+}
+
+#app .layout#app-workspace .optional-studio > summary .optional-studio-heading strong {
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.22rem, 2vw, 1.65rem);
+  font-weight: 750;
+  line-height: 1.22;
+  letter-spacing: -.035em;
+}
+
+#app .layout#app-workspace .optional-studio > summary .optional-studio-heading small {
+  display: block;
+  max-width: 57ch;
+  color: var(--color-text-muted);
+  font-size: .78rem;
+  font-weight: 500;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+#app .optional-studio-summary-action {
+  justify-self: end;
+  color: var(--color-accent-strong);
+  font-size: .7rem;
+  font-weight: 850;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+#app .optional-studio[open] .optional-studio-summary-action {
+  color: var(--color-text-muted);
+}
+
+#app .layout#app-workspace .optional-studio .optional-tools-inner.optional-studio-inner {
+  display: grid;
+  min-width: 0;
+  gap: clamp(.9rem, 1.9vw, 1.3rem);
+  margin: 0;
+  padding: clamp(1rem, 2.2vw, 1.5rem);
+  border-top: 1px solid color-mix(in srgb, var(--color-accent) 18%, var(--color-border));
+  background: color-mix(in srgb, var(--color-surface) 95%, var(--color-bg));
+}
+
+#app .layout#app-workspace .optional-studio .optional-tablist.optional-studio-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  gap: .6rem;
+  width: 100%;
+  min-width: 0;
+}
+
+#app .layout#app-workspace .optional-studio .optional-tablist .optional-studio-tab.btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: .65rem;
+  min-width: 0;
+  min-height: 4.25rem;
+  margin: 0;
+  padding: .8rem .85rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 17%, var(--color-border));
+  border-radius: .85rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: none;
+  text-align: left;
+  white-space: normal;
+  cursor: pointer;
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+#app .optional-studio .optional-tablist .optional-studio-tab.btn:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 49%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
+}
+
+#app .optional-studio .optional-tablist .optional-studio-tab.btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+#app .optional-studio .optional-tablist .optional-studio-tab-active.btn {
+  border-color: color-mix(in srgb, var(--color-accent) 61%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 9%, var(--color-surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 18%, transparent);
+}
+
+#app .optional-studio-tab-index {
+  display: grid;
+  width: 2.15rem;
+  height: 2.15rem;
+  flex: 0 0 2.15rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 21%, var(--color-border));
+  border-radius: .58rem;
+  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface));
+  color: var(--studio-copper);
+  font-family: var(--font-serif);
+  font-size: .83rem;
+  font-weight: 850;
+}
+
+#app .optional-studio-tab-active .optional-studio-tab-index {
+  border-color: #255b44;
+  background: #255b44;
+  color: #fffaf1;
+}
+
+#app .optional-studio-tab-text {
+  display: grid;
+  align-content: center;
+  gap: .22rem;
+  min-width: 0;
+}
+
+#app .optional-studio-tab-text strong {
+  color: var(--color-text);
+  font-size: .79rem;
+  font-weight: 850;
+  line-height: 1.3;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+#app .optional-studio-tab-text small {
+  color: var(--color-text-muted);
+  font-size: .67rem;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: normal;
+}
+
+#app .layout#app-workspace .optional-studio .optional-tool-content {
+  width: 100%;
+  justify-items: stretch;
+  min-width: 0;
+}
+
+#app .optional-studio-tool-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  min-width: 0;
+  width: 100%;
+  padding: clamp(1rem, 2vw, 1.4rem) 0 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-accent) 19%, var(--color-border));
+}
+
+#app .optional-studio-tool-copy {
+  display: grid;
+  flex: 1 1 17rem;
+  min-width: 0;
+  gap: .35rem;
+}
+
+#app .optional-studio-tool-kicker {
+  color: var(--studio-copper);
+  font-size: .64rem;
+  font-weight: 850;
+  letter-spacing: .13em;
+  line-height: 1.3;
+}
+
+#app .optional-studio-tool-copy h4 {
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.23rem, 2vw, 1.58rem);
+  font-weight: 750;
+  letter-spacing: -.04em;
+  line-height: 1.2;
+}
+
+#app .optional-studio-tool-copy p {
+  max-width: 49ch;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: .79rem;
+  line-height: 1.55;
+}
+
+#app .optional-studio-tool-action {
+  display: grid;
+  justify-items: stretch;
+  gap: .4rem;
+  min-width: min(100%, 12rem);
+}
+
+#app .optional-studio-tool-action .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.9rem;
+  margin: 0;
+  padding: .75rem .95rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 42%, var(--color-border));
+  border-radius: .75rem;
+  background: #255b44;
+  color: #fffaf1;
+  font-size: .77rem;
+  font-weight: 800;
+  line-height: 1.3;
+  white-space: normal;
+}
+
+#app .optional-studio-tool-action .btn:not(:disabled):hover {
+  background: #327154;
+  border-color: #327154;
+  color: #fffaf1;
+}
+
+#app .optional-studio-tool-action .btn:disabled {
+  border-color: var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+#app .optional-studio-tool-action small {
+  max-width: 16rem;
+  color: var(--color-text-muted);
+  font-size: .68rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+#app .layout#app-workspace .optional-studio .optional-studio-disclaimer {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: .83rem .96rem;
+  border-left: 3px solid color-mix(in srgb, var(--studio-copper) 70%, var(--color-border));
+  border-radius: .4rem .68rem .68rem .4rem;
+  background: color-mix(in srgb, var(--studio-copper) 5%, var(--color-surface));
+  color: var(--color-text-muted);
+  font-size: .72rem;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+#app .optional-studio-message {
+  width: 100%;
+  margin: 0;
+  padding: .75rem .9rem;
+  border: 1px solid var(--color-border);
+  border-radius: .65rem;
+  background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
+  color: var(--color-text);
+  font-size: .76rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1000px) {
+  #app .layout#app-workspace .optional-studio .optional-tablist.optional-studio-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  #app .layout#app-workspace .empty-state.report-welcome {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: .6rem;
+    padding: 1.3rem 1.15rem;
+    text-align: center;
+  }
+
+  #app .report-welcome-art {
+    width: 7.5rem;
+    min-height: 7.8rem;
+  }
+
+  #app .report-welcome-art-ring {
+    inset: .2rem;
+  }
+
+  #app .layout#app-workspace .report-welcome .empty-illustration {
+    width: 4.2rem;
+    height: 4.85rem;
+  }
+
+  #app .report-welcome-art-stamp {
+    right: 0;
+    bottom: .5rem;
+  }
+
+  #app .report-welcome-copy {
+    justify-items: center;
+    text-align: center;
+  }
+
+  #app .report-welcome-highlights {
+    justify-content: center;
+  }
+
+  #app .layout#app-workspace .optional-studio > summary {
+    grid-template-columns: 2.55rem minmax(0, 1fr);
+    gap: .7rem;
+    min-height: 6.7rem;
+    padding: 1.15rem 3.7rem 1.15rem 1rem;
+  }
+
+  #app .optional-studio-symbol {
+    width: 2.55rem;
+    height: 2.8rem;
+    font-size: 1.3rem;
+  }
+
+  #app .optional-studio > summary::after {
+    right: .95rem;
+    width: 2.1rem;
+    height: 2.1rem;
+  }
+
+  #app .optional-studio-summary-action {
+    display: none;
+  }
+
+  #app .layout#app-workspace .optional-studio .optional-tools-inner.optional-studio-inner {
+    padding: 1rem;
+  }
+
+  #app .optional-studio-tool-head {
+    padding-top: .95rem;
+  }
+
+  #app .optional-studio-tool-action {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+}
+
+@media (max-width: 430px) {
+  #app .layout#app-workspace .empty-state.report-welcome {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #app .layout#app-workspace .report-welcome .empty-illustration {
+    display: block;
+  }
+
+  #app .layout#app-workspace .optional-studio .optional-tablist.optional-studio-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .45rem;
+  }
+
+  #app .layout#app-workspace .optional-studio .optional-tablist .optional-studio-tab.btn {
+    gap: .45rem;
+    min-height: 4.4rem;
+    padding: .6rem .48rem;
+    border-radius: .68rem;
+  }
+
+  #app .optional-studio-tab-index {
+    width: 1.8rem;
+    height: 2rem;
+    flex-basis: 1.8rem;
+    font-size: .72rem;
+  }
+
+  #app .optional-studio-tab-text strong {
+    font-size: .7rem;
+  }
+
+  #app .optional-studio-tab-text small {
+    font-size: .6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .report-welcome-link span,
+  #app .optional-studio .optional-studio-tab {
+    transition: none;
+  }
+}

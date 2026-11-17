@@ -323,9 +323,22 @@ function renderPreview(state: AppState, s: Session, rerender: () => void, enqueu
       });
     },
   };
-  return el('div', { className: 'optional-tool-content', children: [
-    paragraph('Prévia local segura: capítulos, imagens internas, tabelas e notas. Preserva uma seleção limitada de alinhamento, tipografia e espaçamento do CSS, sem executá-lo. A aparência em Kindle ou outros leitores pode diferir.'),
-    control,
+  return el('div', { className: 'optional-tool-content optional-studio-reader', children: [
+    el('div', { className: 'optional-studio-tool-head', children: [
+      el('div', { className: 'optional-studio-tool-copy', children: [
+        el('span', { className: 'optional-studio-tool-kicker', text: 'LEITURA NO NAVEGADOR' }),
+        el('h4', { text: 'Seu livro, antes de baixar' }),
+        el('p', { text: 'Explore capítulos, imagens, tabelas e notas em uma prévia local segura.' }),
+      ] }),
+      el('div', { className: 'optional-studio-tool-action', children: [
+        control,
+        !state.payload
+          ? el('small', { text: 'Escolha um EPUB para habilitar a leitura' })
+          : undefined,
+      ] }),
+    ] }),
+    el('p', { className: 'optional-studio-disclaimer',
+      text: 'A prévia reproduz apenas estilos seguros selecionados, sem executar o CSS original. A aparência no Kindle ou em outros leitores pode ser diferente.' }),
     view ? paragraph(`${view.sections.length} seção(ões) carregada(s)${view.omitted ? `, ${view.omitted} omitida(s)` : ''}.${view.fixedLayout ? ' EPUB de layout fixo: esta é uma prévia simplificada, não uma reprodução da página.' : ''}`) : undefined,
     view?.sections.length ? el('div', { className: 'optional-reader-controls', children: [
       toolButton('Anterior', s.chapter > 0, () => { s.chapter -= 1; rerender(); }),
@@ -1054,32 +1067,57 @@ function renderBatch(
 export function renderOptionalEpubTools(state: AppState, rerender: () => void, enqueue: Queue): HTMLElement {
   const s = sessionFor(state);
   const details = el('details', {
-    className: 'panel optional-tools',
+    className: 'panel optional-tools optional-studio',
     attrs: { id: 'optional-tools' },
     children: [
-    el('summary', { children: [
-      el('strong', { text: 'Ferramentas extras (opcionais)' }),
-      el('small', { text: 'Leitura, comparação, metadados, Kindle e lote, sem interferir no fluxo principal' }),
-    ] }),
-    el('div', { className: 'optional-tools-inner', children: [
-      el('div', { className: 'optional-tablist', attrs: { role: 'group',
-        'aria-label': 'Selecionar ferramenta opcional' }, children:
-        TABS.map(([key, label]) => {
-          const tab = button(label, 'btn btn-small ' + (s.tab === key ? 'btn-primary' : 'btn-ghost'), () => {
-            s.tab = key;
-            s.message = '';
-            rerender();
-          });
-          tab.setAttribute('aria-pressed', String(s.tab === key));
-          return tab;
-        }) }),
-      s.tab === 'preview' ? renderPreview(state, s, rerender, enqueue) : undefined,
-      s.tab === 'compare' ? renderCompare(state, s, rerender, enqueue) : undefined,
-      s.tab === 'metadata' ? renderMetadata(state, s, rerender, enqueue) : undefined,
-      s.tab === 'kindle' ? renderKindle(state) : undefined,
-
-      s.message ? el('p', { className: 'muted', attrs: { role: 'status' }, text: s.message }) : undefined,
-    ] }),
+      el('summary', { children: [
+        el('span', { className: 'optional-studio-symbol', attrs: { 'aria-hidden': 'true' },
+          text: '✳' }),
+        el('span', { className: 'optional-studio-heading', children: [
+          el('span', { className: 'optional-studio-eyebrow',
+            text: 'RECURSOS COMPLEMENTARES' }),
+          el('strong', { text: 'Ferramentas extras' }),
+          el('small', { text: 'Leia, compare, edite metadados e prepare seu livro para o Kindle.' }),
+        ] }),
+        el('span', { className: 'optional-studio-summary-action',
+          attrs: { 'aria-hidden': 'true' }, text: 'Explorar' }),
+      ] }),
+      el('div', { className: 'optional-tools-inner optional-studio-inner', children: [
+        el('div', { className: 'optional-tablist optional-studio-tabs',
+          attrs: { role: 'group', 'aria-label': 'Selecionar ferramenta opcional' },
+          children: TABS.map(([key, label], index) => {
+            const active = s.tab === key;
+            const tab = button('', 'btn btn-small optional-studio-tab' +
+              (active ? ' optional-studio-tab-active' : ''), () => {
+              s.tab = key;
+              s.message = '';
+              rerender();
+            });
+            tab.setAttribute('aria-pressed', String(active));
+            tab.setAttribute('aria-label', label);
+            tab.append(
+              el('span', { className: 'optional-studio-tab-index',
+                attrs: { 'aria-hidden': 'true' },
+                text: String(index + 1).padStart(2, '0') }),
+              el('span', { className: 'optional-studio-tab-text', children: [
+                el('strong', { text: label }),
+                el('small', { text: {
+                  preview: 'Leitura local',
+                  compare: 'Mudanças no livro',
+                  metadata: 'Dados da obra',
+                  kindle: 'Compatibilidade',
+                }[key] }),
+              ] }),
+            );
+            return tab;
+          }) }),
+        s.tab === 'preview' ? renderPreview(state, s, rerender, enqueue) : undefined,
+        s.tab === 'compare' ? renderCompare(state, s, rerender, enqueue) : undefined,
+        s.tab === 'metadata' ? renderMetadata(state, s, rerender, enqueue) : undefined,
+        s.tab === 'kindle' ? renderKindle(state) : undefined,
+        s.message ? el('p', { className: 'optional-studio-message',
+          attrs: { role: 'status' }, text: s.message }) : undefined,
+      ] }),
     ],
   });
   details.open = s.expanded;

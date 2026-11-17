@@ -4,6 +4,7 @@ import { createConverterApp } from '../src/converter/createConverterApp';
 import { renderCoverChanger } from '../src/ui/components/CoverChanger';
 import { createInitialState } from '../src/app/state';
 import { enableCoverPreviewTilt } from '../src/ui/coverPreviewTilt';
+import { renderOptionalEpubTools } from '../src/ui/optionalEpubTools';
 
 afterEach(() => document.body.replaceChildren());
 
@@ -178,6 +179,45 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(root.querySelector('.cover-preview-tilt')).toBeNull();
     expect(root.querySelector('.cover-new-preview-empty')).not.toBeNull();
     enableCoverPreviewTilt(root);
+  });
+
+  it('exibe o diagnóstico inicial com informações claras e link funcional ao envio', () => {
+    const root = document.createElement('div');
+    root.id = 'app';
+    document.body.append(root);
+    createApp(root);
+
+    const card = root.querySelector('.report-welcome')!;
+    expect(card.querySelector('#report-welcome-title')?.textContent)
+      .toBe('Envie um EPUB para começar');
+    expect(card.querySelectorAll('.report-welcome-highlights span')).toHaveLength(3);
+    expect(card.querySelector<HTMLAnchorElement>('.report-welcome-link')?.getAttribute('href'))
+      .toBe('#upload');
+    expect(root.querySelector('#upload')).not.toBeNull();
+  });
+
+  it('organiza quatro ferramentas extras sem incluir lote e mantém a seleção ativa', () => {
+    const state = createInitialState();
+    const root = document.createElement('div');
+    document.body.append(root);
+    const render = (): void => {
+      root.replaceChildren(renderOptionalEpubTools(state, render, () => {}));
+    };
+    render();
+    const tools = root.querySelector<HTMLDetailsElement>('.optional-studio')!;
+    expect(tools.open).toBe(false);
+    expect(tools.querySelector('.optional-studio-heading')?.textContent).not.toContain('lote');
+    expect(tools.querySelectorAll('.optional-studio-tab')).toHaveLength(4);
+    expect(tools.querySelector<HTMLButtonElement>('.optional-studio-tab-active')
+      ?.getAttribute('aria-pressed')).toBe('true');
+    expect(tools.querySelector('.optional-studio-tool-head')).not.toBeNull();
+    const actions = Array.from(tools.querySelectorAll<HTMLButtonElement>('button'));
+    const openReader = actions.find(button => button.textContent === 'Abrir leitura local');
+    expect(openReader?.disabled).toBe(true);
+    actions.find(button => button.getAttribute('aria-label') === 'Metadados')!.click();
+    const changed = root.querySelector('.optional-studio')!;
+    expect(changed.querySelector('.optional-studio-tab-active')?.getAttribute('aria-label'))
+      .toBe('Metadados');
   });
 
 });
