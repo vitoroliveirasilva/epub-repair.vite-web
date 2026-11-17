@@ -9,6 +9,7 @@ type FooterIconName =
   | 'github'
   | 'code'
   | 'external'
+  | 'sun'
   | 'moon';
 
 const iconPaths: Record<FooterIconName, string[]> = {
@@ -19,6 +20,7 @@ const iconPaths: Record<FooterIconName, string[]> = {
   github: ['M15 22v-3.9c0-1 .1-1.4-.5-2 2.7-.3 5.5-1.3 5.5-6A4.7 4.7 0 0 0 18.7 7a4.4 4.4 0 0 0-.1-3.1s-1-.3-3.3 1.2a11.5 11.5 0 0 0-6 0C7 3.6 6 3.9 6 3.9A4.4 4.4 0 0 0 5.9 7 4.7 4.7 0 0 0 4.6 10c0 4.7 2.8 5.7 5.5 6-.4.4-.6.9-.6 1.7V22', 'M9.5 19c-3 .9-3-1.7-4.2-2.1'],
   code: ['m8 9-3 3 3 3', 'm16 9 3 3-3 3', 'm14 5-4 14'],
   external: ['M14 5h5v5', 'm19 5-8 8', 'M18 13v6H5V6h6'],
+  sun: ['M12 4V2', 'M12 22v-2', 'm4.93-12.93 1.42-1.42', 'm-12.7 12.7 1.42-1.42', 'M20 12h2', 'M2 12h2', 'm16.35 6.35-1.42-1.42', 'M7.07 7.07 5.65 5.65', 'M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z'],
   moon: ['M20 15.2A8.5 8.5 0 0 1 8.8 4a8.5 8.5 0 1 0 11.2 11.2Z'],
 };
 
@@ -84,7 +86,10 @@ export function renderEditorialFooter(onThemeToggle: () => void): HTMLElement {
       'aria-label': 'Alternar tema claro e escuro',
       title: 'Alternar tema',
     },
-    children: [footerIcon('moon')],
+    children: [
+      footerIcon('moon', 'editorial-footer-icon editorial-footer-theme-moon'),
+      footerIcon('sun', 'editorial-footer-icon editorial-footer-theme-sun'),
+    ],
   });
   themeButton.addEventListener('click', onThemeToggle);
 

@@ -3,6 +3,7 @@ export function startHeroStarAnimation(hero: HTMLElement): void {
   if (stars.length < 5) return;
 
   const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  const clearScheduled = window.clearTimeout.bind(window);
   let timer: number | undefined;
   let lastShown = new Set<HTMLElement>();
   let stopped = false;
@@ -22,7 +23,7 @@ export function startHeroStarAnimation(hero: HTMLElement): void {
   const stop = (): void => {
     if (stopped) return;
     stopped = true;
-    if (timer !== undefined) window.clearTimeout(timer);
+    if (timer !== undefined) clearScheduled(timer);
     detachObserver?.disconnect();
     reduce?.removeEventListener?.('change', updatePreference);
     document.removeEventListener('visibilitychange', updatePreference);
@@ -73,7 +74,7 @@ export function startHeroStarAnimation(hero: HTMLElement): void {
       stop();
       return;
     }
-    if (timer !== undefined) window.clearTimeout(timer);
+    if (timer !== undefined) clearScheduled(timer);
     clearStars();
     if (reduce?.matches) showStatic();
     else if (!document.hidden) schedule(next, randomBetween(500, 1200));
