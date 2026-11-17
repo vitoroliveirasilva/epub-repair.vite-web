@@ -45,6 +45,10 @@
   text-decoration: none;
 }
 
+.editorial-footer-brand-icon {
+  display: none;
+}
+
 .editorial-footer-brand .brand-wordmark {
   gap: .22em;
   font-family: var(--font-display);

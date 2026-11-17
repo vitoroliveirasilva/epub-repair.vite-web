@@ -101,7 +101,20 @@ export function renderEditorialFooter(onThemeToggle: () => void): HTMLElement {
               el('a', {
                 className: 'footer-brand',
                 attrs: { href: '/#top', 'aria-label': 'EPUB Repair, voltar ao início' },
-                children: [renderBrandName()],
+                children: [
+                  el('img', {
+                    className: 'brand-icon editorial-footer-brand-icon',
+                    attrs: {
+                      src: '/favicon.svg',
+                      alt: '',
+                      width: '44',
+                      height: '44',
+                      decoding: 'async',
+                      'aria-hidden': 'true',
+                    },
+                  }),
+                  renderBrandName(),
+                ],
               }),
               el('p', {
                 text: 'Conserte, organize e prepare seus EPUBs para uma leitura melhor no Kindle e em outros e-readers.',
