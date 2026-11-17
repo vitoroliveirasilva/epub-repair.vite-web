@@ -198,15 +198,15 @@
   .epub-home .home-action::before {
     position: absolute;
     z-index: 3;
-    top: -.18rem;
+    top: 0;
     left: 1rem;
-    width: 1.12rem;
-    height: 2.08rem;
+    width: 1.38rem;
+    height: 2.18rem;
     background: var(--home-action-bookmark);
     clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 77%, 0 100%);
     content: '';
     filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .14));
-    transform: translateY(-.84rem);
+    transform: translateY(-1.08rem);
     transition:
       filter 360ms ease,
       transform 480ms cubic-bezier(.16, 1.28, .3, 1);
@@ -251,7 +251,7 @@
 
   .epub-home .home-action-shell:is(:hover, :focus-within) .home-action::before {
     filter: drop-shadow(0 3px 0 rgba(0, 0, 0, .16));
-    transform: translateY(.28rem);
+    transform: translateY(0);
   }
 
   .epub-home .home-action-shell:is(:hover, :focus-within) .home-action strong {
@@ -283,29 +283,32 @@
   }
 
   :root[data-theme="dark"] .epub-home .home-action-shell-repair {
-    --home-action-bg: #245d49;
-    --home-action-ink: #fff6ea;
-    --home-action-border: #76ad93;
-    --home-action-inner: rgba(255, 246, 234, .48);
-    --home-action-bookmark: #f6e7d5;
-    --home-action-page: #9f543d;
-    --home-action-page-border: #d18765;
+    --home-action-bg: #214f40;
+    --home-action-ink: #fff4e7;
+    --home-action-border: #6f9f89;
+    --home-action-inner: rgba(255, 244, 231, .28);
+    --home-action-bookmark: #f3e2cf;
+    --home-action-page: #a95e44;
+    --home-action-page-border: #d39172;
   }
 
   :root[data-theme="dark"] .epub-home .home-action-shell-converter {
-    --home-action-bg: #1a2923;
-    --home-action-ink: #f4e7d8;
-    --home-action-border: #c87554;
-    --home-action-inner: rgba(200, 117, 84, .24);
-    --home-action-bookmark: #c87554;
-    --home-action-page: #326a53;
-    --home-action-page-border: #70a58d;
+    --home-action-bg: #29241f;
+    --home-action-ink: #f4eadf;
+    --home-action-border: #c87b5b;
+    --home-action-inner: rgba(200, 123, 91, .2);
+    --home-action-bookmark: #cf7958;
+    --home-action-page: #416f5d;
+    --home-action-page-border: #79a18f;
   }
 
   :root[data-theme="dark"] .epub-home .home-action-shell-repair .home-action-repair,
   :root[data-theme="dark"] .epub-home .home-action-shell-converter .home-action-converter {
     border-color: var(--home-action-border);
     background: var(--home-action-bg);
+    box-shadow:
+      inset 0 0 0 1px var(--home-action-inner),
+      0 .12rem .22rem rgba(0, 0, 0, .18);
     color: var(--home-action-ink);
   }
 
@@ -313,6 +316,9 @@
   :root[data-theme="dark"] .epub-home .home-action-shell-converter:is(:hover, :focus-within) .home-action-converter {
     border-color: var(--home-action-border);
     background: var(--home-action-bg);
+    box-shadow:
+      inset 0 0 0 1px var(--home-action-inner),
+      0 .16rem .28rem rgba(0, 0, 0, .22);
     color: var(--home-action-ink);
   }
 
@@ -362,8 +368,8 @@
 
   .epub-home .home-action::before {
     left: .78rem;
-    width: .95rem;
-    height: 1.78rem;
+    width: 1.16rem;
+    height: 1.88rem;
   }
 
   .epub-home .home-action strong {
@@ -403,6 +409,6 @@
   }
 
   .epub-home .home-action-shell:is(:hover, :focus-within) .home-action::before {
-    transform: translateY(-.84rem);
+    transform: translateY(-1.08rem);
   }
 }

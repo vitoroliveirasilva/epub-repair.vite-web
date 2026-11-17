@@ -143,8 +143,10 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(desktop).toContain('--home-action-bookmark: #b8613e');
     expect(desktop).toContain('--home-action-bg: #194d3d');
     expect(desktop).toContain(':root[data-theme="dark"] .epub-home .home-action-shell-converter');
-    expect(desktop).toContain('--home-action-bg: #1a2923');
-    expect(desktop).toContain('--home-action-page: #9f543d');
+    expect(desktop).toContain('--home-action-bg: #29241f');
+    expect(desktop).toContain('--home-action-page: #a95e44');
+    expect(desktop).toContain('width: 1.38rem');
+    expect(desktop).toContain('transform: translateY(0)');
     expect(desktop).toContain('.home-action-shell-converter .home-action-converter');
     expect(desktop).toContain('@media (min-width: 761px) and (prefers-reduced-motion: reduce)');
     expect(desktop).toContain('@media (min-width: 761px) and (prefers-reduced-motion: reduce)');
