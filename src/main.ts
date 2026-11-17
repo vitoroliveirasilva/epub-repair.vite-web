@@ -13,6 +13,7 @@ import './styles/mobileNavigation.css';
 import './styles/homeShowcase.css';
 import './styles/homeDesktopLayout.css';
 import './styles/homeHeroMotion.css';
+import './styles/homeWorkspace.css';
 
 const root = document.querySelector<HTMLElement>('#app');
 

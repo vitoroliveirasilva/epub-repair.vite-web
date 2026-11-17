@@ -101,7 +101,11 @@ function render(
         el('div', {
           className: 'workspace',
           children: [
-            renderUploader(state, (file) => {
+            renderWorkspaceIntro(),
+            el('div', {
+              className: 'workspace-core',
+              children: [
+                renderUploader(state, (file) => {
               enqueue('Carregar e analisar EPUB', (ctx) =>
                 loadAndAnalyzeCandidate(file, state, ctx));
             }, (files) => {
@@ -111,8 +115,8 @@ function render(
                 document.querySelector('.optional-tools')?.scrollIntoView({
                   behavior: 'smooth', block: 'start',
                 }));
-            }),
-            renderControls(state, {
+                }),
+                renderControls(state, {
               analyze: () => {
                 enqueue('Verificar EPUB', (ctx) => analyzeCurrentFile(state, ctx));
               },
@@ -136,8 +140,9 @@ function render(
               downloadJsonReport: () => {
                 void downloadCurrentReport(state, 'json');
               },
-              cancel: cancelAll,
-
+                  cancel: cancelAll,
+                }),
+              ],
             }),
             renderCoverChanger(state, {
               selectCoverImage: (file) => {
@@ -184,11 +189,110 @@ function render(
         }),
       ],
     }),
+    renderCapabilityShowcase(),
     renderSupportSections(),
     renderFooter(),
   );
   const hero = root.querySelector<HTMLElement>('.epub-home');
   if (hero) startHeroStarAnimation(hero);
+}
+
+function renderWorkspaceIntro(): HTMLElement {
+  const signals = [
+    ['01', 'Escolha', 'Um arquivo abre o fluxo individual; vários abrem o lote'],
+    ['02', 'Diagnostique', 'Estrutura, segurança, navegação, capa e compatibilidade'],
+    ['03', 'Baixe', 'Uma nova cópia e relatórios separados, sem alterar o original'],
+  ] as const;
+
+  return el('section', {
+    className: 'workspace-intro',
+    attrs: { 'aria-labelledby': 'workspace-intro-title' },
+    children: [
+      el('div', {
+        className: 'workspace-intro-copy',
+        children: [
+          el('p', { className: 'eyebrow', text: 'Estúdio de restauração' }),
+          el('h2', {
+            text: 'Do arquivo problemático ao EPUB pronto para leitura',
+            attrs: { id: 'workspace-intro-title' },
+          }),
+          el('p', {
+            text: 'Um fluxo guiado para diagnosticar, corrigir, conferir e exportar. ' +
+              'Tudo acontece localmente no navegador.',
+          }),
+        ],
+      }),
+      el('ol', {
+        className: 'workspace-signals',
+        attrs: { 'aria-label': 'Etapas resumidas do reparo' },
+        children: signals.map(([number, title, description]) =>
+          el('li', {
+            children: [
+              el('span', { text: number, attrs: { 'aria-hidden': 'true' } }),
+              el('div', {
+                children: [el('strong', { text: title }), el('small', { text: description })],
+              }),
+            ],
+          })),
+      }),
+    ],
+  });
+}
+
+function renderCapabilityShowcase(): HTMLElement {
+  const capabilities = [
+    ['01', 'Diagnóstico estrutural',
+      'Inspeciona pacote, container, manifest, spine, arquivos, referências e navegação.'],
+    ['02', 'Reparo com segurança',
+      'Reconstrói o necessário, neutraliza conteúdo ativo perigoso e preserva a obra original.'],
+    ['03', 'Capa e metadados',
+      'Substitui a capa oficial e permite revisar título, autoria, idioma e demais informações.'],
+    ['04', 'Leitura e comparação',
+      'Abre capítulos no leitor integrado e mostra as diferenças entre o antes e o depois.'],
+    ['05', 'Kindle e compatibilidade',
+      'Avalia prontidão, aponta o que precisa de atenção e prepara uma cópia mais compatível.'],
+    ['06', 'Processamento em lote',
+      'Analisa ou repara vários EPUBs e reúne arquivos e relatórios em um único ZIP.'],
+  ] as const;
+
+  return el('section', {
+    className: 'capability-showcase',
+    attrs: { 'aria-labelledby': 'capability-title' },
+    children: [
+      el('header', {
+        className: 'capability-heading',
+        children: [
+          el('p', { className: 'eyebrow', text: 'Uma oficina completa' }),
+          el('h2', {
+            text: 'Cada ferramenta cuida de uma parte real do livro',
+            attrs: { id: 'capability-title' },
+          }),
+          el('p', {
+            text: 'O reparo principal permanece simples. Quando você precisa ir além, ' +
+              'os recursos avançados continuam no mesmo fluxo e usam o mesmo arquivo local.',
+          }),
+        ],
+      }),
+      el('div', {
+        className: 'capability-ledger',
+        children: capabilities.map(([number, title, description]) =>
+          el('article', {
+            className: 'capability-entry',
+            children: [
+              el('span', { className: 'capability-number', text: number }),
+              el('div', {
+                children: [el('h3', { text: title }), el('p', { text: description })],
+              }),
+            ],
+          })),
+      }),
+      el('a', {
+        className: 'capability-link',
+        text: 'Explorar as ferramentas avançadas',
+        attrs: { href: '#optional-tools' },
+      }),
+    ],
+  });
 }
 
 
@@ -463,10 +567,22 @@ function renderSupportSections(): HTMLElement {
     className: 'support-sections',
     attrs: { 'aria-label': 'Informações sobre privacidade e limitações' },
     children: [
+      el('header', {
+        className: 'support-heading',
+        children: [
+          el('p', { className: 'eyebrow', text: 'Clareza antes de processar' }),
+          el('h2', { text: 'Seu livro continua sendo seu' }),
+          el('p', {
+            text: 'O EPUB Repair trabalha com limites explícitos, mantém o arquivo original ' +
+              'intacto e informa quando uma decisão ainda depende de revisão humana.',
+          }),
+        ],
+      }),
       el('article', {
-        className: 'support-card',
+        className: 'support-card support-card-local',
         attrs: { id: 'privacy' },
         children: [
+          el('span', { className: 'support-index', text: 'LOCAL' }),
           el('p', { className: 'eyebrow', text: 'Privacidade' }),
           el('h2', { text: 'Processamento local sem envio para servidor' }),
           el('p', {
@@ -476,9 +592,23 @@ function renderSupportSections(): HTMLElement {
         ],
       }),
       el('article', {
-        className: 'support-card',
+        className: 'support-card support-card-original',
+        children: [
+          el('span', { className: 'support-index', text: 'CÓPIA' }),
+          el('p', { className: 'eyebrow', text: 'Preservação' }),
+          el('h2', { text: 'O arquivo original nunca é sobrescrito' }),
+          el('p', {
+            className: 'muted',
+            text: 'Reparos, otimizações, metadados e nova capa geram outro arquivo. ' +
+              'Você decide o que baixar e mantém o EPUB de origem como referência.',
+          }),
+        ],
+      }),
+      el('article', {
+        className: 'support-card support-card-limits',
         attrs: { id: 'limitations' },
         children: [
+          el('span', { className: 'support-index', text: 'LIMITE' }),
           el('p', { className: 'eyebrow', text: 'Limitações' }),
           el('h2', { text: 'Transparente sobre o que é possível fazer' }),
           el('p', {

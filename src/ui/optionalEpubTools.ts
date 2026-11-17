@@ -808,7 +808,10 @@ function renderBatch(state: AppState, s: Session, rerender: () => void, enqueue:
 
 export function renderOptionalEpubTools(state: AppState, rerender: () => void, enqueue: Queue): HTMLElement {
   const s = sessionFor(state);
-  const details = el('details', { className: 'panel optional-tools', children: [
+  const details = el('details', {
+    className: 'panel optional-tools',
+    attrs: { id: 'optional-tools' },
+    children: [
     el('summary', { children: [
       el('strong', { text: 'Ferramentas extras (opcionais)' }),
       el('small', { text: 'Leitura, comparação, metadados, Kindle e lote, sem interferir no fluxo principal' }),
@@ -832,7 +835,8 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
       s.tab === 'batch' ? renderBatch(state, s, rerender, enqueue) : undefined,
       s.message ? el('p', { className: 'muted', attrs: { role: 'status' }, text: s.message }) : undefined,
     ] }),
-  ] });
+    ],
+  });
   details.open = s.expanded;
   details.addEventListener('toggle', () => {
     if (details.isConnected) s.expanded = details.open;
