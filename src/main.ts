@@ -45,3 +45,4 @@ if (route === '/converter') {
 }
 import './styles/footerEditorial.css';
 import './styles/cardMotionRefinement.css';
+import './styles/sectionHeaderPolish.css';

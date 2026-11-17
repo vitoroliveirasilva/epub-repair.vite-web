@@ -149,13 +149,11 @@
 }
 
 @supports (interpolate-size: allow-keywords) {
-  #app .optional-studio,
-  #app .advanced-settings {
+  #app .optional-studio {
     interpolate-size: allow-keywords;
   }
 
-  #app .optional-studio::details-content,
-  #app .advanced-settings::details-content {
+  #app .optional-studio::details-content {
     block-size: 0;
     overflow: clip;
     transition:
@@ -163,8 +161,7 @@
       content-visibility 440ms allow-discrete;
   }
 
-  #app .optional-studio[open]::details-content,
-  #app .advanced-settings[open]::details-content {
+  #app .optional-studio[open]::details-content {
     block-size: auto;
   }
 }
