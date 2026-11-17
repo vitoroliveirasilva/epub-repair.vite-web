@@ -46,6 +46,7 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(hero?.querySelector<HTMLAnchorElement>('.home-action-converter')?.getAttribute('href'))
       .toBe('/converter');
     expect(hero?.querySelectorAll('.home-action')).toHaveLength(2);
+    expect(hero?.querySelectorAll('.home-action-shell')).toHaveLength(2);
     expect(hero?.querySelectorAll('.home-action-symbol')).toHaveLength(0);
     expect(hero?.querySelectorAll('.home-action-arrow')).toHaveLength(0);
 
@@ -135,13 +136,13 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(motion).toContain('inset: 0');
     expect(desktop).not.toContain("content: '↗'");
     expect(desktop).toContain('.epub-home .home-action::before');
-    expect(desktop).toContain('.epub-home .home-action::after');
-    expect(desktop).toContain('transform: translate(.46rem, .66rem) rotate(.7deg)');
-    expect(desktop).toContain('transform: translateX(.38rem) translateY(-1px)');
+    expect(desktop).toContain('.epub-home .home-action-shell::before');
+    expect(desktop).toContain('transform: translate(.42rem, .55rem) rotate(.55deg)');
+    expect(desktop).toContain('transform: translateX(.32rem) translateY(-1px)');
     expect(desktop).toContain('border-radius: .72rem');
     expect(desktop).toContain('--home-action-bookmark: #b8613e');
     expect(desktop).toContain('--home-action-bg: #194d3d');
-    expect(desktop).toContain(':root[data-theme="dark"] .epub-home .home-action-converter');
+    expect(desktop).toContain(':root[data-theme="dark"] .epub-home .home-action-shell-converter');
     expect(desktop).toContain('@media (min-width: 761px) and (prefers-reduced-motion: reduce)');
     expect(desktop).toContain('@media (min-width: 761px) and (prefers-reduced-motion: reduce)');
     expect(desktop).toContain('gap: clamp(.98rem, 2.1vh, 1.26rem)');

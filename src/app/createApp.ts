@@ -405,15 +405,25 @@ function renderHero(): HTMLElement {
                 className: 'home-actions',
                 attrs: { 'aria-label': 'Ações principais' },
                 children: [
-                  el('a', {
-                    className: 'home-action home-action-repair',
-                    attrs: { href: '#upload' },
-                    children: [el('strong', { text: 'Reparar EPUB' })],
+                  el('span', {
+                    className: 'home-action-shell home-action-shell-repair',
+                    children: [
+                      el('a', {
+                        className: 'home-action home-action-repair',
+                        attrs: { href: '#upload' },
+                        children: [el('strong', { text: 'Reparar EPUB' })],
+                      }),
+                    ],
                   }),
-                  el('a', {
-                    className: 'home-action home-action-converter',
-                    attrs: { href: '/converter' },
-                    children: [el('strong', { text: 'Converter PDF' })],
+                  el('span', {
+                    className: 'home-action-shell home-action-shell-converter',
+                    children: [
+                      el('a', {
+                        className: 'home-action home-action-converter',
+                        attrs: { href: '/converter' },
+                        children: [el('strong', { text: 'Converter PDF' })],
+                      }),
+                    ],
                   }),
                 ],
               }),

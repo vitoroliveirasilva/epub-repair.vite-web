@@ -147,8 +147,14 @@
   margin: clamp(2rem, 7svh, 4.5rem) 0 0;
 }
 
+.epub-home .home-action-shell {
+  display: block;
+  min-width: 0;
+}
+
 .epub-home .home-action {
   display: inline-flex;
+  width: 100%;
   align-items: center;
   justify-content: center;
   min-width: 0;
