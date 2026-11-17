@@ -1,4 +1,9 @@
-const REVEAL_TARGETS = ["#app-workspace .workspace-intro","#app-workspace .workflow-mode-selector","#app-workspace .workspace-core > .panel","#app-workspace .workspace > .cover-studio-panel","#app-workspace .workspace > .panel","#app .capability-showcase","#app .support-sections .support-heading","#app .support-sections .support-card","#app .converter-main > .panel","#app .converter-sidebar > .panel","#app .converter-how > .section-heading","#app .converter-how .converter-how-card","#app .converter-how .converter-limitations"].join(', ');
+const REVEAL_TARGETS = ["#app-workspace .workspace-intro","#app-workspace .workflow-mode-selector","#app-workspace .workspace-core > .panel","#app-workspace .workspace > .cover-studio-panel","#app-workspace .workspace > .panel","#app .capability-showcase","#app .support-sections .support-heading","#app .support-sections .support-card","#app .converter-main > .panel","#app .converter-sidebar > .panel","#app .converter-how > .section-heading","#app .converter-how .converter-how-card","#app .converter-how .converter-limitations",
+"#app .editorial-footer-content > .editorial-footer-brand",
+"#app .editorial-footer-content > .editorial-footer-art",
+"#app .editorial-footer-content > .editorial-footer-product",
+"#app .editorial-footer-content > .editorial-footer-project",
+"#app .editorial-footer-wave"].join(', ');
 const activeObservers = new WeakMap<HTMLElement, IntersectionObserver>();
 
 export function setupScrollReveals(root: HTMLElement): void {
@@ -30,7 +35,8 @@ export function setupScrollReveals(root: HTMLElement): void {
     const parent = target.parentElement;
     if (parent) {
       const order = groupIndex.get(parent) ?? 0;
-      target.style.setProperty('--scroll-reveal-delay', String(Math.min(order, 3) * 55) + 'ms');
+      const stagger = target.closest('.editorial-footer') ? 95 : 55;
+      target.style.setProperty('--scroll-reveal-delay', String(Math.min(order, 3) * stagger) + 'ms');
       groupIndex.set(parent, order + 1);
     }
     const rect = positions[index]!;

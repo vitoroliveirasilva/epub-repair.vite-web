@@ -44,3 +44,4 @@ if (route === '/converter') {
   createApp(root);
 }
 import './styles/footerEditorial.css';
+import './styles/cardMotionRefinement.css';

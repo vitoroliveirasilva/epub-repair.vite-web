@@ -166,4 +166,74 @@ describe('Exibição reversível de seções durante rolagem', () => {
     expect(pdf.querySelector('.app-footer')?.classList.contains('scroll-reveal-element'))
       .toBe(false);
   });
+  it('anima diagnóstico, ferramentas e o conteúdo do rodapé sem esconder a estrutura', () => {
+    const root = document.createElement('div');
+    root.id = 'app';
+    root.innerHTML = `
+      <header class="app-header"></header>
+      <main id="app-workspace"><div class="workspace">
+        <section class="panel report-welcome"></section>
+        <details class="panel optional-studio"><summary>Ferramentas extras</summary></details>
+        <details class="panel advanced-settings"><summary>Configurações</summary></details>
+      </div></main>
+      <footer class="app-footer editorial-footer">
+        <div class="editorial-footer-content">
+          <section class="editorial-footer-brand"></section>
+          <div class="editorial-footer-art"></div>
+          <nav class="editorial-footer-product"></nav>
+          <nav class="editorial-footer-project"></nav>
+        </div>
+        <div class="editorial-footer-wave"></div>
+      </footer>
+    `;
+    document.body.append(root);
+    setupScrollReveals(root);
+    const observer = FakeIntersectionObserver.instances[0]!;
+    for (const selector of [
+      '.report-welcome', '.optional-studio', '.advanced-settings',
+      '.editorial-footer-brand', '.editorial-footer-art',
+      '.editorial-footer-product', '.editorial-footer-project',
+      '.editorial-footer-wave',
+    ]) {
+      const element = root.querySelector<HTMLElement>(selector)!;
+      expect(element.classList.contains('scroll-reveal-element')).toBe(true);
+      expect(observer.observed).toContain(element);
+      observer.fire(element, false);
+      expect(element.dataset.scrollRevealState).toBe('hidden');
+      observer.fire(element, true);
+      expect(element.dataset.scrollRevealState).toBe('visible');
+    }
+    const footer = root.querySelector<HTMLElement>('.app-footer')!;
+    expect(footer.classList.contains('scroll-reveal-element')).toBe(false);
+    expect(root.querySelector('.app-header')?.classList.contains('scroll-reveal-element'))
+      .toBe(false);
+    expect(root.querySelector<HTMLElement>('.editorial-footer-brand')
+      ?.style.getPropertyValue('--scroll-reveal-delay')).toBe('0ms');
+    expect(root.querySelector<HTMLElement>('.editorial-footer-art')
+      ?.style.getPropertyValue('--scroll-reveal-delay')).toBe('95ms');
+  });
+
+  it('mantém os controles do rodapé visíveis quando movimento reduzido está ativo', () => {
+    const root = document.createElement('div');
+    root.id = 'app';
+    root.innerHTML = '<footer class="editorial-footer"><div class="editorial-footer-content">' +
+      '<nav class="editorial-footer-product"><a href="/">Produto</a></nav>' +
+      '</div></footer>';
+    document.body.append(root);
+    const previous = window.matchMedia;
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: (query: string) => ({ matches: query.includes('prefers-reduced-motion') }),
+    });
+    try {
+      setupScrollReveals(root);
+      expect(root.querySelector('.editorial-footer-product')?.classList
+        .contains('scroll-reveal-element')).toBe(false);
+      expect(FakeIntersectionObserver.instances).toHaveLength(0);
+    } finally {
+      Object.defineProperty(window, 'matchMedia',
+        { configurable: true, value: previous });
+    }
+  });
+
 });
