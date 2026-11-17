@@ -242,20 +242,6 @@ body > iframe,
   pointer-events: none;
 }
 
-.editorial-footer-art::after {
-  position: absolute;
-  bottom: .35rem;
-  left: 50%;
-  z-index: 0;
-  width: 74%;
-  height: .28rem;
-  border-radius: 999px;
-  background: var(--footer-orange);
-  box-shadow: 0 .4rem 1rem color-mix(in srgb, var(--footer-shadow) 42%, transparent);
-  content: '';
-  transform: translateX(-50%);
-}
-
 .editorial-footer-art img {
   position: relative;
   z-index: 1;
@@ -303,11 +289,7 @@ body > iframe,
 }
 
 .editorial-footer-wave::before {
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 1px;
-  background: color-mix(in srgb, var(--footer-wave-text) 16%, transparent);
+  display: none;
 }
 
 .editorial-footer-wave::after {
