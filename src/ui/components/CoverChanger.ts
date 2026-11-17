@@ -9,72 +9,196 @@ export function renderCoverChanger(
     applyCoverReplacement: () => void;
   },
 ): HTMLElement {
-  const hasFile = Boolean(state.payload);
-  const hasCoverImage = Boolean(state.coverImage);
+  const hasEpub = Boolean(state.payload);
+  const selectedCover = state.coverImage;
+  const canChoose = hasEpub && !state.busy;
   const input = el('input', {
     className: 'cover-file-input',
     attrs: {
+      id: 'cover-image-input',
       type: 'file',
       accept: 'image/jpeg,image/png,.jpg,.jpeg,.png',
-      'aria-label': 'Selecionar nova capa do EPUB',
+      'aria-label': 'Selecionar nova imagem para a capa do EPUB',
     },
   });
-
+  input.disabled = !canChoose;
   input.addEventListener('change', () => {
     const file = input.files?.[0];
     input.value = '';
-    if (file) actions.selectCoverImage(file);
+    if (file && canChoose) actions.selectCoverImage(file);
   });
 
-  const chooseButton = button('Escolher capa', 'btn btn-secondary', () => input.click());
-  chooseButton.disabled = !hasFile || state.busy;
+  const chooseButton = button(
+    selectedCover ? 'Trocar imagem' : 'Escolher imagem',
+    'btn btn-secondary cover-button-choose',
+    () => input.click(),
+  );
+  chooseButton.disabled = !canChoose;
 
-  const applyButton = button('Aplicar nova capa', 'btn btn-primary', actions.applyCoverReplacement);
-  applyButton.disabled = !hasFile || !hasCoverImage || state.busy;
+  const applyButton = button(
+    'Aplicar nova capa',
+    'btn btn-primary cover-button-apply',
+    actions.applyCoverReplacement,
+  );
+  applyButton.disabled = !canChoose || !selectedCover;
 
-  const clearButton = button('Remover seleção', 'btn btn-ghost', actions.clearCoverImage);
-  clearButton.disabled = !hasCoverImage || state.busy;
+  const clearButton = button(
+    'Remover seleção',
+    'btn btn-ghost cover-button-clear',
+    actions.clearCoverImage,
+  );
+  clearButton.disabled = !selectedCover || state.busy;
 
-  return el('section', {
-    className: 'panel cover-action-panel',
-    attrs: { 'aria-label': 'Troca de capa do EPUB' },
+  const uploadZone = el('label', {
+    className: 'cover-upload-zone' +
+      (selectedCover ? ' cover-upload-zone-selected' : '') +
+      (!canChoose ? ' cover-upload-zone-disabled' : ''),
+    attrs: {
+      for: 'cover-image-input',
+      role: 'button',
+      tabindex: canChoose ? '0' : '-1',
+      'aria-label': selectedCover
+        ? 'Selecionar outra imagem JPG ou PNG para a capa'
+        : 'Selecionar ou arrastar uma imagem JPG ou PNG para a capa',
+      'aria-disabled': String(!canChoose),
+    },
     children: [
-      input,
-      el('div', {
-        className: 'section-heading cover-action-heading',
+      el('span', {
+        className: 'cover-upload-illustration',
+        attrs: { 'aria-hidden': 'true' },
         children: [
-          el('p', { className: 'eyebrow', text: 'Capa' }),
-          el('h2', { text: 'Trocar capa do EPUB' }),
-          el('p', {
-            className: 'muted',
-            text: coverDescription(state),
+          el('span', { className: 'cover-upload-sheet cover-upload-sheet-back' }),
+          el('span', { className: 'cover-upload-sheet cover-upload-sheet-front' }),
+          el('span', { className: 'cover-upload-sun' }),
+          el('span', { className: 'cover-upload-mountain' }),
+        ],
+      }),
+      el('span', {
+        className: 'cover-upload-text',
+        children: [
+          el('strong', {
+            text: selectedCover
+              ? 'Imagem pronta para aplicar'
+              : hasEpub ? 'Arraste sua nova capa aqui' : 'Envie um EPUB para começar',
+          }),
+          el('small', {
+            text: selectedCover
+              ? 'Clique para trocar ou confira o resultado ao lado'
+              : hasEpub
+                ? 'Ou clique para buscar uma imagem no seu dispositivo'
+                : 'Depois de selecionar o livro, você poderá escolher a imagem',
           }),
         ],
       }),
+      el('span', {
+        className: 'cover-upload-cta',
+        text: selectedCover ? 'Escolher outra imagem  ↗' : 'Selecionar imagem  ↗',
+      }),
+      el('span', { className: 'cover-upload-footnote', text: 'JPG ou PNG · até 15 MB' }),
+    ],
+  });
+
+  uploadZone.addEventListener('keydown', (event) => {
+    if (!canChoose || (event.key !== 'Enter' && event.key !== ' ')) return;
+    event.preventDefault();
+    input.click();
+  });
+  for (const type of ['dragenter', 'dragover']) {
+    uploadZone.addEventListener(type, (event) => {
+      event.preventDefault();
+      if (canChoose) uploadZone.classList.add('cover-upload-zone-active');
+    });
+  }
+  uploadZone.addEventListener('dragleave', (event) => {
+    if (!uploadZone.contains(event.relatedTarget as Node | null)) {
+      uploadZone.classList.remove('cover-upload-zone-active');
+    }
+  });
+  uploadZone.addEventListener('drop', (event) => {
+    event.preventDefault();
+    uploadZone.classList.remove('cover-upload-zone-active');
+    if (canChoose && event.dataTransfer?.files[0]) {
+      actions.selectCoverImage(event.dataTransfer.files[0]);
+    }
+  });
+
+  return el('section', {
+    className: 'panel cover-action-panel cover-studio-panel',
+    attrs: { 'aria-labelledby': 'cover-studio-title' },
+    children: [
+      input,
       el('div', {
-        className: 'cover-action-grid',
+        className: 'section-heading cover-action-heading cover-studio-heading',
+        children: [
+          el('p', { className: 'eyebrow', text: 'PERSONALIZE SEU LIVRO / 02' }),
+          el('h2', {
+            text: 'Uma nova capa, a mesma história',
+            attrs: { id: 'cover-studio-title' },
+          }),
+          el('p', { className: 'muted', text: coverDescription(state) }),
+        ],
+      }),
+      el('div', {
+        className: 'cover-action-grid cover-studio-grid',
         children: [
           el('article', {
-            className: 'cover-picker-card',
+            className: 'cover-picker-card cover-studio-picker',
             children: [
               el('div', {
-                className: 'cover-picker-content',
+                className: 'cover-picker-content cover-studio-picker-heading',
                 children: [
-                  el('strong', { text: 'Nova imagem' }),
+                  el('span', { className: 'cover-studio-overline', text: '01 / NOVA IMAGEM' }),
+                  el('strong', { text: 'Escolha uma imagem de capa' }),
                   el('p', {
                     className: 'muted',
-                    text: hasCoverImage
-                      ? `${state.coverImage!.fileName} • ${formatBytes(state.coverImage!.bytes.length)} • ${state.coverImage!.mediaType}`
-                      : 'Use JPG, JPEG ou PNG. JPEGs são normalizados quando possível para evitar perda opcional de compatibilidade.',
+                    text: 'Altere a capa sem mexer no texto do livro. O EPUB original continua preservado.',
                   }),
-                  state.coverImage?.normalizationNote
-                    ? el('small', { className: 'muted', text: state.coverImage.normalizationNote })
-                    : undefined,
                 ],
               }),
+              uploadZone,
+              selectedCover
+                ? el('div', {
+                    className: 'cover-selected-file',
+                    attrs: { role: 'status', 'aria-live': 'polite' },
+                    children: [
+                      el('span', {
+                        className: 'cover-selected-file-icon',
+                        text: selectedCover.mediaType === 'image/png' ? 'PNG' : 'JPG',
+                        attrs: { 'aria-hidden': 'true' },
+                      }),
+                      el('div', {
+                        className: 'cover-selected-file-info',
+                        children: [
+                          el('strong', { text: selectedCover.fileName }),
+                          el('small', {
+                            text: formatBytes(selectedCover.bytes.length) + ' · Imagem selecionada',
+                          }),
+                        ],
+                      }),
+                      el('span', {
+                        className: 'cover-selected-file-state',
+                        text: 'Pronta',
+                      }),
+                    ],
+                  })
+                : undefined,
+              selectedCover?.normalizationNote
+                ? el('p', {
+                    className: 'cover-normalization-note',
+                    text: selectedCover.normalizationNote,
+                  })
+                : undefined,
               el('div', {
-                className: 'cover-action-buttons',
-                children: [chooseButton, applyButton, clearButton],
+                className: 'cover-action-buttons cover-studio-actions',
+                children: [
+                  chooseButton,
+                  applyButton,
+                  selectedCover ? clearButton : undefined,
+                ],
+              }),
+              el('p', {
+                className: 'cover-studio-reassurance',
+                text: 'Ao aplicar, geramos uma nova cópia do EPUB para download.',
               }),
             ],
           }),
@@ -86,23 +210,38 @@ export function renderCoverChanger(
 }
 
 function renderCoverPreviewCard(state: AppState): HTMLElement {
-  const previewDataUrl = state.coverImage?.previewDataUrl ?? state.report?.cover?.previewDataUrl;
-  const title = state.coverImage
-    ? 'Prévia da nova capa'
-    : state.payload
-      ? 'Capa atual detectada'
-      : 'Nenhum epub enviado';
-  const detail = state.coverImage
-    ? 'Esta imagem será aplicada quando você confirmar'
-    : (state.report?.cover?.path ?? 'Nenhuma capa atual detectada');
+  const selectedCover = state.coverImage;
+  const previewDataUrl = selectedCover?.previewDataUrl ?? state.report?.cover?.previewDataUrl;
+  const hasOriginalCover = Boolean(state.report?.cover?.previewDataUrl);
+  const title = selectedCover
+    ? 'Sua nova capa'
+    : hasOriginalCover
+      ? 'Capa atual do livro'
+      : 'Prévia da capa';
+  const detail = selectedCover
+    ? 'Esta imagem será usada na nova cópia quando você confirmar'
+    : hasOriginalCover
+      ? 'Escolha outra imagem para visualizar a substituição'
+      : 'A imagem escolhida aparecerá aqui antes da aplicação';
 
   return el('article', {
-    className: state.coverImage
-      ? 'cover-preview-card cover-preview-card-selected'
-      : 'cover-preview-card',
+    className: 'cover-preview-card cover-studio-preview' +
+      (selectedCover ? ' cover-preview-card-selected' : ''),
     children: [
       el('div', {
-        className: 'cover-preview-stage',
+        className: 'cover-studio-preview-header',
+        children: [
+          el('span', { className: 'cover-studio-overline', text: '02 / VISUALIZAÇÃO' }),
+          el('span', {
+            className: 'cover-studio-preview-status' +
+              (selectedCover ? ' cover-studio-preview-status-ready' : ''),
+            text: selectedCover ? 'Nova capa selecionada'
+              : hasOriginalCover ? 'Capa original' : 'Aguardando imagem',
+          }),
+        ],
+      }),
+      el('div', {
+        className: 'cover-preview-stage cover-studio-preview-stage',
         children: [
           previewDataUrl
             ? el('figure', {
@@ -111,7 +250,8 @@ function renderCoverPreviewCard(state: AppState): HTMLElement {
                   el('img', {
                     attrs: {
                       src: previewDataUrl,
-                      alt: title,
+                      alt: selectedCover ? 'Prévia da nova imagem de capa selecionada'
+                        : 'Prévia da capa original do EPUB',
                       loading: 'lazy',
                       decoding: 'async',
                     },
@@ -121,24 +261,25 @@ function renderCoverPreviewCard(state: AppState): HTMLElement {
             : el('div', {
                 className: 'cover-new-preview cover-new-preview-empty',
                 attrs: { 'aria-hidden': 'true' },
-                children: [el('span')],
+                children: [
+                  el('span', { className: 'cover-studio-preview-placeholder' }),
+                ],
               }),
         ],
       }),
       el('div', {
-        className: 'cover-preview-copy',
-        children: [el('strong', { text: title }), el('p', { className: 'muted', text: detail })],
+        className: 'cover-preview-copy cover-studio-preview-copy',
+        children: [
+          el('strong', { text: title }),
+          el('p', { className: 'muted', text: detail }),
+        ],
       }),
     ],
   });
 }
 
 function coverDescription(state: AppState): string {
-  if (!state.payload) return 'Envie um EPUB primeiro para liberar a troca de capa';
-  if (state.coverImage)
-    return 'Confira a prévia centralizada e aplique para gerar uma nova cópia do EPUB';
-  if (state.report?.stats.kindleScore === 100) {
-    return 'O EPUB não precisa de correção, mas você ainda pode trocar a capa como alteração intencional';
-  }
-  return 'A troca de capa é separada do reparo técnico. Ela pode substituir ou adicionar a capa oficial sem rodar correções desnecessárias.';
+  if (!state.payload) return 'Envie um EPUB para liberar a troca de capa. A escolha e a prévia ficam aqui, sem precisar sair do fluxo.';
+  if (state.coverImage) return 'Confira a imagem selecionada e aplique quando estiver satisfeito. A obra original será preservada.';
+  return 'Escolha uma imagem, veja como ficará no livro e gere uma nova cópia. Tudo acontece no seu navegador.';
 }
