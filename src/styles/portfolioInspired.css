@@ -622,12 +622,34 @@
   background: #1e6048;
 }
 
-#app .converter-main > .panel,
+#app .converter-main > .panel:not(.converter-status):not(.converter-result),
 #app .converter-sidebar > .panel {
   border: 1px solid var(--studio-line);
   border-radius: 1.4rem;
-  background: var(--color-surface);
   box-shadow: 0 1rem 2.5rem rgba(24, 52, 38, .065);
+}
+
+#app .converter-main > .converter-status-error {
+  border-color: var(--color-danger);
+  background: color-mix(in srgb, var(--severity-error-soft) 56%, var(--color-surface));
+}
+
+#app .converter-main > .converter-status-success {
+  border-color: color-mix(in srgb, var(--color-success) 42%, var(--color-border));
+  background: color-mix(in srgb, var(--severity-success-soft) 48%, var(--color-surface));
+}
+
+#app .converter-main > .converter-result {
+  border-color: color-mix(in srgb, var(--color-success) 58%, var(--color-border));
+  background:
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--color-success) 20%, transparent), transparent 22rem),
+    color-mix(in srgb, var(--severity-success-soft) 48%, var(--color-surface));
+}
+
+#app .converter-sidebar > .converter-quality-card {
+  background:
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--color-accent) 18%, transparent), transparent 12rem),
+    var(--color-surface);
 }
 
 #app .converter-main > .panel::before {
