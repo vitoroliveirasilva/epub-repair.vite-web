@@ -140,14 +140,12 @@
   line-height: 1.48;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  #app .workspace-signals li:hover {
+@media (hover: hover) and (pointer: fine) {#app .workspace-signals li:hover {
     border-color: color-mix(in srgb, var(--studio-copper) 65%, transparent);
     box-shadow: 0 1.1rem 2rem rgba(39, 48, 33, .075);
     transform: translateY(-4px);
   }
 }
-
 #app .workspace-core {
   gap: clamp(.9rem, 2vw, 1.4rem);
   align-items: stretch;
@@ -220,7 +218,6 @@
 
 #app .layout#app-workspace > .workspace > .cover-action-panel,
 #app .layout#app-workspace > .workspace > .panel:not(.cover-action-panel),
-#app .layout#app-workspace .optional-tools,
 #app .layout#app-workspace .advanced-settings {
   border-color: var(--studio-line);
 }
@@ -233,24 +230,6 @@
 
 #app .layout#app-workspace > .workspace > .cover-action-panel::before {
   background: var(--studio-copper);
-}
-
-#app .layout#app-workspace .optional-tools {
-  background:
-    linear-gradient(100deg, color-mix(in srgb, var(--color-accent) 7%, transparent), transparent 40%),
-    var(--color-surface);
-}
-
-#app .layout#app-workspace .optional-tools > summary {
-  transition: background-color 220ms ease;
-}
-
-#app .layout#app-workspace .optional-tools > summary:is(:hover, :focus-visible) {
-  background: color-mix(in srgb, var(--color-accent) 6%, transparent);
-}
-
-#app .layout#app-workspace .optional-tablist .btn {
-  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, color 180ms ease;
 }
 
 #app .capability-showcase {
@@ -417,14 +396,12 @@
   line-height: 1.65;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  #app .capability-entry:hover {
+@media (hover: hover) and (pointer: fine) {#app .capability-entry:hover {
     border-color: rgba(238, 177, 142, .46);
     box-shadow: 0 1.1rem 2rem rgba(1, 22, 16, .18);
     transform: translateY(-5px);
   }
 }
-
 #app .capability-link {
   gap: .8rem;
   margin-top: clamp(1.6rem, 3vw, 2.5rem);
@@ -587,13 +564,11 @@
   color: #2b392f;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  #app .support-sections .support-card:hover {
+@media (hover: hover) and (pointer: fine) {#app .support-sections .support-card:hover {
     box-shadow: 0 1.5rem 3rem rgba(24, 52, 38, .13);
     transform: translateY(-5px);
   }
 }
-
 #app .converter-workflow {
   border: 1px solid var(--studio-line);
   border-radius: 1.4rem;
@@ -674,15 +649,13 @@
   transition: transform 240ms var(--studio-ease), border-color 240ms ease, box-shadow 240ms ease;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  #app .converter-metric:hover,
-  #app .converter-option:hover {
+@media (hover: hover) and (pointer: fine) {#app .converter-metric:hover,
+#app .converter-option:hover {
     border-color: color-mix(in srgb, var(--studio-copper) 56%, var(--studio-line));
     box-shadow: 0 .65rem 1.2rem rgba(24, 52, 38, .07);
     transform: translateY(-2px);
   }
 }
-
 :root[data-theme="dark"] #app .workspace-core > .panel,
 :root[data-theme="dark"] #app .converter-main > .panel,
 :root[data-theme="dark"] #app .converter-sidebar > .panel {
@@ -706,105 +679,102 @@
   background: #2a3d32;
 }
 
-@media (max-width: 1100px) {
-  #app .workspace-intro {
+@media (max-width: 1100px) {#app .workspace-intro {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
 
-  #app .workspace-signals {
+#app .workspace-signals {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  #app .support-sections .support-card-local {
+#app .support-sections .support-card-local {
     grid-column: span 12;
     min-height: 16rem;
   }
 
-  #app .support-sections .support-card-original,
-  #app .support-sections .support-card-limits {
+#app .support-sections .support-card-original,
+#app .support-sections .support-card-limits {
     grid-column: span 6;
     min-height: 19rem;
   }
 
-  #app .support-sections .support-index {
+#app .support-sections .support-index {
     margin-bottom: 2.3rem;
   }
 }
 
-@media (max-width: 800px) {
-  #app .workspace-core {
+@media (max-width: 800px) {#app .workspace-core {
     grid-template-columns: 1fr;
   }
 
-  #app .capability-heading {
+#app .capability-heading {
     grid-template-columns: 1fr;
     gap: .8rem;
   }
 
-  #app .capability-heading .eyebrow,
-  #app .capability-heading h2,
-  #app .capability-heading > p:last-child {
+#app .capability-heading .eyebrow,
+#app .capability-heading h2,
+#app .capability-heading > p:last-child {
     grid-column: 1;
     grid-row: auto;
   }
 
-  #app .capability-heading > p:last-child {
+#app .capability-heading > p:last-child {
     max-width: 42rem;
     margin-top: .5rem;
   }
 
-  #app .capability-entry,
-  #app .capability-entry:nth-child(4n + 1),
-  #app .capability-entry:nth-child(4n + 4) {
+#app .capability-entry,
+#app .capability-entry:nth-child(4n + 1),
+#app .capability-entry:nth-child(4n + 4) {
     grid-column: span 6;
     min-height: 16rem;
   }
 
-  #app .support-heading {
+#app .support-heading {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
 
-  #app .support-heading .eyebrow {
+#app .support-heading .eyebrow {
     grid-column: 1;
   }
 
-  #app .support-sections .support-card-original,
-  #app .support-sections .support-card-limits {
+#app .support-sections .support-card-original,
+#app .support-sections .support-card-limits {
     min-height: 17rem;
   }
 }
 
-@media (max-width: 600px) {
-  #app .layout#app-workspace,
-  #app .capability-showcase,
-  #app .support-sections {
+@media (max-width: 600px) {#app .layout#app-workspace,
+#app .capability-showcase,
+#app .support-sections {
     width: min(100% - 1.25rem, 40rem);
   }
 
-  #app .layout#app-workspace {
+#app .layout#app-workspace {
     margin-top: 3.25rem;
   }
 
-  #app .workspace-intro {
+#app .workspace-intro {
     gap: 1.35rem;
     padding-bottom: 1.8rem;
   }
 
-  #app .workspace-intro-copy h2,
-  #app .capability-heading h2,
-  #app .support-heading h2 {
+#app .workspace-intro-copy h2,
+#app .capability-heading h2,
+#app .support-heading h2 {
     max-width: 18ch;
     font-size: clamp(2rem, 8vw, 2.9rem);
   }
 
-  #app .workspace-signals {
+#app .workspace-signals {
     grid-template-columns: 1fr;
     gap: .55rem;
   }
 
-  #app .workspace-signals li {
+#app .workspace-signals li {
     flex-direction: row;
     align-items: flex-start;
     min-height: 0;
@@ -812,32 +782,32 @@
     padding: 1rem;
   }
 
-  #app .workspace-signals li > span {
+#app .workspace-signals li > span {
     flex: 0 0 2.15rem;
   }
 
-  #app .workspace-core > .panel,
-  #app .layout#app-workspace > .workspace > .cover-action-panel {
+#app .workspace-core > .panel,
+#app .layout#app-workspace > .workspace > .cover-action-panel {
     border-radius: 1.2rem;
   }
 
-  #app .workspace-core .dropzone {
+#app .workspace-core .dropzone {
     min-height: 13.5rem;
   }
 
-  #app .capability-showcase {
+#app .capability-showcase {
     margin-top: 3.5rem;
     padding: 1.8rem 1.1rem;
     border-radius: 1.55rem;
   }
 
-  #app .capability-ledger {
+#app .capability-ledger {
     gap: .65rem;
   }
 
-  #app .capability-entry,
-  #app .capability-entry:nth-child(4n + 1),
-  #app .capability-entry:nth-child(4n + 4) {
+#app .capability-entry,
+#app .capability-entry:nth-child(4n + 1),
+#app .capability-entry:nth-child(4n + 4) {
     grid-column: span 12;
     min-height: 13.5rem;
     gap: 1.5rem;
@@ -845,63 +815,61 @@
     border-radius: 1.05rem;
   }
 
-  #app .capability-entry h3 {
+#app .capability-entry h3 {
     font-size: 1.5rem;
   }
 
-  #app .capability-entry::after {
+#app .capability-entry::after {
     font-size: 12rem;
   }
 
-  #app .support-heading {
+#app .support-heading {
     gap: .7rem;
   }
 
-  #app .support-sections .support-card,
-  #app .support-sections .support-card-local,
-  #app .support-sections .support-card-original,
-  #app .support-sections .support-card-limits {
+#app .support-sections .support-card,
+#app .support-sections .support-card-local,
+#app .support-sections .support-card-original,
+#app .support-sections .support-card-limits {
     grid-column: span 12;
     min-height: 16rem;
     padding: 1.4rem;
     border-radius: 1.2rem;
   }
 
-  #app .support-sections .support-index {
+#app .support-sections .support-index {
     margin-bottom: 2rem;
   }
 
-  #app .support-sections .support-card h2 {
+#app .support-sections .support-card h2 {
     max-width: 22ch;
     font-size: 1.6rem;
   }
 
-  #app .converter-workflow {
+#app .converter-workflow {
     border-radius: 1.1rem;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  #app .workspace-signals li,
-  #app .workspace-core > .panel,
-  #app .workspace-core .dropzone,
-  #app .capability-entry,
-  #app .support-sections .support-card,
-  #app .converter-workflow-step,
-  #app .converter-metric,
-  #app .converter-option {
+@media (prefers-reduced-motion: reduce) {#app .workspace-signals li,
+#app .workspace-core > .panel,
+#app .workspace-core .dropzone,
+#app .capability-entry,
+#app .support-sections .support-card,
+#app .converter-workflow-step,
+#app .converter-metric,
+#app .converter-option {
     transition: none;
   }
 
-  #app .workspace-signals li:hover,
-  #app .capability-entry:hover,
-  #app .support-sections .support-card:hover,
-  #app .converter-metric:hover,
-  #app .converter-option:hover {
+#app .workspace-signals li:hover,
+#app .capability-entry:hover,
+#app .support-sections .support-card:hover,
+#app .converter-metric:hover,
+#app .converter-option:hover {
     transform: none;
   }
 }
-
 /* Cabeçalho resumido: a escolha de um ou vários EPUBs é apresentada logo abaixo. */
 #app .workspace-intro.workspace-intro-compact {
   grid-template-columns: minmax(0, 1fr);
@@ -935,11 +903,11 @@
   text-wrap: balance;
 }
 
-@media (max-width: 760px) {
-  #app .workspace-intro.workspace-intro-compact {
+@media (max-width: 760px) {#app .workspace-intro.workspace-intro-compact {
     padding-bottom: 1.15rem;
   }
-  #app .workspace-intro-compact .workspace-intro-copy h2 {
+
+#app .workspace-intro-compact .workspace-intro-copy h2 {
     max-width: 23ch;
     font-size: clamp(1.4rem, 5.6vw, 1.9rem);
     line-height: 1.18;

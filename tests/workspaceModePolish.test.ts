@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app/createApp';
 import { createConverterApp } from '../src/converter/createConverterApp';
@@ -401,6 +402,36 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(launch.querySelector('.workbench-reader-launch-symbol')).not.toBeNull();
     launch.click();
     expect(queued).toEqual(['Preparar prévia EPUB']);
+  });
+
+  it('mantém um único controle de expansão e elimina CSS legado das três abas', () => {
+    const state = createInitialState();
+    const panel = renderOptionalEpubTools(state, () => {}, () => {});
+    const toggle = panel.querySelector('.workbench-disclosure')!;
+    expect(toggle.querySelectorAll('.workbench-toggle-icon')).toHaveLength(1);
+    expect(toggle.querySelectorAll('.workbench-toggle-line')).toHaveLength(2);
+    expect(panel.querySelectorAll('.workbench-navigation > button')).toHaveLength(3);
+    expect(panel.querySelectorAll('.workbench-navigation > button[aria-pressed="true"]'))
+      .toHaveLength(1);
+    expect(Array.from(panel.querySelectorAll('.workbench-tab-number')).map(node =>
+      node.textContent)).toEqual(['01', '02', '03']);
+
+    const css = (file: string): string => readFileSync(
+      new URL('../src/styles/' + file, import.meta.url), 'utf8');
+    const workbench = css('optionalWorkbench.css');
+    expect(workbench).toContain('grid-template-columns: repeat(3, minmax(0, 1fr))');
+    expect(workbench).toContain('workbench-toggle-icon');
+    expect(workbench).toContain('workbench-navigation .optional-studio-tab-active.btn::before');
+    expect(workbench).not.toContain('workbench-disclosure::after');
+
+    for (const file of [
+      'workspaceCardsPolish.css', 'cardMotionRefinement.css', 'sectionHeaderPolish.css',
+    ]) {
+      expect(css(file)).not.toMatch(/\.optional-studio\b/u);
+    }
+    for (const file of ['homeWorkspace.css', 'portfolioInspired.css']) {
+      expect(css(file)).not.toMatch(/\.optional-tools\b|\.optional-tablist\b/u);
+    }
   });
 
 });
