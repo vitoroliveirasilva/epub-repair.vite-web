@@ -34,3 +34,4 @@ if (route === '/converter') {
   const { createApp } = await import('./app/createApp');
   createApp(root);
 }
+import './styles/footerEditorial.css';

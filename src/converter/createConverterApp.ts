@@ -6,6 +6,7 @@ import { button, downloadBlob, el, formatBytes } from '../ui/dom';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
 import { renderDesktopNavigation } from '../ui/desktopNavigation';
 import { renderBrandName } from '../ui/brand';
+import { renderEditorialFooter } from '../ui/footer';
 import { buildReviewAudit, exportReviewAudit, reviewFindingKey,
   normalizeSectionSpaces, type ReviewFinding } from './reviewSuggestions';
 
@@ -1209,21 +1210,9 @@ function howCard(number: string, title: string, detail: string): HTMLElement {
 }
 
 function renderFooter(): HTMLElement {
-  return el('footer', { className: 'footer app-footer', children: [
-    el('div', { className: 'footer-main', children: [
-      el('a', { className: 'footer-brand', attrs: { href: '/' }, children: [renderLogoSymbol(), renderBrandName()] }),
-      el('nav', { className: 'footer-links', attrs: { 'aria-label': 'Links de navegação e projeto' }, children: [
-        el('a', { text: 'Desenvolvedor', attrs: { href: 'https://github.com/vitoroliveirasilva', target: '_blank', rel: 'noreferrer noopener' } }),
-        el('a', { text: 'Projeto no GitHub', attrs: { href: 'https://github.com/vitoroliveirasilva/epub-repair.vite-web', target: '_blank', rel: 'noreferrer noopener' } }),
-        el('a', { text: 'Reparar EPUB', attrs: { href: '/' } }),
-        el('a', { text: 'Converter PDF', attrs: { href: '/converter' } }),
-      ] }),
-    ] }),
-    el('div', { className: 'footer-bottom', children: [
-      el('span', { text: `© ${new Date().getFullYear()} Vitor Oliveira Silva` }),
-      el('span', { text: 'Conversão e reparo local de documentos de leitura.' }),
-    ] }),
-  ] });
+  return renderEditorialFooter(() => {
+    applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+  });
 }
 
 function renderLogoSymbol(): HTMLElement {

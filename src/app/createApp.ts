@@ -23,6 +23,7 @@ import { startHeroStarAnimation } from '../ui/heroStarAnimation';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
 import { renderDesktopNavigation } from '../ui/desktopNavigation';
 import { renderBrandName } from '../ui/brand';
+import { renderEditorialFooter } from '../ui/footer';
 import { openBatchWithFiles, renderOptionalEpubTools } from '../ui/optionalEpubTools';
 import { abortProcessingError } from './zipWorkerClient';
 import { SerialTaskQueue } from './taskQueue';
@@ -481,55 +482,8 @@ function renderSupportSections(): HTMLElement {
 }
 
 function renderFooter(): HTMLElement {
-  const currentYear = new Date().getFullYear();
-
-  return el('footer', {
-    className: 'footer app-footer',
-    children: [
-      el('div', {
-        className: 'footer-main',
-        children: [
-          el('div', {
-            className: 'footer-brand-block',
-            children: [
-              el('a', {
-                className: 'footer-brand',
-                attrs: { href: '#top', 'aria-label': 'EPUB Repair, voltar ao início' },
-                children: [renderLogoSymbol(), renderBrandName()],
-              }),
-            ],
-          }),
-          el('nav', {
-            className: 'footer-links',
-            attrs: { 'aria-label': 'Links de navegação e projeto' },
-            children: [
-              renderFooterLink('Desenvolvedor', 'https://github.com/vitoroliveirasilva', true),
-              renderFooterLink(
-                'Projeto no GitHub',
-                'https://github.com/vitoroliveirasilva/epub-repair.vite-web',
-                true,
-              ),
-              renderFooterLink('Reparar EPUB', '/', false),
-              renderFooterLink('Converter PDF', '/converter', false),
-            ],
-          }),
-        ],
-      }),
-      el('div', {
-        className: 'footer-bottom',
-        children: [
-          el('span', { text: `© ${currentYear} Vitor Oliveira Silva` }),
-          el('span', { text: 'Feito para leitores, dispositivos de leitura e arquivos EPUB.' }),
-        ],
-      }),
-    ],
-  });
-}
-
-function renderFooterLink(text: string, href: string, external = false): HTMLElement {
-  return el('a', {
-    text,
-    attrs: external ? { href, target: '_blank', rel: 'noreferrer noopener' } : { href },
+  return renderEditorialFooter(() => {
+    applyTheme(getCurrentTheme() === 'dark' ? 'light' : 'dark');
   });
 }
 
