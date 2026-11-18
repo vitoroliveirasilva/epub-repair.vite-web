@@ -57,8 +57,8 @@
       color-mix(in srgb, var(--upload-tone) 13%, transparent) .7px, transparent 1px) 0 0 / 22px 22px,
     var(--upload-book-surface);
   box-shadow:
-    inset 0 10px 22px -16px color-mix(in srgb, var(--upload-tone-dark) 24%, transparent),
-    inset 0 3px 10px color-mix(in srgb, var(--upload-tone-dark) 6%, transparent),
+    inset 0 10px 22px -16px color-mix(in srgb, var(--upload-tone-dark) 32%, transparent),
+    inset 0 3px 10px color-mix(in srgb, var(--upload-tone-dark) 9%, transparent),
     inset 0 0 0 1px color-mix(in srgb, var(--upload-tone) 11%, transparent);
   transform: none;
   transition: border-color 420ms ease, background-color 420ms ease,
@@ -88,8 +88,8 @@
       color-mix(in srgb, var(--upload-tone) 15%, transparent) .7px, transparent 1px) 0 0 / 22px 22px,
     var(--upload-book-surface);
   box-shadow:
-    inset 0 13px 23px -16px color-mix(in srgb, var(--upload-tone-dark) 32%, transparent),
-    inset 0 4px 13px color-mix(in srgb, var(--upload-tone-dark) 9%, transparent),
+    inset 0 13px 23px -16px color-mix(in srgb, var(--upload-tone-dark) 40%, transparent),
+    inset 0 4px 13px color-mix(in srgb, var(--upload-tone-dark) 12%, transparent),
     inset 0 0 0 1px color-mix(in srgb, var(--upload-tone) 17%, transparent);
   transform: none;
 }
@@ -98,7 +98,7 @@
   border-style: dashed;
   border-color: var(--upload-tone);
   box-shadow:
-    inset 0 14px 23px -14px color-mix(in srgb, var(--upload-tone-dark) 34%, transparent),
+    inset 0 14px 23px -14px color-mix(in srgb, var(--upload-tone-dark) 42%, transparent),
     inset 0 0 0 2px color-mix(in srgb, var(--upload-tone) 21%, transparent);
 }
 
@@ -159,29 +159,18 @@
 }
 
 #app .upload-studio-panel .upload-studio-zone-epub .upload-studio-graphic::after {
-  position: absolute;
-  z-index: -1;
-  bottom: -.48rem;
-  left: 50%;
-  width: 5.5rem;
-  height: .48rem;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--upload-tone-dark) 16%, transparent);
-  filter: blur(.32rem);
-  content: '';
-  transform: translateX(-50%) scale(.8);
-  transition: opacity 500ms ease, transform 500ms cubic-bezier(.16, 1, .3, 1);
-  pointer-events: none;
+  display: none;
+  content: none;
 }
 
 #app .upload-studio-panel .upload-studio-zone-epub .upload-studio-sheet {
   width: 3.63rem;
   height: 4.4rem;
   border-radius: .35rem .62rem .56rem .32rem;
-  box-shadow: .12rem .38rem .8rem color-mix(in srgb, var(--upload-tone-dark) 14%, transparent);
+  box-shadow: none;
   transform-origin: 12% 78%;
   transition: transform 670ms cubic-bezier(.16, 1, .3, 1),
-    box-shadow 470ms ease, background-color 470ms ease;
+    background-color 470ms ease;
 }
 
 #app .upload-studio-panel .upload-studio-zone-epub .upload-studio-sheet-back {
@@ -226,20 +215,17 @@
   pointer-events: none;
 }
 
-#app .upload-studio-panel .upload-studio-zone-epub .upload-studio-bookmark {
+#app .upload-studio-panel .upload-studio-zone-epub .upload-studio-sheet-front .upload-studio-bookmark {
   position: absolute;
   z-index: 3;
-  top: -.19rem;
-  left: 3.28rem;
+  top: -.28rem;
+  right: .53rem;
   width: .54rem;
   height: 1.95rem;
   background: var(--studio-copper);
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
-  transform: rotate(-8deg);
-  transform-origin: top center;
-  filter: drop-shadow(0 2px 1px color-mix(in srgb, var(--upload-tone-dark) 19%, transparent));
-  transition: transform 600ms cubic-bezier(.16, 1, .3, 1),
-    height 500ms cubic-bezier(.16, 1, .3, 1);
+  box-shadow: none;
+  filter: none;
   pointer-events: none;
 }
 
@@ -256,8 +242,8 @@
   bottom: .08rem;
   padding: .15rem .44rem;
   border-color: var(--color-surface);
-  box-shadow: 0 .22rem .5rem color-mix(in srgb, var(--upload-tone-dark) 14%, transparent);
-  transition: transform 500ms cubic-bezier(.16, 1, .3, 1), box-shadow 430ms ease;
+  box-shadow: none;
+  transition: transform 500ms cubic-bezier(.16, 1, .3, 1);
 }
 
 #app .upload-studio-panel .upload-studio-zone-epub .upload-studio-content {
@@ -623,10 +609,6 @@
     border-color: color-mix(in srgb, var(--studio-copper) 35%, transparent);
   }
 
-  #app .upload-studio-panel .upload-studio-zone-epub:not(.upload-studio-busy):is(:hover, :focus-visible, .dropzone-active) .upload-studio-graphic::after {
-    transform: translateX(-50%) scale(1);
-  }
-
   #app .upload-studio-panel .upload-studio-zone-epub:not(.upload-studio-busy):is(:hover, :focus-visible, .dropzone-active) .upload-studio-sheet-back {
     transform: translate(.29rem, -.28rem) rotate(19deg);
   }
@@ -639,14 +621,9 @@
     transform: translate(-.17rem, -.16rem) rotate(-12deg);
   }
 
-  #app .upload-studio-panel .upload-studio-zone-epub:not(.upload-studio-busy):is(:hover, :focus-visible, .dropzone-active) .upload-studio-bookmark {
-    height: 2.25rem;
-    transform: translateY(-.12rem) rotate(-13deg);
-  }
-
   #app .upload-studio-panel .upload-studio-zone-epub:not(.upload-studio-busy):is(:hover, :focus-visible, .dropzone-active) .upload-studio-graphic-tag {
     transform: translate(.14rem, -.17rem) rotate(3deg);
-    box-shadow: 0 .3rem .65rem color-mix(in srgb, var(--upload-tone-dark) 19%, transparent);
+    box-shadow: none;
   }
 
   #app .upload-studio-panel .upload-studio-zone-epub:not(.upload-studio-busy):is(:hover, :focus-visible, .dropzone-active) .upload-studio-action {
