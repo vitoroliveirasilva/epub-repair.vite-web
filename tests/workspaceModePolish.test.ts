@@ -93,11 +93,19 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(rail).not.toBeNull();
     expect(track?.parentElement).toBe(rail);
     expect(track?.children).toHaveLength(3);
+    const connectors = rail?.querySelectorAll('.epub-stage-connector');
+    expect(connectors).toHaveLength(2);
+    expect(steps[2]?.querySelector('.epub-stage-connector')).toBeNull();
+    expect(Array.from(connectors ?? []).every((connector) =>
+      connector.getAttribute('aria-hidden') === 'true' &&
+      connector.querySelector('svg path')?.getAttribute('d') === 'M4 12h15m-6-6 6 6-6 6')).toBe(true);
     expect(root.querySelector('.flow-steps, .flow-step')).toBeNull();
     const styles = readFileSync('src/styles/epubStageRail.css', 'utf8');
     expect(styles).toContain('display: block;');
     expect(styles).toContain('container: epub-stage-rail / inline-size;');
     expect(styles).not.toContain('.flow-step');
+    expect(styles).toContain('.epub-stage-connector');
+    expect(styles).not.toContain('.epub-stage-item:not(:last-child)::after');
   });
   it('mantém o desenho preso à folha animada nos uploads EPUB, PDF e imagem da capa', () => {
     const epubRoot = document.createElement('div');

@@ -325,8 +325,29 @@ function renderFlowStep(
         el('small', { text: detail }),
         el('span', { className: 'epub-stage-item-status', text: statusText }),
       ] }),
+      number !== '3'
+        ? el('span', { className: 'epub-stage-connector',
+          attrs: { 'aria-hidden': 'true' },
+          children: [renderStageArrow()] })
+        : undefined,
     ],
   });
+}
+
+function renderStageArrow(): SVGSVGElement {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  const arrow = document.createElementNS(ns, 'path');
+  arrow.setAttribute('d', 'M4 12h15m-6-6 6 6-6 6');
+  svg.append(arrow);
+  return svg;
 }
 
 function technicalReportGlyph(kind: 'report' | 'copy' | 'txt' | 'json'): SVGSVGElement {
