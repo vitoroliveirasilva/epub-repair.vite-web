@@ -596,7 +596,13 @@ function renderHero(): HTMLElement {
                       el('a', {
                         className: 'home-action home-action-repair',
                         attrs: { href: '#upload' },
-                        children: [el('strong', { text: 'Reparar EPUB' })],
+                        children: [
+                          el('strong', { text: 'Reparar EPUB' }),
+                          el('span', {
+                            className: 'home-action-direction',
+                            attrs: { 'aria-hidden': 'true' },
+                          }),
+                        ],
                       }),
                     ],
                   }),
@@ -606,7 +612,13 @@ function renderHero(): HTMLElement {
                       el('a', {
                         className: 'home-action home-action-converter',
                         attrs: { href: '/converter' },
-                        children: [el('strong', { text: 'Converter PDF' })],
+                        children: [
+                          el('strong', { text: 'Converter PDF' }),
+                          el('span', {
+                            className: 'home-action-direction',
+                            attrs: { 'aria-hidden': 'true' },
+                          }),
+                        ],
                       }),
                     ],
                   }),
