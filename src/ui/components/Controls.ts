@@ -110,7 +110,7 @@ function buildPrimaryActionButtons(
     canRepair: boolean;
     canOptimize: boolean;
   },
-): HTMLButtonElement[] {
+): HTMLElement[] {
   if (flags.hasRepair) {
     const downloadButton = button(
       hasManualReviewIssues(state.repairResult?.after ?? state.report)
@@ -141,6 +141,7 @@ function buildPrimaryActionButtons(
       retryButton.disabled = state.busy;
       retryButton.dataset.focusKey = 'epub-repair-remaining';
       retryButton.title = 'Reparar problemas ainda identificados na cópia atual, preservando o download anterior.';
+      matchUploadActionStyle(retryButton);
       return [downloadButton, retryButton];
     }
     if (!flags.canOptimize) return [downloadButton];
@@ -171,7 +172,8 @@ function buildPrimaryActionButtons(
   analyzeButton.dataset.focusKey = 'epub-analyze';
   matchUploadActionStyle(analyzeButton);
 
-  const repairButton = button(
+  if (!flags.hasFatalIssues && (flags.canRepair || flags.canOptimize)) {
+    const repairButton = button(
     state.busy && (flags.canRepair || flags.canOptimize)
       ? 'Enfileirar reparo'
       : flags.canRepair
@@ -193,10 +195,22 @@ function buildPrimaryActionButtons(
     )) ||
     flags.hasFatalIssues ||
     (!flags.canRepair && !flags.canOptimize);
-  repairButton.title = repairButtonTitle(state, flags.canRepair, flags.canOptimize);
-  matchUploadActionStyle(repairButton);
+    repairButton.title = repairButtonTitle(state, flags.canRepair, flags.canOptimize);
+    matchUploadActionStyle(repairButton);
+    return [analyzeButton, repairButton];
+  }
 
-  return [analyzeButton, repairButton];
+  if (!state.report) return [analyzeButton];
+
+  const needsReview = !state.report.validZip || flags.hasFatalIssues ||
+    hasManualReviewIssues(state.report);
+  const repairStatus = el('span', {
+    className: 'epub-repair-state ' +
+      (needsReview ? 'epub-repair-state-review' : 'epub-repair-state-clear'),
+    attrs: { role: 'status' },
+    text: needsReview ? 'Revisão manual necessária' : 'Nenhum reparo necessário',
+  });
+  return [analyzeButton, repairStatus];
 }
 
 function matchUploadActionStyle(actionButton: HTMLButtonElement): void {
@@ -422,6 +436,11 @@ function renderTechnicalReportTools(
     [textReportButton, 'txt', 'TXT'],
     [jsonReportButton, 'json', 'JSON'],
   ] as const) {
+    if (kind !== 'copy') {
+      actionButton.classList.add('technical-report-download');
+      actionButton.setAttribute('aria-label', 'Baixar relatório técnico em ' + label);
+      actionButton.title = 'Baixar relatório técnico em ' + label;
+    }
     actionButton.replaceChildren(
       el('span', { className: 'technical-report-action-icon',
         attrs: { 'aria-hidden': 'true' }, children: [technicalReportGlyph(kind)] }),
@@ -480,6 +499,7 @@ function renderProcessingStatus(state: AppState, cancel?: () => void): HTMLEleme
     'btn btn-ghost', cancel,
   ) : undefined;
   if (cancelButton) {
+    cancelButton.classList.add('epub-cancel-action');
     cancelButton.dataset.focusKey = 'epub-cancel-processing';
     cancelButton.disabled = state.processingController?.signal.aborted ?? false;
   }

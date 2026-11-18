@@ -311,12 +311,11 @@ describe('Estúdio de restauração e escolha de modo', () => {
     });
     const buttons = panel.querySelectorAll<HTMLButtonElement>(
       '.primary-action-row .epub-upload-matched-action');
-    expect(buttons).toHaveLength(2);
+    expect(buttons).toHaveLength(1);
     expect(buttons[0]?.getAttribute('aria-label')).toBe('Verificar EPUB');
     expect(buttons[0]?.textContent).toBe('Verificar EPUB');
-    expect(buttons[1]?.textContent).toBe('Nenhum reparo necessário');
-    expect(Array.from(buttons).every((element) =>
-      element.childElementCount === 0)).toBe(true);
+    expect(buttons[0]?.childElementCount).toBe(0);
+    expect(panel.querySelector('.epub-repair-state')).toBeNull();
     expect(buttons[0]?.disabled).toBe(true);
     const css = readFileSync('src/styles/epubMatchedActions.css', 'utf8');
     expect(css).toContain('--epub-action-tone: #245e48;');
@@ -362,6 +361,61 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(styles).toContain('linear-gradient(125deg, #b76642 0%, #995034 49%, #783e2c 100%)');
     expect(styles).toContain('background: linear-gradient(145deg, #fffdf7, #f7e4d2)');
     expect(styles).toContain('prefers-reduced-motion: reduce');
+  });
+
+  it('usa indicador verde só quando a análise não encontra reparos nem alertas manuais', () => {
+    const state = createInitialState();
+    state.payload = { file: new File(['epub'], 'livro.epub'), bytes: new Uint8Array() };
+    state.report = buildValidationReport({
+      fileName: 'livro.epub', fileSize: 4, validZip: true,
+      issues: [], zipEntries: [],
+    });
+    const panel = renderControls(state, {
+      analyze: () => {}, repair: () => {}, copy: () => {},
+      downloadTextReport: () => {}, downloadJsonReport: () => {},
+    });
+    const status = panel.querySelector('.epub-repair-state-clear');
+    expect(status?.textContent).toBe('Nenhum reparo necessário');
+    expect(status?.getAttribute('role')).toBe('status');
+    expect(panel.querySelector('.primary-action-row .btn[disabled]')).toBeNull();
+    expect(panel.querySelector('.primary-action-row .epub-upload-matched-action')?.textContent)
+      .toBe('Verificar EPUB');
+  });
+
+  it('avisa sobre revisão manual em vez de exibir sucesso quando o EPUB é inválido', () => {
+    const state = createInitialState();
+    state.payload = { file: new File(['x'], 'invalido.epub'), bytes: new Uint8Array() };
+    state.report = buildValidationReport({
+      fileName: 'invalido.epub', fileSize: 1, validZip: false,
+      issues: [], zipEntries: [],
+    });
+    const panel = renderControls(state, {
+      analyze: () => {}, repair: () => {}, copy: () => {},
+      downloadTextReport: () => {}, downloadJsonReport: () => {},
+    });
+    expect(panel.querySelector('.epub-repair-state-review')?.textContent)
+      .toBe('Revisão manual necessária');
+    expect(panel.querySelector('.epub-repair-state-clear')).toBeNull();
+  });
+
+  it('identifica TXT e JSON como downloads secundários em cobre', () => {
+    const state = createInitialState();
+    const panel = renderControls(state, {
+      analyze: () => {}, repair: () => {}, copy: () => {},
+      downloadTextReport: () => {}, downloadJsonReport: () => {},
+    });
+    const reportDownloads = panel.querySelectorAll(
+      '.technical-report-actions .technical-report-download');
+    expect(reportDownloads).toHaveLength(2);
+    expect(reportDownloads[0]?.textContent).toBe('TXT');
+    expect(reportDownloads[0]?.getAttribute('aria-label'))
+      .toBe('Baixar relatório técnico em TXT');
+    expect(reportDownloads[1]?.textContent).toBe('JSON');
+    expect(panel.querySelector('.technical-report-action-copy.technical-report-download'))
+      .toBeNull();
+    const css = readFileSync('src/styles/epubMatchedActions.css', 'utf8');
+    expect(css).toContain('.technical-report-download .technical-report-action-icon::after');
+    expect(css).toContain("content: '↓';");
   });
 
   it('mantém Kindle Safe obrigatório, sem permitir desligar pelo painel', () => {
