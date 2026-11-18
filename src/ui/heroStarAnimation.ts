@@ -26,7 +26,9 @@ export function startHeroStarAnimation(hero: HTMLElement): void {
     if (timer !== undefined) clearScheduled(timer);
     detachObserver?.disconnect();
     reduce?.removeEventListener?.('change', updatePreference);
-    document.removeEventListener('visibilitychange', updatePreference);
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', updatePreference);
+    }
     clearStars();
   };
 
@@ -37,7 +39,7 @@ export function startHeroStarAnimation(hero: HTMLElement): void {
   };
 
   const next = (): void => {
-    if (!hero.isConnected) {
+    if (typeof document === 'undefined' || !hero.isConnected) {
       stop();
       return;
     }
@@ -70,7 +72,7 @@ export function startHeroStarAnimation(hero: HTMLElement): void {
   };
 
   function updatePreference(): void {
-    if (!hero.isConnected) {
+    if (typeof document === 'undefined' || !hero.isConnected) {
       stop();
       return;
     }
