@@ -440,9 +440,14 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(workbench).toContain('workbench-header-orbit');
     expect(workbench).toContain('workbench-heading-count');
     expect(workbench).not.toContain('workbench-header-stamp');
+    expect(workbench).not.toContain('left: 44%');
     expect(workbench).not.toContain('left: 53%');
-    expect(workbench.match(/left: 44%/gu)).toHaveLength(2);
-    expect(workbench).toContain('transform: translate(-50%, 0) rotate(0deg)');
+    expect(workbench).toContain('workbench-navigation .workbench-tab-label::before');
+    expect(workbench).toContain('workbench-navigation .optional-studio-tab-active .workbench-tab-label::before');
+    expect(workbench).toContain('left: .38rem');
+    expect(workbench).toContain('left: .24rem');
+    expect(workbench).toContain('transform: translateY(0) rotate(-4deg)');
+    expect(workbench).toContain('clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%)');
     expect(workbench).toContain('workbench-book-silhouette');
     expect(workbench).toContain('workbench-book-back');
     expect(workbench).toContain('workbench-book-ink');
@@ -451,7 +456,8 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(workbench).not.toContain('workbench-book-cover');
     expect(workbench).toContain('grid-template-columns: repeat(3, minmax(0, 1fr))');
     expect(workbench).toContain('workbench-toggle-icon');
-    expect(workbench).toContain('workbench-navigation .optional-studio-tab-active.btn::before');
+    expect(workbench).not.toContain('workbench-navigation .optional-studio-tab-active.btn::before');
+    expect(workbench).toMatch(/optional-studio-tab\.btn::before\s*\{\s*display:\s*none;/u);
     expect(workbench).not.toContain('workbench-disclosure::after');
 
     for (const file of [
