@@ -40,11 +40,13 @@ export function renderUploader(
       el('span', { className: 'upload-studio-graphic upload-studio-graphic-epub',
         attrs: { 'aria-hidden': 'true' }, children: [
           el('span', { className: 'upload-studio-sheet upload-studio-sheet-back' }),
+          el('span', { className: 'upload-studio-sheet upload-studio-sheet-mid' }),
           el('span', { className: 'upload-studio-sheet upload-studio-sheet-front',
             children: [
               el('span', { className: 'upload-studio-lines' }),
             ],
           }),
+          el('span', { className: 'upload-studio-bookmark' }),
           el('span', { className: 'upload-studio-graphic-tag', text: 'EPUB' }),
         ] }),
       el('span', { className: 'upload-studio-content', children: [
