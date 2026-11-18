@@ -137,8 +137,9 @@ function renderKindleSafeOption(
     input,
     el('span', { className: 'kindle-safe-book-art', attrs: { 'aria-hidden': 'true' },
       children: [
-        el('span', { className: 'kindle-safe-book-back' }),
-        el('span', { className: 'kindle-safe-book-front' }),
+        el('span', { className: 'kindle-safe-book-page kindle-safe-book-page-left' }),
+        el('span', { className: 'kindle-safe-book-page kindle-safe-book-page-right' }),
+        el('span', { className: 'kindle-safe-book-spine' }),
       ],
     }),
     el('span', { className: 'kindle-safe-main-option-copy', children: [
@@ -151,8 +152,6 @@ function renderKindleSafeOption(
         el('span', { className: 'kindle-safe-switch-track', children: [
           el('span', { className: 'kindle-safe-switch-thumb' }),
         ] }),
-        el('span', { className: 'kindle-safe-main-chip',
-          text: state.options.kindleSafeMode ? 'Ativo' : 'Desativado' }),
       ],
     }),
   ] });
