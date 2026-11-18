@@ -222,13 +222,26 @@ function render(
 function renderWorkflowModeSelector(
   batchActive: boolean, state: AppState, rerender: () => void,
 ): HTMLElement {
+  const makeBook = (className: string): HTMLElement => el('span', {
+    className: `workflow-mode-book ${className}`,
+    attrs: { 'aria-hidden': 'true' },
+    children: [
+      el('span', { className: 'workflow-mode-book-pages' }),
+      el('span', { className: 'workflow-mode-book-cover', children: [
+        el('span', { className: 'workflow-mode-book-decoration' }),
+        el('span', { className: 'workflow-mode-book-mark' }),
+      ] }),
+    ],
+  });
+
   const buildChoice = (
     batch: boolean, number: string, title: string, description: string,
   ): HTMLButtonElement => {
     const selected = batch === batchActive;
     const choice = button(
       '',
-      'workflow-mode-card' + (selected ? ' workflow-mode-card-active' : ''),
+      'workflow-mode-card workflow-mode-card-' + (batch ? 'batch' : 'single') +
+      (selected ? ' workflow-mode-card-active' : ''),
       () => {
         if (state.busy || selected) return;
         setBatchWorkspaceActive(state, batch);
@@ -239,17 +252,34 @@ function renderWorkflowModeSelector(
     choice.setAttribute('aria-pressed', String(selected));
     choice.setAttribute('aria-label', title + '. ' + description);
     choice.append(
-      el('span', { className: 'workflow-mode-icon',
-        attrs: { 'aria-hidden': 'true' }, text: number }),
+      el('span', {
+        className: 'workflow-mode-visual',
+        attrs: { 'aria-hidden': 'true' },
+        children: [
+          el('span', { className: 'workflow-mode-visual-orbit' }),
+          batch
+            ? el('span', { className: 'workflow-mode-book-stack', children: [
+              makeBook('workflow-mode-book-back'),
+              makeBook('workflow-mode-book-middle'),
+              makeBook('workflow-mode-book-front'),
+            ] })
+            : makeBook('workflow-mode-book-solo'),
+        ],
+      }),
       el('span', { className: 'workflow-mode-content', children: [
+        el('span', { className: 'workflow-mode-kicker', text: batch ? 'SUA BIBLIOTECA' : 'ATENÇÃO A CADA PÁGINA' }),
         el('strong', { className: 'workflow-mode-title', text: title }),
         el('small', { className: 'workflow-mode-description', text: description }),
       ] }),
       el('span', {
-        className: 'workflow-mode-indicator',
+        className: 'workflow-mode-bottom',
         attrs: { 'aria-hidden': 'true' },
-        text: selected ? 'Selecionado' : 'Selecionar',
+        children: [
+          el('span', { className: 'workflow-mode-choice-text', text: selected ? 'Modo selecionado' : 'Escolher este modo' }),
+          el('span', { className: 'workflow-mode-choice-arrow' }),
+        ],
       }),
+      el('span', { className: 'workflow-mode-number', attrs: { 'aria-hidden': 'true' }, text: number }),
     );
     return choice;
   };
@@ -268,7 +298,7 @@ function renderWorkflowModeSelector(
         children: [
           buildChoice(false, '01', 'Um EPUB',
             'Análise detalhada, capa e reparos individuais'),
-          buildChoice(true, '02+', 'Vários EPUBs',
+          buildChoice(true, '02–06', 'Vários EPUBs',
             'Selecione até 6 livros, processe juntos e baixe um ZIP'),
         ],
       }),
