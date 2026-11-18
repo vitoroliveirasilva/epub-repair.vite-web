@@ -333,20 +333,73 @@ function renderFlowStep(
   return el('article', {
     className: `flow-step flow-step-${status}`,
     children: [
-      el('div', { className: 'flow-step-heading', children: [
+      el('div', { className: 'flow-step-meta', children: [
         el('span', { className: 'flow-step-number',
-          text: state.done ? '✓' : number,
+          text: state.done ? '✓' : number.padStart(2, '0'),
           attrs: { 'aria-hidden': 'true' } }),
-        el('span', { className: 'flow-step-status', text: statusText }),
+        el('span', { className: 'flow-step-state', text: statusText }),
       ] }),
+      el('span', { className: 'flow-step-art',
+        attrs: { 'aria-hidden': 'true' },
+        children: [workflowStepGlyph(number)] }),
       el('div', { className: 'flow-step-copy', children: [
         el('strong', { text: title }),
         el('small', { text: description }),
       ] }),
-      el('span', { className: 'flow-step-progress',
-        attrs: { 'aria-hidden': 'true' } }),
+      el('div', { className: 'flow-step-foot', attrs: { 'aria-hidden': 'true' },
+        children: [
+          el('span', { className: 'flow-step-foot-label',
+            text: `ETAPA ${number.padStart(2, '0')} / 03` }),
+          el('span', { className: 'flow-step-foot-rule' }),
+        ] }),
     ],
   });
+}
+
+function workflowStepGlyph(number: string): SVGSVGElement {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.65');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('class', 'flow-step-glyph');
+  svg.setAttribute('focusable', 'false');
+  svg.setAttribute('aria-hidden', 'true');
+
+  const paths: Record<string, string[]> = {
+    '1': [
+      'M14 3.5H6.5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2H12',
+      'M9 8h4.5',
+      'M9 11.5h2.5',
+      'M16 18.5a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
+      'm19 21 2-2',
+    ],
+    '2': [
+      'M5 6h14',
+      'M5 12h14',
+      'M5 18h14',
+      'M9 3.5v5',
+      'M15 9.5v5',
+      'M11 15.5v5',
+      'M9 8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+      'M15 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+      'M11 20.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+    ],
+    '3': [
+      'M12 3.5v11',
+      'm7.5 10 4.5 4.5 4.5-4.5',
+      'M4.5 16.5v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3',
+    ],
+  };
+  for (const d of paths[number] ?? []) {
+    const path = document.createElementNS(ns, 'path');
+    path.setAttribute('d', d);
+    svg.append(path);
+  }
+  return svg;
 }
 
 
