@@ -8,6 +8,7 @@ import { enableCoverPreviewTilt } from '../src/ui/coverPreviewTilt';
 import { renderOptionalEpubTools } from '../src/ui/optionalEpubTools';
 import { renderFileSummary } from '../src/ui/components/FileSummary';
 import { renderControls } from '../src/ui/components/Controls';
+import { buildValidationReport } from '../src/epub/utils/reportBuilder';
 import { renderOptionsPanel } from '../src/ui/components/OptionsPanel';
 import { renderStatusMessage } from '../src/ui/components/ErrorPanel';
 import { buildKindleIssueEpub } from './helpers/syntheticEpub';
@@ -322,6 +323,40 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(css).toContain("content: '↗';");
     expect(css).toContain('translateX(750%) rotate(18deg)');
     expect(css).toContain('prefers-reduced-motion: reduce');
+  });
+
+  it('destaca o download com ícone SVG sem mudar o texto nem a ação', () => {
+    const state = createInitialState();
+    const report = buildValidationReport({
+      fileName: 'livro.epub', fileSize: 512,
+      validZip: true, issues: [], zipEntries: [],
+    });
+    state.report = report;
+    state.repairResult = {
+      fileName: 'livro-reparado.epub',
+      blob: new Blob(['epub']),
+      before: report,
+      after: report,
+      actions: [],
+      warnings: [],
+      changed: true,
+      operation: 'repair',
+    };
+    const panel = renderControls(state, {
+      analyze: () => {}, repair: () => {}, copy: () => {},
+      downloadTextReport: () => {}, downloadJsonReport: () => {},
+    });
+    const button = panel.querySelector<HTMLButtonElement>('.btn-download-ready');
+    expect(button?.textContent).toBe('Baixar EPUB corrigido');
+    expect(button?.classList.contains('epub-upload-matched-action')).toBe(true);
+    expect(button?.classList.contains('epub-download-action')).toBe(true);
+    expect(button?.querySelectorAll('svg path')).toHaveLength(2);
+    expect(button?.querySelector('svg')?.parentElement?.getAttribute('aria-hidden')).toBe('true');
+    expect(button?.disabled).toBe(false);
+    const styles = readFileSync('src/styles/epubMatchedActions.css', 'utf8');
+    expect(styles).toContain('.btn.epub-download-action::after');
+    expect(styles).toContain('content: none;');
+    expect(styles).toContain('.epub-download-action-icon');
   });
 
   it('mantém Kindle Safe obrigatório, sem permitir desligar pelo painel', () => {

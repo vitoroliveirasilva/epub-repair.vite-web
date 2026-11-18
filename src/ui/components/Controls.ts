@@ -128,6 +128,9 @@ function buildPrimaryActionButtons(
     );
     downloadButton.disabled = state.busy;
     downloadButton.dataset.focusKey = 'epub-download';
+    matchUploadActionStyle(downloadButton);
+    downloadButton.classList.add('epub-download-action');
+    downloadButton.append(renderDownloadActionIcon());
 
     if (flags.canRepair && !flags.hasFatalIssues) {
       const retryButton = button(
@@ -200,6 +203,32 @@ function matchUploadActionStyle(actionButton: HTMLButtonElement): void {
   const label = actionButton.textContent ?? '';
   actionButton.classList.add('epub-upload-matched-action');
   actionButton.setAttribute('aria-label', label);
+}
+
+function renderDownloadActionIcon(): HTMLElement {
+  const icon = el('span', {
+    className: 'epub-download-action-icon',
+    attrs: { 'aria-hidden': 'true' },
+  });
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.85');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('focusable', 'false');
+
+  const shaft = document.createElementNS(ns, 'path');
+  shaft.setAttribute('class', 'epub-download-arrow');
+  shaft.setAttribute('d', 'M12 3.5v11.2m-4-4 4 4 4-4');
+  const tray = document.createElementNS(ns, 'path');
+  tray.setAttribute('class', 'epub-download-tray');
+  tray.setAttribute('d', 'M4.5 16.1v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3');
+  svg.append(shaft, tray);
+  icon.append(svg);
+  return icon;
 }
 
 function controlsTitle(state: AppState): string {
