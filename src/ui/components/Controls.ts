@@ -399,9 +399,17 @@ function renderTechnicalReportTools(
   copyButton.classList.add('technical-report-action-copy');
   textReportButton.classList.add('technical-report-action-txt');
   jsonReportButton.classList.add('technical-report-action-json');
-  copyButton.prepend(technicalReportGlyph('copy'));
-  textReportButton.prepend(technicalReportGlyph('txt'));
-  jsonReportButton.prepend(technicalReportGlyph('json'));
+  for (const [actionButton, kind, label] of [
+    [copyButton, 'copy', 'Copiar'],
+    [textReportButton, 'txt', 'TXT'],
+    [jsonReportButton, 'json', 'JSON'],
+  ] as const) {
+    actionButton.replaceChildren(
+      el('span', { className: 'technical-report-action-icon',
+        attrs: { 'aria-hidden': 'true' }, children: [technicalReportGlyph(kind)] }),
+      el('span', { className: 'technical-report-action-label', text: label }),
+    );
+  }
 
   details.append(
     el('summary', {
