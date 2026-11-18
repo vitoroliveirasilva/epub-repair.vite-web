@@ -269,11 +269,10 @@ describe('Identidade editorial no EPUB Repair', () => {
 
     expect(desktop).not.toContain('content: "☀"');
     expect(desktop).not.toContain('content: "☾"');
-    expect(desktop).toContain('background: #b75c35;');
-    expect(desktop).toContain('background: #d8b08b;');
-    expect(desktop).toContain('flex: 0 0 2.02rem;');
-    expect(desktop).toContain('width: 2.02rem;');
-    expect(desktop).toContain('height: 2.02rem;');
+    expect(desktop).toContain('.epub-home .home-action-direction::before');
+    expect(desktop).toContain("content: '↗'");
+    expect(desktop).toContain('width: 2.15rem;');
+    expect(desktop).toContain('height: 2.15rem;');
   });
 
   it('sinaliza a ferramenta atual em cobre nas duas páginas sem selecionar destinos secundários', () => {

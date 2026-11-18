@@ -296,7 +296,9 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(card.querySelector('.kindle-safe-switch-track')).not.toBeNull();
     expect(card.querySelector('.kindle-safe-main-chip')).toBeNull();
 
-    setting.click();
+    expect(setting.disabled).toBe(false);
+    setting.checked = false;
+    setting.dispatchEvent(new Event('change', { bubbles: true }));
     expect(changes).toEqual([false]);
     expect(state.options.kindleSafeMode).toBe(false);
     card = renderControls(state, actions);
