@@ -1050,7 +1050,7 @@ function renderBatch(
 function renderWorkbenchBookIcon(): SVGSVGElement {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.classList.add('workbench-book-mark');
-  svg.setAttribute('viewBox', '0 0 64 64');
+  svg.setAttribute('viewBox', '0 0 120 120');
   svg.setAttribute('fill', 'none');
   svg.setAttribute('stroke-linecap', 'round');
   svg.setAttribute('stroke-linejoin', 'round');
@@ -1058,12 +1058,18 @@ function renderWorkbenchBookIcon(): SVGSVGElement {
   svg.setAttribute('focusable', 'false');
 
   const paths: Array<[string, string]> = [
-    ['M32 19c-6.6-5.1-14.8-6.4-24.5-4v33c9.7-2.4 17.9-1.2 24.5 4 6.6-5.2 14.8-6.4 24.5-4V15c-9.7-2.4-17.9-1.1-24.5 4Z', 'workbench-book-outline'],
-    ['M32 19v33', 'workbench-book-center'],
-    ['M14 24c4.3-.2 8.2.4 11.5 2.3', 'workbench-book-detail'],
-    ['M14 32c4.3-.2 8.2.4 11.5 2.3', 'workbench-book-detail'],
-    ['M38.5 26.3c3.3-1.9 7.2-2.5 11.5-2.3', 'workbench-book-detail'],
-    ['M38.5 34.3c3.3-1.9 7.2-2.5 11.5-2.3', 'workbench-book-detail'],
+    ['M23 82C17 87 17 96 26 100C30 101 36 101 43 101H91C99 101 104 97 106 90L108 75C111 70 107 66 102 67L95 74 91 83 35 89Z',
+      'workbench-book-accent'],
+    ['M34 48C43 43 72 35 87 37C96 37 102 43 101 51L96 80C95 87 89 91 81 91H34C27 91 23 87 25 81Z',
+      'workbench-book-page workbench-book-page-back'],
+    ['M30 46C42 39 68 32 88 33C94 32 99 36 98 45L94 75C93 82 89 86 81 86L32 88C25 88 22 84 24 77Z',
+      'workbench-book-page workbench-book-page-middle'],
+    ['M28 42C38 37 70 31 84 29C91 28 96 31 95 39L91 69C90 76 86 80 80 80L29 85C23 85 21 81 24 76Z',
+      'workbench-book-page workbench-book-page-front'],
+    ['M20 75L26 36C27 30 31 28 38 25L81 6C87 4 92 8 90 14L76 51C74 58 68 62 61 64L26 78C22 80 19 78 20 75Z',
+      'workbench-book-cover'],
+    ['M31 30C27 42 26 60 22 72', 'workbench-book-binding'],
+    ['M68 55L82 52M66 63L80 60M64 71L78 68', 'workbench-book-lines'],
   ];
 
   for (const [d, className] of paths) {
