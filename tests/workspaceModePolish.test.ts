@@ -357,6 +357,11 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(styles).toContain('.btn.epub-download-action::after');
     expect(styles).toContain('content: none;');
     expect(styles).toContain('.epub-download-action-icon');
+    expect(styles).toContain('flex: 1 1 100%;');
+    expect(styles).toContain('min-height: 4.25rem;');
+    expect(styles).toContain('linear-gradient(125deg, #b76642 0%, #995034 49%, #783e2c 100%)');
+    expect(styles).toContain('background: linear-gradient(145deg, #fffdf7, #f7e4d2)');
+    expect(styles).toContain('prefers-reduced-motion: reduce');
   });
 
   it('mantém Kindle Safe obrigatório, sem permitir desligar pelo painel', () => {
