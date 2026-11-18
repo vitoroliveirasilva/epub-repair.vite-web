@@ -135,13 +135,6 @@ function renderKindleSafeOption(
     for: 'kindle-safe-main',
   }, children: [
     input,
-    el('span', { className: 'kindle-safe-book-art', attrs: { 'aria-hidden': 'true' },
-      children: [
-        el('span', { className: 'kindle-safe-book-page kindle-safe-book-page-left' }),
-        el('span', { className: 'kindle-safe-book-page kindle-safe-book-page-right' }),
-        el('span', { className: 'kindle-safe-book-spine' }),
-      ],
-    }),
     el('span', { className: 'kindle-safe-main-option-copy', children: [
       el('strong', { text: 'Preparar para Kindle durante o reparo' }),
       el('small', { attrs: { id: 'kindle-safe-main-detail' },
@@ -345,6 +338,56 @@ function renderFlowStep(
   });
 }
 
+
+function technicalReportGlyph(kind: 'report' | 'copy' | 'txt' | 'json'): SVGSVGElement {
+  const namespace = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(namespace, 'svg');
+  svg.setAttribute('class', `technical-report-glyph technical-report-glyph-${kind}`);
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.8');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+
+  const paths: Record<typeof kind, Array<[string, boolean?]>> = {
+    report: [
+      ['M14 2.75H6.5a2 2 0 0 0-2 2v14.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8.25L14 2.75Z'],
+      ['M14 2.75v5.5h5.5'],
+      ['M8.75 17v-2.2', true],
+      ['M12 17v-5.3', true],
+      ['M15.25 17v-3.7', true],
+    ],
+    copy: [
+      ['M8.5 7.5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2v-10a2 2 0 0 1 2-2Z'],
+      ['M16.5 7.5v-3a2 2 0 0 0-2-2h-10a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2'],
+    ],
+    txt: [
+      ['M14 2.75H6.5a2 2 0 0 0-2 2v14.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8.25L14 2.75Z'],
+      ['M14 2.75v5.5h5.5'],
+      ['M8.5 12.5h7'],
+      ['M8.5 16.5h7'],
+    ],
+    json: [
+      ['M9 3.5H7.5A2.5 2.5 0 0 0 5 6v3a2.5 2.5 0 0 1-2.5 2.5A2.5 2.5 0 0 1 5 14v3a2.5 2.5 0 0 0 2.5 2.5H9'],
+      ['M15 3.5h1.5A2.5 2.5 0 0 1 19 6v3a2.5 2.5 0 0 0 2.5 2.5A2.5 2.5 0 0 0 19 14v3a2.5 2.5 0 0 1-2.5 2.5H15'],
+      ['M11.5 9.5l-1 5', true],
+      ['M14 9.5l-1 5', true],
+    ],
+  };
+
+  for (const [d, accent] of paths[kind]) {
+    const path = document.createElementNS(namespace, 'path');
+    path.setAttribute('d', d);
+    if (accent) path.setAttribute('class', 'technical-report-icon-accent');
+    svg.append(path);
+  }
+
+  return svg;
+}
+
 function renderTechnicalReportTools(
   hasReport: boolean,
   copyButton: HTMLButtonElement,
@@ -356,13 +399,16 @@ function renderTechnicalReportTools(
   copyButton.classList.add('technical-report-action-copy');
   textReportButton.classList.add('technical-report-action-txt');
   jsonReportButton.classList.add('technical-report-action-json');
+  copyButton.prepend(technicalReportGlyph('copy'));
+  textReportButton.prepend(technicalReportGlyph('txt'));
+  jsonReportButton.prepend(technicalReportGlyph('json'));
 
   details.append(
     el('summary', {
       children: [
         el('span', { className: 'technical-report-mark',
           attrs: { 'aria-hidden': 'true' }, children: [
-            el('span', { className: 'technical-report-mark-paper' }),
+            technicalReportGlyph('report'),
           ] }),
         el('span', { className: 'technical-report-heading', children: [
           el('strong', { text: 'Relatório técnico' }),
