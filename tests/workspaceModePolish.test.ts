@@ -224,14 +224,15 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(artwork.querySelector('.workbench-header-stamp')).toBeNull();
     const icon = artwork.querySelector('svg.workbench-book-mark')!;
     expect(icon).not.toBeNull();
-    expect(icon.getAttribute('viewBox')).toBe('0 0 120 120');
+    expect(icon.getAttribute('viewBox')).toBe('0 0 128 128');
     expect(icon.getAttribute('aria-hidden')).toBe('true');
-    expect(icon.querySelectorAll('path')).toHaveLength(7);
-    expect(icon.querySelectorAll('.workbench-book-page')).toHaveLength(3);
-    expect(icon.querySelector('.workbench-book-accent')).not.toBeNull();
-    expect(icon.querySelector('.workbench-book-cover')).not.toBeNull();
-    expect(icon.querySelector('.workbench-book-binding')).not.toBeNull();
-    expect(icon.querySelector('.workbench-book-lines')).not.toBeNull();
+    expect(icon.querySelectorAll('path')).toHaveLength(5);
+    expect(icon.querySelectorAll('path[fill-rule="evenodd"]')).toHaveLength(5);
+    expect(icon.querySelector('.workbench-book-silhouette')).not.toBeNull();
+    expect(icon.querySelector('.workbench-book-ink')).not.toBeNull();
+    expect(icon.querySelector('.workbench-book-back')).not.toBeNull();
+    expect(icon.querySelector('.workbench-book-spine')).not.toBeNull();
+    expect(icon.querySelector('.workbench-book-text')).not.toBeNull();
     expect(summary.querySelector('.optional-studio-eyebrow')?.textContent)
       .toBe('RECURSOS COMPLEMENTARES');
     expect(summary.querySelector('.workbench-heading-count')?.textContent)
@@ -442,8 +443,12 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(workbench).not.toContain('left: 53%');
     expect(workbench.match(/left: 44%/gu)).toHaveLength(2);
     expect(workbench).toContain('transform: translate(-50%, 0) rotate(0deg)');
-    expect(workbench).toContain('workbench-book-page');
-    expect(workbench).toContain('workbench-book-accent');
+    expect(workbench).toContain('workbench-book-silhouette');
+    expect(workbench).toContain('workbench-book-back');
+    expect(workbench).toContain('workbench-book-ink');
+    expect(workbench).toContain('workbench-book-spine');
+    expect(workbench).toContain('workbench-book-text');
+    expect(workbench).not.toContain('workbench-book-cover');
     expect(workbench).toContain('grid-template-columns: repeat(3, minmax(0, 1fr))');
     expect(workbench).toContain('workbench-toggle-icon');
     expect(workbench).toContain('workbench-navigation .optional-studio-tab-active.btn::before');

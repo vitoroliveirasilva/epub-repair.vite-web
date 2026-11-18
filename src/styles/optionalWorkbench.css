@@ -66,44 +66,36 @@
 }
 
 #app .optional-workbench .workbench-book-mark {
-  --workbench-book-ink: #1d493b;
-  --workbench-book-paper: #fffaf2;
-  --workbench-book-orange: #c8754f;
   display: block;
-  width: 5.35rem;
-  height: 5.35rem;
+  width: 6rem;
+  height: 6rem;
   overflow: visible;
-  filter: drop-shadow(0 .26rem .34rem rgba(20, 57, 43, .09));
+  filter: drop-shadow(0 .25rem .3rem rgba(23, 62, 51, .11));
   transform: translateY(0) rotate(0deg);
   transform-origin: center;
-  transition: transform 530ms cubic-bezier(.16, 1, .3, 1),
-    filter 400ms ease;
+  transition:
+    transform 540ms cubic-bezier(.16, 1, .3, 1),
+    filter 440ms ease;
 }
 
-#app .optional-workbench .workbench-book-accent {
-  fill: var(--workbench-book-orange);
+#app .optional-workbench .workbench-book-silhouette {
+  fill: #fffaf2;
 }
 
-#app .optional-workbench .workbench-book-page {
-  fill: var(--workbench-book-paper);
-  stroke: var(--workbench-book-ink);
-  stroke-width: 4.3;
+#app .optional-workbench .workbench-book-back {
+  fill: #c97143;
 }
 
-#app .optional-workbench .workbench-book-cover {
-  fill: var(--workbench-book-ink);
+#app .optional-workbench .workbench-book-ink {
+  fill: #1b443a;
 }
 
-#app .optional-workbench .workbench-book-binding {
-  fill: none;
-  stroke: #f28a53;
-  stroke-width: 4.5;
+#app .optional-workbench .workbench-book-spine {
+  fill: #ee8753;
 }
 
-#app .optional-workbench .workbench-book-lines {
-  fill: none;
-  stroke: #d9c19d;
-  stroke-width: 3.1;
+#app .optional-workbench .workbench-book-text {
+  fill: #dfc5a1;
 }
 
 #app .optional-workbench .workbench-heading {
@@ -246,8 +238,8 @@
   }
 
   #app .optional-workbench > summary:hover .workbench-book-mark {
-    transform: translateY(-.2rem) rotate(-3deg) scale(1.035);
-    filter: drop-shadow(0 .45rem .5rem rgba(20, 57, 43, .14));
+    transform: translateY(-.19rem) rotate(-2deg) scale(1.035);
+    filter: drop-shadow(0 .48rem .44rem rgba(23, 62, 51, .16));
   }
 
   #app .optional-workbench > summary:hover .workbench-toggle-icon {
@@ -281,7 +273,7 @@
   }
 
   #app .optional-workbench .workbench-book-mark {
-    scale: .8;
+    scale: .79;
   }
 
 }
@@ -301,7 +293,7 @@
   }
 
   #app .optional-workbench .workbench-header-orbit { inset: .14rem; }
-  #app .optional-workbench .workbench-book-mark { scale: .58; }
+  #app .optional-workbench .workbench-book-mark { scale: .51; }
 
 #app .optional-workbench .workbench-heading { gap: .32rem; }
   #app .optional-workbench .workbench-heading-eyebrow-row { gap: .28rem .45rem; }
@@ -346,7 +338,7 @@
     height: 2.75rem;
     flex-basis: 2.75rem;
   }
-  #app .optional-workbench .workbench-book-mark { scale: .47; }
+  #app .optional-workbench .workbench-book-mark { scale: .43; }
 
 #app .optional-workbench .workbench-toggle-icon {
     width: 2rem;
