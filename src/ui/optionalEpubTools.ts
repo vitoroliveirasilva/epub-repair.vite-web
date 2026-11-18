@@ -712,8 +712,10 @@ export function renderBatchWorkspace(
       el('header', { className: 'batch-studio-header', children: [
         el('div', { className: 'batch-studio-intro', children: [
           el('span', { className: 'batch-studio-eyebrow', text: 'PROCESSAMENTO EM LOTE' }),
-          el('h2', { text: 'Vários livros. Um só fluxo.',
-            attrs: { id: 'batch-workspace-title' } }),
+          el('h2', { attrs: { id: 'batch-workspace-title' }, children: [
+            'Vários livros. ',
+            el('span', { className: 'batch-studio-title-accent', text: 'Um só fluxo.' }),
+          ] }),
           el('p', { text: 'Organize os EPUBs, escolha a operação e baixe tudo em um ZIP.' }),
         ] }),
         el('div', { className: 'batch-studio-counter',
@@ -772,7 +774,6 @@ function renderBatch(
       ] }),
       el('span', { className: 'batch-studio-upload-action',
         text: hasFiles ? 'Adicionar EPUBs' : 'Escolher arquivos' }),
-      input,
     ],
   });
   zone.addEventListener('keydown', (event) => {
@@ -868,6 +869,8 @@ function renderBatch(
       ? [el('ul', { className: 'optional-batch-files batch-workspace-files',
           children: fileRows })]
       : [el('div', { className: 'batch-studio-empty', children: [
+          el('span', { className: 'batch-studio-empty-mark',
+            attrs: { 'aria-hidden': 'true' } }),
           el('strong', { text: 'Nenhum livro na lista' }),
           el('small', { text: 'Adicione entre 1 e ' + MAX_BATCH_FILES +
             ' EPUBs para começar. O limite total é de ' +
@@ -895,6 +898,7 @@ function renderBatch(
         ] }),
         hasFiles ? clear : undefined,
       ] }),
+      input,
       zone,
       el('div', { className: 'batch-studio-file-heading', children: [
         el('strong', { text: count + (count === 1 ? ' EPUB selecionado'
@@ -939,9 +943,15 @@ function renderBatch(
           rerender();
         });
         return el('label', { className: 'optional-batch-choice batch-studio-choice',
-          children: [radio, el('span', { children: [
-            el('strong', { text: title }), el('small', { text: description }),
-          ] })],
+          children: [
+            el('span', { className: 'batch-studio-choice-icon',
+              attrs: { 'aria-hidden': 'true' },
+              children: [renderBatchModeGlyph(mode)] }),
+            el('span', { className: 'batch-studio-choice-copy', children: [
+              el('strong', { text: title }), el('small', { text: description }),
+            ] }),
+            radio,
+          ],
         });
       }),
     ],
@@ -983,9 +993,10 @@ function renderBatch(
 
   const download = outputReady ? button(
     s.batchMode === 'repair' ? 'Baixar EPUBs e relatórios' : 'Baixar relatórios',
-    'btn btn-primary batch-workspace-download-button batch-studio-primary',
+    'btn btn-primary batch-workspace-download-button batch-studio-primary batch-studio-zip-action',
     () => downloadBlob(s.batchZip!, 'epub-repair-lote.zip'),
   ) : undefined;
+  download?.append(renderBatchZipGlyph());
 
   const aside = el('aside', { className: 'batch-studio-console', children: [
     el('header', { className: 'batch-studio-section-heading', children: [
@@ -1030,7 +1041,7 @@ function renderBatch(
         ] }),
       ] }) : undefined,
       download ?? (s.batchStarted && !state.busy
-        ? button('Processar novamente', 'btn btn-primary batch-studio-primary',
+        ? button('Processar novamente', 'btn btn-secondary batch-studio-retry',
           () => start.click()) : start),
       inProgress ? button('Cancelar processamento',
         'btn btn-secondary batch-workspace-cancel batch-studio-cancel', cancelAll) : undefined,
@@ -1047,6 +1058,48 @@ function renderBatch(
 
   return el('div', { className: 'optional-tool-content batch-workspace-content batch-studio-layout',
     children: [uploadSide, aside] });
+}
+
+
+function renderBatchModeGlyph(mode: 'repair' | 'validate'): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.7');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', mode === 'repair'
+    ? 'M12.5 3.25H6.5a2 2 0 0 0-2 2v13.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-9L12.5 3.25Zm0 0v6.5h7M8 15h8m-8 3h5'
+    : 'M10.5 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm5.3-1.4L21 22M7.8 11l2 2 3.6-3.7');
+  svg.append(path);
+  return svg;
+}
+
+function renderBatchZipGlyph(): HTMLElement {
+  const icon = el('span', {
+    className: 'batch-studio-download-icon',
+    attrs: { 'aria-hidden': 'true' },
+  });
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.85');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  const ns = 'http://www.w3.org/2000/svg';
+  const arrow = document.createElementNS(ns, 'path');
+  arrow.setAttribute('class', 'batch-studio-download-arrow');
+  arrow.setAttribute('d', 'M12 3.5v11.2m-4-4 4 4 4-4');
+  const tray = document.createElementNS(ns, 'path');
+  tray.setAttribute('d', 'M4.5 16.1v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3');
+  svg.append(arrow, tray);
+  icon.append(svg);
+  return icon;
 }
 
 function renderWorkbenchBookIcon(): SVGSVGElement {

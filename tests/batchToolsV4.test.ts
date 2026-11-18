@@ -344,9 +344,32 @@ describe('Lotes limitados e isolados', () => {
     expect(host.querySelectorAll('.optional-batch-progress')).toHaveLength(0);
     expect(host.querySelector('.batch-studio-ready')).not.toBeNull();
     expect(host.textContent).toContain('Baixar EPUBs e relatórios');
+    expect(host.querySelector('.batch-studio-zip-action .batch-studio-download-icon svg'))
+      .not.toBeNull();
     const details = host.querySelector<HTMLDetailsElement>('.batch-studio-result-detail')!;
     details.open = true;
     expect(details.textContent).toContain('Relatório:');
+  });
+
+  it('renderiza o estúdio vazio sem revelar o seletor nativo e com operações acessíveis', () => {
+    const state = createInitialState();
+    const panel = renderBatchWorkspace(state, () => {}, () => {}, () => {});
+    expect(panel.querySelector('#batch-workspace-title')?.textContent)
+      .toBe('Vários livros. Um só fluxo.');
+    expect(panel.querySelector('.batch-studio-title-accent')?.textContent)
+      .toBe('Um só fluxo.');
+    const input = panel.querySelector<HTMLInputElement>('#batch-epub-input');
+    const dropzone = panel.querySelector('.batch-studio-upload');
+    expect(input?.classList.contains('visually-hidden')).toBe(true);
+    expect(dropzone?.contains(input ?? null)).toBe(false);
+    expect(dropzone?.getAttribute('for')).toBe('batch-epub-input');
+    expect(panel.querySelector('.batch-studio-empty-mark[aria-hidden="true"]')).not.toBeNull();
+    expect(panel.querySelectorAll('.batch-studio-choice-icon svg')).toHaveLength(2);
+    expect(panel.querySelectorAll('input[name="optional-batch-mode"]')).toHaveLength(2);
+    expect(panel.querySelector<HTMLButtonElement>('.batch-studio-primary')?.disabled)
+      .toBe(true);
+    expect(panel.querySelector('.batch-studio-file-heading')?.textContent)
+      .toContain('0 EPUBs selecionados');
   });
 
   it('tem lista e opções responsivas sem dependência da seção de ferramentas extras', () => {
