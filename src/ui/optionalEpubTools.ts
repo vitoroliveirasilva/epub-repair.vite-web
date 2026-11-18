@@ -1083,7 +1083,7 @@ function renderBatchFlow(count: number, zipReady: boolean): HTMLElement {
     children: stages.map(([number, label, status]) =>
       el('li', {
         className: 'batch-studio-flow-step batch-studio-flow-' + status,
-        attrs: { 'aria-current': status === 'current' ? 'step' : undefined },
+        attrs: status === 'current' ? { 'aria-current': 'step' } : {},
         children: [
           el('span', { className: 'batch-studio-flow-number',
             attrs: { 'aria-hidden': 'true' },
