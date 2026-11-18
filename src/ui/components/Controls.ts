@@ -330,28 +330,39 @@ function renderFlowStep(
   const statusText = state.done
     ? number === '3' ? 'Pronto para baixar' : 'Concluída'
     : state.active ? 'Etapa atual' : 'A seguir';
+  const kicker = number === '1'
+    ? 'INSPEÇÃO DETALHADA'
+    : number === '2' ? 'REPARO SEGURO' : 'SUA NOVA CÓPIA';
+
   return el('article', {
-    className: `flow-step flow-step-${status}`,
+    className: `flow-step flow-step-${number} flow-step-${status}`,
     children: [
-      el('div', { className: 'flow-step-meta', children: [
-        el('span', { className: 'flow-step-number',
-          text: state.done ? '✓' : number.padStart(2, '0'),
-          attrs: { 'aria-hidden': 'true' } }),
-        el('span', { className: 'flow-step-state', text: statusText }),
-      ] }),
-      el('span', { className: 'flow-step-art',
-        attrs: { 'aria-hidden': 'true' },
-        children: [workflowStepGlyph(number)] }),
-      el('div', { className: 'flow-step-copy', children: [
+      el('span', { className: 'flow-step-number',
+        text: number.padStart(2, '0'),
+        attrs: { 'aria-hidden': 'true' } }),
+      el('span', { className: 'flow-step-visual', attrs: { 'aria-hidden': 'true' },
+        children: [
+          el('span', { className: 'flow-step-orbit' }),
+          el('span', { className: 'flow-step-book', children: [
+            el('span', { className: 'flow-step-book-pages' }),
+            el('span', { className: 'flow-step-book-cover', children: [
+              el('span', { className: 'flow-step-book-ornament' }),
+            ] }),
+          ] }),
+          el('span', { className: 'flow-step-visual-glyph',
+            children: [workflowStepGlyph(number)] }),
+        ],
+      }),
+      el('div', { className: 'flow-step-content', children: [
+        el('span', { className: 'flow-step-kicker', text: kicker }),
         el('strong', { text: title }),
         el('small', { text: description }),
       ] }),
-      el('div', { className: 'flow-step-foot', attrs: { 'aria-hidden': 'true' },
-        children: [
-          el('span', { className: 'flow-step-foot-label',
-            text: `ETAPA ${number.padStart(2, '0')} / 03` }),
-          el('span', { className: 'flow-step-foot-rule' }),
-        ] }),
+      el('div', { className: 'flow-step-bottom', children: [
+        el('span', { className: 'flow-step-bottom-status', text: statusText }),
+        el('span', { className: 'flow-step-bottom-detail',
+          attrs: { 'aria-hidden': 'true' } }),
+      ] }),
     ],
   });
 }
@@ -362,7 +373,7 @@ function workflowStepGlyph(number: string): SVGSVGElement {
   svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('fill', 'none');
   svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '1.65');
+  svg.setAttribute('stroke-width', '1.8');
   svg.setAttribute('stroke-linecap', 'round');
   svg.setAttribute('stroke-linejoin', 'round');
   svg.setAttribute('class', 'flow-step-glyph');
@@ -371,27 +382,19 @@ function workflowStepGlyph(number: string): SVGSVGElement {
 
   const paths: Record<string, string[]> = {
     '1': [
-      'M14 3.5H6.5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2H12',
-      'M9 8h4.5',
-      'M9 11.5h2.5',
-      'M16 18.5a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
-      'm19 21 2-2',
+      'M10.4 17.9a6.4 6.4 0 1 0 0-12.8 6.4 6.4 0 0 0 0 12.8Z',
+      'm15.1 15.1 4.4 4.4',
+      'M8.2 11.5h4.4',
     ],
     '2': [
-      'M5 6h14',
-      'M5 12h14',
-      'M5 18h14',
-      'M9 3.5v5',
-      'M15 9.5v5',
-      'M11 15.5v5',
-      'M9 8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
-      'M15 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
-      'M11 20.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+      'm4.5 16.8-.8 3.5 3.5-.8L19 7.7a2.1 2.1 0 0 0-3-3L4.5 16.8Z',
+      'm13.6 7.2 3.2 3.2',
+      'm5 20 2.2-.5',
     ],
     '3': [
-      'M12 3.5v11',
-      'm7.5 10 4.5 4.5 4.5-4.5',
-      'M4.5 16.5v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3',
+      'M12 3.5v10.5',
+      'm7.7 10.3 4.3 4.3 4.3-4.3',
+      'M4.2 16.7V19a2 2 0 0 0 2 2h11.6a2 2 0 0 0 2-2v-2.3',
     ],
   };
   for (const d of paths[number] ?? []) {
@@ -401,7 +404,6 @@ function workflowStepGlyph(number: string): SVGSVGElement {
   }
   return svg;
 }
-
 
 function technicalReportGlyph(kind: 'report' | 'copy' | 'txt' | 'json'): SVGSVGElement {
   const namespace = 'http://www.w3.org/2000/svg';
@@ -446,6 +448,9 @@ function technicalReportGlyph(kind: 'report' | 'copy' | 'txt' | 'json'): SVGSVGE
     const path = document.createElementNS(namespace, 'path');
     path.setAttribute('d', d);
     if (accent) path.setAttribute('class', 'technical-report-icon-accent');
+    if (kind === 'report' && d === paths.report[0]?.[0]) {
+      path.setAttribute('class', 'technical-report-paper-front');
+    }
     svg.append(path);
   }
 
@@ -480,6 +485,7 @@ function renderTechnicalReportTools(
       children: [
         el('span', { className: 'technical-report-mark',
           attrs: { 'aria-hidden': 'true' }, children: [
+            el('span', { className: 'technical-report-sheet' }),
             technicalReportGlyph('report'),
           ] }),
         el('span', { className: 'technical-report-heading', children: [
