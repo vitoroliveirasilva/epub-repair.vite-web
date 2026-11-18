@@ -127,7 +127,10 @@ async function extractEpubCoverThumbnail(file: File): Promise<string | undefined
   const pkg = parsePackageDocument(loaded).packageInfo;
   if (!pkg) return undefined;
 
-  let candidate = findCoverImageCandidate(pkg);
+  const declared = pkg.coverItem;
+  let candidate = declared?.exists && declared.pathSafe &&
+    isCoverCompatibleImage(declared.mediaType)
+    ? declared : findCoverImageCandidate(pkg);
   if (!candidate) {
     const firstDocument = pkg.spine.map((entry) => entry.manifestItem)
       .find((item) => item?.exists && HTML_MEDIA_TYPES.has(item.mediaType));

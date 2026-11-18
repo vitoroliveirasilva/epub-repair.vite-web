@@ -11,7 +11,7 @@ import { BASELINE_JPEG_BYTES, buildKindleIssueEpub } from './helpers/syntheticEp
 function fixtureFile(bytes: Uint8Array, name = 'Livro de teste.epub'): File {
   const file = new File([new Uint8Array(bytes)], name, { type: EPUB_MIME });
   Object.defineProperty(file, 'arrayBuffer', {
-    value: async () => new Uint8Array(bytes).buffer,
+    value: () => Promise.resolve(new Uint8Array(bytes).buffer),
   });
   return file;
 }
