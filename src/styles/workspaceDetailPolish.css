@@ -1,0 +1,544 @@
+#app .editorial-epub-word {
+  color: var(--studio-copper);
+  transition: color 320ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #app .upload-studio-zone-epub:not(.upload-studio-busy):hover .editorial-epub-word {
+    color: color-mix(in srgb, var(--studio-copper) 78%, #f7b98d);
+  }
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 3.45rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .95rem;
+  min-width: 0;
+  margin: 0;
+  padding: 1rem 1.05rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 27%, var(--color-border));
+  border-radius: 1.04rem;
+  background:
+    linear-gradient(113deg, color-mix(in srgb, var(--color-accent) 7%, transparent), transparent 69%),
+    var(--color-surface);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 42%, transparent);
+  cursor: pointer;
+  transition: border-color 300ms ease, background-color 300ms ease,
+    box-shadow 340ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option::before {
+  position: absolute;
+  inset: .82rem auto .82rem 0;
+  width: 3px;
+  border-radius: 0 999px 999px 0;
+  background: color-mix(in srgb, var(--color-accent) 26%, var(--color-border));
+  content: '';
+  transition: background-color 300ms ease, inset 300ms ease;
+  pointer-events: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option:has(input:checked) {
+  border-color: color-mix(in srgb, var(--color-accent) 43%, var(--color-border));
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option:has(input:checked)::before {
+  background: var(--color-accent);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option > input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  opacity: 0;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option:has(input:focus-visible) {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: .73;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-book-art {
+  position: relative;
+  display: block;
+  width: 3.45rem;
+  height: 3.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 20%, var(--color-border));
+  border-radius: .8rem;
+  background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface));
+  pointer-events: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-book-back,
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-book-front {
+  position: absolute;
+  top: .7rem;
+  left: .93rem;
+  width: 1.57rem;
+  height: 2.17rem;
+  border: 1.25px solid color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+  border-radius: .18rem .36rem .3rem .18rem;
+  background: var(--color-surface);
+  transition: transform 440ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-book-back {
+  left: 1.22rem;
+  border-color: color-mix(in srgb, var(--studio-copper) 54%, var(--color-border));
+  background: color-mix(in srgb, var(--studio-copper) 9%, var(--color-surface));
+  transform: rotate(10deg);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-book-front {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 20%, transparent) 0 .19rem, transparent .19rem),
+    var(--color-surface);
+  transform: rotate(-8deg);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-book-front::after {
+  position: absolute;
+  top: .68rem;
+  left: .45rem;
+  width: .6rem;
+  height: .56rem;
+  border-top: 2px solid var(--color-accent);
+  border-bottom: 2px solid var(--color-accent);
+  content: '';
+  opacity: .65;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option-copy {
+  gap: .32rem;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option-copy strong {
+  font-size: .88rem;
+  letter-spacing: -.015em;
+  line-height: 1.37;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option-copy small {
+  max-width: 51ch;
+  font-size: .745rem;
+  line-height: 1.6;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-toggle {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: .48rem;
+  min-width: 4rem;
+  align-self: center;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-switch-track {
+  position: relative;
+  display: block;
+  width: 3.23rem;
+  height: 1.86rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 34%, var(--color-border));
+  border-radius: 99rem;
+  background: var(--color-accent);
+  box-shadow: inset 0 1px 3px color-mix(in srgb, #071e16 20%, transparent);
+  transition: background-color 300ms ease, border-color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-switch-thumb {
+  position: absolute;
+  top: .2rem;
+  left: .2rem;
+  width: 1.31rem;
+  height: 1.31rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 24%, transparent);
+  border-radius: 50%;
+  background: #fffaf1;
+  box-shadow: 0 1px 3px color-mix(in srgb, #0a2418 20%, transparent);
+  transform: translateX(1.32rem);
+  transition: transform 380ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-chip {
+  min-width: 4rem;
+  justify-content: center;
+  padding: .25rem .48rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 23%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface));
+  color: var(--color-accent-strong);
+  font-size: .65rem;
+  line-height: 1.2;
+  letter-spacing: .025em;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option:has(input:not(:checked)) .kindle-safe-switch-track {
+  border-color: color-mix(in srgb, var(--color-text-muted) 31%, var(--color-border));
+  background: color-mix(in srgb, var(--color-text-muted) 25%, var(--color-surface-2));
+  box-shadow: inset 0 1px 3px color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option:has(input:not(:checked)) .kindle-safe-switch-thumb {
+  transform: translateX(0);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option:has(input:not(:checked)) .kindle-safe-main-chip {
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+  background: var(--color-surface-2);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools {
+  margin-top: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 24%, var(--color-border));
+  border-radius: 1.04rem;
+  background:
+    linear-gradient(118deg, color-mix(in srgb, var(--studio-copper) 4%, transparent), transparent 70%),
+    color-mix(in srgb, var(--color-surface) 95%, var(--color-surface-2));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 37%, transparent);
+  transition: border-color 300ms ease, box-shadow 330ms ease,
+    background-color 300ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary {
+  display: grid;
+  grid-template-columns: 3.36rem minmax(0, 1fr) 2.4rem;
+  gap: 1rem;
+  align-items: center;
+  min-width: 0;
+  padding: 1.02rem 1.08rem;
+  text-align: left;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary::after {
+  display: none;
+  content: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 3.36rem;
+  height: 3.36rem;
+  border: 1px solid color-mix(in srgb, var(--studio-copper) 26%, var(--color-border));
+  border-radius: .81rem;
+  background: color-mix(in srgb, var(--studio-copper) 8%, var(--color-surface));
+  pointer-events: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-mark-paper {
+  position: relative;
+  display: block;
+  width: 1.52rem;
+  height: 1.98rem;
+  border: 1.5px solid color-mix(in srgb, var(--color-accent) 65%, var(--color-border));
+  border-radius: .23rem .4rem .33rem .23rem;
+  background: var(--color-surface);
+  transform: rotate(-6deg);
+  transition: transform 400ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-mark-paper::before {
+  position: absolute;
+  top: -.32rem;
+  right: -.37rem;
+  width: 1.45rem;
+  height: 1.95rem;
+  border: 1px solid color-mix(in srgb, var(--studio-copper) 45%, var(--color-border));
+  border-radius: .23rem .38rem .33rem .23rem;
+  background: color-mix(in srgb, var(--studio-copper) 8%, var(--color-surface));
+  content: '';
+  transform: rotate(11deg);
+  z-index: -1;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-mark-paper::after {
+  position: absolute;
+  top: .65rem;
+  left: .36rem;
+  width: .73rem;
+  height: .58rem;
+  border-top: 2px solid var(--studio-copper);
+  border-bottom: 2px solid var(--studio-copper);
+  content: '';
+  opacity: .8;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-heading {
+  display: grid;
+  gap: .27rem;
+  min-width: 0;
+  text-align: left;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-heading strong {
+  color: var(--color-text);
+  font-size: .91rem;
+  font-weight: 850;
+  line-height: 1.36;
+  letter-spacing: -.014em;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-heading small {
+  display: block;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: .73rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: left;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-disclosure {
+  display: grid;
+  width: 2.38rem;
+  height: 2.38rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, var(--color-border));
+  border-radius: .7rem;
+  background: var(--color-surface);
+  transition: transform 350ms cubic-bezier(.16, 1, .3, 1),
+    background-color 290ms ease, border-color 290ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-chevron {
+  width: .57rem;
+  height: .57rem;
+  border-right: 2px solid var(--color-accent-strong);
+  border-bottom: 2px solid var(--color-accent-strong);
+  transform: translateY(-.13rem) rotate(45deg);
+  transition: transform 350ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools[open] {
+  border-color: color-mix(in srgb, var(--studio-copper) 39%, var(--color-border));
+  box-shadow: 0 .5rem 1.2rem color-mix(in srgb, var(--color-text) 4%, transparent);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools[open] > summary {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 15%, var(--color-border));
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools[open] .technical-report-chevron {
+  transform: translateY(.12rem) rotate(225deg);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-body {
+  display: grid;
+  gap: .88rem;
+  padding: 1rem 1.08rem 1.12rem;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-body > p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: .76rem;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .58rem;
+  width: 100%;
+  min-width: 0;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: .54rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.85rem;
+  flex: none;
+  margin: 0;
+  padding: .68rem .62rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 27%, var(--color-border));
+  border-radius: .73rem;
+  background: var(--color-surface);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 30%, transparent);
+  color: var(--color-text);
+  font-size: .79rem;
+  font-weight: 800;
+  transition: border-color 260ms ease, background-color 260ms ease,
+    box-shadow 300ms ease, transform 340ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn::before {
+  display: block;
+  width: .91rem;
+  height: 1.09rem;
+  flex: 0 0 .91rem;
+  border: 1.5px solid currentColor;
+  border-radius: .19rem;
+  background:
+    linear-gradient(currentColor, currentColor) 50% 45% / .45rem 1px no-repeat,
+    linear-gradient(currentColor, currentColor) 50% 68% / .45rem 1px no-repeat;
+  content: '';
+  opacity: .68;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .technical-report-action-copy::before {
+  border-radius: .17rem;
+  box-shadow: -.18rem -.16rem 0 -.05rem var(--color-surface),
+    -.18rem -.16rem 0 .02rem currentColor;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .technical-report-action-json {
+  color: var(--color-text);
+  border-color: color-mix(in srgb, var(--studio-copper) 31%, var(--color-border));
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option:not(:has(input:disabled)):hover {
+    border-color: color-mix(in srgb, var(--color-accent) 52%, var(--color-border));
+    box-shadow: 0 .45rem 1.05rem color-mix(in srgb, var(--color-accent) 6%, transparent);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option:not(:has(input:disabled)):hover .kindle-safe-book-front {
+    transform: translate(-.13rem, -.12rem) rotate(-12deg);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option:not(:has(input:disabled)):hover .kindle-safe-book-back {
+    transform: translate(.14rem, -.12rem) rotate(15deg);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 42%, var(--color-border));
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary:hover .technical-report-mark-paper {
+    transform: translate(-.09rem, -.09rem) rotate(-11deg);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary:hover .technical-report-disclosure {
+    border-color: color-mix(in srgb, var(--studio-copper) 40%, var(--color-border));
+    background: color-mix(in srgb, var(--studio-copper) 7%, var(--color-surface));
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:not(:disabled):hover {
+    border-color: color-mix(in srgb, var(--color-accent) 53%, var(--color-border));
+    background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+    box-shadow: 0 .3rem .85rem color-mix(in srgb, var(--color-accent) 7%, transparent);
+    transform: translateY(-2px);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .technical-report-action-json:not(:disabled):hover {
+    border-color: color-mix(in srgb, var(--studio-copper) 58%, var(--color-border));
+    background: color-mix(in srgb, var(--studio-copper) 9%, var(--color-surface));
+  }
+}
+
+@media (max-width: 760px) {
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option {
+    grid-template-columns: 3.1rem minmax(0, 1fr);
+    column-gap: .85rem;
+    row-gap: .65rem;
+    padding: .9rem;
+    align-items: center;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-book-art {
+    width: 3.1rem;
+    height: 3.55rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-toggle {
+    grid-column: 2;
+    grid-row: 2;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: .7rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary {
+    gap: .75rem;
+    grid-template-columns: 3.05rem minmax(0, 1fr) 2.25rem;
+    padding: .9rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-mark {
+    width: 3.05rem;
+    height: 3.05rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-disclosure {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+}
+
+@media (max-width: 420px) {
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions {
+    gap: .4rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn {
+    padding: .64rem .34rem;
+    gap: .3rem;
+    min-width: 0;
+    font-size: .74rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn::before {
+    width: .72rem;
+    height: .89rem;
+    flex-basis: .72rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .editorial-epub-word,
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option,
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option::before,
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-book-art,
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-book-front,
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-book-back,
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-switch-track,
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-switch-thumb,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-mark-paper,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-disclosure,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-chevron,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn {
+    transition: none;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option:hover :is(.kindle-safe-book-front, .kindle-safe-book-back),
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary:hover .technical-report-mark-paper,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:not(:disabled):hover {
+    transform: none;
+  }
+}

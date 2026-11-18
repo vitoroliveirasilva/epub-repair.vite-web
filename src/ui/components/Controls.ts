@@ -23,6 +23,8 @@ export function renderControls(
 ): HTMLElement {
   const hasFile = Boolean(state.payload);
   const hasReport = Boolean(state.report);
+  const pageTitle = controlsTitle(state);
+  const pageDescription = controlsDescription(state);
   const hasRepair = Boolean(state.repairResult?.changed && state.repairResult.blob);
   const hasFatalIssues = Boolean(state.report?.stats.fatalCount);
   const canRepair = canRepairReport(state.report, state.options);
@@ -56,8 +58,16 @@ export function renderControls(
         className: 'controls-copy',
         children: [
           el('p', { className: 'eyebrow', text: 'Verificação e correção' }),
-          el('h2', { text: controlsTitle(state) }),
-          el('p', { className: 'muted', text: controlsDescription(state) }),
+          pageTitle === 'Escolha um EPUB para começar'
+            ? el('h2', { children: [
+              'Escolha um ',
+              el('span', { className: 'editorial-epub-word', text: 'EPUB' }),
+              ' para começar',
+            ] })
+            : el('h2', { text: pageTitle }),
+          pageDescription
+            ? el('p', { className: 'muted', text: pageDescription })
+            : undefined,
         ],
       }),
       el('div', {
@@ -125,14 +135,26 @@ function renderKindleSafeOption(
     for: 'kindle-safe-main',
   }, children: [
     input,
+    el('span', { className: 'kindle-safe-book-art', attrs: { 'aria-hidden': 'true' },
+      children: [
+        el('span', { className: 'kindle-safe-book-back' }),
+        el('span', { className: 'kindle-safe-book-front' }),
+      ],
+    }),
     el('span', { className: 'kindle-safe-main-option-copy', children: [
       el('strong', { text: 'Preparar para Kindle durante o reparo' }),
       el('small', { attrs: { id: 'kindle-safe-main-detail' },
         text: 'Kindle Safe ativado por padrão. Prioriza compatibilidade quando houver correções seguras, sem substituir a revisão do arquivo.' }),
     ] }),
-    el('span', { className: 'kindle-safe-main-chip',
-      attrs: { 'aria-hidden': 'true' },
-      text: state.options.kindleSafeMode ? 'Ativo' : 'Desativado' }),
+    el('span', { className: 'kindle-safe-main-toggle', attrs: { 'aria-hidden': 'true' },
+      children: [
+        el('span', { className: 'kindle-safe-switch-track', children: [
+          el('span', { className: 'kindle-safe-switch-thumb' }),
+        ] }),
+        el('span', { className: 'kindle-safe-main-chip',
+          text: state.options.kindleSafeMode ? 'Ativo' : 'Desativado' }),
+      ],
+    }),
   ] });
 }
 
@@ -288,7 +310,7 @@ function controlsDescription(state: AppState): string {
   if (state.payload) {
     return 'A análise acontece localmente no navegador e prepara o arquivo para uma correção segura';
   }
-  return 'Envie o arquivo, confira o diagnóstico e baixe uma cópia corrigida. O arquivo original não é alterado';
+  return '';
 }
 
 function repairButtonTitle(state: AppState, canRepair: boolean, canOptimize: boolean): string {
@@ -332,16 +354,29 @@ function renderTechnicalReportTools(
 ): HTMLElement {
   const details = el('details', { className: 'technical-report-tools' });
   details.open = false;
+  copyButton.classList.add('technical-report-action-copy');
+  textReportButton.classList.add('technical-report-action-txt');
+  jsonReportButton.classList.add('technical-report-action-json');
 
   details.append(
     el('summary', {
       children: [
-        el('span', { text: 'Relatório técnico' }),
-        el('small', {
-          text: hasReport
-            ? 'Copiar ou baixar detalhes da análise'
-            : 'Disponível após verificar o EPUB',
-        }),
+        el('span', { className: 'technical-report-mark',
+          attrs: { 'aria-hidden': 'true' }, children: [
+            el('span', { className: 'technical-report-mark-paper' }),
+          ] }),
+        el('span', { className: 'technical-report-heading', children: [
+          el('strong', { text: 'Relatório técnico' }),
+          el('small', {
+            text: hasReport
+              ? 'Copiar ou baixar detalhes da análise'
+              : 'Disponível após verificar o EPUB',
+          }),
+        ] }),
+        el('span', { className: 'technical-report-disclosure',
+          attrs: { 'aria-hidden': 'true' }, children: [
+            el('span', { className: 'technical-report-chevron' }),
+          ] }),
       ],
     }),
     el('div', {

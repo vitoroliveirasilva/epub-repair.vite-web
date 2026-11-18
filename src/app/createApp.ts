@@ -646,8 +646,11 @@ function renderEmptyState(): HTMLElement {
       ] }),
       el('div', { className: 'report-welcome-copy', children: [
         el('span', { className: 'report-welcome-kicker', text: '03 / DIAGNÓSTICO' }),
-        el('h2', { text: 'Envie um EPUB para começar',
-          attrs: { id: 'report-welcome-title' } }),
+        el('h2', { attrs: { id: 'report-welcome-title' }, children: [
+          'Envie um ',
+          el('span', { className: 'editorial-epub-word', text: 'EPUB' }),
+          ' para começar',
+        ] }),
         el('p', { className: 'report-welcome-description',
           text: 'Depois da verificação, você encontrará aqui um relatório claro, com o que está certo e o que merece atenção.' }),
         el('div', { className: 'report-welcome-highlights',

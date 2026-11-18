@@ -50,9 +50,14 @@ export function renderUploader(
           el('span', { className: 'upload-studio-graphic-tag', text: 'EPUB' }),
         ] }),
       el('span', { className: 'upload-studio-content', children: [
-        el('strong', { className: 'upload-studio-title', text: loadedFile
-          ? 'Seu livro está pronto para conferir'
-          : 'Solte seu EPUB aqui' }),
+        loadedFile
+          ? el('strong', { className: 'upload-studio-title',
+            text: 'Seu livro está pronto para conferir' })
+          : el('strong', { className: 'upload-studio-title', children: [
+            'Solte seu ',
+            el('span', { className: 'editorial-epub-word', text: 'EPUB' }),
+            ' aqui',
+          ] }),
         el('span', { className: 'upload-studio-subtitle', text: loadedFile
           ? 'Você pode continuar com a análise ou escolher outro arquivo.'
           : 'Ou selecione o arquivo no seu dispositivo para começar.' }),
@@ -101,9 +106,10 @@ export function renderUploader(
     children: [
       el('div', { className: 'section-heading upload-studio-heading', children: [
         el('p', { className: 'eyebrow', text: '01 / ARQUIVO EPUB' }),
-        el('h2', { text: 'Escolha seu EPUB', attrs: { id: 'upload-title' } }),
-        el('p', { className: 'muted', text:
-          'Envie um livro para verificar ou selecione vários para trabalhar em lote. Tudo fica no navegador.' }),
+        el('h2', { attrs: { id: 'upload-title' }, children: [
+          'Escolha seu ',
+          el('span', { className: 'editorial-epub-word', text: 'EPUB' }),
+        ] }),
         el('p', { className: 'visually-hidden', attrs: { id: 'upload-help' },
           text: 'Um EPUB abre o fluxo individual (até 250 MB). Dois ou mais iniciam ' +
             'o processamento em lote, com até 6 arquivos e 80 MB somados.' }),
