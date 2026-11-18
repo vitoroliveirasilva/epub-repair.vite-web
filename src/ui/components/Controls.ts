@@ -283,7 +283,7 @@ function controlsDescription(state: AppState): string {
     return 'Baixe a nova versão otimizada do arquivo. O relatório técnico mostra quais melhorias opcionais foram aplicadas';
   }
   if (state.repairResult?.changed && state.repairResult.blob) {
-    return 'Baixe a nova versão do arquivo, o relatório técnico fica separado abaixo';
+    return '';
   }
   if (state.report?.stats.fatalCount) {
     return 'Encontramos um problema fatal, o reparo automático fica bloqueado para evitar gerar um arquivo incompleto ou pior que o original.';
