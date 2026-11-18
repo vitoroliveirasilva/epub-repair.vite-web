@@ -206,12 +206,6 @@
   letter-spacing: -.032em;
 }
 
-#app .workspace-core .flow-step {
-  border: 1px solid var(--studio-line);
-  border-radius: .88rem;
-  background: color-mix(in srgb, var(--color-surface) 88%, var(--color-surface-2));
-}
-
 #app .workspace-core .primary-action-row .btn-primary {
   box-shadow: 0 .45rem 1.25rem color-mix(in srgb, var(--color-accent) 17%, transparent);
 }

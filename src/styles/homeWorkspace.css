@@ -167,24 +167,6 @@
   line-height: 1.55;
 }
 
-.workspace-core .flow-steps {
-  gap: .55rem;
-}
-
-.workspace-core .flow-step {
-  padding: .8rem;
-  border-radius: .85rem;
-}
-
-.workspace-core .flow-step strong {
-  font-size: .82rem;
-}
-
-.workspace-core .flow-step small {
-  font-size: .7rem;
-  line-height: 1.35;
-}
-
 .workspace-core .primary-action-row {
   margin-top: auto;
 }
@@ -564,14 +546,6 @@
 
 .workspace-core .dropzone {
     min-height: 13rem;
-  }
-
-.workspace-core .flow-steps {
-    grid-template-columns: 1fr;
-  }
-
-.workspace-core .flow-step {
-    min-height: 0;
   }
 
 .layout#app-workspace .cover-action-grid {
