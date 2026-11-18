@@ -1,5 +1,6 @@
 import type { AppState } from '../../app/state';
 import { el, formatBytes } from '../dom';
+import { createEpubFileCoverSymbol } from '../epubFileCoverThumbnail';
 
 export function renderUploader(
   state: AppState, onFile: (file: File) => void,
@@ -118,8 +119,10 @@ export function renderUploader(
       dropzone,
       loadedFile ? el('div', { className: 'file-pill upload-studio-file',
         attrs: { role: 'status' }, children: [
-          el('span', { className: 'upload-studio-file-symbol', text: 'EPUB',
-            attrs: { 'aria-hidden': 'true' } }),
+          createEpubFileCoverSymbol(loadedFile, 'upload-studio-file-symbol', 'EPUB', {
+            previewDataUrl: state.report?.cover?.previewDataUrl,
+            extractIfMissing: false,
+          }),
           el('span', { className: 'upload-studio-file-copy', children: [
             el('strong', { className: 'upload-studio-file-name', text: loadedFile.name }),
             el('small', { text: 'Arquivo selecionado no dispositivo' }),

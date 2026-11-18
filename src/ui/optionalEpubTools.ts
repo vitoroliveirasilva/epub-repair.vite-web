@@ -3,6 +3,7 @@ import type { ValidationReport } from '../epub';
 import { processEpubBatch, MAX_BATCH_BYTES, MAX_BATCH_FILES,
   type BatchMode, type BatchEntry, type BatchFileProgress } from '../epub/tools/batchProcessor';
 import { addBatchSelection } from '../epub/tools/batchSelection';
+import { createEpubFileCoverSymbol } from './epubFileCoverThumbnail';
 import { button, downloadBlob, el, formatBytes } from './dom';
 import {
   readBookMetadata, readBookPreview, writeBookMetadata,
@@ -844,8 +845,9 @@ function renderBatch(
     }
     return el('li', { className: 'batch-studio-file-row', children: [
       el('div', { className: 'batch-studio-file-main', children: [
-        el('span', { className: 'batch-studio-file-number',
-          attrs: { 'aria-hidden': 'true' }, text: String(index + 1).padStart(2, '0') }),
+        createEpubFileCoverSymbol(
+          file, 'batch-studio-file-number', String(index + 1).padStart(2, '0'),
+        ),
         el('div', { className: 'batch-studio-file-meta', children: [
           el('strong', { text: file.name, attrs: { title: file.name } }),
           el('small', { text: formatBytes(file.size) }),

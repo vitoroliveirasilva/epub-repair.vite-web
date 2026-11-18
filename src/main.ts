@@ -51,3 +51,4 @@ import './styles/optionalWorkbench.css';
 import './styles/workspaceFinalPolish.css';
 import './styles/workspaceDetailPolish.css';
 import './styles/epubStageRail.css';
+import './styles/epubFileCovers.css';
