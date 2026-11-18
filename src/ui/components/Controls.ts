@@ -17,7 +17,6 @@ export function renderControls(
     copy: () => void;
     downloadTextReport: () => void;
     downloadJsonReport: () => void;
-    onKindleSafeChange?: ((enabled: boolean) => void) | undefined;
     cancel?: (() => void) | undefined;
   },
 ): HTMLElement {
@@ -87,7 +86,6 @@ export function renderControls(
           ] }),
         ],
       }),
-      renderKindleSafeOption(state, actions.onKindleSafeChange),
       el('div', {
         className: hasRepair
           ? 'primary-action-row primary-action-row-download'
@@ -100,38 +98,6 @@ export function renderControls(
         : undefined,
     ],
   });
-}
-
-function renderKindleSafeOption(
-  state: AppState, onChange?: (enabled: boolean) => void,
-): HTMLElement {
-  const input = el('input', { attrs: {
-    type: 'checkbox', id: 'kindle-safe-main', 'aria-describedby': 'kindle-safe-main-detail',
-  } });
-  input.checked = state.options.kindleSafeMode;
-  input.disabled = state.busy;
-  input.addEventListener('change', () => {
-    if (state.busy) return;
-    if (onChange) onChange(input.checked);
-    else state.options.kindleSafeMode = input.checked;
-  });
-  return el('label', { className: 'kindle-safe-main-option', attrs: {
-    for: 'kindle-safe-main',
-  }, children: [
-    input,
-    el('span', { className: 'kindle-safe-main-option-copy', children: [
-      el('strong', { text: 'Preparar para Kindle durante o reparo' }),
-      el('small', { attrs: { id: 'kindle-safe-main-detail' },
-        text: 'Kindle Safe ativado por padrão. Prioriza compatibilidade quando houver correções seguras, sem substituir a revisão do arquivo.' }),
-    ] }),
-    el('span', { className: 'kindle-safe-main-toggle', attrs: { 'aria-hidden': 'true' },
-      children: [
-        el('span', { className: 'kindle-safe-switch-track', children: [
-          el('span', { className: 'kindle-safe-switch-thumb' }),
-        ] }),
-      ],
-    }),
-  ] });
 }
 
 function buildPrimaryActionButtons(

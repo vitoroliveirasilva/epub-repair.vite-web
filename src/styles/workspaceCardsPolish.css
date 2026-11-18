@@ -239,71 +239,6 @@
     transition: none;
   }
 }
-#app .controls-panel .kindle-safe-main-option {
-  display: flex;
-  align-items: center;
-  gap: .8rem;
-  width: 100%;
-  margin: .2rem 0 .7rem;
-  padding: .85rem 1rem;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 21%, var(--color-border));
-  border-radius: .85rem;
-  background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
-  cursor: pointer;
-}
-
-#app .controls-panel .kindle-safe-main-option:has(input:focus-visible) {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-#app .kindle-safe-main-option > input {
-  width: 1.1rem;
-  height: 1.1rem;
-  flex: 0 0 1.1rem;
-  margin: 0;
-  accent-color: var(--color-accent);
-}
-
-#app .kindle-safe-main-option-copy {
-  display: grid;
-  flex: 1 1 auto;
-  gap: .24rem;
-  min-width: 0;
-}
-
-#app .kindle-safe-main-option-copy strong {
-  color: var(--color-text);
-  font-size: .81rem;
-  font-weight: 850;
-  line-height: 1.35;
-}
-
-#app .kindle-safe-main-option-copy small {
-  color: var(--color-text-muted);
-  font-size: .7rem;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-#app .kindle-safe-main-chip {
-  display: inline-flex;
-  flex: 0 0 auto;
-  padding: .35rem .6rem;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 25%, var(--color-border));
-  border-radius: 999px;
-  color: var(--color-accent-strong);
-  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
-  font-size: .68rem;
-  font-weight: 850;
-}
-
-#app .kindle-safe-main-option:has(input:not(:checked)) .kindle-safe-main-chip {
-  color: var(--color-text-muted);
-  border-color: var(--color-border);
-  background: var(--color-surface-2);
-}
-
 #app .report-panel .kindle-readiness-inline {
   display: grid;
   gap: .8rem;
@@ -547,15 +482,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-#app .controls-panel .kindle-safe-main-option {
-    align-items: flex-start;
-    flex-wrap: wrap;
-    padding: .8rem;
-  }
 
-#app .kindle-safe-main-chip {
-    margin-left: 1.9rem;
-  }
 }
 
 @media (max-width: 430px) {#app .kindle-readiness-counts {

@@ -302,41 +302,22 @@ describe('Estúdio de restauração e escolha de modo', () => {
       .toBe('Metadados');
   });
 
-  it('configura Kindle Safe no fluxo principal e mantém o padrão ligado', () => {
+  it('mantém Kindle Safe obrigatório, sem permitir desligar pelo painel', () => {
     const state = createInitialState();
     expect(state.options.kindleSafeMode).toBe(true);
-    const changes: boolean[] = [];
     const actions = {
       analyze: () => {}, repair: () => {}, copy: () => {},
       downloadTextReport: () => {}, downloadJsonReport: () => {},
-      onKindleSafeChange: (enabled: boolean) => {
-        changes.push(enabled);
-        state.options.kindleSafeMode = enabled;
-      },
     };
-    let card = renderControls(state, actions);
-    document.body.append(card);
-    const setting = card.querySelector<HTMLInputElement>('#kindle-safe-main')!;
-    expect(setting.checked).toBe(true);
-    expect(card.textContent).toContain('Preparar para Kindle durante o reparo');
-    expect(card.querySelector('.kindle-safe-switch-track')).not.toBeNull();
-    expect(card.querySelector('.kindle-safe-main-chip')).toBeNull();
-
-    expect(setting.disabled).toBe(false);
-    setting.checked = false;
-    setting.dispatchEvent(new Event('change', { bubbles: true }));
-    expect(changes).toEqual([false]);
-    expect(state.options.kindleSafeMode).toBe(false);
-    card = renderControls(state, actions);
-    expect(card.querySelector<HTMLInputElement>('#kindle-safe-main')?.checked).toBe(false);
-    expect(card.querySelector('.kindle-safe-main-chip')).toBeNull();
-
+    const card = renderControls(state, actions);
+    expect(card.querySelector('#kindle-safe-main')).toBeNull();
+    expect(card.querySelector('.kindle-safe-main-option')).toBeNull();
+    expect(card.textContent).not.toContain('Preparar para Kindle durante o reparo');
     const options = renderOptionsPanel(state, () => {});
     expect(options.querySelector('#kindleSafeMode')).toBeNull();
-
+    expect(state.options.kindleSafeMode).toBe(true);
     state.busy = true;
-    card = renderControls(state, actions);
-    expect(card.querySelector<HTMLInputElement>('#kindle-safe-main')?.disabled).toBe(true);
+    expect(renderControls(state, actions).querySelector('#kindle-safe-main')).toBeNull();
   });
 
   it('inclui a auditoria Kindle no diagnóstico com detalhes e ações originais', async () => {

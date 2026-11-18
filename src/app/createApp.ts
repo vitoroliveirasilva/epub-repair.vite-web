@@ -155,10 +155,6 @@ function render(
               downloadJsonReport: () => {
                 void downloadCurrentReport(state, 'json');
               },
-              onKindleSafeChange: (enabled) => {
-                state.options.kindleSafeMode = enabled;
-                rerender();
-              },
                   cancel: cancelAll,
                 }),
               ],
