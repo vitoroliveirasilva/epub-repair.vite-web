@@ -797,7 +797,7 @@
 #app .optional-workbench .workbench-navigation .workbench-tab-label::before {
   position: absolute;
   top: -1.3rem;
-  left: .38rem;
+  left: -1.2rem;
   z-index: 1;
   display: block;
   width: .62rem;
@@ -962,10 +962,10 @@
   }
 
 #app .optional-workbench .workbench-navigation .workbench-tab-label::before {
-    top: -.92rem;
-    left: .24rem;
-    width: .46rem;
-    height: .86rem;
+    top: -1.02rem;
+    left: -.78rem;
+    width: .43rem;
+    height: .9rem;
   }
 }
 

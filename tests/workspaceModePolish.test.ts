@@ -444,8 +444,10 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(workbench).not.toContain('left: 53%');
     expect(workbench).toContain('workbench-navigation .workbench-tab-label::before');
     expect(workbench).toContain('workbench-navigation .optional-studio-tab-active .workbench-tab-label::before');
-    expect(workbench).toContain('left: .38rem');
-    expect(workbench).toContain('left: .24rem');
+    expect(workbench).toContain('left: -1.2rem');
+    expect(workbench).toContain('left: -.78rem');
+    expect(workbench).not.toContain('left: .38rem');
+    expect(workbench).not.toContain('left: .24rem');
     expect(workbench).toContain('transform: translateY(0) rotate(-4deg)');
     expect(workbench).toContain('clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%)');
     expect(workbench).toContain('workbench-book-silhouette');
