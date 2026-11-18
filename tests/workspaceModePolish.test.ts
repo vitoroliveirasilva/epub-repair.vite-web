@@ -134,7 +134,7 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(figure.style.transform).toBe('');
     expect(root.querySelector('.cover-studio-preview-copy strong')?.textContent)
       .toBe('Sua nova capa');
-    const savedMatchMedia = window.matchMedia;
+    const savedMatchMedia = window.matchMedia?.bind(window);
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       value: (query: string) => ({
