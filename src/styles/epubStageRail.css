@@ -203,6 +203,22 @@
   color: var(--color-accent-strong);
 }
 
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-done {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--stage-tone) 32%, var(--color-border));
+  box-shadow:
+    0 .4rem .9rem color-mix(in srgb, var(--color-text) 7%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-done::before {
+  transform: scaleX(1);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-done .epub-stage-item-number {
+  transform: translateY(-1px) scale(1.045);
+}
+
 @media (hover: hover) and (pointer: fine) {
   #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item:hover {
     transform: translateY(-2px);
@@ -333,7 +349,9 @@
   }
 
   #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item:hover,
-  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item:hover .epub-stage-item-number {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item:hover .epub-stage-item-number,
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-done,
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-done .epub-stage-item-number {
     transform: none;
   }
 }
