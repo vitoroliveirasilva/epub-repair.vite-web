@@ -119,7 +119,7 @@ export function renderControls(
 }
 
 function renderKindleSafeOption(
-  state: AppState, onChange?: ((enabled: boolean) => void) | undefined,
+  state: AppState, onChange?: (enabled: boolean) => void,
 ): HTMLElement {
   const input = el('input', { attrs: {
     type: 'checkbox', id: 'kindle-safe-main', 'aria-describedby': 'kindle-safe-main-detail',

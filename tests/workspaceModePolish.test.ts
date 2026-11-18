@@ -77,7 +77,7 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(steps.map((item) => item.querySelector('strong')?.textContent))
       .toEqual(['Verificar', 'Corrigir, otimizar ou trocar capa', 'Baixar']);
     expect(steps.map((item) => item.querySelector('.flow-step-number')?.textContent))
-      .toEqual(['1', '2', '3']);
+      .toEqual(['01', '02', '03']);
     expect(steps.every((item) => Boolean(item.querySelector('small')?.textContent)))
       .toBe(true);
   });
@@ -116,7 +116,7 @@ describe('Estúdio de restauração e escolha de modo', () => {
       mediaType: 'image/png',
       bytes: new Uint8Array([137, 80, 78, 71]),
       previewDataUrl: 'data:image/png;base64,AAAA',
-    } as NonNullable<typeof state.coverImage>;
+    };
     const root = document.createElement('div');
     root.id = 'app';
     document.body.append(root);

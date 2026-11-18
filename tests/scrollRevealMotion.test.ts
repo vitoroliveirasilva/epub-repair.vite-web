@@ -117,7 +117,7 @@ describe('Exibição reversível de seções durante rolagem', () => {
     root.innerHTML = '<main id="app-workspace"><div class="workspace">' +
       '<section class="workspace-intro">Título</section></div></main>';
     document.body.append(root);
-    const savedMatchMedia = window.matchMedia;
+    const savedMatchMedia = window.matchMedia?.bind(window);
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       value: (query: string) => ({ matches: query.includes('prefers-reduced-motion') }),
@@ -220,7 +220,7 @@ describe('Exibição reversível de seções durante rolagem', () => {
       '<nav class="editorial-footer-product"><a href="/">Produto</a></nav>' +
       '</div></footer>';
     document.body.append(root);
-    const previous = window.matchMedia;
+    const previous = window.matchMedia?.bind(window);
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       value: (query: string) => ({ matches: query.includes('prefers-reduced-motion') }),

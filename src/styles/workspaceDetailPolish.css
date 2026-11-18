@@ -536,6 +536,24 @@
   }
 }
 
+@media (max-width: 1060px) and (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:hover .flow-step-book {
+    transform: translate(-.17rem, -.21rem) rotate(-5deg) scale(.86);
+  }
+}
+
+@media (max-width: 860px) and (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:hover .flow-step-book {
+    transform: translate(-.17rem, -.21rem) rotate(-5deg) scale(.89);
+  }
+}
+
+@media (max-width: 430px) and (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:hover .flow-step-book {
+    transform: translate(-.17rem, -.21rem) rotate(-5deg) scale(.73);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   #app .layout#app-workspace .workspace-core .controls-panel .flow-step,
   #app .layout#app-workspace .workspace-core .controls-panel .flow-step::before,
