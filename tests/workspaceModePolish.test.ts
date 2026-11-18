@@ -289,6 +289,7 @@ describe('Estúdio de restauração e escolha de modo', () => {
       },
     };
     let card = renderControls(state, actions);
+    document.body.append(card);
     const setting = card.querySelector<HTMLInputElement>('#kindle-safe-main')!;
     expect(setting.checked).toBe(true);
     expect(card.textContent).toContain('Preparar para Kindle durante o reparo');

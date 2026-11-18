@@ -134,7 +134,7 @@ describe('Identidade editorial no EPUB Repair', () => {
     expect(motion).toContain('.home-star-9 { width: clamp(1.27rem, 2.15vw, 1.84rem); }');
     expect(motion).toContain('.epub-home .home-star-field');
     expect(motion).toContain('inset: 0');
-    expect(desktop).not.toContain("content: '↗'");
+    expect(desktop).toContain("content: '↗'");
     expect(desktop).toContain('.epub-home .home-action::before');
     expect(desktop).toContain('.epub-home .home-action-shell::before');
     expect(desktop).toContain('transform: translate(.42rem, .55rem) rotate(.55deg)');
