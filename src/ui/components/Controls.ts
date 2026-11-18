@@ -200,14 +200,6 @@ function matchUploadActionStyle(actionButton: HTMLButtonElement): void {
   const label = actionButton.textContent ?? '';
   actionButton.classList.add('epub-upload-matched-action');
   actionButton.setAttribute('aria-label', label);
-  actionButton.replaceChildren(
-    el('span', { className: 'epub-upload-matched-label', text: label }),
-    el('span', {
-      className: 'epub-upload-matched-arrow',
-      attrs: { 'aria-hidden': 'true' },
-      text: '↗',
-    }),
-  );
 }
 
 function controlsTitle(state: AppState): string {
