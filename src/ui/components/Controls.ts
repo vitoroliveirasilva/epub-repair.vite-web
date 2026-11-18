@@ -150,6 +150,7 @@ function buildPrimaryActionButtons(
     optimizeButton.disabled = state.busy;
     optimizeButton.dataset.focusKey = 'epub-optimize';
     optimizeButton.title = repairButtonTitle(state, false, true);
+    matchUploadActionStyle(optimizeButton);
 
     return [downloadButton, optimizeButton];
   }
@@ -165,6 +166,7 @@ function buildPrimaryActionButtons(
   analyzeButton.disabled = !flags.hasFile ||
     !mayEnqueueAnalysis || (state.pendingTasks ?? 0) >= 8;
   analyzeButton.dataset.focusKey = 'epub-analyze';
+  matchUploadActionStyle(analyzeButton);
 
   const repairButton = button(
     state.busy && (flags.canRepair || flags.canOptimize)
@@ -189,8 +191,23 @@ function buildPrimaryActionButtons(
     flags.hasFatalIssues ||
     (!flags.canRepair && !flags.canOptimize);
   repairButton.title = repairButtonTitle(state, flags.canRepair, flags.canOptimize);
+  matchUploadActionStyle(repairButton);
 
   return [analyzeButton, repairButton];
+}
+
+function matchUploadActionStyle(actionButton: HTMLButtonElement): void {
+  const label = actionButton.textContent ?? '';
+  actionButton.classList.add('epub-upload-matched-action');
+  actionButton.setAttribute('aria-label', label);
+  actionButton.replaceChildren(
+    el('span', { className: 'epub-upload-matched-label', text: label }),
+    el('span', {
+      className: 'epub-upload-matched-arrow',
+      attrs: { 'aria-hidden': 'true' },
+      text: '↗',
+    }),
+  );
 }
 
 function controlsTitle(state: AppState): string {

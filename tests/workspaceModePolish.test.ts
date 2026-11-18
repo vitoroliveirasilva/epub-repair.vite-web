@@ -302,6 +302,29 @@ describe('Estúdio de restauração e escolha de modo', () => {
       .toBe('Metadados');
   });
 
+  it('repete o estilo de Escolher outro arquivo nas ações de verificar e otimizar', () => {
+    const state = createInitialState();
+    const panel = renderControls(state, {
+      analyze: () => {}, repair: () => {}, copy: () => {},
+      downloadTextReport: () => {}, downloadJsonReport: () => {},
+    });
+    const buttons = panel.querySelectorAll<HTMLButtonElement>(
+      '.primary-action-row .epub-upload-matched-action');
+    expect(buttons).toHaveLength(2);
+    expect(buttons[0]?.getAttribute('aria-label')).toBe('Verificar EPUB');
+    expect(buttons[0]?.querySelector('.epub-upload-matched-label')?.textContent)
+      .toBe('Verificar EPUB');
+    expect(buttons[1]?.querySelector('.epub-upload-matched-label')).not.toBeNull();
+    expect(Array.from(buttons).every((element) =>
+      element.querySelector('.epub-upload-matched-arrow')?.getAttribute('aria-hidden') === 'true'))
+      .toBe(true);
+    expect(buttons[0]?.disabled).toBe(true);
+    const css = readFileSync('src/styles/epubMatchedActions.css', 'utf8');
+    expect(css).toContain('--epub-action-tone: #245e48;');
+    expect(css).toContain('translateX(750%) rotate(18deg)');
+    expect(css).toContain('prefers-reduced-motion: reduce');
+  });
+
   it('mantém Kindle Safe obrigatório, sem permitir desligar pelo painel', () => {
     const state = createInitialState();
     expect(state.options.kindleSafeMode).toBe(true);
