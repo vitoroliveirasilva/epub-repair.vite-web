@@ -48,3 +48,4 @@ import './styles/cardMotionRefinement.css';
 import './styles/sectionHeaderPolish.css';
 import './styles/statusSuccessPolish.css';
 import './styles/optionalWorkbench.css';
+import './styles/workspaceFinalPolish.css';

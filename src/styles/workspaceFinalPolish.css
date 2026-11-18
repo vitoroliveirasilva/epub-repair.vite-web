@@ -1,0 +1,469 @@
+#app .layout#app-workspace .workspace-core > .upload-panel.upload-studio-panel,
+#app .layout#app-workspace .workspace-core > .controls-panel {
+  border-color: color-mix(in srgb, var(--studio-ink) 19%, var(--color-border));
+  box-shadow:
+    0 1px 1px color-mix(in srgb, var(--color-text) 3%, transparent),
+    0 1.35rem 3.2rem color-mix(in srgb, var(--color-text) 6%, transparent);
+  transition: border-color 340ms ease, box-shadow 340ms ease;
+}
+
+#app .layout#app-workspace .workspace-core > .upload-panel.upload-studio-panel {
+  background:
+    radial-gradient(ellipse at 0% 0%,
+      color-mix(in srgb, var(--studio-copper) 8%, transparent), transparent 60%),
+    var(--color-surface);
+}
+
+#app .layout#app-workspace .workspace-core > .controls-panel {
+  background:
+    radial-gradient(ellipse at 100% 0%,
+      color-mix(in srgb, var(--color-accent) 8%, transparent), transparent 62%),
+    var(--color-surface);
+}
+
+#app .upload-studio-panel .upload-studio-heading {
+  gap: .52rem;
+}
+
+#app .upload-studio-panel .upload-studio-heading h2 {
+  letter-spacing: -.048em;
+  line-height: 1.14;
+}
+
+#app .upload-studio-panel .upload-studio-heading .eyebrow {
+  gap: .65rem;
+  letter-spacing: .16em;
+}
+
+#app .upload-studio-panel .upload-studio-heading .eyebrow::before {
+  width: 1.35rem;
+  background: var(--studio-copper);
+}
+
+#app .upload-studio-panel .dropzone.upload-studio-zone-epub {
+  border-color: color-mix(in srgb, var(--upload-tone) 46%, var(--color-border));
+  background:
+    radial-gradient(ellipse at 50% 25%,
+      color-mix(in srgb, var(--upload-tone) 10%, transparent), transparent 68%),
+    radial-gradient(circle,
+      color-mix(in srgb, var(--upload-tone) 16%, transparent) .7px, transparent 1px) 0 0 / 21px 21px,
+    color-mix(in srgb, var(--color-surface) 92%, var(--upload-tone-wash));
+  box-shadow:
+    inset 0 0 0 5px color-mix(in srgb, var(--color-surface) 73%, transparent),
+    0 .3rem .8rem color-mix(in srgb, var(--color-text) 3%, transparent);
+  transition: border-color 320ms ease, background-color 320ms ease,
+    box-shadow 440ms ease, transform 440ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .upload-studio-panel .dropzone.upload-studio-zone-epub::before {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: block;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-top: 1px solid color-mix(in srgb, var(--studio-copper) 43%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--studio-copper) 43%, transparent);
+  border-radius: 0 .3rem 0 0;
+  background: none;
+  content: '';
+  opacity: .72;
+  transform: none;
+  pointer-events: none;
+}
+
+#app .upload-studio-panel .upload-studio-zone-epub .upload-studio-graphic {
+  isolation: isolate;
+}
+
+#app .upload-studio-panel .upload-studio-zone-epub .upload-studio-graphic::before {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  width: 6.9rem;
+  height: 6.9rem;
+  border: 1px solid color-mix(in srgb, var(--upload-tone) 17%, transparent);
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--studio-copper) 9%, transparent), transparent 66%);
+  content: '';
+  transform: translate(-50%, -54%) rotate(-12deg) scale(.92);
+  transition: transform 650ms cubic-bezier(.16, 1, .3, 1), border-color 350ms ease;
+  pointer-events: none;
+}
+
+#app .upload-studio-panel .upload-studio-zone-epub .upload-studio-sheet {
+  transition: transform 530ms cubic-bezier(.16, 1, .3, 1),
+    box-shadow 530ms ease;
+}
+
+#app .upload-studio-panel .upload-studio-zone-epub .upload-studio-graphic-tag {
+  transition: transform 450ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .upload-studio-panel .upload-studio-zone-epub .upload-studio-kicker {
+  margin-bottom: 1.18rem;
+  border-color: color-mix(in srgb, var(--upload-tone) 25%, var(--color-border));
+}
+
+#app .upload-studio-panel .upload-studio-zone-epub .upload-studio-action {
+  transition: background-color 260ms ease, box-shadow 340ms ease,
+    transform 350ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .upload-studio-panel .upload-studio-zone-epub .upload-studio-action-arrow {
+  transition: transform 350ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .upload-studio-panel .dropzone.upload-studio-zone-epub:is(:hover, :focus-visible, .dropzone-active):not(.upload-studio-busy) {
+  border-color: color-mix(in srgb, var(--upload-tone) 75%, var(--color-border));
+  box-shadow:
+    inset 0 0 0 5px color-mix(in srgb, var(--color-surface) 68%, transparent),
+    0 .9rem 2rem color-mix(in srgb, var(--upload-tone) 11%, transparent);
+  transform: translateY(-2px);
+}
+
+#app .upload-studio-panel .upload-studio-zone-epub.upload-studio-loaded {
+  border-style: solid;
+}
+
+#app .upload-studio-panel .upload-studio-file.file-pill {
+  position: relative;
+  gap: .95rem;
+  padding: .93rem 1.08rem;
+  border-color: color-mix(in srgb, var(--upload-tone) 32%, var(--color-border));
+  background:
+    linear-gradient(115deg, color-mix(in srgb, var(--upload-tone) 8%, transparent), transparent 82%),
+    var(--color-surface);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-surface) 90%, transparent);
+  transition: border-color 260ms ease, box-shadow 260ms ease;
+}
+
+#app .upload-studio-panel .upload-studio-file-symbol {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--upload-tone) 37%, var(--color-border));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--upload-tone) 22%, transparent) 0 .28rem, transparent .28rem),
+    color-mix(in srgb, var(--upload-tone) 9%, var(--color-surface));
+}
+
+#app .upload-studio-panel .upload-studio-file-name {
+  max-width: 100%;
+  font-size: .91rem;
+  line-height: 1.4;
+}
+
+#app .upload-studio-panel .upload-studio-file-size {
+  border-color: color-mix(in srgb, var(--upload-tone) 19%, var(--color-border));
+  font-weight: 750;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .controls-copy {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: .38rem;
+  padding-bottom: .3rem;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .controls-copy .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: .68rem;
+  width: fit-content;
+  margin: 0 0 .12rem;
+  color: var(--studio-copper);
+  font-size: .69rem;
+  font-weight: 800;
+  letter-spacing: .105em;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .controls-copy .eyebrow::before {
+  width: 1.3rem;
+  height: 1px;
+  background: currentColor;
+  content: '';
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .controls-copy h2 {
+  max-width: 24ch;
+  margin: 0 0 .25rem;
+  font-size: clamp(1.55rem, 2.6vw, 2.22rem);
+  line-height: 1.19;
+  text-wrap: balance;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .controls-copy .muted {
+  max-width: 56ch;
+  margin: 0;
+  font-size: .88rem;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-steps {
+  gap: clamp(.56rem, 1vw, .82rem);
+  margin-top: .25rem;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step {
+  position: relative;
+  isolation: isolate;
+  padding: 1.12rem .82rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 14%, var(--color-border));
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--color-surface) 90%, var(--color-surface-2));
+  box-shadow: 0 .25rem .8rem color-mix(in srgb, var(--color-text) 3%, transparent);
+  transition: border-color 320ms ease, box-shadow 320ms ease,
+    background-color 320ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step::before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 3rem;
+  height: 2px;
+  border-radius: 0 0 999px 999px;
+  background: color-mix(in srgb, var(--color-accent) 21%, var(--color-border));
+  content: '';
+  transform: translateX(-50%) scaleX(.65);
+  transition: transform 350ms cubic-bezier(.16, 1, .3, 1), background-color 350ms ease;
+  pointer-events: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step-active {
+  border-color: color-mix(in srgb, var(--studio-copper) 38%, var(--color-border));
+  background: color-mix(in srgb, var(--studio-copper) 5%, var(--color-surface));
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step-active::before {
+  background: var(--studio-copper);
+  transform: translateX(-50%) scaleX(1);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step-done {
+  border-color: color-mix(in srgb, var(--color-success) 34%, var(--color-border));
+  background: color-mix(in srgb, var(--color-success) 5%, var(--color-surface));
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step-done::before {
+  background: var(--color-success);
+  transform: translateX(-50%) scaleX(1);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step .flow-step-number {
+  width: 2.7rem;
+  height: 2.7rem;
+  flex: 0 0 2.7rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 18%, var(--color-border));
+  box-shadow: 0 .28rem .72rem color-mix(in srgb, var(--color-text) 5%, transparent);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step-active .flow-step-number {
+  border-color: var(--studio-copper);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--studio-copper) 12%, transparent);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step-done .flow-step-number {
+  border-color: color-mix(in srgb, var(--color-success) 58%, var(--color-border));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-success) 9%, transparent);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step strong {
+  font-size: .83rem;
+  line-height: 1.4;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step small {
+  max-width: 24ch;
+  font-size: .72rem;
+  line-height: 1.48;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option {
+  margin: 0;
+  padding: 1rem 1.08rem;
+  border-color: color-mix(in srgb, var(--color-accent) 24%, var(--color-border));
+  border-radius: .95rem;
+  background:
+    linear-gradient(110deg, color-mix(in srgb, var(--color-accent) 6%, transparent), transparent 88%),
+    var(--color-surface);
+  transition: border-color 260ms ease, background-color 260ms ease,
+    box-shadow 260ms ease, transform 280ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option:has(input:checked) {
+  border-color: color-mix(in srgb, var(--color-accent) 36%, var(--color-border));
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option-copy strong {
+  font-size: .83rem;
+  line-height: 1.4;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option-copy small {
+  font-size: .72rem;
+  line-height: 1.55;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-chip {
+  font-size: .66rem;
+  letter-spacing: .025em;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .primary-action-row {
+  gap: .7rem;
+  margin: 0;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .primary-action-row .btn {
+  min-height: 3rem;
+  border-radius: .82rem;
+  font-weight: 800;
+  transition: transform 270ms cubic-bezier(.16, 1, .3, 1),
+    box-shadow 270ms ease, border-color 270ms ease, background-color 270ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools {
+  margin-top: 0;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--color-accent) 17%, var(--color-border));
+  border-radius: .98rem;
+  background: color-mix(in srgb, var(--color-surface) 93%, var(--color-surface-2));
+  transition: border-color 260ms ease, box-shadow 260ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools summary {
+  padding: 1.02rem 1.15rem;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools summary span {
+  font-size: .87rem;
+  color: var(--color-text);
+  line-height: 1.35;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools[open] {
+  border-color: color-mix(in srgb, var(--studio-copper) 35%, var(--color-border));
+  box-shadow: 0 .45rem 1rem color-mix(in srgb, var(--color-text) 4%, transparent);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools summary:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+  border-radius: .95rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .workspace-core > .upload-panel.upload-studio-panel:hover,
+  #app .layout#app-workspace .workspace-core > .controls-panel:hover {
+    border-color: color-mix(in srgb, var(--studio-copper) 28%, var(--color-border));
+    box-shadow:
+      0 1px 1px color-mix(in srgb, var(--color-text) 3%, transparent),
+      0 1.6rem 3.3rem color-mix(in srgb, var(--color-text) 8%, transparent);
+  }
+
+  #app .upload-studio-panel .upload-studio-zone-epub:not(.upload-studio-busy):hover .upload-studio-graphic::before {
+    transform: translate(-50%, -54%) rotate(12deg) scale(1.06);
+    border-color: color-mix(in srgb, var(--studio-copper) 36%, transparent);
+  }
+
+  #app .upload-studio-panel .upload-studio-zone-epub:not(.upload-studio-busy):hover .upload-studio-graphic-tag {
+    transform: translate(.16rem, -.16rem) rotate(3deg);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:hover::before {
+    transform: translateX(-50%) scaleX(1);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:hover {
+    box-shadow: 0 .45rem 1.05rem color-mix(in srgb, var(--color-text) 5%, transparent);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+    box-shadow: 0 .45rem 1rem color-mix(in srgb, var(--color-accent) 6%, transparent);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .primary-action-row .btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 .6rem 1.15rem color-mix(in srgb, var(--color-text) 10%, transparent);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 30%, var(--color-border));
+  }
+}
+
+@media (max-width: 760px) {
+  #app .layout#app-workspace .workspace-core > .upload-panel.upload-studio-panel,
+  #app .layout#app-workspace .workspace-core > .controls-panel {
+    box-shadow: 0 .7rem 1.8rem color-mix(in srgb, var(--color-text) 5%, transparent);
+  }
+
+  #app .upload-studio-panel .upload-studio-file.file-pill {
+    gap: .68rem;
+    padding: .8rem .85rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .controls-copy {
+    justify-items: center;
+    text-align: center;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .controls-copy .eyebrow {
+    margin-inline: auto;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .controls-copy .muted {
+    max-width: 48ch;
+    margin-inline: auto;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step {
+    min-height: 0;
+    padding: 1rem .85rem;
+  }
+}
+
+@media (max-width: 420px) {
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    padding: .85rem .9rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools summary {
+    padding: .95rem 1rem;
+  }
+
+  #app .upload-studio-panel .upload-studio-zone-epub .upload-studio-graphic::before {
+    width: 6.2rem;
+    height: 6.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .layout#app-workspace .workspace-core > .upload-panel.upload-studio-panel,
+  #app .layout#app-workspace .workspace-core > .controls-panel,
+  #app .upload-studio-panel .dropzone.upload-studio-zone-epub,
+  #app .upload-studio-panel .upload-studio-zone-epub .upload-studio-graphic::before,
+  #app .upload-studio-panel .upload-studio-zone-epub .upload-studio-sheet,
+  #app .upload-studio-panel .upload-studio-zone-epub .upload-studio-graphic-tag,
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step,
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step::before,
+  #app .layout#app-workspace .workspace-core .controls-panel .kindle-safe-main-option,
+  #app .layout#app-workspace .workspace-core .controls-panel .primary-action-row .btn,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools {
+    transition: none;
+  }
+
+  #app .upload-studio-panel .dropzone.upload-studio-zone-epub:is(:hover, :focus-visible, .dropzone-active),
+  #app .layout#app-workspace .workspace-core .controls-panel .primary-action-row .btn:not(:disabled):hover {
+    transform: none;
+  }
+}
