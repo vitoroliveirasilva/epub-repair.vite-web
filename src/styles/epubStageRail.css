@@ -1,4 +1,9 @@
 #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-rail {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  container: epub-stage-rail / inline-size;
   margin: .55rem 0 .15rem;
   padding: .37rem;
   border: 1px solid color-mix(in srgb, var(--color-accent) 15%, var(--color-border));
@@ -14,12 +19,14 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: .22rem;
   align-items: stretch;
+  width: 100%;
+  min-width: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-#app .layout#app-workspace .workspace-core .controls-panel .flow-step {
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item {
   --stage-tone: var(--color-text-muted);
   position: relative;
   isolation: isolate;
@@ -41,7 +48,7 @@
     box-shadow 320ms ease;
 }
 
-#app .layout#app-workspace .workspace-core .controls-panel .flow-step:not(:last-child)::after {
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item:not(:last-child)::after {
   position: absolute;
   z-index: 4;
   top: 50%;
@@ -55,7 +62,7 @@
   pointer-events: none;
 }
 
-#app .layout#app-workspace .workspace-core .controls-panel .flow-step::before {
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item::before {
   position: absolute;
   inset: auto .75rem .34rem;
   height: 2px;
@@ -69,7 +76,7 @@
   pointer-events: none;
 }
 
-#app .layout#app-workspace .workspace-core .controls-panel .flow-step-active {
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-active {
   --stage-tone: var(--studio-copper);
   z-index: 2;
   border-color: color-mix(in srgb, var(--studio-copper) 43%, var(--color-border));
@@ -84,18 +91,18 @@
   color: var(--color-text);
 }
 
-#app .layout#app-workspace .workspace-core .controls-panel .flow-step-active::before {
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-active::before {
   transform: scaleX(.82);
 }
 
-#app .layout#app-workspace .workspace-core .controls-panel .flow-step-done {
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-done {
   --stage-tone: var(--color-success);
   border-color: color-mix(in srgb, var(--color-success) 18%, var(--color-border));
   background: color-mix(in srgb, var(--color-success) 5%, var(--color-surface));
   color: var(--color-text);
 }
 
-#app .layout#app-workspace .workspace-core .controls-panel .flow-step .flow-step-number {
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item .epub-stage-item-number {
   display: grid;
   width: 2.35rem;
   height: 2.35rem;
@@ -117,19 +124,19 @@
     background-color 260ms ease, border-color 260ms ease;
 }
 
-#app .layout#app-workspace .workspace-core .controls-panel .flow-step-active .flow-step-number {
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-active .epub-stage-item-number {
   border-color: color-mix(in srgb, var(--studio-copper) 66%, var(--color-border));
   background: var(--studio-copper);
   color: #fffdf8;
 }
 
-#app .layout#app-workspace .workspace-core .controls-panel .flow-step-done .flow-step-number {
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-done .epub-stage-item-number {
   border-color: color-mix(in srgb, var(--color-success) 55%, var(--color-border));
   background: var(--color-success);
   color: #fffdf8;
 }
 
-#app .layout#app-workspace .workspace-core .controls-panel .flow-step-copy {
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-copy {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -140,7 +147,7 @@
   margin: 0;
 }
 
-#app .layout#app-workspace .workspace-core .controls-panel .flow-step strong {
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item strong {
   display: block;
   margin: 0;
   color: var(--color-text);
@@ -151,7 +158,7 @@
   text-align: left;
 }
 
-#app .layout#app-workspace .workspace-core .controls-panel .flow-step small {
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item small {
   display: block;
   max-width: 100%;
   margin: 0;
@@ -163,7 +170,7 @@
   text-wrap: pretty;
 }
 
-#app .layout#app-workspace .workspace-core .controls-panel .flow-step-status {
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-status {
   display: inline-flex;
   align-items: center;
   gap: .34rem;
@@ -175,7 +182,7 @@
   letter-spacing: .012em;
 }
 
-#app .layout#app-workspace .workspace-core .controls-panel .flow-step-status::before {
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-status::before {
   display: block;
   width: .31rem;
   height: .31rem;
@@ -185,12 +192,12 @@
   content: '';
 }
 
-#app .layout#app-workspace .workspace-core .controls-panel .flow-step-done .flow-step-status {
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-done .epub-stage-item-status {
   color: var(--color-accent-strong);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:hover {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item:hover {
     transform: translateY(-2px);
     border-color: color-mix(in srgb, var(--stage-tone) 32%, var(--color-border));
     box-shadow:
@@ -198,30 +205,73 @@
       inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent);
   }
 
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:hover::before {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item:hover::before {
     transform: scaleX(1);
   }
 
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:hover .flow-step-number {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item:hover .epub-stage-item-number {
     transform: translateY(-1px) scale(1.045);
   }
 }
 
+@container epub-stage-rail (max-width: 600px) {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: .42rem;
+    min-height: 7.3rem;
+    padding: .75rem .65rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-copy {
+    gap: .13rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item strong {
+    font-size: .85rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item small {
+    font-size: .67rem;
+  }
+}
+
+@container epub-stage-rail (max-width: 400px) {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-track {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .28rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item {
+    flex-direction: row;
+    align-items: center;
+    min-height: 4.7rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item:not(:last-child)::after {
+    top: auto;
+    right: 50%;
+    bottom: -.33rem;
+    transform: translateX(50%) rotate(135deg);
+  }
+}
+
 @media (max-width: 970px) and (min-width: 681px) {
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item {
     gap: .42rem;
     min-height: 6.35rem;
     padding: .68rem .53rem;
   }
 
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step .flow-step-number {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item .epub-stage-item-number {
     width: 2rem;
     height: 2rem;
     flex-basis: 2rem;
     font-size: .85rem;
   }
 
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step strong {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item strong {
     font-size: .85rem;
   }
 }
@@ -236,43 +286,45 @@
     gap: .28rem;
   }
 
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item {
+    flex-direction: row;
+    align-items: center;
     min-height: 4.7rem;
     padding: .64rem .85rem;
     gap: .7rem;
   }
 
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:not(:last-child)::after {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item:not(:last-child)::after {
     top: auto;
     right: 50%;
     bottom: -.33rem;
     transform: translateX(50%) rotate(135deg);
   }
 
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step .flow-step-number {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item .epub-stage-item-number {
     width: 2.12rem;
     height: 2.12rem;
     flex-basis: 2.12rem;
   }
 
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step-copy {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-copy {
     gap: .06rem;
   }
 
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step-status {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-status {
     margin-top: .14rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step,
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step::before,
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step-number {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item,
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item::before,
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item-number {
     transition: none;
   }
 
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:hover,
-  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:hover .flow-step-number {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item:hover,
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-item:hover .epub-stage-item-number {
     transform: none;
   }
 }

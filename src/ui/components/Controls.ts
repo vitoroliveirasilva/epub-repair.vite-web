@@ -71,7 +71,7 @@ export function renderControls(
         ],
       }),
       el('nav', {
-        className: 'flow-steps epub-stage-rail',
+        className: 'epub-stage-rail',
         attrs: { 'aria-label': 'Etapas do reparo do EPUB' },
         children: [
           el('ol', { className: 'epub-stage-track', children: [
@@ -315,15 +315,15 @@ function renderFlowStep(
   const statusText = statusOverride ??
     (state.done ? 'Concluída' : state.active ? 'Etapa atual' : 'Próxima');
   return el('li', {
-    className: `flow-step flow-step-${status}`,
+    className: `epub-stage-item epub-stage-item-${status}`,
     attrs: state.active ? { 'aria-current': 'step' } : {},
     children: [
-      el('span', { className: 'flow-step-number', text: number,
+      el('span', { className: 'epub-stage-item-number', text: number,
         attrs: { 'aria-hidden': 'true' } }),
-      el('span', { className: 'flow-step-copy', children: [
+      el('span', { className: 'epub-stage-item-copy', children: [
         el('strong', { text: title }),
         el('small', { text: detail }),
-        el('span', { className: 'flow-step-status', text: statusText }),
+        el('span', { className: 'epub-stage-item-status', text: statusText }),
       ] }),
     ],
   });

@@ -72,22 +72,32 @@ describe('Estúdio de restauração e escolha de modo', () => {
     createApp(root);
 
     const steps = Array.from(root.querySelectorAll<HTMLElement>(
-      '.workspace-core .controls-panel .flow-step'));
+      '.workspace-core .controls-panel .epub-stage-item'));
     expect(steps).toHaveLength(3);
     expect(steps.map((item) => item.querySelector('strong')?.textContent))
       .toEqual(['Verificar', 'Corrigir', 'Baixar']);
-    expect(steps.map((item) => item.querySelector('.flow-step-number')?.textContent))
+    expect(steps.map((item) => item.querySelector('.epub-stage-item-number')?.textContent))
       .toEqual(['1', '2', '3']);
     expect(steps.map((item) => item.querySelector('small')?.textContent))
       .toEqual(['Selecione um EPUB', 'Reparos e ajustes', 'Cópia final']);
-    expect(steps[0]?.classList.contains('flow-step-active')).toBe(true);
+    expect(steps[0]?.classList.contains('epub-stage-item-active')).toBe(true);
     expect(steps[0]?.getAttribute('aria-current')).toBe('step');
-    expect(steps.slice(1).every((item) => item.classList.contains('flow-step-pending')))
+    expect(steps.slice(1).every((item) => item.classList.contains('epub-stage-item-pending')))
       .toBe(true);
-    expect(steps[0]?.querySelector('.flow-step-status')?.textContent).toBe('Comece aqui');
-    expect(steps.every((item) => item.querySelector('.flow-step-number')?.textContent !== '✓'))
+    expect(steps[0]?.querySelector('.epub-stage-item-status')?.textContent).toBe('Comece aqui');
+    expect(steps.every((item) => item.querySelector('.epub-stage-item-number')?.textContent !== '✓'))
       .toBe(true);
     expect(root.querySelectorAll('.flow-step-book, .flow-step-visual-glyph')).toHaveLength(0);
+    const rail = root.querySelector<HTMLElement>('nav.epub-stage-rail');
+    const track = rail?.querySelector('ol.epub-stage-track');
+    expect(rail).not.toBeNull();
+    expect(track?.parentElement).toBe(rail);
+    expect(track?.children).toHaveLength(3);
+    expect(root.querySelector('.flow-steps, .flow-step')).toBeNull();
+    const styles = readFileSync('src/styles/epubStageRail.css', 'utf8');
+    expect(styles).toContain('display: block;');
+    expect(styles).toContain('container: epub-stage-rail / inline-size;');
+    expect(styles).not.toContain('.flow-step');
   });
   it('mantém o desenho preso à folha animada nos uploads EPUB, PDF e imagem da capa', () => {
     const epubRoot = document.createElement('div');
