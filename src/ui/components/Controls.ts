@@ -327,13 +327,24 @@ function renderFlowStep(
   state: { active: boolean; done: boolean },
 ): HTMLElement {
   const status = state.done ? 'done' : state.active ? 'active' : 'pending';
+  const statusText = state.done
+    ? number === '3' ? 'Pronto para baixar' : 'Concluída'
+    : state.active ? 'Etapa atual' : 'A seguir';
   return el('article', {
     className: `flow-step flow-step-${status}`,
     children: [
-      el('span', { className: 'flow-step-number', text: state.done ? '✓' : number }),
-      el('div', {
-        children: [el('strong', { text: title }), el('small', { text: description })],
-      }),
+      el('div', { className: 'flow-step-heading', children: [
+        el('span', { className: 'flow-step-number',
+          text: state.done ? '✓' : number,
+          attrs: { 'aria-hidden': 'true' } }),
+        el('span', { className: 'flow-step-status', text: statusText }),
+      ] }),
+      el('div', { className: 'flow-step-copy', children: [
+        el('strong', { text: title }),
+        el('small', { text: description }),
+      ] }),
+      el('span', { className: 'flow-step-progress',
+        attrs: { 'aria-hidden': 'true' } }),
     ],
   });
 }
