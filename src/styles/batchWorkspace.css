@@ -13,7 +13,7 @@
   height: auto;
   margin: 0;
   padding: clamp(1.35rem, 2.7vw, 2.35rem);
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--batch-line);
   border-radius: clamp(1.18rem, 2vw, 1.65rem);
   background:
