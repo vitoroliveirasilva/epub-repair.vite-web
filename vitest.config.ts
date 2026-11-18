@@ -33,6 +33,7 @@ encodingRewrite99
 epub-audit-132-149
 epub-audit-150-157
 epub-audit-upload-137
+epubFileCoverThumbnail
 epub-fourth-wave
 epub-third-wave-core
 epub-third-wave-cover
