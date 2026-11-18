@@ -1047,6 +1047,34 @@ function renderBatch(
     children: [uploadSide, aside] });
 }
 
+function renderWorkbenchBookIcon(): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.classList.add('workbench-book-mark');
+  svg.setAttribute('viewBox', '0 0 64 64');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+
+  const paths: Array<[string, string]> = [
+    ['M32 19c-6.6-5.1-14.8-6.4-24.5-4v33c9.7-2.4 17.9-1.2 24.5 4 6.6-5.2 14.8-6.4 24.5-4V15c-9.7-2.4-17.9-1.1-24.5 4Z', 'workbench-book-outline'],
+    ['M32 19v33', 'workbench-book-center'],
+    ['M14 24c4.3-.2 8.2.4 11.5 2.3', 'workbench-book-detail'],
+    ['M14 32c4.3-.2 8.2.4 11.5 2.3', 'workbench-book-detail'],
+    ['M38.5 26.3c3.3-1.9 7.2-2.5 11.5-2.3', 'workbench-book-detail'],
+    ['M38.5 34.3c3.3-1.9 7.2-2.5 11.5-2.3', 'workbench-book-detail'],
+  ];
+
+  for (const [d, className] of paths) {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('class', className);
+    svg.append(path);
+  }
+  return svg;
+}
+
 export function renderOptionalEpubTools(state: AppState, rerender: () => void, enqueue: Queue): HTMLElement {
   const s = sessionFor(state);
   const details = el('details', {
@@ -1057,12 +1085,7 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
         el('span', { className: 'workbench-header-art', attrs: { 'aria-hidden': 'true' },
           children: [
             el('span', { className: 'workbench-header-orbit' }),
-            el('span', { className: 'workbench-book-mark', children: [
-              el('span', { className: 'workbench-book-left' }),
-              el('span', { className: 'workbench-book-right' }),
-              el('span', { className: 'workbench-book-spine' }),
-            ] }),
-            el('span', { className: 'workbench-header-stamp' }),
+            renderWorkbenchBookIcon(),
           ],
         }),
         el('span', { className: 'optional-studio-heading workbench-heading', children: [

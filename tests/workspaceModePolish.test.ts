@@ -221,12 +221,13 @@ describe('Estúdio de restauração e escolha de modo', () => {
     const artwork = summary.querySelector('.workbench-header-art')!;
     expect(artwork.getAttribute('aria-hidden')).toBe('true');
     expect(artwork.querySelector('.workbench-header-orbit')).not.toBeNull();
-    expect(artwork.querySelector('.workbench-header-stamp')).not.toBeNull();
-    const icon = artwork.querySelector('.workbench-book-mark')!;
-    expect(icon.textContent).toBe('');
-    expect(icon.querySelectorAll('.workbench-book-left, .workbench-book-right'))
-      .toHaveLength(2);
-    expect(icon.querySelector('.workbench-book-spine')).not.toBeNull();
+    expect(artwork.querySelector('.workbench-header-stamp')).toBeNull();
+    const icon = artwork.querySelector('svg.workbench-book-mark')!;
+    expect(icon).not.toBeNull();
+    expect(icon.getAttribute('viewBox')).toBe('0 0 64 64');
+    expect(icon.getAttribute('aria-hidden')).toBe('true');
+    expect(icon.querySelectorAll('path')).toHaveLength(6);
+    expect(icon.querySelectorAll('.workbench-book-detail')).toHaveLength(4);
     expect(summary.querySelector('.optional-studio-eyebrow')?.textContent)
       .toBe('RECURSOS COMPLEMENTARES');
     expect(summary.querySelector('.workbench-heading-count')?.textContent)
@@ -433,6 +434,9 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(workbench).toContain('summary.workbench-heading-row');
     expect(workbench).toContain('workbench-header-orbit');
     expect(workbench).toContain('workbench-heading-count');
+    expect(workbench).not.toContain('workbench-header-stamp');
+    expect(workbench).toContain('left: 53%');
+    expect(workbench).toContain('transform: translate(-50%, 0) rotate(0deg)');
     expect(workbench).toContain('grid-template-columns: repeat(3, minmax(0, 1fr))');
     expect(workbench).toContain('workbench-toggle-icon');
     expect(workbench).toContain('workbench-navigation .optional-studio-tab-active.btn::before');

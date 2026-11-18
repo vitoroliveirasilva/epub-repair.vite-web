@@ -66,78 +66,30 @@
 }
 
 #app .optional-workbench .workbench-book-mark {
-  position: relative;
   display: block;
   width: 4.55rem;
-  height: 4.45rem;
-  margin: 0;
-  border: 0;
-  background: none;
-  box-shadow: none;
+  height: 4.55rem;
+  overflow: visible;
+  color: var(--color-accent-strong);
+  filter: drop-shadow(0 .3rem .38rem color-mix(in srgb, var(--color-accent) 9%, transparent));
+  transform: translateY(0) rotate(0deg);
   transform-origin: center;
+  transition: transform 530ms cubic-bezier(.16, 1, .3, 1), filter 400ms ease;
 }
 
-#app .optional-workbench .workbench-book-left,
-#app .optional-workbench .workbench-book-right {
-  position: absolute;
-  top: .97rem;
-  width: 1.85rem;
-  height: 2.35rem;
-  border: 1.6px solid var(--color-accent-strong);
-  background: var(--color-surface);
-  box-shadow: 0 .5rem .9rem color-mix(in srgb, var(--color-accent) 10%, transparent);
-  transition: rotate 550ms cubic-bezier(.16, 1, .3, 1),
-    translate 550ms cubic-bezier(.16, 1, .3, 1), box-shadow 440ms ease;
+#app .optional-workbench .workbench-book-outline {
+  stroke: currentColor;
+  stroke-width: 2.35;
 }
 
-#app .optional-workbench .workbench-book-left {
-  left: .31rem;
-  border-radius: .6rem .15rem .15rem .4rem;
-  rotate: -9deg;
-  transform-origin: right bottom;
+#app .optional-workbench .workbench-book-center {
+  stroke: var(--studio-copper);
+  stroke-width: 2.4;
 }
 
-#app .optional-workbench .workbench-book-right {
-  right: .31rem;
-  border-radius: .15rem .6rem .4rem .15rem;
-  rotate: 9deg;
-  transform-origin: left bottom;
-}
-
-#app .optional-workbench .workbench-book-left::before,
-#app .optional-workbench .workbench-book-right::before {
-  position: absolute;
-  top: .7rem;
-  left: .29rem;
-  right: .25rem;
-  height: .87rem;
-  background: repeating-linear-gradient(180deg,
-    color-mix(in srgb, var(--color-accent) 45%, transparent) 0 1px,
-    transparent 1px 7px);
-  content: '';
-}
-
-#app .optional-workbench .workbench-book-spine {
-  position: absolute;
-  top: 1.01rem;
-  bottom: 1.06rem;
-  left: calc(50% - .85px);
-  width: 1.7px;
-  border-radius: 999px;
-  background: var(--studio-copper);
-}
-
-#app .optional-workbench .workbench-header-stamp {
-  position: absolute;
-  right: .39rem;
-  bottom: .76rem;
-  width: .8rem;
-  height: 1.3rem;
-  background: var(--studio-copper);
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
-  rotate: 12deg;
-  transition: rotate 470ms cubic-bezier(.16, 1, .3, 1),
-    translate 470ms cubic-bezier(.16, 1, .3, 1);
+#app .optional-workbench .workbench-book-detail {
+  stroke: color-mix(in srgb, var(--color-accent) 60%, var(--color-text-muted));
+  stroke-width: 1.7;
 }
 
 #app .optional-workbench .workbench-heading {
@@ -279,19 +231,9 @@
     border-color: color-mix(in srgb, var(--color-accent) 43%, var(--color-border));
   }
 
-  #app .optional-workbench > summary:hover .workbench-book-left {
-    rotate: -17deg;
-    translate: -.2rem -.13rem;
-  }
-
-  #app .optional-workbench > summary:hover .workbench-book-right {
-    rotate: 17deg;
-    translate: .2rem -.13rem;
-  }
-
-  #app .optional-workbench > summary:hover .workbench-header-stamp {
-    rotate: -7deg;
-    translate: 0 -.16rem;
+  #app .optional-workbench > summary:hover .workbench-book-mark {
+    transform: translateY(-.17rem) rotate(-3deg);
+    filter: drop-shadow(0 .5rem .55rem color-mix(in srgb, var(--color-accent) 14%, transparent));
   }
 
   #app .optional-workbench > summary:hover .workbench-toggle-icon {
@@ -328,10 +270,6 @@
     scale: .8;
   }
 
-  #app .optional-workbench .workbench-header-stamp {
-    right: .2rem;
-    bottom: .42rem;
-  }
 }
 
 @media (max-width: 630px) {
@@ -350,14 +288,8 @@
 
   #app .optional-workbench .workbench-header-orbit { inset: .14rem; }
   #app .optional-workbench .workbench-book-mark { scale: .58; }
-  #app .optional-workbench .workbench-header-stamp {
-    width: .45rem;
-    height: .75rem;
-    right: .05rem;
-    bottom: .24rem;
-  }
 
-  #app .optional-workbench .workbench-heading { gap: .32rem; }
+#app .optional-workbench .workbench-heading { gap: .32rem; }
   #app .optional-workbench .workbench-heading-eyebrow-row { gap: .28rem .45rem; }
   #app .optional-workbench .workbench-heading .optional-studio-eyebrow {
     font-size: .56rem;
@@ -401,8 +333,8 @@
     flex-basis: 2.75rem;
   }
   #app .optional-workbench .workbench-book-mark { scale: .47; }
-  #app .optional-workbench .workbench-header-stamp { display: none; }
-  #app .optional-workbench .workbench-toggle-icon {
+
+#app .optional-workbench .workbench-toggle-icon {
     width: 2rem;
     height: 2rem;
     flex-basis: 2rem;
@@ -416,9 +348,7 @@
 @media (prefers-reduced-motion: reduce) {
   #app .optional-workbench .workbench-header-art,
   #app .optional-workbench .workbench-header-orbit,
-  #app .optional-workbench .workbench-book-left,
-  #app .optional-workbench .workbench-book-right,
-  #app .optional-workbench .workbench-header-stamp,
+
   #app .optional-workbench .workbench-heading,
   #app .optional-workbench .workbench-toggle-icon,
   #app .optional-workbench .workbench-disclosure-label {
@@ -851,7 +781,8 @@
 #app .layout#app-workspace .optional-workbench .workbench-navigation .optional-studio-tab.btn::before {
   position: absolute;
   top: 0;
-  right: clamp(.35rem, 1vw, 1.05rem);
+  left: 53%;
+  right: auto;
   z-index: 0;
   display: block;
   width: .78rem;
@@ -864,7 +795,7 @@
   content: '';
   pointer-events: none;
   opacity: 0;
-  transform: translateY(-.68rem) rotate(-8deg);
+  transform: translate(-50%, -.68rem) rotate(-8deg);
   transform-origin: center top;
   transition:
     opacity 260ms ease,
@@ -873,7 +804,7 @@
 
 #app .layout#app-workspace .optional-workbench .workbench-navigation .optional-studio-tab-active.btn::before {
   opacity: 1;
-  transform: translateY(0) rotate(0deg);
+  transform: translate(-50%, 0) rotate(0deg);
 }
 
 #app .optional-workbench .workbench-navigation .workbench-tab-number {
@@ -1014,7 +945,8 @@
   }
 
 #app .layout#app-workspace .optional-workbench .workbench-navigation .optional-studio-tab.btn::before {
-    right: .18rem;
+    left: 53%;
+    right: auto;
     width: .5rem;
     height: .95rem;
   }
