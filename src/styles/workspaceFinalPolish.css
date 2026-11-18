@@ -447,6 +447,11 @@
   }
 }
 
+:root[data-theme="dark"] #app .upload-studio-panel .upload-studio-zone-epub.upload-studio-loaded .upload-studio-action {
+  color: #152c21;
+  border-color: color-mix(in srgb, var(--upload-tone-dark) 75%, var(--upload-tone));
+}
+
 @media (max-width: 760px) {
   #app .layout#app-workspace .workspace-core > .upload-panel.upload-studio-panel,
   #app .layout#app-workspace .workspace-core > .controls-panel {
