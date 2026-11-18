@@ -1053,17 +1053,23 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
     className: 'panel optional-tools optional-studio optional-workbench',
     attrs: { id: 'optional-tools' },
     children: [
-      el('summary', { children: [
-        el('span', { className: 'workbench-book-mark', attrs: { 'aria-hidden': 'true' },
+      el('summary', { className: 'workbench-heading-row', children: [
+        el('span', { className: 'workbench-header-art', attrs: { 'aria-hidden': 'true' },
           children: [
-            el('span', { className: 'workbench-book-left' }),
-            el('span', { className: 'workbench-book-right' }),
-            el('span', { className: 'workbench-book-spine' }),
+            el('span', { className: 'workbench-header-orbit' }),
+            el('span', { className: 'workbench-book-mark', children: [
+              el('span', { className: 'workbench-book-left' }),
+              el('span', { className: 'workbench-book-right' }),
+              el('span', { className: 'workbench-book-spine' }),
+            ] }),
+            el('span', { className: 'workbench-header-stamp' }),
           ],
         }),
         el('span', { className: 'optional-studio-heading workbench-heading', children: [
-          el('span', { className: 'optional-studio-eyebrow',
-            text: 'RECURSOS COMPLEMENTARES / 03 FERRAMENTAS' }),
+          el('span', { className: 'workbench-heading-eyebrow-row', children: [
+            el('span', { className: 'optional-studio-eyebrow', text: 'RECURSOS COMPLEMENTARES' }),
+            el('span', { className: 'workbench-heading-count', text: '03 FERRAMENTAS' }),
+          ] }),
           el('strong', { text: 'Ferramentas extras' }),
           el('small', { text: 'Leia, compare versões e edite metadados.' }),
         ] }),

@@ -216,12 +216,23 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(tools.open).toBe(false);
     expect(tools.querySelector('.optional-studio-heading')?.textContent).not.toContain('lote');
     expect(tools.querySelectorAll('.optional-studio-tab')).toHaveLength(3);
-    const icon = tools.querySelector('.workbench-book-mark')!;
-    expect(icon.getAttribute('aria-hidden')).toBe('true');
+    const summary = tools.querySelector('summary.workbench-heading-row')!;
+    expect(summary).not.toBeNull();
+    const artwork = summary.querySelector('.workbench-header-art')!;
+    expect(artwork.getAttribute('aria-hidden')).toBe('true');
+    expect(artwork.querySelector('.workbench-header-orbit')).not.toBeNull();
+    expect(artwork.querySelector('.workbench-header-stamp')).not.toBeNull();
+    const icon = artwork.querySelector('.workbench-book-mark')!;
     expect(icon.textContent).toBe('');
     expect(icon.querySelectorAll('.workbench-book-left, .workbench-book-right'))
       .toHaveLength(2);
     expect(icon.querySelector('.workbench-book-spine')).not.toBeNull();
+    expect(summary.querySelector('.optional-studio-eyebrow')?.textContent)
+      .toBe('RECURSOS COMPLEMENTARES');
+    expect(summary.querySelector('.workbench-heading-count')?.textContent)
+      .toBe('03 FERRAMENTAS');
+    expect(summary.querySelector('.workbench-heading strong')?.textContent)
+      .toBe('Ferramentas extras');
     expect(tools.classList.contains('optional-workbench')).toBe(true);
     expect(tools.querySelector('.workbench-navigation')).not.toBeNull();
     expect(tools.querySelectorAll('.workbench-tab-number')).toHaveLength(3);
@@ -419,6 +430,9 @@ describe('Estúdio de restauração e escolha de modo', () => {
     const css = (file: string): string => readFileSync(
       new URL('../src/styles/' + file, import.meta.url), 'utf8');
     const workbench = css('optionalWorkbench.css');
+    expect(workbench).toContain('summary.workbench-heading-row');
+    expect(workbench).toContain('workbench-header-orbit');
+    expect(workbench).toContain('workbench-heading-count');
     expect(workbench).toContain('grid-template-columns: repeat(3, minmax(0, 1fr))');
     expect(workbench).toContain('workbench-toggle-icon');
     expect(workbench).toContain('workbench-navigation .optional-studio-tab-active.btn::before');
