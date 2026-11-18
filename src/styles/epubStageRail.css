@@ -1,0 +1,278 @@
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-rail {
+  margin: .55rem 0 .15rem;
+  padding: .37rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 15%, var(--color-border));
+  border-radius: 1.16rem;
+  background: color-mix(in srgb, var(--color-surface-2) 65%, var(--color-surface));
+  box-shadow:
+    inset 0 1px 2px color-mix(in srgb, var(--color-text) 4%, transparent),
+    0 .26rem .85rem color-mix(in srgb, var(--color-text) 3%, transparent);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .epub-stage-track {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .22rem;
+  align-items: stretch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step {
+  --stage-tone: var(--color-text-muted);
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: clamp(.48rem, 1vw, .86rem);
+  min-width: 0;
+  min-height: 6rem;
+  padding: .77rem clamp(.62rem, 1.1vw, .96rem);
+  border: 1px solid transparent;
+  border-radius: .88rem;
+  background: color-mix(in srgb, var(--color-surface) 76%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 17%, transparent);
+  color: var(--color-text-muted);
+  text-align: left;
+  transition:
+    transform 320ms cubic-bezier(.16, 1, .3, 1),
+    border-color 280ms ease,
+    box-shadow 320ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step:not(:last-child)::after {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  right: -.36rem;
+  width: .53rem;
+  height: .53rem;
+  border-top: 1.7px solid color-mix(in srgb, var(--color-accent) 42%, var(--color-border));
+  border-right: 1.7px solid color-mix(in srgb, var(--color-accent) 42%, var(--color-border));
+  content: '';
+  transform: translateY(-50%) rotate(45deg);
+  pointer-events: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step::before {
+  position: absolute;
+  inset: auto .75rem .34rem;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--stage-tone);
+  content: '';
+  opacity: .7;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 400ms cubic-bezier(.16, 1, .3, 1);
+  pointer-events: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step-active {
+  --stage-tone: var(--studio-copper);
+  z-index: 2;
+  border-color: color-mix(in srgb, var(--studio-copper) 43%, var(--color-border));
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--studio-copper) 8%, transparent),
+      transparent 75%),
+    var(--color-surface);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 32%, transparent),
+    0 .15rem .65rem color-mix(in srgb, var(--studio-copper) 7%, transparent);
+  color: var(--color-text);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step-active::before {
+  transform: scaleX(.82);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step-done {
+  --stage-tone: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 18%, var(--color-border));
+  background: color-mix(in srgb, var(--color-success) 5%, var(--color-surface));
+  color: var(--color-text);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step .flow-step-number {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 2.35rem;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 21%, var(--color-border));
+  border-radius: .72rem;
+  background: var(--color-surface);
+  box-shadow: 0 .15rem .35rem color-mix(in srgb, var(--color-text) 4%, transparent);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: .92rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -.035em;
+  transition: transform 320ms cubic-bezier(.16, 1, .3, 1),
+    background-color 260ms ease, border-color 260ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step-active .flow-step-number {
+  border-color: color-mix(in srgb, var(--studio-copper) 66%, var(--color-border));
+  background: var(--studio-copper);
+  color: #fffdf8;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step-done .flow-step-number {
+  border-color: color-mix(in srgb, var(--color-success) 55%, var(--color-border));
+  background: var(--color-success);
+  color: #fffdf8;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step-copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: .13rem;
+  min-width: 0;
+  margin: 0;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step strong {
+  display: block;
+  margin: 0;
+  color: var(--color-text);
+  font-size: clamp(.86rem, 1.1vw, .99rem);
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -.022em;
+  text-align: left;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step small {
+  display: block;
+  max-width: 100%;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: .69rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
+  text-wrap: pretty;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step-status {
+  display: inline-flex;
+  align-items: center;
+  gap: .34rem;
+  margin-top: .22rem;
+  color: var(--stage-tone);
+  font-size: .61rem;
+  font-weight: 760;
+  line-height: 1.3;
+  letter-spacing: .012em;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step-status::before {
+  display: block;
+  width: .31rem;
+  height: .31rem;
+  flex: 0 0 .31rem;
+  border-radius: 50%;
+  background: var(--stage-tone);
+  content: '';
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .flow-step-done .flow-step-status {
+  color: var(--color-accent-strong);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--stage-tone) 32%, var(--color-border));
+    box-shadow:
+      0 .4rem .9rem color-mix(in srgb, var(--color-text) 7%, transparent),
+      inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:hover::before {
+    transform: scaleX(1);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:hover .flow-step-number {
+    transform: translateY(-1px) scale(1.045);
+  }
+}
+
+@media (max-width: 970px) and (min-width: 681px) {
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step {
+    gap: .42rem;
+    min-height: 6.35rem;
+    padding: .68rem .53rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step .flow-step-number {
+    width: 2rem;
+    height: 2rem;
+    flex-basis: 2rem;
+    font-size: .85rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step strong {
+    font-size: .85rem;
+  }
+}
+
+@media (max-width: 680px) {
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-rail {
+    padding: .34rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .epub-stage-track {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .28rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step {
+    min-height: 4.7rem;
+    padding: .64rem .85rem;
+    gap: .7rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:not(:last-child)::after {
+    top: auto;
+    right: 50%;
+    bottom: -.33rem;
+    transform: translateX(50%) rotate(135deg);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step .flow-step-number {
+    width: 2.12rem;
+    height: 2.12rem;
+    flex-basis: 2.12rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step-copy {
+    gap: .06rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step-status {
+    margin-top: .14rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step,
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step::before,
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step-number {
+    transition: none;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:hover,
+  #app .layout#app-workspace .workspace-core .controls-panel .flow-step:hover .flow-step-number {
+    transform: none;
+  }
+}

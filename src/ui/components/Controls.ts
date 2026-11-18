@@ -70,37 +70,21 @@ export function renderControls(
             : undefined,
         ],
       }),
-      el('div', {
-        className: 'flow-steps',
-        attrs: { 'aria-label': 'Etapas principais' },
+      el('nav', {
+        className: 'flow-steps epub-stage-rail',
+        attrs: { 'aria-label': 'Etapas do reparo do EPUB' },
         children: [
-          renderFlowStep(
-            '1',
-            'Verificar',
-            'Encontrar problemas de estrutura, capa, sumário e Kindle',
-            {
-              active: hasFile && !hasReport,
-              done: hasReport,
-            },
-          ),
-          renderFlowStep(
-            '2',
-            'Corrigir, otimizar ou trocar capa',
-            'Gerar uma nova cópia somente quando houver mudança real',
-            {
-              active: hasReport && !hasRepair,
-              done: hasRepair,
-            },
-          ),
-          renderFlowStep(
-            '3',
-            'Baixar',
-            'Salvar o EPUB alterado e se quiser, o relatório técnico',
-            {
-              active: hasRepair,
-              done: hasRepair,
-            },
-          ),
+          el('ol', { className: 'epub-stage-track', children: [
+            renderFlowStep('1', 'Verificar',
+              hasFile ? 'Estrutura e capa' : 'Selecione um EPUB',
+              { active: !hasReport, done: hasReport },
+              !hasFile ? 'Comece aqui' : undefined),
+            renderFlowStep('2', 'Corrigir', 'Reparos e ajustes',
+              { active: hasReport && !hasRepair, done: hasRepair }),
+            renderFlowStep('3', 'Baixar', 'Cópia final',
+              { active: hasRepair, done: false },
+              hasRepair ? 'Pronto para baixar' : undefined),
+          ] }),
         ],
       }),
       renderKindleSafeOption(state, actions.onKindleSafeChange),
@@ -323,86 +307,26 @@ function formatCount(count: number, singular: string, plural: string): string {
 function renderFlowStep(
   number: string,
   title: string,
-  description: string,
+  detail: string,
   state: { active: boolean; done: boolean },
+  statusOverride?: string,
 ): HTMLElement {
   const status = state.done ? 'done' : state.active ? 'active' : 'pending';
-  const statusText = state.done
-    ? number === '3' ? 'Pronto para baixar' : 'Concluída'
-    : state.active ? 'Etapa atual' : 'A seguir';
-  const kicker = number === '1'
-    ? 'INSPEÇÃO DETALHADA'
-    : number === '2' ? 'REPARO SEGURO' : 'SUA NOVA CÓPIA';
-
-  return el('article', {
-    className: `flow-step flow-step-${number} flow-step-${status}`,
+  const statusText = statusOverride ??
+    (state.done ? 'Concluída' : state.active ? 'Etapa atual' : 'Próxima');
+  return el('li', {
+    className: `flow-step flow-step-${status}`,
+    attrs: state.active ? { 'aria-current': 'step' } : {},
     children: [
-      el('span', { className: 'flow-step-number',
-        text: number.padStart(2, '0'),
+      el('span', { className: 'flow-step-number', text: number,
         attrs: { 'aria-hidden': 'true' } }),
-      el('span', { className: 'flow-step-visual', attrs: { 'aria-hidden': 'true' },
-        children: [
-          el('span', { className: 'flow-step-orbit' }),
-          el('span', { className: 'flow-step-book', children: [
-            el('span', { className: 'flow-step-book-pages' }),
-            el('span', { className: 'flow-step-book-cover', children: [
-              el('span', { className: 'flow-step-book-ornament' }),
-            ] }),
-          ] }),
-          el('span', { className: 'flow-step-visual-glyph',
-            children: [workflowStepGlyph(number)] }),
-        ],
-      }),
-      el('div', { className: 'flow-step-content', children: [
-        el('span', { className: 'flow-step-kicker', text: kicker }),
+      el('span', { className: 'flow-step-copy', children: [
         el('strong', { text: title }),
-        el('small', { text: description }),
-      ] }),
-      el('div', { className: 'flow-step-bottom', children: [
-        el('span', { className: 'flow-step-bottom-status', text: statusText }),
-        el('span', { className: 'flow-step-bottom-detail',
-          attrs: { 'aria-hidden': 'true' } }),
+        el('small', { text: detail }),
+        el('span', { className: 'flow-step-status', text: statusText }),
       ] }),
     ],
   });
-}
-
-function workflowStepGlyph(number: string): SVGSVGElement {
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '1.8');
-  svg.setAttribute('stroke-linecap', 'round');
-  svg.setAttribute('stroke-linejoin', 'round');
-  svg.setAttribute('class', 'flow-step-glyph');
-  svg.setAttribute('focusable', 'false');
-  svg.setAttribute('aria-hidden', 'true');
-
-  const paths: Record<string, string[]> = {
-    '1': [
-      'M10.4 17.9a6.4 6.4 0 1 0 0-12.8 6.4 6.4 0 0 0 0 12.8Z',
-      'm15.1 15.1 4.4 4.4',
-      'M8.2 11.5h4.4',
-    ],
-    '2': [
-      'm4.5 16.8-.8 3.5 3.5-.8L19 7.7a2.1 2.1 0 0 0-3-3L4.5 16.8Z',
-      'm13.6 7.2 3.2 3.2',
-      'm5 20 2.2-.5',
-    ],
-    '3': [
-      'M12 3.5v10.5',
-      'm7.7 10.3 4.3 4.3 4.3-4.3',
-      'M4.2 16.7V19a2 2 0 0 0 2 2h11.6a2 2 0 0 0 2-2v-2.3',
-    ],
-  };
-  for (const d of paths[number] ?? []) {
-    const path = document.createElementNS(ns, 'path');
-    path.setAttribute('d', d);
-    svg.append(path);
-  }
-  return svg;
 }
 
 function technicalReportGlyph(kind: 'report' | 'copy' | 'txt' | 'json'): SVGSVGElement {

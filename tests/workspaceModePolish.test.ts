@@ -75,11 +75,19 @@ describe('Estúdio de restauração e escolha de modo', () => {
       '.workspace-core .controls-panel .flow-step'));
     expect(steps).toHaveLength(3);
     expect(steps.map((item) => item.querySelector('strong')?.textContent))
-      .toEqual(['Verificar', 'Corrigir, otimizar ou trocar capa', 'Baixar']);
+      .toEqual(['Verificar', 'Corrigir', 'Baixar']);
     expect(steps.map((item) => item.querySelector('.flow-step-number')?.textContent))
-      .toEqual(['01', '02', '03']);
-    expect(steps.every((item) => Boolean(item.querySelector('small')?.textContent)))
+      .toEqual(['1', '2', '3']);
+    expect(steps.map((item) => item.querySelector('small')?.textContent))
+      .toEqual(['Selecione um EPUB', 'Reparos e ajustes', 'Cópia final']);
+    expect(steps[0]?.classList.contains('flow-step-active')).toBe(true);
+    expect(steps[0]?.getAttribute('aria-current')).toBe('step');
+    expect(steps.slice(1).every((item) => item.classList.contains('flow-step-pending')))
       .toBe(true);
+    expect(steps[0]?.querySelector('.flow-step-status')?.textContent).toBe('Comece aqui');
+    expect(steps.every((item) => item.querySelector('.flow-step-number')?.textContent !== '✓'))
+      .toBe(true);
+    expect(root.querySelectorAll('.flow-step-book, .flow-step-visual-glyph')).toHaveLength(0);
   });
   it('mantém o desenho preso à folha animada nos uploads EPUB, PDF e imagem da capa', () => {
     const epubRoot = document.createElement('div');
