@@ -149,13 +149,13 @@ describe('Estúdio de restauração e escolha de modo', () => {
     });
     try {
       enableCoverPreviewTilt(root);
-      expect(cover.style.transform).toContain('perspective(1200px)');
+      expect(cover.style.willChange).toBe('transform');
       expect(figure.style.transform).toBe('');
 
       render();
       enableCoverPreviewTilt(root);
-      expect(root.querySelector<HTMLElement>('.cover-preview-tilt')?.style.transform)
-        .toContain('perspective(1200px)');
+      expect(root.querySelector<HTMLElement>('.cover-preview-tilt')?.style.willChange)
+        .toBe('transform');
 
       Object.defineProperty(window, 'matchMedia', {
         configurable: true,
@@ -292,14 +292,15 @@ describe('Estúdio de restauração e escolha de modo', () => {
     const setting = card.querySelector<HTMLInputElement>('#kindle-safe-main')!;
     expect(setting.checked).toBe(true);
     expect(card.textContent).toContain('Preparar para Kindle durante o reparo');
-    expect(card.textContent).toContain('Ativo');
+    expect(card.querySelector('.kindle-safe-switch-track')).not.toBeNull();
+    expect(card.querySelector('.kindle-safe-main-chip')).toBeNull();
 
     setting.click();
     expect(changes).toEqual([false]);
     expect(state.options.kindleSafeMode).toBe(false);
     card = renderControls(state, actions);
     expect(card.querySelector<HTMLInputElement>('#kindle-safe-main')?.checked).toBe(false);
-    expect(card.textContent).toContain('Desativado');
+    expect(card.querySelector('.kindle-safe-main-chip')).toBeNull();
 
     const options = renderOptionsPanel(state, () => {});
     expect(options.querySelector('#kindleSafeMode')).toBeNull();

@@ -58,7 +58,7 @@ describe('Rascunhos seguros de metadados', () => {
     };
     const click = (label: string): void => {
       const element = Array.from(host.querySelectorAll('button')).find((button) =>
-        button.textContent?.trim() === label);
+        button.getAttribute('aria-label') === label || button.textContent?.trim() === label);
       if (!element) throw new Error('Botão não encontrado: ' + label);
       element.click();
     };
@@ -84,7 +84,7 @@ describe('Rascunhos seguros de metadados', () => {
     const input = titleInput();
     input.value = 'Título digitado, ainda não salvo';
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    click('Preparar Kindle');
+    click('Ler EPUB');
     click('Metadados');
     expect(titleInput().value).toBe('Título digitado, ainda não salvo');
     const save = Array.from(host.querySelectorAll('button')).find((btn) =>

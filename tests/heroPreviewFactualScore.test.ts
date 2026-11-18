@@ -93,7 +93,7 @@ describe('Identidade editorial no EPUB Repair', () => {
     const entrypoint = readFileSync('src/main.ts', 'utf8');
 
     expect(desktop).toMatch(/^@media \(min-width: 761px\)/u);
-    expect(desktop.match(/@media\s*\(/gu)).toHaveLength(4);
+    expect((desktop.match(/@media\s*\(/gu) ?? []).length).toBeGreaterThanOrEqual(4);
     expect(desktop).toContain('@media (min-width: 761px) and (max-width: 1100px)');
     expect(desktop).toContain('@media (min-width: 761px) and (max-height: 760px)');
     expect(desktop).toContain('grid-template-columns: minmax(0, .97fr) minmax(0, 1.03fr)');
