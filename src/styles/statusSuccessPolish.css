@@ -170,68 +170,123 @@
   }
 }
 
-
 #app .layout#app-workspace .status-panel.status-ok.status-verified {
+  position: relative;
+  isolation: isolate;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(11.5rem, 26%, 16.5rem);
-  align-items: stretch;
-  gap: 0;
-  min-height: 12.4rem;
-  padding: 0;
+  grid-template-columns: 5.1rem minmax(0, 1fr);
+  align-items: center;
+  column-gap: 1.65rem;
+  min-height: 11rem;
+  margin: 0;
+  padding: 1.65rem 2.15rem;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--studio-ink, var(--color-accent)) 20%, var(--color-border));
-  border-radius: 1.4rem;
-  background: var(--color-surface);
-  box-shadow:
-    0 1px 2px color-mix(in srgb, var(--color-text) 5%, transparent),
-    0 1.2rem 3rem color-mix(in srgb, var(--color-text) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border) 72%, var(--studio-copper, var(--brand-copper)));
+  border-radius: 1.25rem;
+  background:
+    linear-gradient(115deg,
+      color-mix(in srgb, var(--color-surface) 95%, var(--studio-copper, var(--brand-copper))),
+      var(--color-surface) 56%),
+    var(--color-surface);
+  box-shadow: 0 1rem 2.9rem color-mix(in srgb, var(--color-text) 5%, transparent);
   transform: none;
-  transition: border-color 250ms ease, box-shadow 250ms ease;
+  transition: border-color 260ms ease, box-shadow 260ms ease;
 }
 
-#app .layout#app-workspace .status-panel.status-verified::before {
+#app .layout#app-workspace .status-panel.status-ok.status-verified::before {
+  position: absolute;
+  z-index: -1;
   top: 0;
   left: 0;
-  bottom: auto;
-  width: 5.6rem;
-  height: 3px;
-  border-radius: 0 0 .3rem 0;
-  background: var(--studio-copper, var(--brand-copper));
+  bottom: 0;
+  width: 5px;
+  height: 100%;
+  border-radius: 0;
+  background: linear-gradient(180deg,
+    var(--studio-copper, var(--brand-copper)),
+    color-mix(in srgb, var(--studio-copper, var(--brand-copper)) 50%, var(--color-success)));
+  content: '';
   opacity: 1;
   transform: none;
   transition: none;
 }
 
-#app .layout#app-workspace .status-panel.status-verified::after {
-  content: none;
+#app .layout#app-workspace .status-panel.status-ok.status-verified::after {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  width: 14rem;
+  height: 100%;
+  border-radius: 0;
+  background: linear-gradient(130deg,
+    transparent 30%,
+    color-mix(in srgb, var(--studio-copper, var(--brand-copper)) 4%, transparent));
+  clip-path: polygon(50% 0, 100% 0, 100% 100%, 0 100%);
+  content: '';
+  opacity: 1;
+  transform: none;
+  pointer-events: none;
 }
 
-#app .layout#app-workspace .status-panel.status-verified .status-verified-copy {
+#app .layout#app-workspace .status-panel.status-verified .status-verified-seal {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 5.1rem;
+  height: 5.1rem;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--color-success) 20%, var(--color-border));
+  border-radius: 1.05rem;
+  background: color-mix(in srgb, var(--color-success) 7%, var(--color-surface));
+  box-shadow: none;
+  animation: status-verified-appear 480ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+#app .layout#app-workspace .status-panel.status-verified .status-verified-seal::before {
+  position: absolute;
+  inset: -.43rem;
+  border: 1px solid color-mix(in srgb, var(--studio-copper, var(--brand-copper)) 30%, transparent);
+  border-radius: 1.3rem;
+  content: '';
+  transform: rotate(-5deg);
+  pointer-events: none;
+}
+
+#app .layout#app-workspace .status-panel.status-verified .status-verified-seal img {
+  display: block;
+  width: 4rem;
+  height: 4rem;
+  object-fit: contain;
+  user-select: none;
+}
+
+#app .layout#app-workspace .status-panel.status-verified .status-verified-content {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: center;
   min-width: 0;
-  padding: clamp(1.45rem, 3vw, 2.2rem) clamp(1.5rem, 3.5vw, 2.65rem);
-  animation: status-verified-reveal 540ms cubic-bezier(.16, 1, .3, 1) both;
+  animation: status-verified-appear 480ms cubic-bezier(.16, 1, .3, 1) both;
 }
 
-#app .layout#app-workspace .status-panel.status-verified .status-verified-overline {
+#app .layout#app-workspace .status-panel.status-verified .status-verified-kicker {
   display: inline-flex;
   align-items: center;
-  gap: .65rem;
-  margin: 0 0 .85rem;
-  color: var(--studio-copper, var(--brand-copper));
+  gap: .62rem;
+  margin-bottom: .55rem;
+  color: var(--brand-copper, var(--studio-copper));
   font-family: var(--font-sans);
-  font-size: .67rem;
+  font-size: .69rem;
   font-weight: 800;
-  letter-spacing: .16em;
+  letter-spacing: .15em;
   line-height: 1.3;
+  text-transform: uppercase;
 }
 
-#app .layout#app-workspace .status-panel.status-verified .status-verified-overline::before {
+#app .layout#app-workspace .status-panel.status-verified .status-verified-kicker::before {
   display: block;
-  width: 1.45rem;
+  width: 1.25rem;
   height: 1px;
   flex: 0 0 auto;
   background: currentColor;
@@ -240,192 +295,120 @@
 
 #app .layout#app-workspace .status-panel.status-verified .status-verified-title {
   display: block;
-  max-width: 22ch;
   margin: 0;
   color: var(--color-text);
   font-family: var(--font-display, var(--font-sans));
-  font-size: clamp(1.48rem, 2.55vw, 2.15rem);
+  font-size: clamp(1.55rem, 2.6vw, 2.05rem);
   font-weight: 750;
-  letter-spacing: -.045em;
-  line-height: 1.1;
+  letter-spacing: -.055em;
+  line-height: 1.16;
   text-wrap: balance;
 }
 
 #app .layout#app-workspace .status-panel.status-verified .status-verified-description {
-  max-width: 43ch;
-  margin: .75rem 0 0;
+  max-width: 65ch;
+  margin: .5rem 0 0;
   color: var(--color-text-muted);
-  font-size: clamp(.91rem, 1.2vw, 1rem);
-  line-height: 1.6;
+  font-family: var(--font-sans);
+  font-size: .95rem;
+  line-height: 1.52;
   text-wrap: pretty;
 }
 
-#app .layout#app-workspace .status-panel.status-verified .status-verified-signature {
+#app .layout#app-workspace .status-panel.status-verified .status-verified-footnote {
   display: inline-flex;
   align-items: center;
-  gap: .8rem;
-  margin-top: 1.45rem;
-  color: color-mix(in srgb, var(--color-text-muted) 85%, var(--color-surface));
+  gap: .55rem;
+  margin-top: 1rem;
+  color: color-mix(in srgb, var(--color-text-muted) 88%, var(--color-text));
   font-family: var(--font-sans);
-  font-size: .61rem;
-  font-weight: 700;
-  letter-spacing: .13em;
+  font-size: .72rem;
+  font-weight: 650;
+  letter-spacing: .025em;
   line-height: 1.35;
 }
 
-#app .layout#app-workspace .status-panel.status-verified .status-verified-signature::before {
+#app .layout#app-workspace .status-panel.status-verified .status-verified-footnote::before {
   display: block;
-  width: .36rem;
-  height: .36rem;
+  width: .4rem;
+  height: .4rem;
   flex: 0 0 auto;
   border-radius: 50%;
   background: var(--color-success);
   content: '';
 }
 
-#app .layout#app-workspace .status-panel.status-verified .status-verified-art {
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  align-items: center;
-  justify-items: center;
-  min-width: 0;
-  min-height: 100%;
-  padding: 1rem;
-  overflow: hidden;
-  border-left: 1px solid color-mix(in srgb, var(--studio-copper, var(--brand-copper)) 16%, var(--color-border));
-  background:
-    radial-gradient(circle at 53% 48%, color-mix(in srgb, var(--studio-copper, var(--brand-copper)) 10%, transparent), transparent 67%),
-    linear-gradient(145deg, color-mix(in srgb, var(--color-surface-2) 50%, var(--color-surface)), var(--color-surface));
-}
-
-#app .layout#app-workspace .status-panel.status-verified .status-verified-art::before {
-  position: absolute;
-  z-index: -1;
-  top: 50%;
-  left: 50%;
-  width: min(10.9rem, 75%);
-  aspect-ratio: 1;
-  border: 1px solid color-mix(in srgb, var(--studio-copper, var(--brand-copper)) 21%, transparent);
-  border-radius: 50%;
-  content: '';
-  transform: translate(-50%, -50%);
-}
-
-#app .layout#app-workspace .status-panel.status-verified .status-verified-art::after {
-  position: absolute;
-  right: .85rem;
-  bottom: .85rem;
-  width: 1rem;
-  height: 1rem;
-  border-right: 1px solid color-mix(in srgb, var(--studio-copper, var(--brand-copper)) 45%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--studio-copper, var(--brand-copper)) 45%, transparent);
-  content: '';
-}
-
-#app .layout#app-workspace .status-panel.status-verified .status-verified-book {
-  display: block;
-  width: min(100%, 14rem);
-  max-height: 12rem;
-  object-fit: contain;
-  user-select: none;
-  filter: drop-shadow(0 .7rem .65rem color-mix(in srgb, var(--color-text) 11%, transparent));
-  transform: rotate(-2deg);
-  transition: transform 460ms cubic-bezier(.16, 1, .3, 1);
-}
-
-@keyframes status-verified-reveal {
-  from { opacity: 0; transform: translateY(.5rem); }
+@keyframes status-verified-appear {
+  from { opacity: 0; transform: translateY(.35rem); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @media (hover: hover) and (pointer: fine) {
   #app .layout#app-workspace .status-panel.status-ok.status-verified:hover {
-    border-color: color-mix(in srgb, var(--studio-copper, var(--brand-copper)) 34%, var(--color-border));
-    box-shadow:
-      0 1px 2px color-mix(in srgb, var(--color-text) 5%, transparent),
-      0 1.45rem 3.2rem color-mix(in srgb, var(--color-text) 7%, transparent);
-  }
-
-  #app .layout#app-workspace .status-panel.status-verified:hover .status-verified-book {
-    transform: translateY(-.18rem) rotate(0deg);
+    border-color: color-mix(in srgb, var(--studio-copper, var(--brand-copper)) 36%, var(--color-border));
+    box-shadow: 0 1.2rem 3rem color-mix(in srgb, var(--color-text) 7%, transparent);
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 600px) {
   #app .layout#app-workspace .status-panel.status-ok.status-verified {
-    grid-template-columns: minmax(0, 1fr) 7.8rem;
-    min-height: 10rem;
-    border-radius: 1.1rem;
+    grid-template-columns: 3.4rem minmax(0, 1fr);
+    gap: .95rem;
+    min-height: 9.6rem;
+    padding: 1.4rem 1.15rem 1.4rem 1.35rem;
+    border-radius: 1rem;
   }
 
-  #app .layout#app-workspace .status-panel.status-verified .status-verified-copy {
-    padding: 1.35rem 1.15rem;
+  #app .layout#app-workspace .status-panel.status-verified .status-verified-seal {
+    width: 3.35rem;
+    height: 3.35rem;
+    border-radius: .75rem;
   }
 
-  #app .layout#app-workspace .status-panel.status-verified .status-verified-overline {
+  #app .layout#app-workspace .status-panel.status-verified .status-verified-seal::before {
+    inset: -.25rem;
+    border-radius: .85rem;
+  }
+
+  #app .layout#app-workspace .status-panel.status-verified .status-verified-seal img {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  #app .layout#app-workspace .status-panel.status-verified .status-verified-kicker {
     gap: .4rem;
-    margin-bottom: .55rem;
-    font-size: .59rem;
-    letter-spacing: .1em;
+    margin-bottom: .45rem;
+    font-size: .58rem;
+    letter-spacing: .095em;
   }
 
-  #app .layout#app-workspace .status-panel.status-verified .status-verified-overline::before {
-    width: .8rem;
+  #app .layout#app-workspace .status-panel.status-verified .status-verified-kicker::before {
+    width: .75rem;
   }
 
   #app .layout#app-workspace .status-panel.status-verified .status-verified-title {
-    font-size: clamp(1.25rem, 4.4vw, 1.5rem);
+    font-size: 1.25rem;
     letter-spacing: -.038em;
+    line-height: 1.2;
   }
 
   #app .layout#app-workspace .status-panel.status-verified .status-verified-description {
-    margin-top: .55rem;
-    font-size: .85rem;
-    line-height: 1.52;
+    margin-top: .42rem;
+    font-size: .83rem;
   }
 
-  #app .layout#app-workspace .status-panel.status-verified .status-verified-signature {
+  #app .layout#app-workspace .status-panel.status-verified .status-verified-footnote {
     gap: .45rem;
-    margin-top: 1rem;
-    font-size: .53rem;
-    letter-spacing: .07em;
-  }
-
-  #app .layout#app-workspace .status-panel.status-verified .status-verified-art {
-    padding: .25rem;
-  }
-
-  #app .layout#app-workspace .status-panel.status-verified .status-verified-book {
-    width: 8.6rem;
-    max-width: 120%;
-  }
-}
-
-@media (max-width: 390px) {
-  #app .layout#app-workspace .status-panel.status-ok.status-verified {
-    grid-template-columns: minmax(0, 1fr) 5.5rem;
-  }
-
-  #app .layout#app-workspace .status-panel.status-verified .status-verified-book {
-    width: 7rem;
-    max-width: 150%;
-  }
-
-  #app .layout#app-workspace .status-panel.status-verified .status-verified-copy {
-    padding: 1.2rem .85rem;
-  }
-
-  #app .layout#app-workspace .status-panel.status-verified .status-verified-signature {
-    font-size: .48rem;
+    margin-top: .7rem;
+    font-size: .66rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #app .layout#app-workspace .status-panel.status-verified .status-verified-copy,
-  #app .layout#app-workspace .status-panel.status-verified .status-verified-book {
+  #app .layout#app-workspace .status-panel.status-verified .status-verified-seal,
+  #app .layout#app-workspace .status-panel.status-verified .status-verified-content,
+  #app .layout#app-workspace .status-panel.status-ok.status-verified {
     animation: none;
     transition: none;
-    transform: none;
   }
 }
