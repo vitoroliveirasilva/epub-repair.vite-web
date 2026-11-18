@@ -372,6 +372,32 @@ describe('Lotes limitados e isolados', () => {
       .toContain('0 EPUBs selecionados');
   });
 
+  it('mantém o passo a passo de lote sincronizado com a seleção de arquivos', () => {
+    const state = createInitialState();
+    const host = document.createElement('div');
+    const rerender = (): void => {
+      host.replaceChildren(renderBatchWorkspace(state, rerender, () => {}, () => {}));
+    };
+    rerender();
+    let steps = Array.from(host.querySelectorAll('.batch-studio-flow-step'));
+    expect(steps).toHaveLength(3);
+    expect(steps[0]?.getAttribute('aria-current')).toBe('step');
+    expect(steps[1]?.classList.contains('batch-studio-flow-waiting')).toBe(true);
+    expect(host.querySelector('.batch-studio-counter-meter')?.children).toHaveLength(6);
+    expect(host.querySelectorAll('.batch-studio-counter-tick-filled')).toHaveLength(0);
+    expect(host.querySelector('.batch-studio-upload-icon svg path')).not.toBeNull();
+    expect(host.querySelector('#batch-workspace')?.getAttribute('data-batch-state'))
+      .toBe('empty');
+    openBatchWithFiles(state, [new File(['epub'], 'um.epub')]);
+    rerender();
+    steps = Array.from(host.querySelectorAll('.batch-studio-flow-step'));
+    expect(steps[0]?.classList.contains('batch-studio-flow-complete')).toBe(true);
+    expect(steps[1]?.getAttribute('aria-current')).toBe('step');
+    expect(host.querySelectorAll('.batch-studio-counter-tick-filled')).toHaveLength(1);
+    expect(host.querySelector('#batch-workspace')?.getAttribute('data-batch-state'))
+      .toBe('selected');
+  });
+
   it('tem lista e opções responsivas sem dependência da seção de ferramentas extras', () => {
     const state = createInitialState();
     const host = document.createElement('div');

@@ -707,7 +707,9 @@ export function renderBatchWorkspace(
   return el('section', {
     className: 'panel batch-workspace batch-studio',
     attrs: { id: 'batch-workspace', tabindex: '-1',
-      'aria-labelledby': 'batch-workspace-title' },
+      'aria-labelledby': 'batch-workspace-title',
+      'data-batch-state': s.batchZip ? 'ready' : state.busy && s.batchStarted ? 'working'
+        : count > 0 ? 'selected' : 'empty' },
     children: [
       el('header', { className: 'batch-studio-header', children: [
         el('div', { className: 'batch-studio-intro', children: [
@@ -724,9 +726,15 @@ export function renderBatchWorkspace(
             el('strong', { text: String(count).padStart(2, '0') }),
             el('span', { text: '/ ' + String(MAX_BATCH_FILES).padStart(2, '0') }),
             el('small', { text: 'LIVROS' }),
+            el('span', { className: 'batch-studio-counter-meter',
+              attrs: { 'aria-hidden': 'true' },
+              children: Array.from({ length: MAX_BATCH_FILES }, (_, index) =>
+                el('i', { className: index < count ? 'batch-studio-counter-tick-filled' : '' })),
+            }),
           ],
         }),
       ] }),
+      renderBatchFlow(count, Boolean(s.batchZip)),
       renderBatch(state, s, rerender, enqueue, cancelAll, totalBytes),
     ],
   });
@@ -766,7 +774,8 @@ function renderBatch(
     },
     children: [
       el('span', { className: 'batch-studio-upload-icon',
-        attrs: { 'aria-hidden': 'true' }, text: '+' }),
+        attrs: { 'aria-hidden': 'true' },
+        children: [renderBatchUploadGlyph()] }),
       el('span', { className: 'batch-studio-upload-copy', children: [
         el('strong', { text: hasFiles ? 'Adicionar mais livros' : 'Arraste seus EPUBs aqui' }),
         el('small', { text: hasFiles ? 'Arraste mais arquivos ou selecione no dispositivo'
@@ -864,6 +873,7 @@ function renderBatch(
   const fileList = el('div', {
     className: 'batch-studio-file-scroll',
     attrs: { tabindex: '0', role: 'region',
+      'data-has-files': String(hasFiles),
       'aria-label': 'Lista de arquivos EPUB selecionados' },
     children: hasFiles
       ? [el('ul', { className: 'optional-batch-files batch-workspace-files',
@@ -1060,6 +1070,50 @@ function renderBatch(
     children: [uploadSide, aside] });
 }
 
+
+function renderBatchFlow(count: number, zipReady: boolean): HTMLElement {
+  const stages = [
+    ['01', 'Selecionar', count ? 'complete' : 'current'],
+    ['02', 'Processar', zipReady ? 'complete' : count ? 'current' : 'waiting'],
+    ['03', 'Baixar ZIP', zipReady ? 'current' : 'waiting'],
+  ] as const;
+  return el('ol', {
+    className: 'batch-studio-flow',
+    attrs: { 'aria-label': 'Etapas do processamento em lote' },
+    children: stages.map(([number, label, status]) =>
+      el('li', {
+        className: 'batch-studio-flow-step batch-studio-flow-' + status,
+        attrs: { 'aria-current': status === 'current' ? 'step' : undefined },
+        children: [
+          el('span', { className: 'batch-studio-flow-number',
+            attrs: { 'aria-hidden': 'true' },
+            text: status === 'complete' ? '✓' : number }),
+          el('span', { className: 'batch-studio-flow-text', text: label }),
+        ],
+      })),
+  });
+}
+
+function renderBatchUploadGlyph(): SVGSVGElement {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 36 36');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.6');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('focusable', 'false');
+  svg.setAttribute('aria-hidden', 'true');
+  const back = document.createElementNS(ns, 'path');
+  back.setAttribute('d', 'M10 7.5h11l5.5 5.5V27a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V9.5a2 2 0 0 1 2-2Z');
+  const fold = document.createElementNS(ns, 'path');
+  fold.setAttribute('d', 'M21 7.5V13h5.5');
+  const content = document.createElementNS(ns, 'path');
+  content.setAttribute('d', 'M12.5 18h8M12.5 21.5H18');
+  svg.append(back, fold, content);
+  return svg;
+}
 
 function renderBatchModeGlyph(mode: 'repair' | 'validate'): SVGSVGElement {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
