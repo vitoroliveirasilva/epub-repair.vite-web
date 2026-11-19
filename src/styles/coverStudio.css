@@ -1868,15 +1868,15 @@
 
 /* 02 / VISUALIZAÇÃO: enlarge the real book preview, never the 01 image picker. */
 #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage {
-  min-height: 24rem;
+  min-height: 23.3rem;
   padding: 1.35rem .6rem;
 }
 #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage .cover-preview-tilt {
-  width: min(100%, 14rem);
+  width: min(100%, 13.3rem);
   max-width: 100%;
 }
 #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage .cover-new-preview {
-  width: min(100%, 14rem);
+  width: min(100%, 13.3rem);
   max-height: none;
   aspect-ratio: 2 / 3;
   border-radius: .42rem .72rem .72rem .42rem;
@@ -1932,23 +1932,23 @@
 }
 @media (max-width: 760px) {
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage {
-    min-height: 22rem;
+    min-height: 21.35rem;
     padding: 1.25rem .55rem;
   }
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage .cover-preview-tilt,
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage .cover-new-preview {
-    width: min(100%, 12.85rem);
+    width: min(100%, 12.2rem);
     max-height: none;
   }
 }
 @media (max-width: 400px) {
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage {
-    min-height: 20.5rem;
+    min-height: 19.9rem;
     padding: 1.1rem .4rem;
   }
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage .cover-preview-tilt,
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage .cover-new-preview {
-    width: min(100%, 11.8rem);
+    width: min(100%, 11.25rem);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1968,14 +1968,14 @@
   }
 }
 
-/* Bespoke line-art cover symbol for the empty preview in card 02 only. */
+/* Minimal book + inspection lens, exclusive to the empty preview in 02. */
 #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-placeholder {
   width: 68%;
   height: 61%;
-  border: 1px solid rgba(77, 111, 89, .25);
-  border-radius: .48rem;
-  background: rgba(255, 250, 241, .63);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3);
+  border: 1px solid rgba(78, 110, 92, .22);
+  border-radius: .45rem;
+  background: rgba(255, 251, 244, .68);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, .045);
 }
 #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-placeholder::before {
   display: none;
@@ -1983,37 +1983,46 @@
 }
 #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-placeholder-glyph {
   display: block;
-  width: clamp(3.1rem, 35%, 4.45rem);
+  width: clamp(3.55rem, 42%, 4.9rem);
   height: auto;
   aspect-ratio: 1;
   overflow: visible;
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-glyph-frame {
-  fill: rgba(232, 241, 230, .65);
-  stroke: #61886f;
-  stroke-width: 2.1;
-}
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-glyph-sun {
-  fill: #ba7750;
-}
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-glyph-hills {
-  fill: none;
-  stroke: #648f79;
-  stroke-width: 2.55;
-  stroke-linejoin: round;
-  stroke-linecap: round;
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-glyph-book {
+  fill: rgba(229, 237, 224, .82);
+  stroke: #658a73;
+  stroke-width: 2;
 }
 #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-glyph-spine {
-  fill: none;
-  stroke: #93ac98;
-  stroke-width: 1.65;
+  stroke: #94ac98;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+}
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-glyph-label {
+  fill: rgba(255, 250, 240, .72);
+  stroke: #a1b7a5;
+  stroke-width: 1.3;
+}
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-glyph-lines {
+  stroke: #8da997;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-glyph-lens {
+  fill: #fff9ed;
+  stroke: #b56e47;
+  stroke-width: 2.6;
+}
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-glyph-handle {
+  stroke: #b56e47;
+  stroke-width: 2.8;
   stroke-linecap: round;
 }
 #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-placeholder-lines {
-  right: 30%;
-  bottom: 16%;
-  left: 30%;
-  height: 2px;
-  background: rgba(95, 132, 108, .42);
-  box-shadow: 0 .42rem 0 rgba(95, 132, 108, .21);
+  right: 33%;
+  bottom: 14%;
+  left: 33%;
+  height: 1.5px;
+  background: rgba(95, 132, 108, .34);
+  box-shadow: 0 .38rem 0 rgba(95, 132, 108, .15);
 }
