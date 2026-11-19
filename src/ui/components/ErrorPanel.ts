@@ -42,15 +42,7 @@ export function renderStatusMessage(message?: string, error?: string): HTMLEleme
         el('span', {
           className: 'status-verified-seal',
           attrs: { 'aria-hidden': 'true' },
-          children: [
-            el('img', {
-              attrs: {
-                src: '/status-verified-book.svg',
-                alt: '',
-                draggable: 'false',
-              },
-            }),
-          ],
+          children: [renderStatusGlyph('verified')],
         }),
         el('div', {
           className: 'status-verified-content',
@@ -169,48 +161,56 @@ function classifyStatus(message?: string, error?: string): StatusPresentation {
 }
 
 /**
- * Seven distinct, hand-tuned 24px outline glyphs. The verified state keeps its
- * bespoke book illustration in /public/status-verified-book.svg.
- * Shared geometry and stroke weight maintain a consistent visual family.
+ * A restrained eight-symbol editorial family, with no floating corner badges.
+ * All glyphs use identical proportions, line caps and a shared 32px grid.
+ * The verified book uses a single integrated checkmark rather than an
+ * illustration, and the remaining states use distinct silhouettes.
  */
 const STATUS_GLYPH_PATHS: Record<StatusKind, readonly string[]> = {
   success: [
-    'M3.85 8.62a4 4 0 0 1 4.77-4.77 4 4 0 0 1 6.76 0 4 4 0 0 1 4.77 4.77 4 4 0 0 1 0 6.76 4 4 0 0 1-4.77 4.77 4 4 0 0 1-6.76 0 4 4 0 0 1-4.77-4.77 4 4 0 0 1 0-6.76Z',
-    'm9 12 2 2 4-4',
+    'M16 4a12 12 0 1 1 0 24 12 12 0 0 1 0-24Z',
+    'M9.8 16.15l4.25 4.3 8.3-8.8',
   ],
-  verified: [],
+  verified: [
+    'M4.2 7.7c4.1-1.8 7.7-1.45 11.8 1 4.1-2.45 7.7-2.8 11.8-1v17.1c-4.1-1.8-7.7-1.45-11.8 1-4.1-2.45-7.7-2.8-11.8-1V7.7Z',
+    'M16 8.7v17.1',
+    'M8.4 12.8c1.25-.35 2.65-.18 4 .52',
+    'M19.1 17.6l2.2 2.15 4.6-4.9',
+  ],
   review: [
-    'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h5',
-    'M14 2v6h6',
-    'M20 8v3',
-    'M18 20.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z',
-    'm20.5 20.5 2 2',
+    'M18.6 5.4H9a2.1 2.1 0 0 0-2.1 2.1v17A2.1 2.1 0 0 0 9 26.6h4.7',
+    'M18.6 5.4v5.4H24',
+    'M24 10.8v2.7',
+    'M10.2 13.9h6.1',
+    'M10.2 18h3.1',
+    'm14.7 23.6 8.3-8.3a1.6 1.6 0 0 1 2.3 0l1.2 1.2a1.6 1.6 0 0 1 0 2.3l-8.3 8.3-4.6 1.2 1.1-4.7Z',
+    'm21.6 16.7 3 3',
   ],
   warning: [
-    'M10.3 3.86 1.5 18.66a2 2 0 0 0 1.7 3h17.6a2 2 0 0 0 1.7-3l-8.8-14.8a2 2 0 0 0-3.4 0Z',
-    'M12 9v4.5',
-    'M12 17.5h.01',
+    'M13.3 5.8a3.1 3.1 0 0 1 5.4 0l10.3 17.5a2.35 2.35 0 0 1-2 3.5H5a2.35 2.35 0 0 1-2-3.5L13.3 5.8Z',
+    'M16 12.6v6.2',
+    'M16 22.7h.01',
   ],
   info: [
-    'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z',
-    'M12 11v6',
-    'M12 7.3h.01',
+    'M16 4a12 12 0 1 1 0 24 12 12 0 0 1 0-24Z',
+    'M16 14.1v7.2',
+    'M16 9.7h.01',
   ],
   cancelled: [
-    'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z',
-    'M9 9h6v6H9z',
+    'M16 4a12 12 0 1 1 0 24 12 12 0 0 1 0-24Z',
+    'M12.4 11.6v8.8',
+    'M19.6 11.6v8.8',
   ],
   blocked: [
-    'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z',
-    'M14 2v6h6',
-    'M8.7 15h6.6v5H8.7z',
-    'M10 15v-1.75a2 2 0 0 1 4 0V15',
+    'M16 3.6c4 2.8 7.4 3.4 10.6 4.1v7.6c0 6.3-4.05 10.5-10.6 13.1C9.45 25.8 5.4 21.6 5.4 15.3V7.7C8.6 7 12 6.4 16 3.6Z',
+    'M12.6 15.7v-2.4a3.4 3.4 0 1 1 6.8 0v2.4',
+    'M11.5 15.7h9v7.2h-9z',
+    'M16 18.5v1.5',
   ],
   error: [
-    'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z',
-    'M14 2v6h6',
-    'm9 13 6 6',
-    'm15 13-6 6',
+    'M10.9 4.2h10.2l6.7 6.7v10.2l-6.7 6.7H10.9l-6.7-6.7V10.9l6.7-6.7Z',
+    'M12.1 12.1l7.8 7.8',
+    'M19.9 12.1l-7.8 7.8',
   ],
 };
 
@@ -219,10 +219,10 @@ function renderStatusGlyph(kind: StatusKind): SVGSVGElement {
   const svg = document.createElementNS(ns, 'svg');
   svg.setAttribute('class', 'status-glyph');
   svg.setAttribute('data-status-glyph', kind);
-  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('viewBox', '0 0 32 32');
   svg.setAttribute('fill', 'none');
   svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '1.75');
+  svg.setAttribute('stroke-width', '1.9');
   svg.setAttribute('stroke-linecap', 'round');
   svg.setAttribute('stroke-linejoin', 'round');
   svg.setAttribute('aria-hidden', 'true');

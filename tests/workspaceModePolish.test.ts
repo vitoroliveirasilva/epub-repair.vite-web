@@ -590,9 +590,10 @@ describe('Estúdio de restauração e escolha de modo', () => {
       .toBe('Sem correções obrigatórias; há melhorias opcionais disponíveis.');
   });
 
-  it('usa sete ícones vetoriais únicos, sem selo duplicado, e preserva o livro verificado', () => {
+  it('renderiza oito ícones vetoriais distintos, sem ilustração antiga nem selo duplicado', () => {
     const cases = [
       ['success', 'Reparo concluído e revalidado.'],
+      ['verified', 'Seu EPUB já está pronto, nenhuma correção é necessária.'],
       ['review', 'O EPUB tem problemas sem reparo automático. Consulte as pendências para revisão manual.'],
       ['warning', 'Alterações aplicadas; confira os alertas remanescentes antes de usar.'],
       ['info', 'Arquivo carregado localmente.'],
@@ -607,8 +608,9 @@ describe('Estúdio de restauração e escolha de modo', () => {
         : renderStatusMessage(message);
       const svg = node?.querySelector<SVGSVGElement>('.status-glyph');
       expect(svg?.getAttribute('data-status-glyph')).toBe(kind);
-      expect(svg?.getAttribute('viewBox')).toBe('0 0 24 24');
+      expect(svg?.getAttribute('viewBox')).toBe('0 0 32 32');
       expect(svg?.getAttribute('fill')).toBe('none');
+      expect(svg?.getAttribute('stroke-width')).toBe('1.9');
       expect(svg?.getAttribute('aria-hidden')).toBe('true');
       expect(svg?.querySelectorAll('path').length).toBeGreaterThan(1);
       expect(node?.querySelector('.status-highlight-seal, .status-review-emblem-alert'))
@@ -620,9 +622,9 @@ describe('Estúdio de restauração e escolha de modo', () => {
     }
     expect(icons.size).toBe(cases.length);
     const verified = renderStatusMessage('Seu EPUB já está pronto, nenhuma correção é necessária.');
-    expect(verified?.querySelector('.status-verified-seal img')?.getAttribute('src'))
-      .toBe('/status-verified-book.svg');
-    expect(verified?.querySelector('svg.status-glyph')).toBeNull();
+    expect(verified?.querySelector('.status-verified-seal svg[data-status-glyph="verified"]'))
+      .not.toBeNull();
+    expect(verified?.querySelector('.status-verified-seal img')).toBeNull();
   });
 
   it('preserva o estilo e a semântica de erros, sem transformar erros em sucesso', () => {
