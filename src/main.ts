@@ -55,3 +55,4 @@ import './styles/epubMatchedActions.css';
 import './styles/batchWorkspace.css';
 import './styles/statusReviewPolish.css';
 import './styles/statusOutcomesPolish.css';
+import './styles/batchWorkspaceEditorial.css';
