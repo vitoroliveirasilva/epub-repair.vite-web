@@ -2048,11 +2048,17 @@
   inset: 0;
   display: block;
   overflow: hidden;
-  border: 1px solid rgba(240, 218, 174, .4);
+  border: 1px solid rgba(240, 198, 132, .52);
   border-radius: .38rem .68rem .68rem .38rem;
-  background: linear-gradient(133deg, #357154 0%, #235340 55%, #173b2d 100%);
-  box-shadow: inset .35rem 0 rgba(7, 31, 21, .28),
-    inset .53rem 0 rgba(255, 255, 255, .045),
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255, 181, 92, .14), transparent 30%),
+    radial-gradient(circle at 79% 23%, rgba(255, 165, 79, .09), transparent 26%),
+    linear-gradient(145deg, #3d7b5c 0%, #285b44 43%, #173b2d 100%);
+  box-shadow:
+    inset .35rem 0 rgba(7, 31, 21, .24),
+    inset .53rem 0 rgba(255, 255, 255, .055),
+    inset 0 1px 0 rgba(255, 255, 255, .075),
+    inset 0 -18px 26px rgba(0, 0, 0, .08),
     .22rem .25rem .55rem rgba(0, 0, 0, .12);
   transform: perspective(1000px) rotateY(0deg);
   transform-origin: 4.5% center;
@@ -2065,55 +2071,82 @@
   inset: 0;
   display: block;
   background:
-    radial-gradient(ellipse at 55% 37%, rgba(236, 240, 211, .08), transparent 62%),
-    linear-gradient(105deg, rgba(255, 255, 255, .055), transparent 35%);
+    radial-gradient(ellipse at 55% 30%, rgba(255, 214, 150, .11), transparent 43%),
+    linear-gradient(105deg, rgba(255, 255, 255, .052), transparent 36%);
 }
 #app .layout#app-workspace .cover-studio-preview .cover-preview-book-art::before {
   position: absolute;
   inset: .7rem .65rem .7rem .9rem;
-  border: 1px solid rgba(245, 220, 173, .19);
+  border: 1px solid rgba(245, 201, 132, .28);
   border-radius: .25rem .45rem .45rem .25rem;
   content: '';
+  pointer-events: none;
+}
+#app .layout#app-workspace .cover-studio-preview .cover-preview-book-art::after {
+  position: absolute;
+  right: 1.05rem;
+  bottom: 1rem;
+  left: 1.05rem;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(235, 172, 101, .25) 18%,
+    rgba(239, 177, 105, .7) 50%,
+    rgba(235, 172, 101, .25) 82%,
+    transparent);
+  content: '';
+  pointer-events: none;
 }
 #app .layout#app-workspace .cover-studio-preview .cover-preview-book-arch {
   position: absolute;
-  top: 23%;
-  right: 23%;
-  bottom: 32%;
-  left: 27%;
+  top: 20%;
+  right: 21%;
+  bottom: 31%;
+  left: 25%;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(242, 214, 164, .65);
+  border: 1px solid rgba(244, 191, 111, .8);
   border-radius: 8rem 8rem .28rem .28rem;
+  background:
+    radial-gradient(circle at 50% 24%, rgba(255, 184, 88, .11), transparent 48%),
+    linear-gradient(180deg, rgba(255, 255, 255, .025), transparent 74%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 214, 160, .06),
+    0 0 0 1px rgba(0, 0, 0, .03);
 }
 #app .layout#app-workspace .cover-studio-preview .cover-preview-book-arch::after {
   position: absolute;
-  inset: .4rem;
-  border: 1px solid rgba(242, 214, 164, .18);
+  inset: .42rem;
+  border: 1px solid rgba(246, 209, 155, .23);
   border-radius: inherit;
   content: '';
 }
 #app .layout#app-workspace .cover-studio-preview .cover-preview-book-seal {
   position: absolute;
-  top: 40%;
+  top: 39%;
   left: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.85rem;
-  height: 2.85rem;
+  width: 3rem;
+  height: 3rem;
   padding: .48rem;
-  border: 1px solid rgba(245, 217, 169, .78);
+  border: 1px solid rgba(246, 197, 121, .92);
   border-radius: 50%;
-  background: rgba(244, 226, 192, .075);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 214, 150, .27), rgba(222, 144, 72, .16)),
+    rgba(244, 226, 192, .08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 230, 188, .13),
+    0 .18rem .4rem rgba(0, 0, 0, .1);
   transform: translate(-50%, -50%);
 }
 #app .layout#app-workspace .cover-studio-preview .cover-preview-book-seal-page {
   display: block;
   flex: 0 0 50%;
   height: 1rem;
-  border: 1.5px solid #e8d1a8;
-  background: rgba(244, 230, 205, .12);
+  border: 1.5px solid #f3d6a7;
+  background: rgba(255, 245, 226, .19);
 }
 #app .layout#app-workspace .cover-studio-preview .cover-preview-book-seal-page-left {
   border-radius: .16rem .06rem .08rem .16rem;
@@ -2128,16 +2161,17 @@
 #app .layout#app-workspace .cover-studio-preview .cover-preview-book-title {
   position: absolute;
   right: .85rem;
-  bottom: 13%;
+  bottom: 12%;
   left: 1rem;
   display: block;
-  color: #f2dbb5;
+  color: #f6ddb7;
   font-family: var(--font-serif), Georgia, serif;
-  font-size: clamp(1.05rem, 1.8vw, 1.28rem);
-  font-weight: 690;
+  font-size: clamp(1.12rem, 1.9vw, 1.38rem);
+  font-weight: 760;
   line-height: 1.1;
-  letter-spacing: .17em;
+  letter-spacing: .18em;
   text-align: center;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, .11);
 }
 #app .layout#app-workspace .cover-studio-preview .cover-preview-book-image {
   position: absolute;
@@ -2176,8 +2210,17 @@
   }
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-book-front {
     transform: perspective(1000px) rotateY(-36deg);
-    box-shadow: inset .35rem 0 rgba(7, 31, 21, .3),
+    box-shadow:
+      inset .35rem 0 rgba(7, 31, 21, .26),
+      inset .53rem 0 rgba(255, 255, 255, .055),
+      inset 0 1px 0 rgba(255, 255, 255, .07),
+      inset 0 -20px 28px rgba(0, 0, 0, .1),
       .24rem .3rem .95rem rgba(0, 0, 0, .2);
+  }
+  #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-book-seal {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 230, 188, .16),
+      0 .22rem .55rem rgba(0, 0, 0, .14);
   }
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-book-sheet-first {
     transform: perspective(1000px) rotateY(-18deg);
