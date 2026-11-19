@@ -35,6 +35,14 @@ export function renderCoverChanger(
     actions.applyCoverReplacement,
   );
   applyButton.disabled = !canChoose || !selectedCover;
+  applyButton.replaceChildren(
+    el('span', { className: 'cover-button-apply-label', text: 'Aplicar nova capa' }),
+    el('span', {
+      className: 'cover-button-apply-arrow',
+      attrs: { 'aria-hidden': 'true' },
+      text: '↗',
+    }),
+  );
 
   const clearButton = button(
     'Remover seleção',
@@ -42,6 +50,14 @@ export function renderCoverChanger(
     actions.clearCoverImage,
   );
   clearButton.disabled = !selectedCover || state.busy;
+  clearButton.replaceChildren(
+    el('span', {
+      className: 'cover-button-clear-icon',
+      attrs: { 'aria-hidden': 'true' },
+      text: '×',
+    }),
+    el('span', { className: 'cover-button-clear-label', text: 'Remover seleção' }),
+  );
 
   const uploadZone = el('label', {
     className: 'cover-upload-zone cover-upload-zone-' + coverState +
@@ -219,9 +235,20 @@ export function renderCoverChanger(
                   selectedCover ? clearButton : undefined,
                 ],
               }),
-              el('p', {
+              el('div', {
                 className: 'cover-studio-reassurance',
-                text: 'O livro original e seu conteúdo permanecem preservados',
+                attrs: { role: 'note' },
+                children: [
+                  el('span', {
+                    className: 'cover-studio-reassurance-icon',
+                    attrs: { 'aria-hidden': 'true' },
+                    text: '✓',
+                  }),
+                  el('span', {
+                    className: 'cover-studio-reassurance-copy',
+                    text: 'O livro original e seu conteúdo permanecem preservados',
+                  }),
+                ],
               }),
             ],
           }),
