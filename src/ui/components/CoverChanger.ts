@@ -162,8 +162,12 @@ export function renderCoverChanger(
         children: [
           el('p', { className: 'eyebrow', text: 'PERSONALIZE SEU LIVRO / 02' }),
           el('h2', {
-            text: 'Uma nova capa, a mesma história',
             attrs: { id: 'cover-studio-title' },
+            children: [
+              'Uma nova ',
+              el('span', { className: 'cover-title-accent', text: 'capa' }),
+              ', a mesma história',
+            ],
           }),
           el('p', { className: 'muted', text: coverDescription(state) }),
         ],
@@ -179,8 +183,10 @@ export function renderCoverChanger(
                 className: 'cover-picker-content cover-studio-picker-heading',
                 children: [
                   el('span', { className: 'cover-studio-overline', text: '01 / NOVA IMAGEM' }),
-                  el('strong', { text: selectedCover
-                    ? 'Sua nova capa' : 'Escolha uma imagem de capa' }),
+                  el('strong', { children: [
+                    selectedCover ? 'Sua nova ' : 'Escolha uma imagem de ',
+                    el('span', { className: 'cover-title-accent', text: 'capa' }),
+                  ] }),
                   selectedCover ? undefined : el('p', {
                     className: 'muted',
                     text: hasEpub
