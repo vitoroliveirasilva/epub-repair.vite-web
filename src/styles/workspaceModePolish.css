@@ -338,6 +338,7 @@
   font-weight: 850;
   line-height: 1.3;
   letter-spacing: .13em;
+  white-space: nowrap;
 }
 
 #app .workflow-mode-title {
@@ -348,7 +349,8 @@
   font-weight: 750;
   line-height: 1.15;
   letter-spacing: -.042em;
-  text-wrap: balance;
+  text-wrap: nowrap;
+  white-space: nowrap;
 }
 
 #app .workspace-intro-compact .workspace-intro-accent,
@@ -358,12 +360,18 @@
 
 #app .workflow-mode-description {
   display: block;
-  max-width: 38ch;
+  max-width: none;
   color: var(--color-text-muted);
   font-size: .8rem;
   font-weight: 500;
   line-height: 1.55;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+}
+
+@media (min-width: 1200px) {
+  #app .workflow-mode-description {
+    white-space: nowrap;
+  }
 }
 
 #app .workflow-mode-number {
