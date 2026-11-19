@@ -689,10 +689,6 @@ function renderSupportSections(): HTMLElement {
               el('span', { className: 'support-heading-accent', text: 'EPUB' }),
             ],
           }),
-          el('p', {
-            text: 'O processamento acontece no navegador, preserva o arquivo original e ' +
-              'indica quando algum ajuste precisa de revisão.',
-          }),
         ],
       }),
       el('article', {
