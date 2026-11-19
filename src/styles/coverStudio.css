@@ -1968,186 +1968,170 @@
   }
 }
 
-/* 02 / VISUALIZAÇÃO: complete editorial book artwork, based on the "Um EPUB" selector. */
-#app .layout#app-workspace .cover-studio-preview .cover-new-preview-empty.cover-preview-editorial-empty {
+/* Empty preview reuses the green hardback language of the "Um EPUB" selector. */
+#app .layout#app-workspace .cover-studio-preview .cover-new-preview-empty.cover-preview-classic-empty {
   position: relative;
   display: block;
   overflow: hidden;
-  background: linear-gradient(156deg, #fbf4e8 0%, #eee4d3 54%, #dccbb4 100%);
-  border: 1px solid rgba(244, 232, 210, .9);
+  border: 1px solid rgba(238, 218, 180, .48);
+  border-radius: .38rem .67rem .67rem .38rem;
+  background: linear-gradient(134deg, #326d51 0%, #245741 45%, #173d2f 100%);
+  box-shadow: -7px 9px 0 rgba(0, 0, 0, .16),
+    0 .9rem 1.85rem rgba(0, 0, 0, .26);
 }
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-cover {
+#app .layout#app-workspace .cover-studio-preview .cover-new-preview-empty.cover-preview-classic-empty::before {
   position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 0;
-  gap: .46rem;
-  padding: clamp(1.08rem, 11%, 1.6rem) .72rem 1.05rem 1rem;
-  isolation: isolate;
-  color: #275642;
-  text-align: center;
-  background:
-    radial-gradient(ellipse at 52% 38%, rgba(255, 255, 255, .53), transparent 66%),
-    linear-gradient(132deg, rgba(255, 255, 255, .13), transparent 58%);
-}
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-cover::before {
-  position: absolute;
-  z-index: -1;
-  inset: .55rem .48rem;
-  border: 1px solid rgba(66, 109, 81, .19);
-  border-radius: .22rem .52rem .52rem .22rem;
+  z-index: 2;
+  inset: 0 auto 0 0;
+  width: .66rem;
+  border: 0;
+  border-radius: .3rem 0 0 .3rem;
+  background: linear-gradient(90deg,
+    rgba(8, 30, 23, .39) 0%,
+    rgba(8, 30, 23, .22) 55%,
+    rgba(255, 255, 255, .085) 94%,
+    transparent 100%);
   content: '';
   pointer-events: none;
 }
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-ribbon {
+#app .layout#app-workspace .cover-studio-preview .cover-new-preview-empty.cover-preview-classic-empty::after {
   position: absolute;
-  top: 0;
-  right: 1.12rem;
-  width: .82rem;
-  height: 2.85rem;
-  background: #bb784f;
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 79%, 0 100%);
-  transition: height 340ms cubic-bezier(.16, 1, .3, 1);
+  top: .4rem;
+  right: 0;
+  bottom: .4rem;
+  width: 2px;
+  border-radius: 99px;
+  background: rgba(255, 245, 226, .3);
+  content: '';
+  pointer-events: none;
 }
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-eyebrow {
+#app .layout#app-workspace .cover-studio-preview .cover-preview-classic-face {
+  position: absolute;
+  inset: 0;
   display: block;
-  max-width: 100%;
-  color: #9b6344;
-  font-size: clamp(.49rem, .75vw, .58rem);
-  font-weight: 810;
-  letter-spacing: .11em;
-  line-height: 1.4;
-  white-space: nowrap;
+  background:
+    radial-gradient(ellipse at 52% 40%, rgba(230, 238, 207, .08), transparent 66%),
+    linear-gradient(100deg, rgba(255, 255, 255, .055), transparent 30%);
 }
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-ornament {
-  position: relative;
-  display: grid;
-  flex: 1 1 auto;
-  place-items: center;
-  align-self: center;
-  width: min(84%, 8rem);
-  max-height: 8.5rem;
-  min-height: 5.5rem;
-  margin: .4rem 0 .12rem;
-  border: 1px solid rgba(54, 108, 76, .56);
-  border-radius: 50% 50% .38rem .38rem;
-  background: radial-gradient(ellipse at 50% 65%, rgba(192, 215, 186, .2), transparent 67%);
-  transition: transform 360ms cubic-bezier(.16, 1, .3, 1), border-color 360ms ease;
-}
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-ornament::before {
+#app .layout#app-workspace .cover-studio-preview .cover-preview-classic-face::before {
   position: absolute;
-  inset: .42rem;
-  border: 1px solid rgba(52, 107, 73, .18);
+  inset: .66rem .72rem .72rem .95rem;
+  border: 1px solid rgba(246, 226, 183, .18);
+  border-radius: .25rem .49rem .49rem .25rem;
+  content: '';
+  pointer-events: none;
+}
+#app .layout#app-workspace .cover-studio-preview .cover-preview-classic-ribbon {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 1.14rem;
+  width: .69rem;
+  height: 2.72rem;
+  background: #d69568;
+  clip-path: polygon(0 0,100% 0,100% 100%,50% 79%,0 100%);
+  transition: height 400ms cubic-bezier(.16, 1, .3, 1);
+}
+#app .layout#app-workspace .cover-studio-preview .cover-preview-classic-arch {
+  position: absolute;
+  top: 24%;
+  right: 22%;
+  bottom: 31%;
+  left: 25%;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(246, 222, 180, .64);
+  border-radius: 9rem 9rem .32rem .32rem;
+  background: linear-gradient(165deg, rgba(245, 225, 192, .065), transparent 76%);
+  transition: border-color 380ms ease, transform 380ms cubic-bezier(.16, 1, .3, 1);
+}
+#app .layout#app-workspace .cover-studio-preview .cover-preview-classic-arch::after {
+  position: absolute;
+  inset: .43rem;
+  border: 1px solid rgba(246, 222, 180, .19);
   border-radius: inherit;
   content: '';
+  pointer-events: none;
 }
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-medallion {
-  position: absolute;
-  top: 25%;
-  left: 50%;
-  width: 1.35rem;
-  height: 1.35rem;
-  border: 1px solid rgba(67, 121, 86, .63);
-  border-radius: 50%;
-  background: rgba(255, 250, 238, .42);
-  transform: translateX(-50%);
-}
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-open-book {
-  position: absolute;
-  right: 23%;
-  bottom: 20%;
-  left: 23%;
+#app .layout#app-workspace .cover-studio-preview .cover-preview-classic-seal {
+  position: relative;
   display: flex;
-  height: 2.6rem;
-  align-items: end;
+  align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 .16rem .16rem rgba(0, 0, 0, .08));
+  width: 2.65rem;
+  height: 2.65rem;
+  padding: .43rem;
+  border: 1px solid rgba(246, 222, 180, .75);
+  border-radius: 50%;
+  background: rgba(247, 229, 199, .07);
+  box-shadow: inset 0 0 0 4px rgba(241, 219, 180, .055);
 }
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-page-left,
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-page-right {
+#app .layout#app-workspace .cover-studio-preview .cover-preview-classic-page {
   display: block;
-  width: 50%;
-  height: 2.15rem;
-  border: 1.5px solid rgba(58, 104, 77, .74);
-  background: repeating-linear-gradient(0deg,
-    rgba(75, 123, 88, .17) 0 1px, transparent 1px 8px),
-    rgba(255, 249, 237, .75);
+  flex: 0 0 50%;
+  height: .95rem;
+  border: 1.5px solid #efd5aa;
+  background: rgba(244, 226, 192, .13);
 }
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-page-left {
-  border-radius: .35rem .12rem .22rem .25rem;
-  transform: skewY(8deg);
+#app .layout#app-workspace .cover-studio-preview .cover-preview-classic-page-left {
+  border-radius: .18rem .06rem .12rem .18rem;
+  transform: skewY(9deg);
   transform-origin: right bottom;
 }
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-page-right {
-  border-radius: .12rem .35rem .25rem .22rem;
-  transform: skewY(-8deg);
+#app .layout#app-workspace .cover-studio-preview .cover-preview-classic-page-right {
+  border-radius: .06rem .18rem .18rem .12rem;
+  transform: skewY(-9deg);
   transform-origin: left bottom;
 }
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-title {
+#app .layout#app-workspace .cover-studio-preview .cover-preview-classic-divider {
+  position: absolute;
+  right: 35%;
+  bottom: 23%;
+  left: 38%;
+  height: 1px;
+  background: rgba(247, 225, 188, .55);
+}
+#app .layout#app-workspace .cover-studio-preview .cover-preview-classic-title {
+  position: absolute;
+  right: 1rem;
+  bottom: 11.5%;
+  left: 1.16rem;
   display: block;
-  margin: .02rem 0 0;
-  color: #204c37;
+  color: #f1d7ae;
   font-family: var(--font-serif), Georgia, serif;
-  font-size: clamp(1.5rem, 2.5vw, 1.97rem);
-  font-weight: 710;
-  letter-spacing: -.045em;
-  line-height: 1.04;
-  white-space: nowrap;
-}
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-title strong {
-  color: #ae6343;
-  font: inherit;
-  font-weight: 820;
-}
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-divider {
-  display: block;
-  flex: 0 0 1px;
-  width: 35%;
-  margin: .04rem 0;
-  background: rgba(70, 117, 83, .37);
-}
-#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-subtitle {
-  display: block;
-  color: #647b67;
-  font-size: clamp(.49rem, .73vw, .59rem);
-  font-weight: 740;
-  letter-spacing: .09em;
-  line-height: 1.55;
-  white-space: nowrap;
+  font-size: clamp(1.08rem, 1.8vw, 1.3rem);
+  font-weight: 640;
+  line-height: 1;
+  letter-spacing: .17em;
+  text-align: center;
 }
 @media (hover: hover) and (pointer: fine) {
-  #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-editorial-ornament {
-    transform: translateY(-2px);
-    border-color: rgba(54, 108, 76, .76);
+  #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-classic-arch {
+    border-color: rgba(246, 222, 180, .88);
+    transform: translateY(-1px);
   }
-  #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-editorial-ribbon {
-    height: 3.3rem;
+  #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-classic-ribbon {
+    height: 3.02rem;
   }
 }
 @media (max-width: 400px) {
-  #app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-cover {
-    gap: .33rem;
-    padding: 1.06rem .56rem .78rem .78rem;
+  #app .layout#app-workspace .cover-studio-preview .cover-preview-classic-arch {
+    right: 19%;
+    left: 22%;
   }
-  #app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-title {
-    font-size: 1.49rem;
-  }
-  #app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-ornament {
-    min-height: 4.7rem;
+  #app .layout#app-workspace .cover-studio-preview .cover-preview-classic-title {
+    font-size: 1.04rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  #app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-ornament,
-  #app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-ribbon {
+  #app .layout#app-workspace .cover-studio-preview .cover-preview-classic-arch,
+  #app .layout#app-workspace .cover-studio-preview .cover-preview-classic-ribbon {
     transition: none;
   }
-  #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-editorial-ornament {
+  #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-classic-arch {
     transform: none;
   }
-  #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-editorial-ribbon {
-    height: 2.85rem;
+  #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-classic-ribbon {
+    height: 2.72rem;
   }
 }
