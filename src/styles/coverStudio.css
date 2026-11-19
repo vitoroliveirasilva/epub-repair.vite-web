@@ -2150,19 +2150,6 @@
   object-fit: contain;
   object-position: center;
 }
-#app .layout#app-workspace .cover-studio-preview .cover-preview-book-ribbon {
-  position: absolute;
-  z-index: 3;
-  top: 0;
-  right: 1.07rem;
-  display: block;
-  width: 1.05rem;
-  height: 3.12rem;
-  background: #d69264;
-  clip-path: polygon(0 0,100% 0,100% 100%,50% 80%,0 100%);
-  filter: drop-shadow(0 .12rem .08rem rgba(0, 0, 0, .12));
-  transition: height 450ms cubic-bezier(.16, 1, .3, 1);
-}
 #app .layout#app-workspace .cover-studio-preview .cover-preview-book-spine {
   position: absolute;
   z-index: 4;
@@ -2186,20 +2173,17 @@
     transform: translateY(-3px) rotate(-1.8deg) scale(1.012);
   }
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-book-front {
-    transform: perspective(1000px) rotateY(-66deg);
+    transform: perspective(1000px) rotateY(-43deg);
     box-shadow: inset .35rem 0 rgba(7, 31, 21, .3),
       .35rem .35rem 1.3rem rgba(0, 0, 0, .25);
   }
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-book-sheet-first {
-    transform: perspective(1000px) rotateY(-35deg);
+    transform: perspective(1000px) rotateY(-22deg);
     box-shadow: .2rem .26rem .75rem rgba(0, 0, 0, .18);
   }
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-book-sheet-second {
-    transform: perspective(1000px) rotateY(-15deg);
+    transform: perspective(1000px) rotateY(-9deg);
     box-shadow: .18rem .22rem .55rem rgba(0, 0, 0, .14);
-  }
-  #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-book-ribbon {
-    height: 3.45rem;
   }
 }
 @media (max-width: 760px) {
@@ -2208,11 +2192,6 @@
   }
 }
 @media (max-width: 400px) {
-  #app .layout#app-workspace .cover-studio-preview .cover-preview-book-ribbon {
-    right: .88rem;
-    width: .95rem;
-    height: 2.8rem;
-  }
   #app .layout#app-workspace .cover-studio-preview .cover-preview-book-seal {
     width: 2.45rem;
     height: 2.45rem;
@@ -2221,8 +2200,7 @@
 @media (prefers-reduced-motion: reduce) {
   #app .layout#app-workspace .cover-studio-preview .cover-preview-book,
   #app .layout#app-workspace .cover-studio-preview .cover-preview-book-front,
-  #app .layout#app-workspace .cover-studio-preview .cover-preview-book-sheet,
-  #app .layout#app-workspace .cover-studio-preview .cover-preview-book-ribbon {
+  #app .layout#app-workspace .cover-studio-preview .cover-preview-book-sheet {
     transition: none;
   }
 }
