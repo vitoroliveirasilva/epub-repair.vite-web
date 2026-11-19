@@ -1069,33 +1069,30 @@
 }
 
 
-/* Received image layout modeled on the EPUB upload confirmation. */
+/* Cover selection: consistent upload canvas before and after choosing an image. */
 #app .layout#app-workspace .cover-studio-picker-received {
   gap: 0;
-  border-color: color-mix(in srgb, var(--color-accent) 23%, var(--color-border));
+  border-color: color-mix(in srgb, var(--color-accent) 19%, var(--color-border));
   background: var(--color-surface);
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-studio-picker-heading {
-  gap: .34rem;
-  margin-bottom: 1rem;
+  gap: .35rem;
+  margin-bottom: .85rem;
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-studio-picker-heading > strong {
-  font-size: clamp(1.32rem, 2vw, 1.6rem);
+  font-size: clamp(1.26rem, 1.85vw, 1.52rem);
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-upload-zone-selected {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: .48rem;
-  min-height: 15.8rem;
-  padding: 1.25rem 1.1rem;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 33%, var(--color-border));
-  border-radius: 1.08rem;
-  background:
-    radial-gradient(ellipse at 50% 18%,
-      color-mix(in srgb, var(--color-accent) 7%, transparent), transparent 78%),
-    var(--color-surface);
+  gap: .42rem;
+  min-height: 13.45rem;
+  padding: 1.05rem 1rem;
+  border: 1.5px solid color-mix(in srgb, var(--color-accent) 38%, var(--color-border));
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--color-surface) 91%, var(--color-accent-soft));
   box-shadow:
     inset 0 10px 22px -16px color-mix(in srgb, var(--color-accent) 32%, transparent),
     inset 0 3px 10px color-mix(in srgb, var(--color-accent) 9%, transparent),
@@ -1106,71 +1103,68 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: .48rem;
-  margin-bottom: .15rem;
-  padding: .37rem .68rem;
+  gap: .42rem;
+  margin: 0 0 .12rem;
+  padding: .28rem .58rem;
   border: 1px solid color-mix(in srgb, var(--color-accent) 22%, var(--color-border));
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-surface) 86%, var(--color-accent-soft));
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--color-surface) 90%, var(--color-accent-soft));
   color: var(--color-text-muted);
-  font-size: .64rem;
-  font-weight: 800;
+  font-size: .6rem;
+  font-weight: 810;
   letter-spacing: .08em;
-  line-height: 1.25;
+  line-height: 1.3;
   white-space: nowrap;
 }
 #app .cover-upload-received-dot {
   display: block;
-  flex: 0 0 .4rem;
-  width: .4rem;
-  height: .4rem;
+  flex: 0 0 .38rem;
+  width: .38rem;
+  height: .38rem;
   border-radius: 50%;
   background: var(--color-accent-strong);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 12%, transparent);
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-upload-illustration {
-  width: 4.35rem;
-  height: 4.15rem;
-  flex: 0 0 4.15rem;
-  margin: .14rem auto .2rem;
+  width: 3.85rem;
+  height: 4.2rem;
+  flex: 0 0 4.2rem;
+  margin: 0 auto .12rem;
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-upload-text {
-  gap: .32rem;
+  gap: .25rem;
   justify-items: center;
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-upload-text strong {
-  max-width: 26ch;
+  max-width: 34ch;
   font-family: var(--font-serif);
-  font-size: clamp(1.19rem, 1.8vw, 1.42rem);
+  font-size: clamp(1.06rem, 1.55vw, 1.26rem);
   font-weight: 750;
-  line-height: 1.22;
-  letter-spacing: -.033em;
+  line-height: 1.23;
+  letter-spacing: -.031em;
   text-wrap: balance;
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-upload-text small {
-  max-width: 31ch;
+  max-width: 36ch;
   color: var(--color-text-muted);
-  font-size: .77rem;
+  font-size: .75rem;
   line-height: 1.5;
   text-wrap: pretty;
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-upload-zone-selected .cover-upload-cta {
-  min-height: 2.35rem;
-  margin-top: .52rem;
-  padding: .5rem .94rem;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 32%, var(--color-border));
-  border-radius: .7rem;
+  min-height: 2.2rem;
+  margin-top: .25rem;
+  padding: .45rem .83rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
+  border-radius: .68rem;
   background: var(--color-surface);
   color: var(--color-accent-strong);
-  font-size: .76rem;
+  font-size: .75rem;
   box-shadow: none;
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-upload-zone-selected:not(.cover-upload-zone-disabled):is(:hover, :focus-visible, .cover-upload-zone-active) {
-  border-color: color-mix(in srgb, var(--color-accent) 60%, var(--color-border));
-  background:
-    radial-gradient(ellipse at 50% 18%,
-      color-mix(in srgb, var(--color-accent) 9%, transparent), transparent 78%),
-    var(--color-surface);
+  border-color: color-mix(in srgb, var(--color-accent) 63%, var(--color-border));
+  background: color-mix(in srgb, var(--color-surface) 87%, var(--color-accent-soft));
   box-shadow:
     inset 0 13px 23px -16px color-mix(in srgb, var(--color-accent) 40%, transparent),
     inset 0 4px 13px color-mix(in srgb, var(--color-accent) 12%, transparent),
@@ -1182,74 +1176,130 @@
   background: var(--color-accent-strong);
   color: #fffdf6;
 }
+
+/* Selected image details: actual artwork, readable filename and a quiet format label. */
 #app .layout#app-workspace .cover-studio-picker-received .cover-selected-file {
+  position: relative;
   display: grid;
-  grid-template-columns: 2.45rem minmax(0, 1fr);
+  grid-template-columns: 3.15rem minmax(0, 1fr) auto;
   align-items: center;
-  gap: .76rem;
+  gap: .78rem;
   min-width: 0;
-  margin: .86rem 0 0;
-  padding: .72rem .84rem;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 21%, var(--color-border));
-  border-radius: .82rem;
+  margin: .8rem 0 0;
+  padding: .68rem .83rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 23%, var(--color-border));
+  border-radius: .86rem;
   background:
-    linear-gradient(110deg,
-      color-mix(in srgb, var(--color-accent) 5%, transparent), transparent 80%),
+    linear-gradient(112deg, color-mix(in srgb, var(--color-accent) 6%, transparent), transparent 85%),
     var(--color-surface);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 28%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 31%, transparent);
+  transition: border-color 240ms ease, background-color 240ms ease, box-shadow 270ms ease;
+}
+#app .layout#app-workspace .cover-studio-picker-received .cover-selected-file::before {
+  position: absolute;
+  top: .6rem;
+  bottom: .6rem;
+  left: 0;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: var(--studio-copper, #b76642);
+  content: '';
+  opacity: .68;
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-icon {
   display: grid;
-  width: 2.45rem;
-  height: 2.9rem;
+  width: 3.15rem;
+  height: 3.75rem;
   place-items: center;
+  overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--color-accent) 29%, var(--color-border));
-  border-radius: .43rem;
-  background:
-    linear-gradient(90deg,
-      color-mix(in srgb, var(--color-accent) 16%, transparent) 0 .29rem,
-      transparent .29rem),
-    var(--color-surface);
+  border-radius: .46rem;
+  background: color-mix(in srgb, var(--color-surface-2) 70%, var(--color-surface));
+  box-shadow: 0 .1rem .25rem color-mix(in srgb, var(--color-text) 5%, transparent);
   color: var(--color-accent-strong);
-  font-size: .63rem;
-  font-weight: 850;
+}
+#app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-thumbnail {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  border-radius: inherit;
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-info {
   display: grid;
+  align-content: center;
   min-width: 0;
-  gap: .18rem;
+  gap: .25rem;
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-name {
   display: block;
-  overflow: hidden;
   max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
   color: var(--color-text);
-  font-size: .83rem;
-  font-weight: 750;
-  line-height: 1.4;
+  font-size: .86rem;
+  font-weight: 790;
+  line-height: 1.32;
+  letter-spacing: -.014em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-info small {
+  display: inline-flex;
+  align-items: center;
+  gap: .32rem;
+  min-width: 0;
   color: var(--color-text-muted);
-  font-size: .72rem;
-  line-height: 1.35;
+  font-size: .74rem;
+  font-weight: 540;
+  line-height: 1.4;
 }
+#app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-format {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: end;
+  min-height: 1.65rem;
+  padding: .26rem .46rem;
+  border: 1px solid color-mix(in srgb, var(--studio-copper, #b76642) 24%, var(--color-border));
+  border-radius: .48rem;
+  background: color-mix(in srgb, var(--studio-copper, #b76642) 6%, var(--color-surface));
+  color: var(--color-accent-strong);
+  font-size: .61rem;
+  font-weight: 830;
+  letter-spacing: .025em;
+  line-height: 1.2;
+}
+@media (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .cover-studio-picker-received .cover-selected-file:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 38%, var(--color-border));
+    background:
+      linear-gradient(112deg, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent 85%),
+      var(--color-surface);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 35%, transparent),
+      0 .22rem .5rem color-mix(in srgb, var(--color-text) 4%, transparent);
+  }
+}
+
+/* Actions stay directly below the image details and preserve the apply workflow. */
 #app .layout#app-workspace .cover-studio-picker-received .cover-studio-actions {
-  gap: .1rem;
-  margin-top: .2rem;
-  padding-top: 1.05rem;
+  gap: .12rem;
+  margin-top: .15rem;
+  padding-top: .95rem;
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-button-apply {
   width: 100%;
-  min-height: 3.15rem;
-  border-radius: .8rem;
+  min-height: 3.05rem;
+  border-radius: .78rem;
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-button-clear {
   width: fit-content;
-  min-height: 2rem;
+  min-height: 1.95rem;
   margin-inline: auto;
-  padding: .25rem .6rem;
+  padding: .2rem .6rem;
   border: 0;
   border-radius: .4rem;
   background: transparent;
@@ -1267,7 +1317,7 @@
 #app .layout#app-workspace .cover-studio-picker-received .cover-studio-reassurance {
   justify-content: center;
   align-items: center;
-  margin-top: .35rem;
+  margin-top: .3rem;
   color: var(--color-text-muted);
   font-size: .7rem;
   text-align: center;
@@ -1275,26 +1325,35 @@
 #app .layout#app-workspace .cover-studio-picker-received .cover-studio-reassurance::before {
   margin-top: 0;
 }
+
 @media (max-width: 760px) {
   #app .layout#app-workspace .cover-studio-picker-received .cover-upload-zone-selected {
-    min-height: 14.8rem;
-    padding: 1.12rem .82rem;
+    min-height: 13.8rem;
+    padding: 1.05rem .85rem;
   }
   #app .layout#app-workspace .cover-studio-picker-received .cover-upload-text strong {
-    font-size: clamp(1.15rem, 4.5vw, 1.36rem);
+    font-size: clamp(1.05rem, 4.3vw, 1.27rem);
   }
 }
 @media (max-width: 400px) {
   #app .layout#app-workspace .cover-studio-picker-received .cover-upload-received {
-    font-size: .59rem;
+    font-size: .58rem;
   }
   #app .layout#app-workspace .cover-studio-picker-received .cover-selected-file {
-    grid-template-columns: 2.3rem minmax(0, 1fr);
-    gap: .65rem;
+    grid-template-columns: 2.6rem minmax(0, 1fr);
+    gap: .62rem;
     padding: .65rem .7rem;
   }
   #app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-icon {
-    width: 2.3rem;
-    height: 2.75rem;
+    width: 2.6rem;
+    height: 3.2rem;
+  }
+  #app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-format {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #app .layout#app-workspace .cover-studio-picker-received .cover-selected-file {
+    transition: none;
   }
 }
