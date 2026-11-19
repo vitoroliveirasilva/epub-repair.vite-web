@@ -7,7 +7,7 @@ interface StatusPresentation {
   kicker: string;
   title: string;
   badge: string;
-  nextStep?: string;
+  nextStep?: string | undefined;
 }
 
 export function renderStatusMessage(message?: string, error?: string): HTMLElement | undefined {
