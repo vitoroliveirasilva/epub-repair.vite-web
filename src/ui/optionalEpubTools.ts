@@ -715,10 +715,10 @@ export function renderBatchWorkspace(
         el('div', { className: 'batch-studio-intro', children: [
           el('span', { className: 'batch-studio-eyebrow', text: 'PROCESSAMENTO EM LOTE' }),
           el('h2', { attrs: { id: 'batch-workspace-title' }, children: [
-            'Vários livros. ',
-            el('span', { className: 'batch-studio-title-accent', text: 'Um só fluxo.' }),
+            'Cuide de vários livros ',
+            el('span', { className: 'batch-studio-title-accent', text: 'ao mesmo tempo.' }),
           ] }),
-          el('p', { text: 'Organize os EPUBs, escolha a operação e baixe tudo em um ZIP.' }),
+          el('p', { text: 'Reúna até seis EPUBs, analise ou corrija os arquivos e baixe tudo em um único ZIP.' }),
         ] }),
         el('div', { className: 'batch-studio-counter',
           attrs: { 'aria-label': count + ' de ' + MAX_BATCH_FILES + ' arquivos selecionados' },
