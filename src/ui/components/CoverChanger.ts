@@ -81,15 +81,27 @@ export function renderCoverChanger(
         ],
       }) : undefined,
       el('span', {
-        className: 'cover-upload-illustration',
+        className: 'cover-upload-illustration' +
+          (selectedCover ? ' cover-upload-illustration-selected' : ''),
         attrs: { 'aria-hidden': 'true' },
         children: [
           el('span', { className: 'cover-upload-sheet cover-upload-sheet-back' }),
-          el('span', { className: 'cover-upload-sheet cover-upload-sheet-front',
-            children: [
-              el('span', { className: 'cover-upload-sun' }),
-              el('span', { className: 'cover-upload-mountain' }),
-            ],
+          el('span', {
+            className: 'cover-upload-sheet cover-upload-sheet-front',
+            children: selectedCover
+              ? [el('img', {
+                  className: 'cover-upload-preview-image',
+                  attrs: {
+                    src: selectedCover.previewDataUrl,
+                    alt: '',
+                    loading: 'eager',
+                    decoding: 'async',
+                  },
+                })]
+              : [
+                  el('span', { className: 'cover-upload-sun' }),
+                  el('span', { className: 'cover-upload-mountain' }),
+                ],
           }),
         ],
       }),
