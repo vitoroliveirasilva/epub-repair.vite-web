@@ -56,6 +56,14 @@ export function renderCoverChanger(
       'aria-disabled': String(!canChoose),
     },
     children: [
+      selectedCover ? el('span', {
+        className: 'cover-upload-received',
+        attrs: { 'aria-hidden': 'true' },
+        children: [
+          el('span', { className: 'cover-upload-received-dot' }),
+          el('span', { text: 'IMAGEM RECEBIDA' }),
+        ],
+      }) : undefined,
       el('span', {
         className: 'cover-upload-illustration',
         attrs: { 'aria-hidden': 'true' },
@@ -74,12 +82,12 @@ export function renderCoverChanger(
         children: [
           el('strong', {
             text: selectedCover
-              ? 'Imagem escolhida'
+              ? 'Sua nova capa está pronta para conferir'
               : hasEpub ? 'Arraste sua nova capa aqui' : 'Aguardando um EPUB',
           }),
           el('small', {
             text: selectedCover
-              ? 'Confira a prévia ao lado ou escolha outra imagem'
+              ? 'Confira o resultado ao lado ou escolha outra imagem'
               : hasEpub
                 ? 'JPG ou PNG, arraste ou selecione no dispositivo'
                 : 'Selecione um livro para habilitar a troca de capa',
@@ -93,7 +101,9 @@ export function renderCoverChanger(
         className: 'cover-upload-locked-label',
         text: 'Disponível após selecionar um EPUB',
       }),
-      el('span', { className: 'cover-upload-footnote', text: 'JPG ou PNG · até 15 MB' }),
+      selectedCover ? undefined : el('span', {
+        className: 'cover-upload-footnote', text: 'JPG ou PNG · até 15 MB',
+      }),
     ],
   });
 
@@ -141,14 +151,16 @@ export function renderCoverChanger(
         className: 'cover-action-grid cover-studio-grid',
         children: [
           el('article', {
-            className: 'cover-picker-card cover-studio-picker',
+            className: 'cover-picker-card cover-studio-picker' +
+              (selectedCover ? ' cover-studio-picker-received' : ''),
             children: [
               el('div', {
                 className: 'cover-picker-content cover-studio-picker-heading',
                 children: [
                   el('span', { className: 'cover-studio-overline', text: '01 / NOVA IMAGEM' }),
-                  el('strong', { text: 'Escolha uma imagem de capa' }),
-                  el('p', {
+                  el('strong', { text: selectedCover
+                    ? 'Sua nova capa' : 'Escolha uma imagem de capa' }),
+                  selectedCover ? undefined : el('p', {
                     className: 'muted',
                     text: hasEpub
                       ? 'Escolha a imagem que vai substituir a capa atual'
@@ -160,25 +172,22 @@ export function renderCoverChanger(
               selectedCover
                 ? el('div', {
                     className: 'cover-selected-file',
-                    attrs: { role: 'status', 'aria-live': 'polite' },
+                    attrs: { role: 'status', 'aria-live': 'polite',
+                      'aria-label': 'Nova imagem selecionada: ' +
+                        selectedCover.fileName },
                     children: [
-                      el('span', {
-                        className: 'cover-selected-file-icon',
+                      el('span', { className: 'cover-selected-file-icon',
                         text: selectedCover.mediaType === 'image/png' ? 'PNG' : 'JPG',
-                        attrs: { 'aria-hidden': 'true' },
-                      }),
-                      el('div', {
+                        attrs: { 'aria-hidden': 'true' } }),
+                      el('span', {
                         className: 'cover-selected-file-info',
                         children: [
-                          el('strong', { text: selectedCover.fileName }),
-                          el('small', {
-                            text: formatBytes(selectedCover.bytes.length) + ' · Imagem selecionada',
-                          }),
+                          el('strong', { className: 'cover-selected-file-name',
+                            text: selectedCover.fileName,
+                            attrs: { title: selectedCover.fileName } }),
+                          el('small', { text: formatBytes(selectedCover.bytes.length) +
+                            ' · Imagem selecionada' }),
                         ],
-                      }),
-                      el('span', {
-                        className: 'cover-selected-file-state',
-                        text: 'Pronta',
                       }),
                     ],
                   })
@@ -198,7 +207,7 @@ export function renderCoverChanger(
               }),
               el('p', {
                 className: 'cover-studio-reassurance',
-                text: 'A capa original e o texto do EPUB permanecem preservados',
+                text: 'O livro original e seu conteúdo permanecem preservados',
               }),
             ],
           }),
