@@ -96,7 +96,12 @@ export function renderCoverChanger(
       }),
       canChoose ? el('span', {
         className: 'cover-upload-cta',
-        text: selectedCover ? 'Trocar imagem  ↗' : 'Escolher imagem  ↗',
+        children: [
+          el('span', { className: 'cover-upload-cta-label',
+            text: selectedCover ? 'Trocar imagem' : 'Escolher imagem' }),
+          el('span', { className: 'cover-upload-cta-arrow',
+            attrs: { 'aria-hidden': 'true' }, text: '↗' }),
+        ],
       }) : el('span', {
         className: 'cover-upload-locked-label',
         text: 'Disponível após selecionar um EPUB',
