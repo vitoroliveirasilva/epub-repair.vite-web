@@ -12,6 +12,7 @@ export function renderCoverChanger(
   const hasEpub = Boolean(state.payload);
   const selectedCover = state.coverImage;
   const canChoose = hasEpub && !state.busy;
+  const coverState = selectedCover ? 'selected' : hasEpub ? 'available' : 'locked';
   const input = el('input', {
     className: 'cover-file-input',
     attrs: {
@@ -28,13 +29,6 @@ export function renderCoverChanger(
     if (file && canChoose) actions.selectCoverImage(file);
   });
 
-  const chooseButton = button(
-    selectedCover ? 'Trocar imagem' : 'Escolher imagem',
-    'btn btn-secondary cover-button-choose',
-    () => input.click(),
-  );
-  chooseButton.disabled = !canChoose;
-
   const applyButton = button(
     'Aplicar nova capa',
     'btn btn-primary cover-button-apply',
@@ -50,16 +44,15 @@ export function renderCoverChanger(
   clearButton.disabled = !selectedCover || state.busy;
 
   const uploadZone = el('label', {
-    className: 'cover-upload-zone' +
-      (selectedCover ? ' cover-upload-zone-selected' : '') +
+    className: 'cover-upload-zone cover-upload-zone-' + coverState +
       (!canChoose ? ' cover-upload-zone-disabled' : ''),
     attrs: {
-      for: 'cover-image-input',
-      role: 'button',
+      ...(canChoose ? { for: 'cover-image-input' } : {}),
+      role: canChoose ? 'button' : 'group',
       tabindex: canChoose ? '0' : '-1',
-      'aria-label': selectedCover
-        ? 'Selecionar outra imagem JPG ou PNG para a capa'
-        : 'Selecionar ou arrastar uma imagem JPG ou PNG para a capa',
+      'aria-label': !hasEpub ? 'Selecione um EPUB para habilitar a troca de capa'
+        : selectedCover ? 'Trocar a imagem de capa selecionada'
+          : 'Escolher ou arrastar uma nova imagem de capa JPG ou PNG',
       'aria-disabled': String(!canChoose),
     },
     children: [
@@ -81,21 +74,24 @@ export function renderCoverChanger(
         children: [
           el('strong', {
             text: selectedCover
-              ? 'Imagem pronta para aplicar'
-              : hasEpub ? 'Arraste sua nova capa aqui' : 'Envie um EPUB para começar',
+              ? 'Imagem escolhida'
+              : hasEpub ? 'Arraste sua nova capa aqui' : 'Aguardando um EPUB',
           }),
           el('small', {
             text: selectedCover
-              ? 'Clique para trocar ou confira o resultado ao lado'
+              ? 'Confira a prévia ao lado ou escolha outra imagem'
               : hasEpub
-                ? 'Ou clique para buscar uma imagem no seu dispositivo'
-                : 'Depois de selecionar o livro, você poderá escolher a imagem',
+                ? 'JPG ou PNG, arraste ou selecione no dispositivo'
+                : 'Selecione um livro para habilitar a troca de capa',
           }),
         ],
       }),
-      el('span', {
+      canChoose ? el('span', {
         className: 'cover-upload-cta',
-        text: selectedCover ? 'Escolher outra imagem  ↗' : 'Selecionar imagem  ↗',
+        text: selectedCover ? 'Trocar imagem  ↗' : 'Escolher imagem  ↗',
+      }) : el('span', {
+        className: 'cover-upload-locked-label',
+        text: 'Disponível após selecionar um EPUB',
       }),
       el('span', { className: 'cover-upload-footnote', text: 'JPG ou PNG · até 15 MB' }),
     ],
@@ -126,7 +122,7 @@ export function renderCoverChanger(
   });
 
   return el('section', {
-    className: 'panel cover-action-panel cover-studio-panel',
+    className: 'panel cover-action-panel cover-studio-panel cover-studio-' + coverState,
     attrs: { 'aria-labelledby': 'cover-studio-title' },
     children: [
       input,
@@ -154,7 +150,9 @@ export function renderCoverChanger(
                   el('strong', { text: 'Escolha uma imagem de capa' }),
                   el('p', {
                     className: 'muted',
-                    text: 'Altere a capa sem mexer no texto do livro. O EPUB original continua preservado.',
+                    text: hasEpub
+                      ? 'Escolha a imagem que vai substituir a capa atual'
+                      : 'Selecione um EPUB na etapa anterior para começar',
                   }),
                 ],
               }),
@@ -194,14 +192,13 @@ export function renderCoverChanger(
               el('div', {
                 className: 'cover-action-buttons cover-studio-actions',
                 children: [
-                  chooseButton,
                   applyButton,
                   selectedCover ? clearButton : undefined,
                 ],
               }),
               el('p', {
                 className: 'cover-studio-reassurance',
-                text: 'Ao aplicar, geramos uma nova cópia do EPUB para download.',
+                text: 'A capa original e o texto do EPUB permanecem preservados',
               }),
             ],
           }),
@@ -229,7 +226,8 @@ function renderCoverPreviewCard(state: AppState): HTMLElement {
 
   return el('article', {
     className: 'cover-preview-card cover-studio-preview' +
-      (selectedCover ? ' cover-preview-card-selected' : ''),
+      (selectedCover ? ' cover-preview-card-selected' : '') +
+      (!previewDataUrl ? ' cover-studio-preview-empty' : ''),
     children: [
       el('div', {
         className: 'cover-studio-preview-header',
@@ -270,7 +268,10 @@ function renderCoverPreviewCard(state: AppState): HTMLElement {
                 className: 'cover-new-preview cover-new-preview-empty',
                 attrs: { 'aria-hidden': 'true' },
                 children: [
-                  el('span', { className: 'cover-studio-preview-placeholder' }),
+                  el('span', { className: 'cover-studio-preview-placeholder',
+                    children: [
+                      el('span', { className: 'cover-studio-preview-placeholder-lines' }),
+                    ] }),
                 ],
               }),
         ],
@@ -287,7 +288,7 @@ function renderCoverPreviewCard(state: AppState): HTMLElement {
 }
 
 function coverDescription(state: AppState): string {
-  if (!state.payload) return 'Envie um EPUB para liberar a troca de capa. A escolha e a prévia ficam aqui, sem precisar sair do fluxo.';
-  if (state.coverImage) return 'Confira a imagem selecionada e aplique quando estiver satisfeito. A obra original será preservada.';
-  return 'Escolha uma imagem, veja como ficará no livro e gere uma nova cópia. Tudo acontece no seu navegador.';
+  if (!state.payload) return 'Envie um EPUB para escolher uma nova capa e visualizar o resultado';
+  if (state.coverImage) return 'Confira a prévia e aplique a nova capa quando estiver satisfeito';
+  return 'Escolha uma imagem, confira a prévia e crie uma nova cópia do seu EPUB';
 }
