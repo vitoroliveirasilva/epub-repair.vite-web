@@ -279,7 +279,7 @@
 .capability-heading {
   display: grid;
   max-width: 49rem;
-  margin-bottom: clamp(2rem, 4vw, 3.5rem);
+  margin-bottom: clamp(2.2rem, 4vw, 3.25rem);
 }
 
 .capability-heading .eyebrow {
@@ -287,23 +287,24 @@
 }
 
 .capability-heading h2 {
-  max-width: 17ch;
-  margin-bottom: .85rem;
+  max-width: 19ch;
+  margin-bottom: 1rem;
   color: #fff9f1;
   font-size: clamp(2rem, 4vw, 3.7rem);
-  line-height: 1.04;
+  line-height: 1.08;
+  letter-spacing: -.025em;
 }
 
 .capability-heading > p:last-child {
-  max-width: 44rem;
+  max-width: 39rem;
   margin: 0;
   color: #cfddd6;
-  line-height: 1.65;
+  line-height: 1.7;
 }
 
 .capability-ledger {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   border-top: 1px solid rgba(255, 249, 241, .2);
   border-bottom: 1px solid rgba(255, 249, 241, .2);
 }
@@ -311,54 +312,76 @@
 .capability-entry {
   display: grid;
   min-width: 0;
+  grid-column: span 2;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 1rem;
-  padding: 1.45rem clamp(.8rem, 2vw, 1.35rem);
+  align-content: start;
+  gap: .9rem;
+  padding: clamp(1.5rem, 2.3vw, 2.05rem) clamp(1rem, 2vw, 1.5rem);
   border-right: 1px solid rgba(255, 249, 241, .16);
   border-bottom: 1px solid rgba(255, 249, 241, .16);
-}
-
-.capability-entry:nth-child(3n) {
-  border-right: 0;
+  transition: background-color 180ms ease;
 }
 
 .capability-entry:nth-child(n + 4) {
+  grid-column: span 3;
   border-bottom: 0;
 }
 
+.capability-entry:nth-child(3),
+.capability-entry:last-child {
+  border-right: 0;
+}
+
+.capability-entry:hover {
+  background-color: rgba(255, 249, 241, .035);
+}
+
 .capability-number {
-  padding-top: .16rem;
+  padding-top: .22rem;
   color: #eca27d;
   font-family: var(--font-serif);
-  font-size: .78rem;
+  font-size: .8rem;
   font-weight: 800;
-  letter-spacing: .08em;
+  letter-spacing: .09em;
 }
 
 .capability-entry h3 {
-  margin: 0 0 .45rem;
+  margin: 0 0 .6rem;
   color: #fff9f1;
   font-family: var(--font-serif);
-  font-size: clamp(1.05rem, 1.7vw, 1.3rem);
+  font-size: clamp(1.1rem, 1.7vw, 1.34rem);
+  line-height: 1.25;
   letter-spacing: -.025em;
 }
 
 .capability-entry p {
+  max-width: 34rem;
   margin: 0;
   color: #c8d8d1;
-  font-size: .86rem;
-  line-height: 1.55;
+  font-size: .9rem;
+  line-height: 1.65;
 }
 
 .capability-link {
   display: inline-flex;
   align-items: center;
   gap: .7rem;
-  margin-top: 2rem;
+  margin-top: 2.15rem;
   border-bottom: 1px solid #eca27d;
   padding: .45rem 0;
   color: #fff9f1;
   font-weight: 750;
+  transition: color 180ms ease;
+}
+
+.capability-link:hover {
+  color: #ffe4d4;
+}
+
+.capability-link:focus-visible {
+  border-radius: .2rem;
+  outline: 2px solid #eca27d;
+  outline-offset: 5px;
 }
 
 .capability-link::after {
@@ -369,7 +392,7 @@
 }
 
 .capability-link:hover::after {
-  transform: translate(.18rem, .18rem);
+  transform: translateX(.2rem);
 }
 
 .support-sections {
@@ -483,19 +506,20 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-.capability-entry:nth-child(3n) {
+.capability-entry,
+.capability-entry:nth-child(n + 4) {
+    grid-column: auto;
     border-right: 1px solid rgba(255, 249, 241, .16);
+    border-bottom: 1px solid rgba(255, 249, 241, .16);
   }
 
 .capability-entry:nth-child(2n) {
     border-right: 0;
   }
 
-.capability-entry:nth-last-child(-n + 3) {
-    border-bottom: 1px solid rgba(255, 249, 241, .16);
-  }
-
-.capability-entry:nth-child(n + 5) {
+.capability-entry:last-child {
+    grid-column: 1 / -1;
+    border-right: 0;
     border-bottom: 0;
   }
 
@@ -577,13 +601,13 @@
   }
 
 .capability-entry,
+.capability-entry:nth-child(n + 4),
 .capability-entry:nth-child(2n),
-.capability-entry:nth-child(3n),
-.capability-entry:nth-last-child(-n + 2),
-.capability-entry:nth-last-child(-n + 3) {
+.capability-entry:last-child {
+    grid-column: 1 / -1;
     border-right: 0;
     border-bottom: 1px solid rgba(255, 249, 241, .16);
-    padding: 1.15rem .15rem;
+    padding: 1.3rem .15rem;
   }
 
 .capability-entry:last-child {
@@ -625,7 +649,9 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {.capability-link::after {
+@media (prefers-reduced-motion: reduce) {.capability-entry,
+.capability-link,
+.capability-link::after {
     transition: none;
   }
 }
