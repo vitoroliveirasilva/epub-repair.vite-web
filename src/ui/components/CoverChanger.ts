@@ -363,31 +363,30 @@ function coverStudioPreviewPlaceholderIcon(): SVGSVGElement {
   icon.setAttribute('aria-hidden', 'true');
   icon.setAttribute('focusable', 'false');
 
-  const frame = document.createElementNS(ns, 'rect');
-  frame.setAttribute('x', '9');
-  frame.setAttribute('y', '9');
-  frame.setAttribute('width', '46');
-  frame.setAttribute('height', '46');
-  frame.setAttribute('rx', '8');
-  frame.setAttribute('class', 'cover-studio-preview-glyph-frame');
-  icon.append(frame);
+  const add = (tag: 'rect' | 'path' | 'circle', className: string, attrs: Record<string, string>) => {
+    const node = document.createElementNS(ns, tag);
+    node.setAttribute('class', className);
+    for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+    icon.append(node);
+  };
 
-  const sun = document.createElementNS(ns, 'circle');
-  sun.setAttribute('cx', '43');
-  sun.setAttribute('cy', '23');
-  sun.setAttribute('r', '4.4');
-  sun.setAttribute('class', 'cover-studio-preview-glyph-sun');
-  icon.append(sun);
-
-  const hills = document.createElementNS(ns, 'path');
-  hills.setAttribute('d', 'M15 44 27 31 35 39 42 33 49 41');
-  hills.setAttribute('class', 'cover-studio-preview-glyph-hills');
-  icon.append(hills);
-
-  const spine = document.createElementNS(ns, 'path');
-  spine.setAttribute('d', 'M17 10v44');
-  spine.setAttribute('class', 'cover-studio-preview-glyph-spine');
-  icon.append(spine);
+  // A small book being inspected, rather than another generic landscape icon.
+  add('rect', 'cover-studio-preview-glyph-book', {
+    x: '11', y: '6', width: '36', height: '48', rx: '5',
+  });
+  add('path', 'cover-studio-preview-glyph-spine', { d: 'M19 7v46' });
+  add('rect', 'cover-studio-preview-glyph-label', {
+    x: '24', y: '16', width: '17', height: '19', rx: '3',
+  });
+  add('path', 'cover-studio-preview-glyph-lines', {
+    d: 'M25 40h14M25 45h9',
+  });
+  add('circle', 'cover-studio-preview-glyph-lens', {
+    cx: '43', cy: '43', r: '9',
+  });
+  add('path', 'cover-studio-preview-glyph-handle', {
+    d: 'm49.5 49.5 7.5 7.5',
+  });
 
   return icon;
 }
