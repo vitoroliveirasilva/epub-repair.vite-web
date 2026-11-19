@@ -31,12 +31,18 @@
 
 /* Intro: the same editorial type scale as the mode selector and EPUB uploader. */
 #app .batch-studio-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 1.3rem;
-  padding: .1rem 0 1.32rem;
+  gap: .78rem clamp(1rem, 2.3vw, 1.8rem);
+  padding: .1rem 0 1.4rem;
   border-bottom: 1px solid var(--batch-rule);
 }
-#app .batch-studio-intro { gap: .56rem; }
+#app .batch-studio-intro {
+  grid-column: 1;
+  grid-row: 1;
+  gap: .56rem;
+}
 #app .batch-studio-eyebrow {
   gap: .48rem;
   padding: .34rem .68rem;
@@ -56,70 +62,114 @@
   letter-spacing: -.051em;
 }
 #app .batch-studio-intro .batch-studio-title-accent { color: var(--brand-copper); }
-#app .batch-studio-intro p {
-  max-width: 49ch;
-  font-size: .85rem;
-  line-height: 1.57;
+#app .batch-studio-subtitle {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  min-width: 0;
+  max-width: none;
+  margin: .08rem 0 0;
+  color: var(--color-text-muted);
+  font-size: clamp(.8rem, 1.05vw, .89rem);
+  line-height: 1.6;
+  white-space: nowrap;
+  text-wrap: auto;
 }
 
-/* Counter uses the restrained editorial badge language, not a dark dashboard tile. */
+/* Compact book counter with a restrained numeric hierarchy and six progress marks. */
 #app .batch-studio-counter {
+  position: relative;
   display: grid;
-  grid-template-columns: auto auto;
+  grid-column: 2;
+  grid-row: 1;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto auto;
-  place-content: center;
-  align-items: baseline;
-  gap: .1rem .3rem;
-  min-width: 7.6rem;
-  min-height: 7.1rem;
-  padding: .85rem .9rem .77rem;
-  border: 1px solid color-mix(in srgb, var(--batch-ink) 24%, var(--color-border));
-  border-radius: .92rem;
-  background: linear-gradient(145deg,
-    color-mix(in srgb, var(--batch-ink) 7%, var(--batch-surface)),
-    var(--batch-surface) 83%);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 26%, transparent);
+  align-content: center;
+  justify-content: stretch;
+  gap: 0;
+  flex: none;
+  width: 11.6rem;
+  min-width: 0;
+  min-height: 6.5rem;
+  padding: .94rem 1.13rem .96rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--batch-copper) 30%, var(--batch-rule));
+  border-radius: 1.02rem;
+  background: linear-gradient(150deg,
+    color-mix(in srgb, var(--batch-copper) 6%, var(--batch-surface)),
+    var(--batch-surface) 78%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 23%, transparent),
+    0 .3rem 1rem color-mix(in srgb, var(--color-text) 4%, transparent);
   color: var(--color-text);
 }
 #app .batch-studio-counter::before {
-  top: .75rem;
-  right: .75rem;
-  width: .9rem;
-  height: .9rem;
-  border-color: color-mix(in srgb, var(--batch-copper) 44%, transparent);
+  position: absolute;
+  top: 0;
+  left: 1.13rem;
+  width: 2.6rem;
+  height: 2px;
+  border: 0;
+  border-radius: 0 0 99px 99px;
+  background: var(--batch-copper);
+  content: '';
 }
-#app .batch-studio-counter strong {
-  color: var(--color-accent-strong);
-  font-family: var(--font-serif);
-  font-size: 2.32rem;
-  font-weight: 800;
-  letter-spacing: -.08em;
-  line-height: 1;
-}
-#app .batch-studio-counter > span:not(.batch-studio-counter-meter) {
-  color: var(--color-text-muted);
-  font-size: .88rem;
-}
-#app .batch-studio-counter small {
-  padding-top: .37rem;
-  border-top-color: var(--batch-rule);
+#app .batch-studio-counter .batch-studio-counter-label {
+  display: block;
+  grid-row: 1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  justify-self: start;
   color: var(--batch-copper);
-  letter-spacing: .15em;
-  font-size: .59rem;
+  font-size: .62rem;
+  font-weight: 850;
+  line-height: 1.3;
+  letter-spacing: .16em;
+}
+#app .batch-studio-counter-count {
+  display: flex;
+  grid-row: 2;
+  align-items: baseline;
+  gap: .36rem;
+  margin-top: .26rem;
+  white-space: nowrap;
+}
+#app .batch-studio-counter-count strong {
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: 2.18rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.065em;
+  line-height: 1.02;
+}
+#app .batch-studio-counter-count > span {
+  color: color-mix(in srgb, var(--batch-copper) 70%, var(--color-text-muted));
+  font-family: var(--font-serif);
+  font-size: 1.02rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.025em;
 }
 #app .batch-studio-counter-meter {
-  gap: .2rem;
+  display: grid;
+  grid-row: 3;
+  grid-column: 1;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: .26rem;
   width: 100%;
-  margin-top: .29rem;
+  margin-top: .72rem;
 }
 #app .batch-studio-counter-meter i {
-  height: .22rem;
-  background: color-mix(in srgb, var(--batch-ink) 16%, var(--batch-surface));
+  display: block;
+  height: .26rem;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--batch-ink) 15%, var(--batch-surface));
   box-shadow: none;
+  transition: background-color 250ms ease, box-shadow 250ms ease;
 }
 #app .batch-studio-counter-meter .batch-studio-counter-tick-filled {
-  background: var(--color-accent-strong);
-  box-shadow: none;
+  background: var(--batch-copper);
+  box-shadow: 0 0 .36rem color-mix(in srgb, var(--batch-copper) 20%, transparent);
 }
 
 /* Stage rail: three related chapters, each with a number, title and context. */
@@ -729,17 +779,17 @@
     max-width: 100%;
   }
 }
+@container batch-studio (max-width: 690px) {
+  #app .batch-studio-subtitle {
+    white-space: normal;
+    text-wrap: pretty;
+  }
+}
 @container batch-studio (max-width: 600px) {
   #app .batch-studio-header {
-    align-items: flex-start;
+    align-items: start;
     gap: .85rem;
   }
-  #app .batch-studio-counter {
-    min-width: 7rem;
-    min-height: 6.8rem;
-    padding: .7rem;
-  }
-  #app .batch-studio-counter strong { font-size: 2.05rem; }
   #app .batch-studio-flow-step {
     grid-template-columns: 1.85rem minmax(0,1fr);
     gap: .48rem;
@@ -759,35 +809,33 @@
 }
 @container batch-studio (max-width: 470px) {
   #app .batch-studio-header {
-    display: grid;
     grid-template-columns: minmax(0, 1fr);
     align-items: start;
   }
-  #app .batch-studio-intro { width: 100%; }
+  #app .batch-studio-intro {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+  }
   #app .batch-studio-intro h2 {
     max-width: none;
     font-size: clamp(1.72rem, 6.2vw, 2.05rem);
   }
+  #app .batch-studio-subtitle {
+    grid-column: 1;
+    grid-row: 2;
+  }
   #app .batch-studio-counter {
-    display: grid;
-    grid-template-columns: auto auto;
-    grid-template-rows: auto auto auto;
-    justify-content: start;
-    min-width: 7.3rem;
-    width: fit-content;
+    grid-column: 1;
+    grid-row: 3;
+    width: min(100%, 12rem);
     min-height: 0;
-    padding: .6rem .8rem .65rem;
-    border-radius: .75rem;
+    padding: .78rem 1rem .82rem;
+    border-radius: .88rem;
   }
-  #app .batch-studio-counter strong { font-size: 1.6rem; }
-  #app .batch-studio-counter > span:not(.batch-studio-counter-meter) {
-    font-size: .72rem;
+  #app .batch-studio-counter-count strong {
+    font-size: 1.95rem;
   }
-  #app .batch-studio-counter small {
-    font-size: .55rem;
-    padding-top: .25rem;
-  }
-  #app .batch-studio-counter-meter { margin-top: .2rem; }
   #app .batch-studio-flow {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: .36rem;
