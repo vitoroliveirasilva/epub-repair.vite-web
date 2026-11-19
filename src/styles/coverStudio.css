@@ -1068,300 +1068,11 @@
   }
 }
 
-
-/* Cover selection: consistent upload canvas before and after choosing an image. */
-#app .layout#app-workspace .cover-studio-picker-received {
-  gap: 0;
-  border-color: color-mix(in srgb, var(--color-accent) 19%, var(--color-border));
-  background: var(--color-surface);
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-studio-picker-heading {
-  gap: .35rem;
-  margin-bottom: .85rem;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-studio-picker-heading > strong {
-  font-size: clamp(1.26rem, 1.85vw, 1.52rem);
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-upload-zone-selected {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: .42rem;
-  min-height: 13.45rem;
-  padding: 1.05rem 1rem;
-  border: 1.5px solid color-mix(in srgb, var(--color-accent) 38%, var(--color-border));
-  border-radius: 1rem;
-  background: color-mix(in srgb, var(--color-surface) 91%, var(--color-accent-soft));
-  box-shadow:
-    inset 0 10px 22px -16px color-mix(in srgb, var(--color-accent) 32%, transparent),
-    inset 0 3px 10px color-mix(in srgb, var(--color-accent) 9%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 11%, transparent);
-  transform: none;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-upload-received {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: .42rem;
-  margin: 0 0 .12rem;
-  padding: .28rem .58rem;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, var(--color-border));
-  border-radius: 99px;
-  background: color-mix(in srgb, var(--color-surface) 90%, var(--color-accent-soft));
-  color: var(--color-text-muted);
-  font-size: .6rem;
-  font-weight: 810;
-  letter-spacing: .08em;
-  line-height: 1.3;
-  white-space: nowrap;
-}
-#app .cover-upload-received-dot {
-  display: block;
-  flex: 0 0 .38rem;
-  width: .38rem;
-  height: .38rem;
-  border-radius: 50%;
-  background: var(--color-accent-strong);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 12%, transparent);
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-upload-illustration {
-  width: 3.85rem;
-  height: 4.2rem;
-  flex: 0 0 4.2rem;
-  margin: 0 auto .12rem;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-upload-text {
-  gap: .25rem;
-  justify-items: center;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-upload-text strong {
-  max-width: 34ch;
-  font-family: var(--font-serif);
-  font-size: clamp(1.06rem, 1.55vw, 1.26rem);
-  font-weight: 750;
-  line-height: 1.23;
-  letter-spacing: -.031em;
-  text-wrap: balance;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-upload-text small {
-  max-width: 36ch;
-  color: var(--color-text-muted);
-  font-size: .75rem;
-  line-height: 1.5;
-  text-wrap: pretty;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-upload-zone-selected .cover-upload-cta {
-  min-height: 2.2rem;
-  margin-top: .25rem;
-  padding: .45rem .83rem;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
-  border-radius: .68rem;
-  background: var(--color-surface);
-  color: var(--color-accent-strong);
-  font-size: .75rem;
-  box-shadow: none;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-upload-zone-selected:not(.cover-upload-zone-disabled):is(:hover, :focus-visible, .cover-upload-zone-active) {
-  border-color: color-mix(in srgb, var(--color-accent) 63%, var(--color-border));
-  background: color-mix(in srgb, var(--color-surface) 87%, var(--color-accent-soft));
-  box-shadow:
-    inset 0 13px 23px -16px color-mix(in srgb, var(--color-accent) 40%, transparent),
-    inset 0 4px 13px color-mix(in srgb, var(--color-accent) 12%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 17%, transparent);
-  transform: none;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-upload-zone-selected:not(.cover-upload-zone-disabled):is(:hover, :focus-visible, .cover-upload-zone-active) .cover-upload-cta {
-  border-color: var(--color-accent-strong);
-  background: var(--color-accent-strong);
-  color: #fffdf6;
-}
-
-/* Selected image details: actual artwork, readable filename and a quiet format label. */
-#app .layout#app-workspace .cover-studio-picker-received .cover-selected-file {
-  position: relative;
-  display: grid;
-  grid-template-columns: 3.15rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: .78rem;
-  min-width: 0;
-  margin: .8rem 0 0;
-  padding: .68rem .83rem;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 23%, var(--color-border));
-  border-radius: .86rem;
-  background:
-    linear-gradient(112deg, color-mix(in srgb, var(--color-accent) 6%, transparent), transparent 85%),
-    var(--color-surface);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 31%, transparent);
-  transition: border-color 240ms ease, background-color 240ms ease, box-shadow 270ms ease;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-selected-file::before {
-  position: absolute;
-  top: .6rem;
-  bottom: .6rem;
-  left: 0;
-  width: 2px;
-  border-radius: 0 2px 2px 0;
-  background: var(--studio-copper, #b76642);
-  content: '';
-  opacity: .68;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-icon {
-  display: grid;
-  width: 3.15rem;
-  height: 3.75rem;
-  place-items: center;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 29%, var(--color-border));
-  border-radius: .46rem;
-  background: color-mix(in srgb, var(--color-surface-2) 70%, var(--color-surface));
-  box-shadow: 0 .1rem .25rem color-mix(in srgb, var(--color-text) 5%, transparent);
-  color: var(--color-accent-strong);
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-thumbnail {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
-  border-radius: inherit;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-info {
-  display: grid;
-  align-content: center;
-  min-width: 0;
-  gap: .25rem;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-name {
-  display: block;
-  max-width: 100%;
-  min-width: 0;
-  margin: 0;
-  overflow: hidden;
-  color: var(--color-text);
-  font-size: .86rem;
-  font-weight: 790;
-  line-height: 1.32;
-  letter-spacing: -.014em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-info small {
-  display: inline-flex;
-  align-items: center;
-  gap: .32rem;
-  min-width: 0;
-  color: var(--color-text-muted);
-  font-size: .74rem;
-  font-weight: 540;
-  line-height: 1.4;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-format {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  justify-self: end;
-  min-height: 1.65rem;
-  padding: .26rem .46rem;
-  border: 1px solid color-mix(in srgb, var(--studio-copper, #b76642) 24%, var(--color-border));
-  border-radius: .48rem;
-  background: color-mix(in srgb, var(--studio-copper, #b76642) 6%, var(--color-surface));
-  color: var(--color-accent-strong);
-  font-size: .61rem;
-  font-weight: 830;
-  letter-spacing: .025em;
-  line-height: 1.2;
-}
-@media (hover: hover) and (pointer: fine) {
-  #app .layout#app-workspace .cover-studio-picker-received .cover-selected-file:hover {
-    border-color: color-mix(in srgb, var(--color-accent) 38%, var(--color-border));
-    background:
-      linear-gradient(112deg, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent 85%),
-      var(--color-surface);
-    box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 35%, transparent),
-      0 .22rem .5rem color-mix(in srgb, var(--color-text) 4%, transparent);
-  }
-}
-
-/* Actions stay directly below the image details and preserve the apply workflow. */
-#app .layout#app-workspace .cover-studio-picker-received .cover-studio-actions {
-  gap: .12rem;
-  margin-top: .15rem;
-  padding-top: .95rem;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-button-apply {
-  width: 100%;
-  min-height: 3.05rem;
-  border-radius: .78rem;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-button-clear {
-  width: fit-content;
-  min-height: 1.95rem;
-  margin-inline: auto;
-  padding: .2rem .6rem;
-  border: 0;
-  border-radius: .4rem;
-  background: transparent;
-  box-shadow: none;
-  color: var(--color-text-muted);
-  font-size: .73rem;
-  font-weight: 650;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-button-clear:not(:disabled):hover {
-  transform: none;
-  color: var(--color-accent-strong);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-studio-reassurance {
-  justify-content: center;
-  align-items: center;
-  margin-top: .3rem;
-  color: var(--color-text-muted);
-  font-size: .7rem;
-  text-align: center;
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-studio-reassurance::before {
-  margin-top: 0;
-}
-
-@media (max-width: 760px) {
-  #app .layout#app-workspace .cover-studio-picker-received .cover-upload-zone-selected {
-    min-height: 13.8rem;
-    padding: 1.05rem .85rem;
-  }
-  #app .layout#app-workspace .cover-studio-picker-received .cover-upload-text strong {
-    font-size: clamp(1.05rem, 4.3vw, 1.27rem);
-  }
-}
-@media (max-width: 400px) {
-  #app .layout#app-workspace .cover-studio-picker-received .cover-upload-received {
-    font-size: .58rem;
-  }
-  #app .layout#app-workspace .cover-studio-picker-received .cover-selected-file {
-    grid-template-columns: 2.6rem minmax(0, 1fr);
-    gap: .62rem;
-    padding: .65rem .7rem;
-  }
-  #app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-icon {
-    width: 2.6rem;
-    height: 3.2rem;
-  }
-  #app .layout#app-workspace .cover-studio-picker-received .cover-selected-file-format {
-    display: none;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  #app .layout#app-workspace .cover-studio-picker-received .cover-selected-file {
-    transition: none;
-  }
-}
-
-
-/* EPUB-referenced cover picker redesign. */
+/* Image picker: one warm editorial palette and one consistent shadow language. */
 #app .layout#app-workspace .cover-studio-picker {
-  --cover-picker-tone: var(--studio-copper, #b76642);
+  --cover-orange: var(--studio-copper, #c57450);
+  --cover-orange-dark: #a65332;
+  --cover-orange-rgb: 166, 83, 50;
   position: relative;
   isolation: isolate;
   display: flex;
@@ -1369,47 +1080,44 @@
   align-items: stretch;
   justify-content: flex-start;
   gap: 0;
-  min-height: 26.25rem;
+  min-width: 0;
+  min-height: 26rem;
   padding: clamp(1.2rem, 2.35vw, 1.8rem);
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--studio-ink, var(--color-text)) 19%, var(--color-border));
-  border-radius: 1.32rem;
+  border: 1px solid color-mix(in srgb, var(--cover-orange) 29%, var(--color-border));
+  border-radius: 1.3rem;
   background:
-    radial-gradient(ellipse at 0% 0%,
-      color-mix(in srgb, var(--cover-picker-tone) 8%, transparent),
-      transparent 62%),
+    radial-gradient(ellipse at 0% 0%, color-mix(in srgb, var(--cover-orange) 8%, transparent), transparent 66%),
     var(--color-surface);
-  box-shadow:
-    0 1px 1px color-mix(in srgb, var(--color-text) 3%, transparent),
-    0 .95rem 2.1rem color-mix(in srgb, var(--color-text) 5%, transparent);
-  transition: border-color 340ms ease, box-shadow 340ms ease;
+  box-shadow: 0 .55rem 1.6rem rgba(44, 35, 30, .045);
+  transition: border-color 250ms ease, box-shadow 250ms ease;
 }
 #app .layout#app-workspace .cover-studio-picker::before {
   position: absolute;
   display: block;
   top: 0;
-  right: clamp(1.25rem, 3vw, 2rem);
-  left: auto;
+  right: clamp(1.2rem, 2.7vw, 1.8rem);
   bottom: auto;
-  width: 3.2rem;
+  left: auto;
+  width: 3.25rem;
   height: 3px;
   border: 0;
-  border-radius: 0 0 999px 999px;
-  background: var(--cover-picker-tone);
+  border-radius: 0 0 99px 99px;
+  background: var(--cover-orange);
   content: '';
   transform: none;
-  opacity: .8;
   pointer-events: none;
 }
-#app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading {
+#app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading,
+#app .layout#app-workspace .cover-studio-picker-received .cover-studio-picker-heading {
   display: grid;
   align-content: start;
   justify-items: center;
-  gap: .44rem;
+  gap: .42rem;
   width: 100%;
   max-width: none;
   min-width: 0;
-  margin: 0 0 clamp(1.1rem, 2vw, 1.5rem);
+  margin: 0 0 clamp(1.05rem, 1.85vw, 1.38rem);
   padding: 0;
   text-align: center;
 }
@@ -1417,113 +1125,210 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: .66rem;
+  gap: .65rem;
   width: fit-content;
   max-width: 100%;
-  margin: 0 0 .09rem;
-  color: var(--cover-picker-tone);
-  font-family: inherit;
+  margin: 0 0 .06rem;
+  color: var(--cover-orange);
   font-size: .68rem;
   font-weight: 850;
+  letter-spacing: .16em;
   line-height: 1.5;
-  letter-spacing: .165em;
   text-transform: uppercase;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading > .cover-studio-overline::before {
-  display: inline-block;
+  display: block;
   flex: 0 0 1.35rem;
   width: 1.35rem;
   height: 1px;
   background: currentColor;
   content: '';
 }
-#app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading > strong {
+#app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading > strong,
+#app .layout#app-workspace .cover-studio-picker-received .cover-studio-picker-heading > strong {
   display: block;
   max-width: 30ch;
   margin: 0;
-  padding: 0;
   color: var(--color-text);
   font-family: var(--font-serif);
-  font-size: clamp(1.5rem, 2.35vw, 1.98rem);
+  font-size: clamp(1.48rem, 2.3vw, 1.94rem);
   font-weight: 750;
+  letter-spacing: -.046em;
   line-height: 1.14;
-  letter-spacing: -.047em;
   text-wrap: balance;
   overflow-wrap: anywhere;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading > p {
   max-width: 34rem;
-  margin: .06rem auto 0;
+  margin: .05rem auto 0;
   padding: 0;
   color: var(--color-text-muted);
   font-size: .84rem;
-  font-weight: 470;
   line-height: 1.55;
   text-align: center;
   text-wrap: pretty;
 }
-#app .layout#app-workspace .cover-studio-picker-received .cover-studio-picker-heading {
-  margin-bottom: clamp(1.1rem, 2vw, 1.5rem);
-}
-#app .layout#app-workspace .cover-studio-picker-received .cover-studio-picker-heading > strong {
-  font-size: clamp(1.5rem, 2.35vw, 1.98rem);
-}
 
-/* Retain the inward depth of the chosen file field. Its two states use the same stage. */
+/* The image field only has inset depth: nothing casts a shadow outside it. */
 #app .layout#app-workspace .cover-studio-picker .cover-upload-zone {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   flex: 0 0 auto;
-  border-radius: 1.12rem;
-  box-shadow:
-    inset 0 10px 22px -16px color-mix(in srgb, var(--color-accent) 32%, transparent),
-    inset 0 3px 10px color-mix(in srgb, var(--color-accent) 9%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 10%, transparent);
-}
-
-/* Consistent image-selection stage with the EPUB upload card. */
-#app .layout#app-workspace .cover-studio-picker .cover-upload-zone-available {
-  min-height: 14.2rem;
-  border: 1.5px dashed color-mix(in srgb, var(--color-accent) 43%, var(--color-border));
+  min-height: 14.15rem;
+  gap: .45rem;
+  padding: 1.1rem 1rem;
+  border: 1.5px dashed color-mix(in srgb, var(--cover-orange) 48%, var(--color-border));
+  border-radius: 1.05rem;
   background:
-    radial-gradient(ellipse at 50% 28%, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent 78%),
-    radial-gradient(circle, color-mix(in srgb, var(--color-accent) 11%, transparent) .6px, transparent 1px) 0 0 / 22px 22px,
-    color-mix(in srgb, var(--color-surface) 92%, var(--color-accent-soft));
+    radial-gradient(ellipse at 50% 18%, color-mix(in srgb, var(--cover-orange) 8%, transparent), transparent 80%),
+    color-mix(in srgb, var(--color-surface) 95%, var(--cover-orange));
+  box-shadow: inset 0 2px 9px rgba(var(--cover-orange-rgb), .07);
+  color: var(--color-text);
+  transform: none;
+  transition: border-color 230ms ease, background-color 230ms ease, box-shadow 230ms ease;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-zone-selected {
+  min-height: 14.15rem;
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--cover-orange) 44%, var(--color-border));
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-zone:not(.cover-upload-zone-disabled):is(:hover, :focus-visible, .cover-upload-zone-active) {
+  border-color: var(--cover-orange);
+  background:
+    radial-gradient(ellipse at 50% 18%, color-mix(in srgb, var(--cover-orange) 11%, transparent), transparent 80%),
+    color-mix(in srgb, var(--color-surface) 92%, var(--cover-orange));
+  box-shadow: inset 0 2px 11px rgba(var(--cover-orange-rgb), .1);
+  transform: none;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-zone:focus-visible {
+  outline: 2px solid var(--cover-orange);
+  outline-offset: 3px;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-zone-disabled,
+#app .layout#app-workspace .cover-studio-picker .cover-upload-zone-disabled:is(:hover, :focus-visible, .cover-upload-zone-active) {
+  border-style: solid;
+  border-color: var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 91%, var(--color-surface-2));
+  box-shadow: none;
+  cursor: default;
+  opacity: 1;
+  transform: none;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-zone-disabled .cover-upload-text strong,
+#app .layout#app-workspace .cover-studio-picker .cover-upload-zone-disabled .cover-upload-locked-label {
+  color: var(--color-text-muted);
 }
 #app .layout#app-workspace .cover-studio-picker .cover-upload-illustration {
-  margin-bottom: .26rem;
-  filter: drop-shadow(0 .18rem .22rem color-mix(in srgb, var(--color-text) 5%, transparent));
+  width: 3.85rem;
+  height: 4.2rem;
+  flex: 0 0 4.2rem;
+  margin: 0 auto .18rem;
+  filter: none;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-sheet {
+  width: 2.75rem;
+  height: 3.45rem;
+  border-color: color-mix(in srgb, var(--cover-orange) 46%, var(--color-border));
+  border-radius: .3rem .5rem .5rem .3rem;
+  background: var(--color-surface);
+  box-shadow: none;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-sheet-back {
+  top: .36rem;
+  left: .95rem;
+  background: color-mix(in srgb, var(--color-surface) 89%, var(--cover-orange));
+  transform: rotate(8deg);
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-sheet-front {
+  top: .17rem;
+  left: .36rem;
+  transform: rotate(-6deg);
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-sun {
+  top: .68rem;
+  right: .58rem;
+  left: auto;
+  width: .57rem;
+  height: .57rem;
+  background: var(--cover-orange);
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-mountain {
+  top: 1.45rem;
+  left: .44rem;
+  width: 1.91rem;
+  height: 1.3rem;
+  background: color-mix(in srgb, var(--cover-orange) 66%, transparent);
 }
 #app .layout#app-workspace .cover-studio-picker .cover-upload-text {
+  display: grid;
+  justify-items: center;
   gap: .3rem;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-upload-text strong {
-  font-size: clamp(1.1rem, 1.55vw, 1.32rem);
+  max-width: 34ch;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.1rem, 1.55vw, 1.31rem);
+  font-weight: 750;
+  letter-spacing: -.033em;
   line-height: 1.26;
   text-wrap: balance;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-upload-text small {
-  max-width: 32rem;
-  font-size: .77rem;
-  line-height: 1.52;
+  max-width: 34ch;
+  color: var(--color-text-muted);
+  font-size: .76rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* Small received label and upload action share the same warm accent. */
+#app .layout#app-workspace .cover-studio-picker .cover-upload-received {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .43rem;
+  margin: 0 0 .12rem;
+  padding: .29rem .62rem;
+  border: 1px solid color-mix(in srgb, var(--cover-orange) 35%, var(--color-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-surface) 90%, var(--cover-orange));
+  color: var(--color-text-muted);
+  font-size: .61rem;
+  font-weight: 800;
+  letter-spacing: .075em;
+  line-height: 1.3;
+  box-shadow: none;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-received-dot {
+  display: block;
+  width: .38rem;
+  height: .38rem;
+  flex: 0 0 .38rem;
+  border-radius: 50%;
+  background: var(--cover-orange);
+  box-shadow: none;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-upload-zone .cover-upload-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: .74rem;
-  min-height: 2.68rem;
-  margin-top: .46rem;
-  padding: .36rem .4rem .36rem .96rem;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 42%, var(--color-border));
-  border-radius: .75rem;
-  background: var(--color-surface);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 38%, transparent);
-  color: var(--color-accent-strong);
-  font-family: inherit;
-  font-size: .79rem;
+  gap: .7rem;
+  min-height: 2.6rem;
+  margin-top: .42rem;
+  padding: .35rem .39rem .35rem .92rem;
+  border: 1px solid var(--cover-orange-dark);
+  border-radius: .73rem;
+  background: var(--cover-orange-dark);
+  box-shadow: none;
+  color: #fffaf4;
+  font-size: .78rem;
   font-weight: 810;
+  letter-spacing: -.01em;
   line-height: 1.3;
-  transition: border-color 260ms ease, background-color 260ms ease,
-    color 260ms ease, box-shadow 260ms ease;
+  transition: background-color 230ms ease, border-color 230ms ease, color 230ms ease;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-upload-cta-label {
   display: block;
@@ -1531,118 +1336,275 @@
 }
 #app .layout#app-workspace .cover-studio-picker .cover-upload-cta-arrow {
   display: grid;
-  flex: 0 0 1.86rem;
-  width: 1.86rem;
-  height: 1.86rem;
+  width: 1.84rem;
+  height: 1.84rem;
+  flex: 0 0 1.84rem;
   place-items: center;
-  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
-  border-radius: .53rem;
-  background: color-mix(in srgb, currentColor 7%, transparent);
+  border: 1px solid rgba(255, 250, 244, .29);
+  border-radius: .5rem;
+  background: rgba(255, 250, 244, .09);
+  color: #fffaf4;
   font-family: Georgia, 'Iowan Old Style', serif;
-  font-size: 1.12rem;
+  font-size: 1.13rem;
   line-height: 1;
-  transition: transform 330ms cubic-bezier(.16, 1, .3, 1),
-    border-color 260ms ease;
-}
-#app .layout#app-workspace .cover-studio-picker .cover-upload-zone-available .cover-upload-cta {
-  border-color: color-mix(in srgb, #163c30 68%, var(--color-border));
-  background: #245e48;
-  box-shadow: 0 .16rem 0 color-mix(in srgb, #163c30 33%, transparent);
-  color: #fffaf1;
+  transform: none;
+  transition: background-color 230ms ease, transform 230ms ease;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-upload-zone:not(.cover-upload-zone-disabled):is(:hover, :focus-visible, .cover-upload-zone-active) .cover-upload-cta {
-  border-color: #245e48;
-  background: #245e48;
-  box-shadow: 0 .18rem 0 color-mix(in srgb, #163c30 30%, transparent);
-  color: #fffaf1;
-}
-#app .layout#app-workspace .cover-studio-picker .cover-upload-zone:not(.cover-upload-zone-disabled):is(:hover, :focus-visible, .cover-upload-zone-active) .cover-upload-cta-arrow {
-  transform: translate(1px, -1px);
-}
-
-#app .layout#app-workspace .cover-studio-picker .cover-upload-zone:not(.cover-upload-zone-disabled):is(:hover, :focus-visible, .cover-upload-zone-active) {
-  box-shadow:
-    inset 0 13px 23px -16px color-mix(in srgb, var(--color-accent) 40%, transparent),
-    inset 0 4px 13px color-mix(in srgb, var(--color-accent) 12%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 17%, transparent);
+  border-color: #914528;
+  background: #914528;
+  box-shadow: none;
+  color: #fffaf4;
   transform: none;
 }
-#app .layout#app-workspace .cover-studio-picker .cover-upload-zone-disabled:is(:hover, :focus-visible, .cover-upload-zone-active) {
+#app .layout#app-workspace .cover-studio-picker .cover-upload-zone:not(.cover-upload-zone-disabled):is(:hover, :focus-visible, .cover-upload-zone-active) .cover-upload-cta-arrow {
+  background: rgba(255, 250, 244, .14);
+  transform: translate(1px, -1px);
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-footnote {
+  color: var(--color-text-muted);
+  font-size: .69rem;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-locked-label {
+  font-size: .72rem;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-zone-disabled .cover-upload-illustration {
+  opacity: .62;
+}
+
+/* Selected image: quiet thumbnail row, no shadow stack. */
+#app .layout#app-workspace .cover-studio-picker .cover-selected-file {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3.1rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .75rem;
+  min-width: 0;
+  margin: .82rem 0 0;
+  padding: .68rem .82rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--cover-orange) 35%, var(--color-border));
+  border-radius: .84rem;
+  background: color-mix(in srgb, var(--color-surface) 95%, var(--cover-orange));
+  box-shadow: none;
+  transition: border-color 230ms ease, background-color 230ms ease;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-selected-file::before {
+  position: absolute;
+  top: .68rem;
+  bottom: .68rem;
+  left: 0;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: var(--cover-orange);
+  opacity: .78;
+  content: '';
+}
+#app .layout#app-workspace .cover-studio-picker .cover-selected-file-icon {
+  display: grid;
+  width: 3.1rem;
+  height: 3.72rem;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--cover-orange) 32%, var(--color-border));
+  border-radius: .45rem;
+  background: var(--color-surface);
+  box-shadow: none;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-selected-file-thumbnail {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  border-radius: inherit;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-selected-file-info {
+  display: grid;
+  min-width: 0;
+  align-content: center;
+  gap: .23rem;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-selected-file-name {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: .86rem;
+  font-weight: 780;
+  line-height: 1.35;
+  letter-spacing: -.013em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-selected-file-info small {
+  color: var(--color-text-muted);
+  font-size: .73rem;
+  line-height: 1.4;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-selected-file-format {
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+  min-height: 1.6rem;
+  padding: .24rem .45rem;
+  border: 1px solid color-mix(in srgb, var(--cover-orange) 40%, var(--color-border));
+  border-radius: .46rem;
+  background: color-mix(in srgb, var(--color-surface) 87%, var(--cover-orange));
+  color: var(--cover-orange-dark);
+  font-size: .63rem;
+  font-weight: 800;
+  letter-spacing: .015em;
+  line-height: 1.2;
+}
+@media (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .cover-studio-picker .cover-selected-file:hover {
+    border-color: var(--cover-orange);
+    background: color-mix(in srgb, var(--color-surface) 91%, var(--cover-orange));
+    box-shadow: none;
+  }
+}
+
+/* The final action uses orange instead of the previous green and has no raised lip. */
+#app .layout#app-workspace .cover-studio-picker .cover-studio-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: .15rem;
+  margin-top: auto;
+  padding-top: 1.08rem;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-actions .btn {
+  min-width: 0;
+  border-radius: .76rem;
   box-shadow: none;
   transform: none;
 }
-#app .layout#app-workspace .cover-studio-picker .cover-studio-actions {
-  margin-top: auto;
-}
-#app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance {
-  padding-top: .05rem;
-}
 #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply:not(:disabled) {
-  border-color: #184b37;
-  background: #245e48;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12),
-    0 .2rem 0 rgba(17, 55, 38, .29);
-  color: #fffaf1;
-  font-weight: 820;
+  min-height: 3.05rem;
+  border: 1px solid var(--cover-orange-dark);
+  background: var(--cover-orange-dark);
+  box-shadow: none;
+  color: #fffaf4;
+  font-weight: 815;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply:disabled {
-  border-color: var(--color-border);
-  background: color-mix(in srgb, var(--color-surface-2) 75%, var(--color-surface));
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-surface) 70%, transparent);
+  min-height: 3.05rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  box-shadow: none;
   color: var(--color-text-muted);
-  opacity: .79;
+  opacity: .74;
+  cursor: not-allowed;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-clear {
+  grid-column: 1;
+  justify-self: center;
+  width: fit-content;
+  min-height: 2rem;
+  margin: 0 auto;
+  padding: .25rem .6rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--color-text-muted);
+  font-size: .74rem;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-clear:not(:disabled):hover {
+  color: var(--cover-orange-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  box-shadow: none;
+  transform: none;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance {
+  justify-content: center;
+  align-items: center;
+  gap: .48rem;
+  margin: .4rem 0 0;
+  color: var(--color-text-muted);
+  font-size: .71rem;
+  line-height: 1.45;
+  text-align: center;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance::before {
+  flex: 0 0 .43rem;
+  width: .43rem;
+  height: .43rem;
+  margin: 0;
+  border: 1.5px solid var(--cover-orange);
+  border-radius: 50%;
 }
 
-
-/* Same subtle hover language as the EPUB upload panel, with no layout jump. */
+/* A single restrained outer elevation for the card, not the controls inside it. */
 @media (hover: hover) and (pointer: fine) {
   #app .layout#app-workspace .cover-studio-picker:hover {
-    border-color: color-mix(in srgb, var(--cover-picker-tone) 32%, var(--color-border));
-    box-shadow:
-      0 1px 1px color-mix(in srgb, var(--color-text) 3%, transparent),
-      0 1.4rem 2.65rem color-mix(in srgb, var(--color-text) 7%, transparent);
-  }
-  #app .layout#app-workspace .cover-studio-picker .cover-upload-zone-disabled:hover {
-    transform: none;
+    border-color: color-mix(in srgb, var(--cover-orange) 50%, var(--color-border));
+    box-shadow: 0 .7rem 1.9rem rgba(44, 35, 30, .06);
   }
   #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply:not(:disabled):hover {
-    background: #2b6a50;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16),
-      0 .27rem 0 rgba(17, 55, 38, .3);
+    border-color: #914528;
+    background: #914528;
+    box-shadow: none;
+    transform: none;
   }
-
+  #app .layout#app-workspace .cover-studio-picker .cover-upload-sheet-front:hover,
+  #app .layout#app-workspace .cover-studio-picker .cover-upload-sheet-back:hover {
+    box-shadow: none;
+  }
 }
 :root[data-theme="dark"] #app .layout#app-workspace .cover-studio-picker {
+  --cover-orange: #d28a68;
+  --cover-orange-dark: #b86846;
+  --cover-orange-rgb: 210, 138, 104;
+  border-color: color-mix(in srgb, var(--cover-orange) 35%, var(--color-border));
   background:
-    radial-gradient(ellipse at 0% 0%,
-      color-mix(in srgb, var(--cover-picker-tone) 7%, transparent), transparent 62%),
+    radial-gradient(ellipse at 0% 0%, color-mix(in srgb, var(--cover-orange) 7%, transparent), transparent 66%),
     var(--color-surface);
-  border-color: color-mix(in srgb, var(--color-text) 19%, var(--color-border));
+  box-shadow: 0 .45rem 1.3rem rgba(0, 0, 0, .11);
 }
-
-:root[data-theme="dark"] #app .layout#app-workspace .cover-studio-picker .cover-upload-zone-available .cover-upload-cta,
-:root[data-theme="dark"] #app .layout#app-workspace .cover-studio-picker .cover-upload-zone:not(.cover-upload-zone-disabled):is(:hover, :focus-visible, .cover-upload-zone-active) .cover-upload-cta {
-  color: #fffaf1;
+:root[data-theme="dark"] #app .layout#app-workspace .cover-studio-picker .cover-upload-zone .cover-upload-cta,
+:root[data-theme="dark"] #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply:not(:disabled) {
+  color: #fffaf4;
 }
 @media (max-width: 760px) {
   #app .layout#app-workspace .cover-studio-picker {
     min-height: 0;
-    padding: clamp(1.05rem, 3.2vw, 1.4rem);
-    border-radius: 1.1rem;
+    padding: 1.15rem;
+    border-radius: 1.12rem;
   }
   #app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading {
     gap: .38rem;
     margin-bottom: 1rem;
   }
-  #app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading > strong,
-  #app .layout#app-workspace .cover-studio-picker-received .cover-studio-picker-heading > strong {
-    font-size: clamp(1.36rem, 5vw, 1.72rem);
+  #app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading > strong {
+    font-size: clamp(1.36rem, 5vw, 1.76rem);
+  }
+  #app .layout#app-workspace .cover-studio-picker .cover-upload-zone {
+    min-height: 13.6rem;
+    padding: 1rem .82rem;
+  }
+}
+@media (max-width: 400px) {
+  #app .layout#app-workspace .cover-studio-picker .cover-selected-file {
+    grid-template-columns: 2.6rem minmax(0, 1fr);
+    gap: .62rem;
+    padding: .65rem .7rem;
+  }
+  #app .layout#app-workspace .cover-studio-picker .cover-selected-file-icon {
+    width: 2.6rem;
+    height: 3.2rem;
+  }
+  #app .layout#app-workspace .cover-studio-picker .cover-selected-file-format {
+    display: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
   #app .layout#app-workspace .cover-studio-picker,
-  #app .layout#app-workspace .cover-studio-picker .cover-upload-cta,
-  #app .layout#app-workspace .cover-studio-picker .cover-upload-cta-arrow {
+  #app .layout#app-workspace .cover-studio-picker .cover-upload-zone,
+  #app .layout#app-workspace .cover-studio-picker .cover-upload-zone .cover-upload-cta,
+  #app .layout#app-workspace .cover-studio-picker .cover-upload-cta-arrow,
+  #app .layout#app-workspace .cover-studio-picker .cover-selected-file {
     transition: none;
   }
   #app .layout#app-workspace .cover-studio-picker .cover-upload-zone:not(.cover-upload-zone-disabled):hover .cover-upload-cta-arrow {
