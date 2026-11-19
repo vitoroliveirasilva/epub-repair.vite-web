@@ -197,7 +197,7 @@
 
   .app-header .header-nav a:hover,
   .app-header .header-nav a:focus-visible {
-    color: var(--color-accent-strong);
+    color: var(--desktop-nav-copper);
     border-color: transparent;
     background: transparent;
     transform: translateY(-1px);
