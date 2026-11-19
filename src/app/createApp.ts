@@ -683,7 +683,12 @@ function renderSupportSections(): HTMLElement {
         className: 'support-heading',
         children: [
           el('p', { className: 'eyebrow', text: 'Clareza antes de processar' }),
-          el('h2', { text: 'Seu livro continua sendo seu' }),
+          el('h2', {
+            children: [
+              'Seu livro continua sendo ',
+              el('span', { className: 'support-heading-accent', text: 'seu' }),
+            ],
+          }),
           el('p', {
             text: 'O EPUB Repair trabalha com limites explícitos, mantém o arquivo original ' +
               'intacto e informa quando uma decisão ainda depende de revisão humana.',
@@ -692,7 +697,7 @@ function renderSupportSections(): HTMLElement {
       }),
       el('article', {
         className: 'support-card support-card-local',
-        attrs: { id: 'privacy' },
+        attrs: { id: 'privacy', 'data-decor': '01' },
         children: [
           el('span', { className: 'support-index', text: 'LOCAL' }),
           el('p', { className: 'eyebrow', text: 'Privacidade' }),
@@ -705,6 +710,7 @@ function renderSupportSections(): HTMLElement {
       }),
       el('article', {
         className: 'support-card support-card-original',
+        attrs: { 'data-decor': '02' },
         children: [
           el('span', { className: 'support-index', text: 'CÓPIA' }),
           el('p', { className: 'eyebrow', text: 'Preservação' }),
@@ -718,7 +724,7 @@ function renderSupportSections(): HTMLElement {
       }),
       el('article', {
         className: 'support-card support-card-limits',
-        attrs: { id: 'limitations' },
+        attrs: { id: 'limitations', 'data-decor': '03' },
         children: [
           el('span', { className: 'support-index', text: 'LIMITE' }),
           el('p', { className: 'eyebrow', text: 'Limitações' }),
