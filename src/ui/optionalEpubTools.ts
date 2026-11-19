@@ -893,29 +893,33 @@ function renderBatch(
       detail,
     ] });
   });
-  const emptyAction = button('Adicionar EPUBs',
-    'btn batch-studio-empty-action', () => input.click());
-  emptyAction.disabled = state.busy;
+  const emptyList = button('', 'batch-studio-empty', () => input.click());
+  emptyList.disabled = state.busy;
+  emptyList.setAttribute('aria-label', 'Escolher livros EPUB para o lote');
+  emptyList.append(
+    el('span', { className: 'batch-studio-empty-book',
+      attrs: { 'aria-hidden': 'true' } }),
+    el('span', { className: 'batch-studio-empty-copy', children: [
+      el('strong', { text: 'Nenhum livro na lista' }),
+      el('small', { text: 'Escolha até ' + MAX_BATCH_FILES +
+        ' EPUBs para montar seu lote.' }),
+    ] }),
+    el('span', { className: 'batch-studio-empty-link',
+      attrs: { 'aria-hidden': 'true' }, children: [
+        el('span', { text: 'Adicionar' }),
+        el('span', { className: 'batch-studio-empty-arrow', text: '↗' }),
+      ] }),
+  );
 
   const fileList = el('div', {
     className: 'batch-studio-file-scroll',
-    attrs: { tabindex: '0', role: 'region',
+    attrs: { tabindex: hasFiles ? '0' : '-1', role: 'region',
       'data-has-files': String(hasFiles),
       'aria-label': 'Lista de arquivos EPUB selecionados' },
     children: hasFiles
       ? [el('ul', { className: 'optional-batch-files batch-workspace-files',
           children: fileRows })]
-      : [el('div', { className: 'batch-studio-empty', children: [
-          el('span', { className: 'batch-studio-empty-art',
-            attrs: { 'aria-hidden': 'true' }, children: [
-              el('span', { className: 'batch-studio-empty-mark' }),
-              el('span', { className: 'batch-studio-empty-shelf' }),
-            ] }),
-          el('strong', { text: 'Nenhum livro na lista' }),
-          el('small', { text: 'Escolha até ' + MAX_BATCH_FILES +
-            ' EPUBs para montar seu lote.' }),
-          emptyAction,
-        ] })],
+      : [emptyList],
   });
 
   const message = s.batchError || (!state.busy && state.error && s.batchStarted && !s.batchZip)
