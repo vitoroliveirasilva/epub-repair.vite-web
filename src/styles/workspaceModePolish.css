@@ -224,7 +224,7 @@
 #app .workflow-mode-book-solo .workflow-mode-book-pages {
   z-index: 1;
   top: .3rem;
-  right: .54rem;
+  right: .14rem;
   bottom: .3rem;
   left: .4rem;
   box-shadow: .09rem .15rem .3rem rgba(29, 42, 33, .13);
