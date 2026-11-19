@@ -358,34 +358,50 @@ function coverStudioPreviewPlaceholderIcon(): SVGSVGElement {
   const ns = 'http://www.w3.org/2000/svg';
   const icon = document.createElementNS(ns, 'svg');
   icon.setAttribute('class', 'cover-studio-preview-placeholder-glyph');
-  icon.setAttribute('viewBox', '0 0 64 64');
+  icon.setAttribute('viewBox', '0 0 96 120');
   icon.setAttribute('fill', 'none');
   icon.setAttribute('aria-hidden', 'true');
   icon.setAttribute('focusable', 'false');
 
-  const add = (tag: 'rect' | 'path' | 'circle', className: string, attrs: Record<string, string>) => {
+  const add = (
+    tag: 'rect' | 'path' | 'circle',
+    className: string,
+    attrs: Record<string, string>,
+  ) => {
     const node = document.createElementNS(ns, tag);
     node.setAttribute('class', className);
-    for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+    for (const [key, value] of Object.entries(attrs)) {
+      node.setAttribute(key, value);
+    }
     icon.append(node);
   };
 
-  // A small book being inspected, rather than another generic landscape icon.
-  add('rect', 'cover-studio-preview-glyph-book', {
-    x: '11', y: '6', width: '36', height: '48', rx: '5',
+  add('rect', 'cover-studio-preview-book-body', {
+    x: '14', y: '6', width: '66', height: '104', rx: '6',
   });
-  add('path', 'cover-studio-preview-glyph-spine', { d: 'M19 7v46' });
-  add('rect', 'cover-studio-preview-glyph-label', {
-    x: '24', y: '16', width: '17', height: '19', rx: '3',
+  add('rect', 'cover-studio-preview-book-spine', {
+    x: '14', y: '6', width: '10', height: '104', rx: '4',
   });
-  add('path', 'cover-studio-preview-glyph-lines', {
-    d: 'M25 40h14M25 45h9',
+  add('rect', 'cover-studio-preview-book-panel', {
+    x: '28', y: '28', width: '44', height: '58', rx: '4',
   });
-  add('circle', 'cover-studio-preview-glyph-lens', {
-    cx: '43', cy: '43', r: '9',
+  add('path', 'cover-studio-preview-book-title', {
+    d: 'M31 38h24',
   });
-  add('path', 'cover-studio-preview-glyph-handle', {
-    d: 'm49.5 49.5 7.5 7.5',
+  add('path', 'cover-studio-preview-book-subtitle', {
+    d: 'M31 45h18',
+  });
+  add('rect', 'cover-studio-preview-book-mark', {
+    x: '46', y: '53', width: '3', height: '14', rx: '1.5',
+  });
+  add('path', 'cover-studio-preview-book-footer-1', {
+    d: 'M31 74h27',
+  });
+  add('path', 'cover-studio-preview-book-footer-2', {
+    d: 'M31 79h20',
+  });
+  add('path', 'cover-studio-preview-book-shadow-line', {
+    d: 'M27 92h38',
   });
 
   return icon;
