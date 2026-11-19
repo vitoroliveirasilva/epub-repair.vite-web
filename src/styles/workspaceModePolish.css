@@ -212,6 +212,11 @@
   box-shadow: .25rem .55rem .8rem rgba(29, 42, 33, .14);
 }
 
+#app .workflow-mode-book-solo .workflow-mode-book-pages {
+  right: .08rem;
+  bottom: .08rem;
+}
+
 #app .workflow-mode-book-cover {
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--color-accent-strong) 76%, #0c2e22);
