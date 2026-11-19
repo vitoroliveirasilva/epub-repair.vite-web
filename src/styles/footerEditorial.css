@@ -835,11 +835,17 @@ body > iframe,
   .editorial-footer-link:hover,
   .editorial-footer-link:hover::before,
   .editorial-footer-action:hover,
-  .editorial-footer-nav:hover::before,
-  .editorial-footer-content:hover .editorial-footer-art::before,
   .editorial-footer-content:hover .editorial-footer-art::after,
   .editorial-footer-link:hover > .editorial-footer-icon,
   .editorial-footer-link:hover .editorial-footer-external {
     transform: none;
+  }
+
+  .editorial-footer-nav:hover::before {
+    transform: translateY(-50%) scaleY(.5);
+  }
+
+  .editorial-footer-content:hover .editorial-footer-art::before {
+    transform: translate(-50%, -50%) rotate(-13deg);
   }
 }
