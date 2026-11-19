@@ -73,6 +73,11 @@
   text-wrap: balance;
 }
 
+#app .layout#app-workspace .cover-studio-heading h2 .cover-title-accent,
+#app .layout#app-workspace .cover-studio-picker-heading > strong .cover-title-accent {
+  color: var(--studio-copper, #c57450);
+}
+
 #app .layout#app-workspace .cover-studio-heading .muted {
   max-width: 55rem;
   margin: .1rem 0 0;
