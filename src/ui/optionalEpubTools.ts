@@ -773,6 +773,11 @@ function renderBatch(
       'aria-disabled': String(state.busy),
     },
     children: [
+      el('span', { className: 'batch-studio-upload-kicker', children: [
+        el('span', { className: 'batch-studio-upload-dot',
+          attrs: { 'aria-hidden': 'true' } }),
+        el('span', { text: hasFiles ? 'CONTINUE SUA SELEÇÃO' : 'SUA BIBLIOTECA DIGITAL' }),
+      ] }),
       el('span', { className: 'batch-studio-upload-graphic',
         attrs: { 'aria-hidden': 'true' },
         children: [
@@ -786,14 +791,15 @@ function renderBatch(
           el('span', { className: 'batch-studio-upload-graphic-tag', text: 'EPUB' }),
         ] }),
       el('span', { className: 'batch-studio-upload-copy', children: [
-        el('span', { className: 'batch-studio-upload-kicker',
-          text: hasFiles ? 'CONTINUE SUA SELEÇÃO' : 'SUA BIBLIOTECA DIGITAL' }),
         el('strong', { text: hasFiles ? 'Adicione mais livros' : 'Arraste seus EPUBs aqui' }),
         el('small', { text: hasFiles ? 'Solte mais arquivos ou escolha no seu dispositivo'
           : 'Ou selecione os arquivos no seu dispositivo para começar.' }),
       ] }),
       el('span', { className: 'batch-studio-upload-action',
         text: hasFiles ? 'Adicionar EPUBs' : 'Escolher arquivos' }),
+      el('span', { className: 'batch-studio-upload-formats',
+        text: 'Até ' + MAX_BATCH_FILES + ' EPUBs · ' + formatBytes(MAX_BATCH_BYTES) +
+          ' no total' }),
     ],
   });
   zone.addEventListener('keydown', (event) => {
@@ -934,8 +940,6 @@ function renderBatch(
         ] }),
         el('progress', { attrs: { max: String(MAX_BATCH_BYTES),
           value: String(totalBytes), 'aria-label': 'Espaço total de EPUBs utilizado' } }),
-        el('small', { text: 'Limite compartilhado entre até ' +
-          MAX_BATCH_FILES + ' EPUBs' }),
       ] }),
       message,
     ],

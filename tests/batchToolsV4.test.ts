@@ -391,6 +391,14 @@ describe('Lotes limitados e isolados', () => {
       .toBe('EPUB');
     expect(host.querySelector('.batch-studio-upload-kicker')?.textContent)
       .toBe('SUA BIBLIOTECA DIGITAL');
+    const upload = host.querySelector('.batch-studio-upload');
+    expect(upload?.children[0]?.classList.contains('batch-studio-upload-kicker')).toBe(true);
+    expect(upload?.children[1]?.classList.contains('batch-studio-upload-graphic')).toBe(true);
+    expect(upload?.children[2]?.classList.contains('batch-studio-upload-copy')).toBe(true);
+    expect(upload?.children[3]?.classList.contains('batch-studio-upload-action')).toBe(true);
+    expect(upload?.children[4]?.classList.contains('batch-studio-upload-formats')).toBe(true);
+    expect(upload?.querySelector('.batch-studio-upload-formats')?.textContent)
+      .toBe('Até 6 EPUBs · 80 MB no total');
     expect(host.querySelector('.batch-studio-flow-step[aria-current="step"] .batch-studio-flow-text small')?.textContent)
       .toBe('Escolha seus livros');
     expect(host.querySelector('#batch-workspace')?.getAttribute('data-batch-state'))
