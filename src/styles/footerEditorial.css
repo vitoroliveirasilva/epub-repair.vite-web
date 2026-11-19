@@ -33,7 +33,7 @@ body > iframe,
   border-radius: 0;
   color: var(--footer-text);
   background:
-    radial-gradient(ellipse at 37% 9%, color-mix(in srgb, var(--footer-orange) 8%, transparent), transparent 47%),
+    linear-gradient(115deg, color-mix(in srgb, var(--footer-orange-soft) 25%, transparent), transparent 39%),
     linear-gradient(180deg, color-mix(in srgb, var(--footer-surface) 42%, transparent), transparent 9rem),
     var(--footer-bg);
   box-shadow: 0 -1rem 3rem color-mix(in srgb, var(--footer-shadow) 32%, transparent);
@@ -54,6 +54,21 @@ body > iframe,
   transform: translateX(-50%);
 }
 
+/* Marcador editorial inspirado em uma fita de página, longe do conteúdo. */
+.app-footer.editorial-footer::after {
+  position: absolute;
+  top: 0;
+  right: clamp(1.5rem, 6vw, 6rem);
+  z-index: 3;
+  width: 1.05rem;
+  height: 3.2rem;
+  background: color-mix(in srgb, var(--footer-orange) 68%, var(--footer-orange-soft));
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
+  content: '';
+  opacity: .66;
+  pointer-events: none;
+}
+
 :root[data-theme="dark"] .app-footer.editorial-footer {
   --footer-bg: #101815;
   --footer-surface: #17231f;
@@ -69,7 +84,7 @@ body > iframe,
   --footer-wave-text: #f9eee2;
   --footer-shadow: rgba(0, 0, 0, .48);
   background:
-    radial-gradient(circle at 84% 18%, rgba(98, 167, 140, .08), transparent 23rem),
+    linear-gradient(118deg, rgba(98, 167, 140, .065), transparent 48%),
     linear-gradient(180deg, rgba(255, 255, 255, .018), transparent 7rem),
     var(--footer-bg);
 }
@@ -115,10 +130,13 @@ body > iframe,
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 4rem;
-  height: 3px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--footer-orange), color-mix(in srgb, var(--footer-orange) 18%, transparent));
+  width: 4.25rem;
+  height: .5rem;
+  background:
+    linear-gradient(90deg, var(--footer-orange), color-mix(in srgb, var(--footer-orange) 18%, transparent))
+      left top / 100% 3px no-repeat,
+    linear-gradient(90deg, color-mix(in srgb, var(--footer-orange) 55%, transparent), transparent)
+      left bottom / 64% 1px no-repeat;
   content: '';
   transition: width 480ms cubic-bezier(.16, 1, .3, 1);
 }
@@ -199,6 +217,26 @@ body > iframe,
   transition: width 380ms cubic-bezier(.16, 1, .3, 1), opacity 300ms ease;
 }
 
+/* Um canto dobrado em cada painel, como uma folha de papel. */
+.editorial-footer-nav::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 0;
+  width: clamp(1.8rem, 3vw, 2.6rem);
+  aspect-ratio: 1;
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--footer-orange-soft) 24%, var(--footer-bg)),
+      color-mix(in srgb, var(--footer-orange) 26%, var(--footer-surface)));
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  content: '';
+  opacity: .8;
+  transform-origin: top right;
+  transition: transform 400ms cubic-bezier(.16, 1, .3, 1), opacity 400ms ease;
+  pointer-events: none;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .editorial-footer-nav:hover {
     border-color: color-mix(in srgb, var(--footer-orange) 38%, var(--footer-line));
@@ -210,6 +248,11 @@ body > iframe,
   .editorial-footer-nav:hover::before {
     width: 4.6rem;
     opacity: 1;
+  }
+
+  .editorial-footer-nav:hover::after {
+    opacity: 1;
+    transform: scale(1.22);
   }
 }
 
@@ -366,51 +409,6 @@ body > iframe,
   pointer-events: none;
 }
 
-.editorial-footer-art::before {
-  position: absolute;
-  top: 49%;
-  left: 50%;
-  z-index: 0;
-  width: clamp(11.5rem, 19vw, 17.25rem);
-  aspect-ratio: 1;
-  border: 1px solid color-mix(in srgb, var(--footer-orange) 26%, transparent);
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 45%,
-    color-mix(in srgb, var(--footer-orange-soft) 68%, transparent),
-    color-mix(in srgb, var(--footer-orange-soft) 18%, transparent) 53%,
-    transparent 75%);
-  box-shadow: 0 0 0 .7rem color-mix(in srgb, var(--footer-orange) 3%, transparent);
-  content: '';
-  transform: translate(-50%, -50%);
-  transition: transform 650ms cubic-bezier(.16, 1, .3, 1),
-    border-color 350ms ease;
-  pointer-events: none;
-}
-
-.editorial-footer-art::after {
-  position: absolute;
-  z-index: 0;
-  bottom: 4%;
-  left: 50%;
-  width: 72%;
-  height: 1.2rem;
-  border: 0;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--footer-shadow) 58%, transparent);
-  filter: blur(.9rem);
-  content: '';
-  opacity: .5;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .editorial-footer-content:hover .editorial-footer-art::before {
-    border-color: color-mix(in srgb, var(--footer-orange) 43%, transparent);
-    transform: translate(-50%, -50%) scale(1.045);
-  }
-}
-
 .editorial-footer-art img {
   position: relative;
   z-index: 1;
@@ -419,6 +417,14 @@ body > iframe,
   height: auto;
   margin-inline: auto;
   filter: drop-shadow(0 .8rem 1.2rem color-mix(in srgb, var(--footer-shadow) 55%, transparent));
+  transform: translateY(0);
+  transition: transform 480ms cubic-bezier(.16, 1, .3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .editorial-footer-content:hover .editorial-footer-art img {
+    transform: translateY(-.28rem);
+  }
 }
 
 .editorial-footer-product {
@@ -450,9 +456,9 @@ body > iframe,
   place-content: center stretch;
   color: var(--footer-wave-text);
   background:
-    radial-gradient(circle at 88% 16%, color-mix(in srgb, var(--footer-orange) 9%, transparent), transparent 29%),
-    linear-gradient(118deg, color-mix(in srgb, var(--footer-orange) 5%, var(--footer-wave)),
-      var(--footer-wave) 53%,
+    linear-gradient(116deg,
+      color-mix(in srgb, var(--footer-orange) 6%, var(--footer-wave)),
+      var(--footer-wave) 51%,
       color-mix(in srgb, #081a14 19%, var(--footer-wave)));
 }
 
@@ -466,17 +472,20 @@ body > iframe,
 
 .editorial-footer-wave::before {
   display: block;
-  bottom: -8rem;
-  left: -7rem;
-  width: 20rem;
-  aspect-ratio: 1;
+  top: -.5rem;
+  bottom: -.5rem;
+  left: -1.5rem;
+  width: clamp(9rem, 22vw, 20rem);
   border: 0;
-  border-radius: 50%;
-  background: radial-gradient(circle,
-    color-mix(in srgb, var(--footer-wave-text) 6%, transparent),
-    transparent 70%);
+  border-radius: 0;
+  background:
+    repeating-linear-gradient(116deg,
+      transparent 0 1.5rem,
+      color-mix(in srgb, var(--footer-wave-text) 8%, transparent) 1.5rem calc(1.5rem + 1px),
+      transparent calc(1.5rem + 1px) 2.65rem);
+  clip-path: polygon(0 22%, 100% 0, 84% 100%, 0 100%);
   box-shadow: none;
-  opacity: .65;
+  opacity: .55;
 }
 
 .editorial-footer-wave::after {
@@ -634,6 +643,17 @@ body > iframe,
     padding-top: .75rem;
   }
 
+  .app-footer.editorial-footer::after {
+    right: 1.75rem;
+    width: .82rem;
+    height: 2.5rem;
+    opacity: .5;
+  }
+
+  .editorial-footer-nav::after {
+    width: 1.75rem;
+  }
+
   .editorial-footer-content {
     width: min(calc(100% - 1.5rem), 39rem);
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -666,15 +686,6 @@ body > iframe,
 
   .editorial-footer-nav::before {
     display: block;
-  }
-
-  .editorial-footer-art::before {
-    width: min(125%, 14.5rem);
-  }
-
-  .editorial-footer-art::after {
-    bottom: 3%;
-    left: 50%;
   }
 
   .editorial-footer-product,
@@ -844,9 +855,9 @@ body > iframe,
   .editorial-footer-action,
   .editorial-footer-brand .footer-brand::after,
   .editorial-footer-nav::before,
+  .editorial-footer-nav::after,
   .editorial-footer-nav h2::after,
-  .editorial-footer-art::before,
-  .editorial-footer-art::after,
+  .editorial-footer-art img,
   .editorial-footer-link > .editorial-footer-icon,
   .editorial-footer-external {
     transition: none;
@@ -855,7 +866,8 @@ body > iframe,
   .editorial-footer-link:hover,
   .editorial-footer-link:hover::before,
   .editorial-footer-action:hover,
-  .editorial-footer-content:hover .editorial-footer-art::after,
+  .editorial-footer-nav:hover::after,
+  .editorial-footer-content:hover .editorial-footer-art img,
   .editorial-footer-link:hover > .editorial-footer-icon,
   .editorial-footer-link:hover .editorial-footer-external {
     transform: none;
@@ -865,7 +877,4 @@ body > iframe,
     width: 2.65rem;
   }
 
-  .editorial-footer-content:hover .editorial-footer-art::before {
-    transform: translate(-50%, -50%);
-  }
 }
