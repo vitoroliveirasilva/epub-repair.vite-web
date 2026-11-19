@@ -55,7 +55,7 @@
   line-height: 1.1;
   letter-spacing: -.051em;
 }
-#app .batch-studio-intro .batch-studio-title-accent { color: var(--color-accent-strong); }
+#app .batch-studio-intro .batch-studio-title-accent { color: var(--brand-copper); }
 #app .batch-studio-intro p {
   max-width: 49ch;
   font-size: .85rem;
