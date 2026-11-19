@@ -54,7 +54,7 @@ export function renderCoverChanger(
     el('span', {
       className: 'cover-button-clear-icon',
       attrs: { 'aria-hidden': 'true' },
-      text: '×',
+      children: [coverStudioActionIcon('trash')],
     }),
     el('span', { className: 'cover-button-clear-label', text: 'Remover seleção' }),
   );
@@ -242,7 +242,7 @@ export function renderCoverChanger(
                   el('span', {
                     className: 'cover-studio-reassurance-icon',
                     attrs: { 'aria-hidden': 'true' },
-                    text: '✓',
+                    children: [coverStudioActionIcon('lock')],
                   }),
                   el('span', {
                     className: 'cover-studio-reassurance-copy',
@@ -341,4 +341,37 @@ function coverDescription(state: AppState): string {
   if (!state.payload) return 'Envie um EPUB para escolher uma nova capa e visualizar o resultado';
   if (state.coverImage) return 'Confira a prévia e aplique a nova capa quando estiver satisfeito';
   return 'Escolha uma imagem, confira a prévia e crie uma nova cópia do seu EPUB';
+}
+
+function coverStudioActionIcon(kind: 'trash' | 'lock'): SVGSVGElement {
+  const ns = 'http://www.w3.org/2000/svg';
+  const icon = document.createElementNS(ns, 'svg');
+  icon.setAttribute('viewBox', '0 0 24 24');
+  icon.setAttribute('fill', 'none');
+  icon.setAttribute('stroke', 'currentColor');
+  icon.setAttribute('stroke-width', '1.8');
+  icon.setAttribute('stroke-linecap', 'round');
+  icon.setAttribute('stroke-linejoin', 'round');
+  icon.setAttribute('aria-hidden', 'true');
+  icon.setAttribute('focusable', 'false');
+
+  const paths = kind === 'trash'
+    ? [
+        'M3 6h18',
+        'M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6',
+        'M5 6l1 14h12l1-14',
+        'M10 10v7',
+        'M14 10v7',
+      ]
+    : [
+        'M7 10V7a5 5 0 0 1 10 0v3',
+        'M6 10h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z',
+      ];
+
+  for (const d of paths) {
+    const path = document.createElementNS(ns, 'path');
+    path.setAttribute('d', d);
+    icon.append(path);
+  }
+  return icon;
 }
