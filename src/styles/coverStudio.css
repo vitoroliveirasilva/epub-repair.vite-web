@@ -1968,14 +1968,16 @@
   }
 }
 
-/* Minimal book + inspection lens, exclusive to the empty preview in 02. */
+/* Editorial book placeholder for 02 / VISUALIZAÇÃO. */
 #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-placeholder {
-  width: 68%;
-  height: 61%;
-  border: 1px solid rgba(78, 110, 92, .22);
-  border-radius: .45rem;
-  background: rgba(255, 251, 244, .68);
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, .045);
+  display: grid;
+  width: 72%;
+  height: 70%;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-placeholder::before {
   display: none;
@@ -1983,46 +1985,53 @@
 }
 #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-placeholder-glyph {
   display: block;
-  width: clamp(3.55rem, 42%, 4.9rem);
+  width: clamp(4.8rem, 58%, 6.6rem);
   height: auto;
-  aspect-ratio: 1;
+  aspect-ratio: 96 / 120;
   overflow: visible;
+  filter: drop-shadow(0 .55rem 1rem rgba(0, 0, 0, .16));
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-glyph-book {
-  fill: rgba(229, 237, 224, .82);
-  stroke: #658a73;
-  stroke-width: 2;
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-body {
+  fill: #e8dfd2;
+  stroke: rgba(68, 95, 80, .18);
+  stroke-width: 1.2;
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-glyph-spine {
-  stroke: #94ac98;
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-spine {
+  fill: #d9cfbf;
+}
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-panel {
+  fill: rgba(255, 255, 255, .26);
+  stroke: rgba(100, 132, 111, .22);
+  stroke-width: 1;
+}
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-title,
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-subtitle,
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-footer-1,
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-footer-2,
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-shadow-line {
+  fill: none;
+  stroke: #88a28f;
+  stroke-linecap: round;
+}
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-title {
+  stroke-width: 2.2;
+}
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-subtitle {
   stroke-width: 1.7;
-  stroke-linecap: round;
+  opacity: .9;
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-glyph-label {
-  fill: rgba(255, 250, 240, .72);
-  stroke: #a1b7a5;
-  stroke-width: 1.3;
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-footer-1,
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-footer-2 {
+  stroke-width: 1.8;
+  opacity: .92;
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-glyph-lines {
-  stroke: #8da997;
-  stroke-width: 1.6;
-  stroke-linecap: round;
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-shadow-line {
+  stroke-width: 1.4;
+  opacity: .48;
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-glyph-lens {
-  fill: #fff9ed;
-  stroke: #b56e47;
-  stroke-width: 2.6;
-}
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-glyph-handle {
-  stroke: #b56e47;
-  stroke-width: 2.8;
-  stroke-linecap: round;
+#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-mark {
+  fill: #8daa97;
 }
 #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-placeholder-lines {
-  right: 33%;
-  bottom: 14%;
-  left: 33%;
-  height: 1.5px;
-  background: rgba(95, 132, 108, .34);
-  box-shadow: 0 .38rem 0 rgba(95, 132, 108, .15);
+  display: none;
 }
