@@ -317,18 +317,16 @@ function renderWorkspaceIntro(): HTMLElement {
 
 function renderCapabilityShowcase(): HTMLElement {
   const capabilities = [
-    ['01', 'Diagnóstico estrutural',
-      'Inspeciona pacote, container, manifest, spine, arquivos, referências e navegação.'],
-    ['02', 'Reparo com segurança',
-      'Reconstrói o necessário, neutraliza conteúdo ativo perigoso e preserva a obra original.'],
-    ['03', 'Capa e metadados',
-      'Substitui a capa oficial e permite revisar título, autoria, idioma e demais informações.'],
-    ['04', 'Leitura e comparação',
-      'Abre capítulos no leitor integrado e mostra as diferenças entre o antes e o depois.'],
-    ['05', 'Kindle e compatibilidade',
-      'Avalia prontidão, aponta o que precisa de atenção e prepara uma cópia mais compatível.'],
-    ['06', 'Processamento em lote',
-      'Analisa ou repara vários EPUBs e reúne arquivos e relatórios em um único ZIP.'],
+    ['01', 'Análise e correção',
+      'Identifique problemas na estrutura do EPUB e aplique correções para melhorar sua integridade e compatibilidade.'],
+    ['02', 'Capas e metadados',
+      'Atualize a capa e revise informações como título, autoria, idioma e outros dados do livro.'],
+    ['03', 'Leitura e comparação',
+      'Visualize os capítulos e compare as versões original e corrigida para conferir as alterações.'],
+    ['04', 'Compatibilidade com Kindle',
+      'Verifique possíveis problemas de compatibilidade e prepare uma versão do EPUB com os ajustes necessários para o Kindle.'],
+    ['05', 'Processamento em lote',
+      'Analise ou corrija até seis EPUBs em uma única operação e baixe os arquivos e relatórios reunidos em um ZIP.'],
   ] as const;
 
   return el('section', {
@@ -338,14 +336,13 @@ function renderCapabilityShowcase(): HTMLElement {
       el('header', {
         className: 'capability-heading',
         children: [
-          el('p', { className: 'eyebrow', text: 'Uma oficina completa' }),
+          el('p', { className: 'eyebrow', text: 'Recursos disponíveis' }),
           el('h2', {
-            text: 'Cada ferramenta cuida de uma parte real do livro',
+            text: 'Ferramentas para seus EPUBs',
             attrs: { id: 'capability-title' },
           }),
           el('p', {
-            text: 'O reparo principal permanece simples. Quando você precisa ir além, ' +
-              'os recursos avançados continuam no mesmo fluxo e usam o mesmo arquivo local.',
+            text: 'Analise, corrija e revise seus livros com recursos adicionais disponíveis no próprio EPUB Repair.',
           }),
         ],
       }),
@@ -365,13 +362,12 @@ function renderCapabilityShowcase(): HTMLElement {
       }),
       el('a', {
         className: 'capability-link',
-        text: 'Explorar as ferramentas avançadas',
+        text: 'Ver todas as ferramentas',
         attrs: { href: '#optional-tools' },
       }),
     ],
   });
 }
-
 
 
 
