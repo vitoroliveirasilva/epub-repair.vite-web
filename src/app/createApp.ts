@@ -338,11 +338,14 @@ function renderCapabilityShowcase(): HTMLElement {
         children: [
           el('p', { className: 'eyebrow', text: 'Recursos disponíveis' }),
           el('h2', {
-            text: 'Ferramentas para seus EPUBs',
             attrs: { id: 'capability-title' },
-          }),
-          el('p', {
-            text: 'Analise, corrija e revise seus livros com recursos adicionais disponíveis no próprio EPUB Repair.',
+            children: [
+              'Ferramentas para seus ',
+              el('span', {
+                className: 'capability-title-accent',
+                text: 'EPUBs',
+              }),
+            ],
           }),
         ],
       }),
