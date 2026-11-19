@@ -212,9 +212,26 @@
   box-shadow: .25rem .55rem .8rem rgba(29, 42, 33, .14);
 }
 
+#app .workflow-mode-book-solo::before {
+  position: absolute;
+  inset: 0;
+  border: 1px solid #194a37;
+  border-radius: .36rem .55rem .55rem .36rem;
+  background: linear-gradient(134deg, #346d52, #194a37 75%);
+  content: '';
+}
+
 #app .workflow-mode-book-solo .workflow-mode-book-pages {
-  right: .08rem;
-  bottom: .08rem;
+  z-index: 1;
+  top: .3rem;
+  right: .54rem;
+  bottom: .3rem;
+  left: .4rem;
+  box-shadow: .09rem .15rem .3rem rgba(29, 42, 33, .13);
+}
+
+#app .workflow-mode-book-solo .workflow-mode-book-cover {
+  z-index: 2;
 }
 
 #app .workflow-mode-book-cover {
