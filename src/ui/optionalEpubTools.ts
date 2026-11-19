@@ -943,12 +943,14 @@ function renderBatch(
       el('div', { className: 'batch-studio-file-heading', children: [
         el('strong', { text: count + (count === 1 ? ' EPUB selecionado'
           : ' EPUBs selecionados') }),
-        el('div', { className: 'batch-studio-file-capacity', children: [
-          el('span', { text: 'Espaço utilizado' }),
-          el('strong', { text: Math.round(totalBytes / MAX_BATCH_BYTES * 100) + '%' }),
+        el('div', { className: 'batch-studio-file-usage', children: [
+          el('small', { text: formatBytes(totalBytes) + ' de ' +
+            formatBytes(MAX_BATCH_BYTES) }),
+          el('span', { className: 'batch-studio-file-usage-percent',
+            attrs: { 'aria-label': 'Espaço utilizado: ' +
+              Math.round(totalBytes / MAX_BATCH_BYTES * 100) + '%' },
+            text: Math.round(totalBytes / MAX_BATCH_BYTES * 100) + '%' }),
         ] }),
-        el('small', { text: formatBytes(totalBytes) + ' de ' +
-          formatBytes(MAX_BATCH_BYTES) }),
       ] }),
       el('div', { className: 'batch-studio-capacity-track', children: [
         el('progress', { attrs: { max: String(MAX_BATCH_BYTES),
@@ -1118,7 +1120,8 @@ function renderBatchFlow(count: number, zipReady: boolean, working: boolean): HT
       className: 'batch-studio-flow',
       children: stages.map(([number, label, subtitle, stateLabel, status], index) =>
         el('li', {
-          className: 'batch-studio-flow-step batch-studio-flow-' + status,
+          className: 'batch-studio-flow-step batch-studio-flow-' + status +
+            (zipReady && index === 2 ? ' batch-studio-flow-ready' : ''),
           attrs: status === 'current' ? { 'aria-current': 'step' } : {},
           children: [
             el('span', { className: 'batch-studio-flow-number',
