@@ -353,10 +353,6 @@ function renderCoverPreviewCard(state: AppState): HTMLElement {
                             ],
                           }),
                       el('span', {
-                        className: 'cover-preview-book-ribbon',
-                        attrs: { 'aria-hidden': 'true' },
-                      }),
-                      el('span', {
                         className: 'cover-preview-book-spine',
                         attrs: { 'aria-hidden': 'true' },
                       }),
