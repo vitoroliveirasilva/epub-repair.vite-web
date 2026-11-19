@@ -10,7 +10,7 @@
   background:
     radial-gradient(circle at 100% 0, color-mix(in srgb, #ce8760 9%, transparent), transparent 28rem),
     var(--color-surface);
-  box-shadow: 0 1.6rem 4rem rgba(26, 49, 37, .055);
+  box-shadow: 0 1rem 2.4rem rgba(0, 0, 0, .035);
 }
 
 #app .layout#app-workspace > .workspace > .cover-studio-panel::before {
@@ -180,8 +180,7 @@
 
 #app .layout#app-workspace .cover-upload-zone:is(:hover, :focus-visible, .cover-upload-zone-active) {
   border-color: var(--color-accent);
-  box-shadow: 0 1rem 1.8rem color-mix(in srgb, var(--color-accent) 11%, transparent),
-    inset 0 0 0 4px color-mix(in srgb, var(--color-surface) 70%, transparent);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, .035);
   transform: translateY(-2px);
 }
 
@@ -225,7 +224,7 @@
   border: 1.5px solid color-mix(in srgb, var(--color-accent) 48%, var(--color-border));
   border-radius: .48rem;
   background: var(--color-surface);
-  box-shadow: 0 .6rem 1.2rem rgba(20, 52, 37, .08);
+  box-shadow: 0 .22rem .55rem rgba(0, 0, 0, .045);
   transition: transform 300ms cubic-bezier(.2,.8,.2,1);
 }
 
@@ -420,7 +419,7 @@
   border-color: #1b553e;
   background: #21583f;
   color: #fffaf2;
-  box-shadow: 0 .26rem 0 color-mix(in srgb, #163b2d 35%, transparent);
+  box-shadow: 0 .16rem 0 rgba(0, 0, 0, .08);
 }
 
 #app .layout#app-workspace .cover-studio-actions .cover-button-apply:disabled {
@@ -452,7 +451,7 @@
   }
   #app .layout#app-workspace .cover-studio-actions .cover-button-apply:not(:disabled):hover {
     background: #286c4d;
-    box-shadow: 0 .32rem 0 color-mix(in srgb, #163b2d 32%, transparent);
+    box-shadow: 0 .18rem 0 rgba(0, 0, 0, .095);
   }
 }
 
@@ -582,7 +581,7 @@
   border: 1px solid rgba(255, 244, 227, .55);
   border-radius: .42rem .75rem .75rem .42rem;
   background: #f1e9da;
-  box-shadow: -10px 14px 0 rgba(11, 31, 26, .18), 0 1.25rem 2.25rem rgba(1, 15, 11, .3);
+  box-shadow: -7px 10px 0 rgba(0, 0, 0, .09), 0 .9rem 1.65rem rgba(0, 0, 0, .16);
   transform: rotate(-2deg);
 }
 
@@ -818,12 +817,12 @@
   border-radius: 1rem;
   background: color-mix(in srgb, var(--color-surface) 92%, var(--color-accent-soft));
   transition: border-color 260ms ease, box-shadow 290ms ease,
-    background-color 260ms ease, transform 320ms cubic-bezier(.16, 1, .3, 1);
+    background-color 260ms ease, transform 280ms cubic-bezier(.16, 1, .3, 1);
 }
 #app .layout#app-workspace .cover-upload-zone:not(.cover-upload-zone-disabled):is(:hover, :focus-visible, .cover-upload-zone-active) {
   border-color: color-mix(in srgb, var(--studio-copper, #b76642) 66%, var(--color-border));
   background: color-mix(in srgb, var(--color-surface) 86%, var(--color-accent-soft));
-  box-shadow: 0 .55rem 1.2rem color-mix(in srgb, var(--color-accent) 9%, transparent);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, .04);
   transform: translateY(-2px);
 }
 #app .layout#app-workspace .cover-upload-zone-selected {
@@ -852,7 +851,7 @@
   height: 3.45rem;
   border-color: color-mix(in srgb, var(--color-accent) 30%, var(--color-border));
   border-radius: .3rem .5rem .5rem .3rem;
-  box-shadow: 0 .3rem .6rem color-mix(in srgb, var(--color-text) 7%, transparent);
+  box-shadow: 0 .18rem .38rem rgba(0, 0, 0, .045);
 }
 #app .cover-upload-sheet-back {
   top: .36rem;
@@ -971,7 +970,7 @@
   width: min(100%, 12rem);
   max-height: 17.7rem;
   border-radius: .34rem .6rem .6rem .34rem;
-  box-shadow: -7px 8px 0 rgba(11, 31, 26, .19), 0 1rem 2rem rgba(1, 15, 11, .26);
+  box-shadow: -6px 7px 0 rgba(0, 0, 0, .12), 0 .8rem 1.5rem rgba(0, 0, 0, .2);
   transform: rotate(-1.25deg);
 }
 #app .layout#app-workspace .cover-studio-preview-stage .cover-new-preview img {
@@ -982,7 +981,7 @@
   overflow: visible;
   border: 1px solid rgba(255, 244, 227, .55);
   background: linear-gradient(160deg, #f8f0e4, #e5d8c4);
-  box-shadow: -6px 8px 0 rgba(11, 31, 26, .19), 0 .8rem 1.7rem rgba(1, 15, 11, .21);
+  box-shadow: -5px 7px 0 rgba(0, 0, 0, .1), 0 .65rem 1.25rem rgba(0, 0, 0, .17);
 }
 #app .layout#app-workspace .cover-studio-preview-stage .cover-new-preview-empty::before {
   position: absolute;
@@ -1023,7 +1022,7 @@
   height: 2px;
   border-radius: 99px;
   background: rgba(94, 113, 98, .31);
-  box-shadow: 0 .42rem 0 rgba(94, 113, 98, .18);
+  box-shadow: 0 .42rem 0 rgba(0, 0, 0, .12);
 }
 @media (hover: hover) and (pointer: fine) {
   #app .cover-upload-zone-disabled:hover .cover-upload-sheet-back {
@@ -1226,7 +1225,7 @@
   margin: 0 auto .18rem;
   filter: none;
   transform-origin: center;
-  transition: transform 340ms cubic-bezier(.16, 1, .3, 1);
+  transition: transform 290ms cubic-bezier(.16, 1, .3, 1);
 }
 #app .layout#app-workspace .cover-studio-picker .cover-upload-sheet {
   width: 2.75rem;
@@ -1235,7 +1234,7 @@
   border-radius: .3rem .5rem .5rem .3rem;
   background: var(--color-surface);
   box-shadow: none;
-  transition: transform 370ms cubic-bezier(.16, 1, .3, 1);
+  transition: transform 280ms cubic-bezier(.16, 1, .3, 1);
 }
 #app .layout#app-workspace .cover-studio-picker .cover-upload-sheet-back {
   top: .36rem;
@@ -1288,13 +1287,13 @@
 
 @media (hover: hover) and (pointer: fine) {
   #app .layout#app-workspace .cover-studio-picker .cover-upload-zone:not(.cover-upload-zone-disabled):hover .cover-upload-illustration {
-    transform: translateY(-3px) scale(1.035);
+    transform: translateY(-2px) scale(1.02);
   }
   #app .layout#app-workspace .cover-studio-picker .cover-upload-zone:not(.cover-upload-zone-disabled):hover .cover-upload-sheet-back {
-    transform: translate(4px, -3px) rotate(13deg);
+    transform: translate(2px, -2px) rotate(11deg);
   }
   #app .layout#app-workspace .cover-studio-picker .cover-upload-zone:not(.cover-upload-zone-disabled):hover .cover-upload-sheet-front {
-    transform: translate(-3px, -3px) rotate(-10deg);
+    transform: translate(-2px, -2px) rotate(-8deg);
   }
 }
 
@@ -1344,7 +1343,7 @@
   line-height: 1.3;
   transform: none;
   transition: background-color 260ms ease, border-color 260ms ease, color 260ms ease,
-    transform 320ms cubic-bezier(.16, 1, .3, 1);
+    transform 280ms cubic-bezier(.16, 1, .3, 1);
 }
 #app .layout#app-workspace .cover-studio-picker .cover-upload-cta-label {
   display: block;
@@ -1364,18 +1363,18 @@
   font-size: 1.13rem;
   line-height: 1;
   transform: none;
-  transition: background-color 280ms ease, transform 360ms cubic-bezier(.16, 1, .3, 1);
+  transition: background-color 240ms ease, transform 290ms cubic-bezier(.16, 1, .3, 1);
 }
 #app .layout#app-workspace .cover-studio-picker .cover-upload-zone:not(.cover-upload-zone-disabled):is(:hover, :focus-visible, .cover-upload-zone-active) .cover-upload-cta {
   border-color: #914528;
   background: #914528;
   box-shadow: none;
   color: #fffaf4;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 #app .layout#app-workspace .cover-studio-picker .cover-upload-zone:not(.cover-upload-zone-disabled):is(:hover, :focus-visible, .cover-upload-zone-active) .cover-upload-cta-arrow {
   background: rgba(255, 250, 244, .14);
-  transform: translate(3px, -3px);
+  transform: translate(2px, -2px);
 }
 #app .layout#app-workspace .cover-studio-picker .cover-upload-footnote {
   color: var(--color-text-muted);
@@ -1435,7 +1434,7 @@
   object-position: center;
   border-radius: inherit;
   transform: none;
-  transition: transform 350ms cubic-bezier(.16, 1, .3, 1);
+  transition: transform 290ms cubic-bezier(.16, 1, .3, 1);
 }
 #app .layout#app-workspace .cover-studio-picker .cover-selected-file-info {
   display: grid;
@@ -1483,7 +1482,7 @@
     box-shadow: none;
   }
   #app .layout#app-workspace .cover-studio-picker .cover-selected-file:hover .cover-selected-file-thumbnail {
-    transform: scale(1.065);
+    transform: scale(1.035);
   }
 }
 
@@ -1567,7 +1566,7 @@
     border-color: #914528;
     background: #914528;
     box-shadow: none;
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
   #app .layout#app-workspace .cover-studio-picker .cover-upload-sheet-front:hover,
   #app .layout#app-workspace .cover-studio-picker .cover-upload-sheet-back:hover {
