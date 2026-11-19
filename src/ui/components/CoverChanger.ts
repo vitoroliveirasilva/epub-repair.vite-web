@@ -329,6 +329,7 @@ function renderCoverPreviewCard(state: AppState): HTMLElement {
                 children: [
                   el('span', { className: 'cover-studio-preview-placeholder',
                     children: [
+                      coverStudioPreviewPlaceholderIcon(),
                       el('span', { className: 'cover-studio-preview-placeholder-lines' }),
                     ] }),
                 ],
@@ -350,6 +351,45 @@ function coverDescription(state: AppState): string {
   if (!state.payload) return 'Envie um EPUB para escolher uma nova capa e visualizar o resultado';
   if (state.coverImage) return 'Confira a prévia e aplique a nova capa quando estiver satisfeito';
   return 'Escolha uma imagem, confira a prévia e crie uma nova cópia do seu EPUB';
+}
+
+
+function coverStudioPreviewPlaceholderIcon(): SVGSVGElement {
+  const ns = 'http://www.w3.org/2000/svg';
+  const icon = document.createElementNS(ns, 'svg');
+  icon.setAttribute('class', 'cover-studio-preview-placeholder-glyph');
+  icon.setAttribute('viewBox', '0 0 64 64');
+  icon.setAttribute('fill', 'none');
+  icon.setAttribute('aria-hidden', 'true');
+  icon.setAttribute('focusable', 'false');
+
+  const frame = document.createElementNS(ns, 'rect');
+  frame.setAttribute('x', '9');
+  frame.setAttribute('y', '9');
+  frame.setAttribute('width', '46');
+  frame.setAttribute('height', '46');
+  frame.setAttribute('rx', '8');
+  frame.setAttribute('class', 'cover-studio-preview-glyph-frame');
+  icon.append(frame);
+
+  const sun = document.createElementNS(ns, 'circle');
+  sun.setAttribute('cx', '43');
+  sun.setAttribute('cy', '23');
+  sun.setAttribute('r', '4.4');
+  sun.setAttribute('class', 'cover-studio-preview-glyph-sun');
+  icon.append(sun);
+
+  const hills = document.createElementNS(ns, 'path');
+  hills.setAttribute('d', 'M15 44 27 31 35 39 42 33 49 41');
+  hills.setAttribute('class', 'cover-studio-preview-glyph-hills');
+  icon.append(hills);
+
+  const spine = document.createElementNS(ns, 'path');
+  spine.setAttribute('d', 'M17 10v44');
+  spine.setAttribute('class', 'cover-studio-preview-glyph-spine');
+  icon.append(spine);
+
+  return icon;
 }
 
 function coverStudioActionIcon(kind: 'trash' | 'lock'): SVGSVGElement {
