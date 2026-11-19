@@ -182,7 +182,7 @@ function renderStatusDocumentGlyph(kind: StatusKind): SVGSVGElement {
     'M10 5h11l6 6v17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z',
     'M21 5v6h6',
     kind === 'success'
-      ? 'm-9 6-3.2 4.3-2.4-2.1'
+      ? 'M13 20l3 3 6-7'
       : kind === 'error' || kind === 'blocked'
         ? 'M18 16v6m0 3v.1'
         : kind === 'cancelled'
