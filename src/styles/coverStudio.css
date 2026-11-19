@@ -1868,15 +1868,15 @@
 
 /* 02 / VISUALIZAÇÃO: enlarge the real book preview, never the 01 image picker. */
 #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage {
-  min-height: 26.8rem;
+  min-height: 25rem;
   padding: 1.35rem .6rem;
 }
 #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage .cover-preview-tilt {
-  width: min(100%, 16.25rem);
+  width: min(100%, 14.75rem);
   max-width: 100%;
 }
 #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage .cover-new-preview {
-  width: min(100%, 16.25rem);
+  width: min(100%, 14.75rem);
   max-height: none;
   aspect-ratio: 2 / 3;
   border-radius: .42rem .72rem .72rem .42rem;
@@ -1917,9 +1917,9 @@
 }
 @media (hover: hover) and (pointer: fine) {
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-new-preview {
-    box-shadow: -10px 13px 0 rgba(0, 0, 0, .18),
-      0 1.55rem 2.8rem rgba(0, 0, 0, .36);
-    transform: translateY(-5px) rotate(-3deg) scale(1.035);
+    box-shadow: -9px 12px 0 rgba(0, 0, 0, .17),
+      0 1.3rem 2.45rem rgba(0, 0, 0, .32);
+    transform: translateY(-3px) rotate(-2.5deg) scale(1.025);
   }
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover::before {
     opacity: 1;
@@ -1932,23 +1932,23 @@
 }
 @media (max-width: 760px) {
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage {
-    min-height: 24.1rem;
+    min-height: 22.8rem;
     padding: 1.25rem .55rem;
   }
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage .cover-preview-tilt,
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage .cover-new-preview {
-    width: min(100%, 14.5rem);
+    width: min(100%, 13.5rem);
     max-height: none;
   }
 }
 @media (max-width: 400px) {
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage {
-    min-height: 22rem;
+    min-height: 21rem;
     padding: 1.1rem .4rem;
   }
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage .cover-preview-tilt,
   #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage .cover-new-preview {
-    width: min(100%, 13.1rem);
+    width: min(100%, 12.3rem);
   }
 }
 @media (prefers-reduced-motion: reduce) {
