@@ -295,128 +295,158 @@
 }
 
 
-/* Empty library: one purposeful surface with an inviting, restrained hover. */
+/* Empty shelf only: compact invitation. Populated rows remain untouched. */
 #app .batch-studio .batch-studio-file-scroll[data-has-files="false"] {
   position: relative;
-  min-height: 15rem;
+  min-height: 0;
+  max-height: none;
   overflow: hidden;
-  border: 1px dashed color-mix(in srgb, var(--batch-ink) 31%, var(--color-border));
-  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--batch-ink) 20%, var(--color-border));
+  border-radius: .95rem;
   background:
-    radial-gradient(ellipse 70% 70% at 50% 0%,
-      color-mix(in srgb, var(--batch-copper) 7%, transparent), transparent 96%),
-    color-mix(in srgb, var(--batch-ink) 2.2%, var(--color-surface));
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-surface) 75%, transparent);
-  transition: border-color 300ms ease, background-color 300ms ease,
-    box-shadow 360ms cubic-bezier(.16, 1, .3, 1);
+    linear-gradient(112deg,
+      color-mix(in srgb, var(--batch-copper) 3%, var(--color-surface)),
+      var(--color-surface) 60%);
+  box-shadow: 0 .13rem .4rem color-mix(in srgb, var(--batch-ink) 3%, transparent);
+  transition: border-color 280ms ease, background-color 280ms ease,
+    box-shadow 320ms cubic-bezier(.16, 1, .3, 1);
 }
-#app .batch-studio .batch-studio-empty {
-  position: relative;
-  display: flex;
-  flex-direction: column;
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"]::before {
+  position: absolute;
+  top: 1rem;
+  bottom: 1rem;
+  left: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--studio-copper, #b76642);
+  content: '';
+  opacity: .65;
+  transform: scaleY(.5);
+  transition: transform 320ms cubic-bezier(.16, 1, .3, 1), opacity 280ms ease;
+  pointer-events: none;
+}
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty {
+  display: grid;
+  grid-template-columns: 3.6rem minmax(0, 1fr);
+  grid-template-areas:
+    "art title"
+    "art description"
+    ". action";
+  align-content: center;
   align-items: center;
-  justify-content: center;
-  gap: .4rem;
+  justify-items: start;
+  gap: .17rem .92rem;
   width: 100%;
-  min-height: 15rem;
-  padding: 1.5rem 1rem;
-  text-align: center;
+  min-height: 10rem;
+  padding: 1.12rem 1.3rem 1.1rem 1.22rem;
+  text-align: left;
 }
-#app .batch-studio .batch-studio-empty-art {
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty-art {
   position: relative;
   display: block;
+  grid-area: art;
   isolation: isolate;
-  width: 5.55rem;
-  height: 4.75rem;
-  margin: 0 auto .3rem;
-  transition: transform 440ms cubic-bezier(.16, 1, .3, 1);
+  align-self: center;
+  width: 3.6rem;
+  height: 3.8rem;
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--batch-ink) 16%, var(--color-border));
+  border-radius: .82rem;
+  background: color-mix(in srgb, var(--batch-ink) 5%, var(--color-surface));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-surface) 55%, transparent);
+  transition: transform 350ms cubic-bezier(.16, 1, .3, 1),
+    border-color 300ms ease, background-color 300ms ease;
 }
-#app .batch-studio .batch-studio-empty-art::before {
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty-art::before {
   position: absolute;
   z-index: -1;
-  inset: .05rem .65rem .55rem;
-  border: 1px solid color-mix(in srgb, var(--batch-ink) 17%, var(--color-border));
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--batch-ink) 5%, var(--color-surface));
+  inset: .34rem;
+  border: 0;
+  border-radius: .54rem;
+  background: color-mix(in srgb, var(--batch-copper) 5%, transparent);
   content: '';
-  transition: border-color 340ms ease, background-color 340ms ease,
-    transform 460ms cubic-bezier(.16, 1, .3, 1);
+  transform: none;
+  transition: background-color 300ms ease;
 }
-#app .batch-studio .batch-studio-empty-mark {
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty-mark {
   position: absolute;
-  top: .33rem;
-  left: 1.12rem;
-  width: 3.5rem;
-  height: 3.48rem;
+  top: .54rem;
+  left: .36rem;
+  width: 2.9rem;
+  height: 2.6rem;
   margin: 0;
+  opacity: 1;
   transform: rotate(-3deg);
-  transition: transform 440ms cubic-bezier(.16, 1, .3, 1);
+  transition: transform 350ms cubic-bezier(.16, 1, .3, 1);
 }
-#app .batch-studio .batch-studio-empty-mark::before,
-#app .batch-studio .batch-studio-empty-mark::after {
-  bottom: .18rem;
-  width: 1.34rem;
-  height: 2.69rem;
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty-mark::before,
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty-mark::after {
+  bottom: .28rem;
+  width: 1.13rem;
+  height: 1.92rem;
   border-width: 1.5px;
-  border-radius: .27rem .48rem .41rem .26rem;
-  box-shadow: inset .18rem 0 0 color-mix(in srgb, var(--batch-ink) 13%, transparent);
+  border-radius: .2rem .35rem .3rem .2rem;
 }
-#app .batch-studio .batch-studio-empty-mark::before {
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty-mark::before {
   left: .32rem;
-  transform: rotate(-11deg);
+  transform: rotate(-10deg);
 }
-#app .batch-studio .batch-studio-empty-mark::after {
-  right: .27rem;
-  transform: rotate(12deg);
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty-mark::after {
+  right: .34rem;
+  transform: rotate(10deg);
 }
-#app .batch-studio .batch-studio-empty-shelf {
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty-shelf {
   position: absolute;
-  right: .85rem;
-  bottom: .27rem;
-  left: .85rem;
+  right: .62rem;
+  bottom: .53rem;
+  left: .62rem;
   height: 2px;
-  border-radius: 999px;
+  border-radius: 99px;
   background: linear-gradient(90deg, transparent,
-    color-mix(in srgb, var(--batch-copper) 60%, transparent), transparent);
-  transition: left 380ms ease, right 380ms ease;
+    color-mix(in srgb, var(--batch-copper) 76%, transparent), transparent);
 }
-#app .batch-studio .batch-studio-empty strong {
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty > strong {
+  grid-area: title;
+  margin: 0;
   color: var(--color-text);
-  font-family: var(--font-serif);
-  font-size: clamp(1.13rem, 1.7vw, 1.33rem);
-  font-weight: 760;
-  line-height: 1.22;
-  letter-spacing: -.025em;
-  text-wrap: balance;
-}
-#app .batch-studio .batch-studio-empty small {
-  max-width: 34ch;
-  color: var(--color-text-muted);
-  font-size: .76rem;
-  font-weight: 480;
-  line-height: 1.55;
+  font-family: inherit;
+  font-size: .95rem;
+  font-weight: 810;
+  line-height: 1.35;
+  letter-spacing: -.015em;
+  text-align: left;
   text-wrap: pretty;
 }
-#app .batch-studio .batch-studio-empty-action.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: .55rem;
-  min-height: 2.48rem;
-  margin-top: .38rem;
-  padding: .51rem .88rem;
-  border: 1px solid color-mix(in srgb, var(--studio-copper, #b76642) 43%, var(--color-border));
-  border-radius: .72rem;
-  background: var(--color-surface);
-  color: var(--color-text);
-  box-shadow: 0 .18rem .48rem color-mix(in srgb, var(--batch-ink) 5%, transparent);
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty > small {
+  grid-area: description;
+  max-width: none;
+  margin: 0;
+  color: var(--color-text-muted);
   font-size: .75rem;
-  font-weight: 800;
-  transition: transform 300ms cubic-bezier(.16, 1, .3, 1),
-    border-color 260ms ease, color 260ms ease, background-color 260ms ease,
-    box-shadow 300ms ease;
+  font-weight: 480;
+  line-height: 1.5;
+  text-align: left;
+  text-wrap: pretty;
 }
-#app .batch-studio .batch-studio-empty-action::after {
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty-action.btn {
+  display: inline-flex;
+  grid-area: action;
+  align-items: center;
+  justify-content: flex-start;
+  gap: .45rem;
+  min-height: 2rem;
+  margin: .38rem 0 0;
+  padding: .25rem .12rem;
+  border: 0;
+  border-radius: .24rem;
+  background: transparent;
+  color: var(--color-accent-strong);
+  box-shadow: none;
+  font-size: .73rem;
+  font-weight: 790;
+  transition: color 250ms ease, transform 300ms cubic-bezier(.16, 1, .3, 1);
+}
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty-action::after {
   content: '↗';
   color: var(--studio-copper, #b76642);
   font-family: Georgia, serif;
@@ -424,44 +454,78 @@
   line-height: 1;
   transition: transform 300ms cubic-bezier(.16, 1, .3, 1);
 }
-#app .batch-studio .batch-studio-empty-action.btn:focus-visible {
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty-action.btn:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 3px;
 }
 #app .batch-studio .batch-studio-file-scroll[data-has-files="false"]:focus-within {
-  border-color: color-mix(in srgb, var(--studio-copper, #b76642) 63%, var(--color-border));
+  border-color: color-mix(in srgb, var(--studio-copper, #b76642) 45%, var(--color-border));
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--studio-copper, #b76642) 9%, transparent);
+}
+#app .batch-studio .batch-studio-file-scroll[data-has-files="false"]:focus-within::before {
+  opacity: 1;
+  transform: scaleY(1);
 }
 @media (hover: hover) and (pointer: fine) {
   #app .batch-studio .batch-studio-file-scroll[data-has-files="false"]:hover {
-    border-color: color-mix(in srgb, var(--studio-copper, #b76642) 64%, var(--color-border));
+    border-color: color-mix(in srgb, var(--studio-copper, #b76642) 42%, var(--color-border));
     background-color: color-mix(in srgb, var(--batch-copper) 4%, var(--color-surface));
-    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-surface) 82%, transparent),
-      0 .55rem 1.35rem color-mix(in srgb, var(--batch-ink) 8%, transparent);
+    box-shadow: 0 .45rem 1rem color-mix(in srgb, var(--batch-ink) 8%, transparent);
   }
-  #app .batch-studio .batch-studio-file-scroll[data-has-files="false"]:hover .batch-studio-empty-art,
-  #app .batch-studio .batch-studio-file-scroll[data-has-files="false"]:focus-within .batch-studio-empty-art {
-    transform: translateY(-4px);
+  #app .batch-studio .batch-studio-file-scroll[data-has-files="false"]:hover::before {
+    opacity: 1;
+    transform: scaleY(1);
   }
-  #app .batch-studio .batch-studio-file-scroll[data-has-files="false"]:hover .batch-studio-empty-mark,
-  #app .batch-studio .batch-studio-file-scroll[data-has-files="false"]:focus-within .batch-studio-empty-mark {
-    transform: rotate(2deg);
+  #app .batch-studio .batch-studio-file-scroll[data-has-files="false"]:hover .batch-studio-empty-art {
+    transform: translateY(-2px) rotate(-2deg);
+    border-color: color-mix(in srgb, var(--studio-copper, #b76642) 35%, var(--color-border));
   }
-  #app .batch-studio .batch-studio-file-scroll[data-has-files="false"]:hover .batch-studio-empty-art::before {
-    transform: scale(1.07);
-    border-color: color-mix(in srgb, var(--batch-copper) 35%, var(--color-border));
+  #app .batch-studio .batch-studio-file-scroll[data-has-files="false"]:hover .batch-studio-empty-mark {
+    transform: rotate(1deg);
   }
   #app .batch-studio .batch-studio-empty-action.btn:not(:disabled):hover {
-    transform: translateY(-2px);
-    border-color: var(--studio-copper, #b76642);
+    transform: translateX(2px);
     color: var(--studio-copper, #b76642);
-    box-shadow: 0 .5rem .85rem color-mix(in srgb, var(--batch-ink) 10%, transparent);
+    border: 0;
+    background: transparent;
+    box-shadow: none;
   }
   #app .batch-studio .batch-studio-empty-action.btn:hover::after {
     transform: translate(2px, -2px);
   }
 }
-
+@container batch-studio (max-width: 520px) {
+  #app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty {
+    grid-template-columns: 3.2rem minmax(0, 1fr);
+    gap: .18rem .72rem;
+    min-height: 9rem;
+    padding: 1.05rem .9rem;
+  }
+  #app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty-art {
+    width: 3.2rem;
+    height: 3.5rem;
+  }
+  #app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty-mark {
+    left: .16rem;
+  }
+}
+@container batch-studio (max-width: 345px) {
+  #app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "art" "title" "description" "action";
+    justify-items: center;
+    gap: .42rem;
+    padding: 1.2rem .8rem;
+    text-align: center;
+  }
+  #app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty > strong,
+  #app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty > small {
+    text-align: center;
+  }
+  #app .batch-studio .batch-studio-file-scroll[data-has-files="false"] .batch-studio-empty-action.btn {
+    margin-top: .15rem;
+  }
+}
 
 /* Selected books: distinct, readable rows with a unified shelf and focused hover. */
 #app .batch-studio .batch-studio-file-scroll[data-has-files="true"] {
