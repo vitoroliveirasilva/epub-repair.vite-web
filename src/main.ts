@@ -54,3 +54,4 @@ import './styles/epubFileCovers.css';
 import './styles/epubMatchedActions.css';
 import './styles/batchWorkspace.css';
 import './styles/statusReviewPolish.css';
+import './styles/statusOutcomesPolish.css';

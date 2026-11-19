@@ -503,6 +503,53 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(ready?.classList.contains('status-review')).toBe(false);
   });
 
+
+  it('exibe a mesma identidade editorial nos estados normais de sucesso', () => {
+    const success = renderStatusMessage('Análise concluída no navegador.');
+    expect(success?.classList.contains('status-highlight-success')).toBe(true);
+    expect(success?.querySelector('.status-highlight-kicker')?.textContent)
+      .toBe('OPERAÇÃO CONCLUÍDA');
+    expect(success?.querySelector('.status-highlight-badge')?.textContent)
+      .toBe('Tudo certo');
+    expect(success?.querySelector('.status-highlight-emblem svg path')).not.toBeNull();
+    expect(success?.querySelector('.status-highlight-next-step')?.textContent)
+      .toContain('diagnóstico completo');
+    expect(success?.querySelector('.status-panel-copy strong')?.textContent)
+      .toBe('Concluído com sucesso');
+  });
+
+  it.each([
+    ['Arquivo carregado localmente.', 'info', 'Informação registrada', 'status'],
+    ['Nova capa carregada, confira a prévia e aplique quando quiser.',
+      'info', 'Informação registrada', 'status'],
+    ['Seleção de capa removida.', 'info', 'Informação registrada', 'status'],
+    ['A otimização opcional foi avaliada, mas nenhuma alteração automática foi aplicada pelo navegador.',
+      'info', 'Informação registrada', 'status'],
+    ['Operação cancelada. O EPUB original permanece inalterado.',
+      'cancelled', 'Operação cancelada', 'status'],
+    ['Troca de capa cancelada; a obra original continua intacta.',
+      'cancelled', 'Operação cancelada', 'status'],
+    ['Fila cheia: aguarde ou cancele tarefas agendadas.',
+      'warning', 'Conclusão com observações', 'status'],
+    ['Alterações aplicadas; confira os alertas remanescentes antes de usar.',
+      'warning', 'Conclusão com observações', 'status'],
+    ['EPUB inválido: o reparo automático foi bloqueado por problema fatal.',
+      'blocked', 'Reparo automático indisponível', 'alert'],
+    ['O novo EPUB tem problemas fatais. A cópia anterior foi preservada para download.',
+      'blocked', 'Reparo automático indisponível', 'alert'],
+    ['Reparo concluído e revalidado.', 'success', 'Concluído com sucesso', 'status'],
+    ['Capa aplicada e EPUB revalidado.', 'success', 'Concluído com sucesso', 'status'],
+  ])('representa corretamente o retorno %s', (message, kind, title, role) => {
+    const status = renderStatusMessage(message);
+    expect(status?.classList.contains('status-highlight-' + kind)).toBe(true);
+    expect(status?.getAttribute('role')).toBe(role);
+    expect(status?.querySelector('.status-highlight-title')?.textContent).toBe(title);
+    expect(status?.querySelector('.status-highlight-description')?.textContent).toBe(message);
+    expect(status?.querySelector('.status-icon')?.getAttribute('aria-hidden')).toBe('true');
+    expect(status?.querySelector('.status-highlight-seal')?.getAttribute('aria-hidden'))
+      .toBe('true');
+  });
+
   it('preserva o estilo e a semântica de erros, sem transformar erros em sucesso', () => {
     const error = renderStatusMessage(undefined, 'Arquivo EPUB inválido.');
     expect(error?.classList.contains('status-error')).toBe(true);
@@ -512,6 +559,11 @@ describe('Estúdio de restauração e escolha de modo', () => {
       .toBe('Não foi possível concluir');
     expect(error?.querySelector('.status-panel-copy p')?.textContent)
       .toBe('Arquivo EPUB inválido.');
+    expect(error?.querySelector('.status-highlight-kicker')?.textContent)
+      .toBe('NÃO FOI POSSÍVEL CONCLUIR');
+    expect(error?.classList.contains('status-highlight-error')).toBe(true);
+    expect(error?.querySelector('.status-highlight-next-step')?.textContent)
+      .toContain('Confira o erro apresentado');
     expect(renderStatusMessage()).toBeUndefined();
   });
 
