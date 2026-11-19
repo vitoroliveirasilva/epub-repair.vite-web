@@ -1968,70 +1968,186 @@
   }
 }
 
-/* Editorial book placeholder for 02 / VISUALIZAÇÃO. */
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-placeholder {
-  display: grid;
-  width: 72%;
-  height: 70%;
-  place-items: center;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-placeholder::before {
-  display: none;
-  content: none;
-}
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-placeholder-glyph {
+/* 02 / VISUALIZAÇÃO: complete editorial book artwork, based on the "Um EPUB" selector. */
+#app .layout#app-workspace .cover-studio-preview .cover-new-preview-empty.cover-preview-editorial-empty {
+  position: relative;
   display: block;
-  width: clamp(4.8rem, 58%, 6.6rem);
-  height: auto;
-  aspect-ratio: 96 / 120;
-  overflow: visible;
-  filter: drop-shadow(0 .55rem 1rem rgba(0, 0, 0, .16));
+  overflow: hidden;
+  background: linear-gradient(156deg, #fbf4e8 0%, #eee4d3 54%, #dccbb4 100%);
+  border: 1px solid rgba(244, 232, 210, .9);
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-body {
-  fill: #e8dfd2;
-  stroke: rgba(68, 95, 80, .18);
-  stroke-width: 1.2;
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-cover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 0;
+  gap: .46rem;
+  padding: clamp(1.08rem, 11%, 1.6rem) .72rem 1.05rem 1rem;
+  isolation: isolate;
+  color: #275642;
+  text-align: center;
+  background:
+    radial-gradient(ellipse at 52% 38%, rgba(255, 255, 255, .53), transparent 66%),
+    linear-gradient(132deg, rgba(255, 255, 255, .13), transparent 58%);
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-spine {
-  fill: #d9cfbf;
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-cover::before {
+  position: absolute;
+  z-index: -1;
+  inset: .55rem .48rem;
+  border: 1px solid rgba(66, 109, 81, .19);
+  border-radius: .22rem .52rem .52rem .22rem;
+  content: '';
+  pointer-events: none;
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-panel {
-  fill: rgba(255, 255, 255, .26);
-  stroke: rgba(100, 132, 111, .22);
-  stroke-width: 1;
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-ribbon {
+  position: absolute;
+  top: 0;
+  right: 1.12rem;
+  width: .82rem;
+  height: 2.85rem;
+  background: #bb784f;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 79%, 0 100%);
+  transition: height 340ms cubic-bezier(.16, 1, .3, 1);
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-title,
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-subtitle,
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-footer-1,
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-footer-2,
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-shadow-line {
-  fill: none;
-  stroke: #88a28f;
-  stroke-linecap: round;
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-eyebrow {
+  display: block;
+  max-width: 100%;
+  color: #9b6344;
+  font-size: clamp(.49rem, .75vw, .58rem);
+  font-weight: 810;
+  letter-spacing: .11em;
+  line-height: 1.4;
+  white-space: nowrap;
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-title {
-  stroke-width: 2.2;
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-ornament {
+  position: relative;
+  display: grid;
+  flex: 1 1 auto;
+  place-items: center;
+  align-self: center;
+  width: min(84%, 8rem);
+  max-height: 8.5rem;
+  min-height: 5.5rem;
+  margin: .4rem 0 .12rem;
+  border: 1px solid rgba(54, 108, 76, .56);
+  border-radius: 50% 50% .38rem .38rem;
+  background: radial-gradient(ellipse at 50% 65%, rgba(192, 215, 186, .2), transparent 67%);
+  transition: transform 360ms cubic-bezier(.16, 1, .3, 1), border-color 360ms ease;
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-subtitle {
-  stroke-width: 1.7;
-  opacity: .9;
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-ornament::before {
+  position: absolute;
+  inset: .42rem;
+  border: 1px solid rgba(52, 107, 73, .18);
+  border-radius: inherit;
+  content: '';
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-footer-1,
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-footer-2 {
-  stroke-width: 1.8;
-  opacity: .92;
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-medallion {
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 1px solid rgba(67, 121, 86, .63);
+  border-radius: 50%;
+  background: rgba(255, 250, 238, .42);
+  transform: translateX(-50%);
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-shadow-line {
-  stroke-width: 1.4;
-  opacity: .48;
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-open-book {
+  position: absolute;
+  right: 23%;
+  bottom: 20%;
+  left: 23%;
+  display: flex;
+  height: 2.6rem;
+  align-items: end;
+  justify-content: center;
+  filter: drop-shadow(0 .16rem .16rem rgba(0, 0, 0, .08));
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-book-mark {
-  fill: #8daa97;
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-page-left,
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-page-right {
+  display: block;
+  width: 50%;
+  height: 2.15rem;
+  border: 1.5px solid rgba(58, 104, 77, .74);
+  background: repeating-linear-gradient(0deg,
+    rgba(75, 123, 88, .17) 0 1px, transparent 1px 8px),
+    rgba(255, 249, 237, .75);
 }
-#app .layout#app-workspace .cover-studio-preview .cover-studio-preview-placeholder-lines {
-  display: none;
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-page-left {
+  border-radius: .35rem .12rem .22rem .25rem;
+  transform: skewY(8deg);
+  transform-origin: right bottom;
+}
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-page-right {
+  border-radius: .12rem .35rem .25rem .22rem;
+  transform: skewY(-8deg);
+  transform-origin: left bottom;
+}
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-title {
+  display: block;
+  margin: .02rem 0 0;
+  color: #204c37;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: clamp(1.5rem, 2.5vw, 1.97rem);
+  font-weight: 710;
+  letter-spacing: -.045em;
+  line-height: 1.04;
+  white-space: nowrap;
+}
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-title strong {
+  color: #ae6343;
+  font: inherit;
+  font-weight: 820;
+}
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-divider {
+  display: block;
+  flex: 0 0 1px;
+  width: 35%;
+  margin: .04rem 0;
+  background: rgba(70, 117, 83, .37);
+}
+#app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-subtitle {
+  display: block;
+  color: #647b67;
+  font-size: clamp(.49rem, .73vw, .59rem);
+  font-weight: 740;
+  letter-spacing: .09em;
+  line-height: 1.55;
+  white-space: nowrap;
+}
+@media (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-editorial-ornament {
+    transform: translateY(-2px);
+    border-color: rgba(54, 108, 76, .76);
+  }
+  #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-editorial-ribbon {
+    height: 3.3rem;
+  }
+}
+@media (max-width: 400px) {
+  #app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-cover {
+    gap: .33rem;
+    padding: 1.06rem .56rem .78rem .78rem;
+  }
+  #app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-title {
+    font-size: 1.49rem;
+  }
+  #app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-ornament {
+    min-height: 4.7rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-ornament,
+  #app .layout#app-workspace .cover-studio-preview .cover-preview-editorial-ribbon {
+    transition: none;
+  }
+  #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-editorial-ornament {
+    transform: none;
+  }
+  #app .layout#app-workspace .cover-studio-preview .cover-studio-preview-stage:hover .cover-preview-editorial-ribbon {
+    height: 2.85rem;
+  }
 }
