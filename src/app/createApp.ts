@@ -264,7 +264,13 @@ function renderWorkflowModeSelector(
       }),
       el('span', { className: 'workflow-mode-content', children: [
         el('span', { className: 'workflow-mode-kicker', text: batch ? 'SUA BIBLIOTECA' : 'ATENÇÃO A CADA PÁGINA' }),
-        el('strong', { className: 'workflow-mode-title', text: title }),
+        el('strong', { className: 'workflow-mode-title', children: [
+          batch ? 'Vários ' : 'Um ',
+          el('span', {
+            className: 'workflow-mode-title-accent',
+            text: batch ? 'EPUBs' : 'EPUB',
+          }),
+        ] }),
         el('small', { className: 'workflow-mode-description', text: description }),
       ] }),
       el('span', {
@@ -308,8 +314,13 @@ function renderWorkspaceIntro(): HTMLElement {
     attrs: { 'aria-labelledby': 'workspace-intro-title' },
     children: [
       el('div', { className: 'workspace-intro-copy', children: [
-        el('h2', { text: 'Estúdio de restauração',
-          attrs: { id: 'workspace-intro-title' } }),
+        el('h2', {
+          attrs: { id: 'workspace-intro-title' },
+          children: [
+            'Estúdio de ',
+            el('span', { className: 'workspace-intro-accent', text: 'restauração' }),
+          ],
+        }),
       ] }),
     ],
   });
