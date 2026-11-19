@@ -226,128 +226,102 @@
   background: var(--studio-copper);
 }
 
+/* Five compact editorial rows: one coherent layout, without the legacy six-card mosaic. */
 #app .capability-showcase {
   isolation: isolate;
-  padding: clamp(2rem, 5vw, 4.5rem);
+  padding: clamp(1.7rem, 4.5vw, 4rem);
   border: 1px solid rgba(241, 180, 142, .2);
-  border-radius: clamp(1.75rem, 3.8vw, 3rem);
+  border-radius: clamp(1.65rem, 3.8vw, 2.8rem);
   background:
-    radial-gradient(circle at 95% 0%, rgba(217, 142, 104, .19), transparent 27rem),
-    radial-gradient(circle at 0% 100%, rgba(121, 178, 148, .1), transparent 25rem),
+    radial-gradient(circle at 94% 0%, rgba(217, 142, 104, .16), transparent 27rem),
+    radial-gradient(circle at 0% 100%, rgba(121, 178, 148, .075), transparent 25rem),
     #153c31;
   box-shadow: 0 2rem 4.5rem rgba(12, 48, 36, .17);
 }
 
 #app .capability-showcase::after {
   top: 0;
-  right: clamp(2rem, 5vw, 4.5rem);
+  right: clamp(1.7rem, 4.5vw, 4rem);
   width: 5rem;
   background: #dd9470;
 }
 
 #app .capability-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: .4rem;
   max-width: none;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr);
-  align-items: end;
-  column-gap: 3rem;
-  margin-bottom: clamp(1.75rem, 4vw, 3rem);
-}
-
-#app .capability-heading .eyebrow,
-#app .capability-heading h2 {
-  grid-column: 1;
+  margin-bottom: clamp(1.55rem, 3vw, 2.25rem);
 }
 
 #app .capability-heading .eyebrow {
-  margin-bottom: .8rem;
+  margin-bottom: .45rem;
   color: #eeb18e;
 }
 
 #app .capability-heading h2 {
-  max-width: 16ch;
+  max-width: 26ch;
   margin: 0;
   color: #fff8ee;
   font-family: var(--font-serif);
-  font-size: clamp(2.35rem, 4.8vw, 4.45rem);
-  letter-spacing: -.055em;
-  line-height: 1.03;
+  font-size: clamp(2rem, 4vw, 3.6rem);
+  letter-spacing: -.048em;
+  line-height: 1.1;
+  text-wrap: balance;
 }
 
-#app .capability-heading > p:last-child {
-  grid-column: 2;
-  grid-row: 1 / 3;
-  align-self: end;
-  max-width: 23rem;
-  margin: 0 0 .15rem;
-  color: #d4ded7;
-  font-size: 1rem;
-  line-height: 1.7;
+#app .capability-heading h2 .capability-title-accent {
+  color: #eda481;
 }
 
 #app .capability-ledger {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: .85rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: .72rem;
   border: 0;
 }
 
 #app .capability-entry {
   position: relative;
   isolation: isolate;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  grid-column: span 5;
-  gap: clamp(2rem, 4vw, 4rem);
-  min-height: clamp(15.5rem, 22vw, 20rem);
-  padding: clamp(1.35rem, 2.6vw, 2rem);
+  display: grid;
+  grid-column: auto;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  align-items: center;
+  justify-content: stretch;
+  gap: clamp(.95rem, 2.2vw, 1.65rem);
+  min-width: 0;
+  min-height: 6.6rem;
+  padding: clamp(1rem, 1.8vw, 1.4rem) clamp(1.05rem, 2.2vw, 1.7rem);
   overflow: hidden;
-  border: 1px solid rgba(237, 247, 237, .16);
-  border-radius: 1.35rem;
-  background: linear-gradient(145deg, rgba(253, 248, 233, .095), rgba(253, 248, 233, .035));
-  transition: transform 350ms var(--studio-ease), border-color 280ms ease, background-color 280ms ease, box-shadow 350ms ease;
-}
-
-#app .capability-entry:nth-child(4n + 1),
-#app .capability-entry:nth-child(4n + 4) {
-  grid-column: span 7;
-}
-
-#app .capability-entry:nth-child(2),
-#app .capability-entry:nth-child(5) {
-  background: linear-gradient(155deg, rgba(224, 154, 115, .19), rgba(253, 248, 233, .03));
-}
-
-#app .capability-entry:nth-child(3),
-#app .capability-entry:nth-child(6) {
-  background: linear-gradient(155deg, rgba(134, 191, 157, .15), rgba(253, 248, 233, .035));
+  border: 1px solid rgba(237, 247, 237, .17);
+  border-radius: 1.05rem;
+  background: linear-gradient(115deg, rgba(253, 248, 233, .075), rgba(253, 248, 233, .026));
+  box-shadow: inset 0 1px 0 rgba(255, 250, 241, .035);
+  transition: transform 260ms var(--studio-ease), border-color 260ms ease,
+    background-color 260ms ease, box-shadow 260ms ease;
 }
 
 #app .capability-entry::before {
   position: absolute;
-  top: 0;
-  right: 1.6rem;
-  width: 3.5rem;
-  height: 3px;
-  border-radius: 0 0 8px 8px;
+  top: 18%;
+  right: auto;
+  bottom: 18%;
+  left: 0;
+  width: 3px;
+  height: auto;
+  border-radius: 0 99px 99px 0;
   background: #e6a481;
+  opacity: 0;
+  transform: scaleY(.35);
+  transition: opacity 250ms ease, transform 270ms var(--studio-ease);
   content: "";
+  pointer-events: none;
 }
 
 #app .capability-entry::after {
-  position: absolute;
-  z-index: 0;
-  right: -.06em;
-  bottom: -.33em;
-  color: rgba(255, 248, 238, .055);
-  content: attr(data-sequence);
-  font-family: var(--font-serif);
-  font-size: clamp(10rem, 22vw, 19rem);
-  font-weight: 800;
-  letter-spacing: -.1em;
-  line-height: 1;
-  pointer-events: none;
+  display: none;
+  content: none;
 }
 
 #app .capability-entry > * {
@@ -356,58 +330,106 @@
 }
 
 #app .capability-number {
-  display: inline-grid;
-  width: 2.65rem;
-  height: 2.65rem;
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
   place-items: center;
   padding: 0;
-  border: 1px solid rgba(238, 177, 142, .45);
-  border-radius: .78rem;
+  border: 1px solid rgba(238, 177, 142, .4);
+  border-radius: .7rem;
   color: #efb394;
-  background: rgba(238, 177, 142, .09);
+  background: rgba(238, 177, 142, .08);
   font-family: var(--font-sans);
-  font-size: .78rem;
+  font-size: .76rem;
   font-weight: 850;
+  letter-spacing: .04em;
+  transition: border-color 250ms ease, background-color 250ms ease;
 }
 
 #app .capability-entry > div {
-  max-width: 27rem;
+  display: grid;
+  grid-template-columns: minmax(11rem, .9fr) minmax(0, 1.7fr);
+  align-items: center;
+  gap: clamp(1.2rem, 3vw, 3rem);
+  min-width: 0;
+  max-width: none;
 }
 
 #app .capability-entry h3 {
-  margin: 0 0 .7rem;
+  min-width: 0;
+  max-width: 24ch;
+  margin: 0;
   color: #fff8ee;
   font-family: var(--font-serif);
-  font-size: clamp(1.45rem, 2.5vw, 2.2rem);
-  letter-spacing: -.045em;
-  line-height: 1.08;
+  font-size: clamp(1.16rem, 1.75vw, 1.45rem);
+  letter-spacing: -.035em;
+  line-height: 1.22;
   text-wrap: balance;
 }
 
 #app .capability-entry p {
+  min-width: 0;
+  max-width: 70ch;
+  margin: 0;
   color: #d3ded7;
-  font-size: .9rem;
-  line-height: 1.65;
+  font-size: clamp(.86rem, 1vw, .94rem);
+  line-height: 1.6;
+  overflow-wrap: break-word;
 }
 
-@media (hover: hover) and (pointer: fine) {#app .capability-entry:hover {
-    border-color: rgba(238, 177, 142, .46);
-    box-shadow: 0 1.1rem 2rem rgba(1, 22, 16, .18);
-    transform: translateY(-5px);
+@media (hover: hover) and (pointer: fine) {
+  #app .capability-entry:hover {
+    border-color: rgba(238, 177, 142, .5);
+    background: linear-gradient(115deg, rgba(253, 248, 233, .11), rgba(253, 248, 233, .045));
+    box-shadow: 0 .75rem 1.6rem rgba(1, 22, 16, .17);
+    transform: translateY(-2px);
+  }
+
+  #app .capability-entry:hover::before {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+
+  #app .capability-entry:hover .capability-number {
+    border-color: rgba(238, 177, 142, .75);
+    background: rgba(238, 177, 142, .16);
   }
 }
+
 #app .capability-link {
-  gap: .8rem;
-  margin-top: clamp(1.6rem, 3vw, 2.5rem);
-  padding: .85rem 0;
-  border-bottom: 1px solid rgba(238, 177, 142, .66);
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 3.65rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(1.2rem, 2.8vw, 2.5rem);
+  margin-top: clamp(1.4rem, 2.5vw, 1.9rem);
+  padding: .67rem .68rem .67rem 1.3rem;
+  border: 1px solid rgba(238, 177, 142, .65);
+  border-radius: 999px;
+  background: rgba(238, 177, 142, .07);
   color: #fff8ee;
+  box-shadow: 0 .35rem 1rem rgba(1, 22, 16, .12);
   font-size: .93rem;
+  font-weight: 750;
+  line-height: 1.25;
   text-decoration: none;
+  transition: background-color 230ms ease, color 230ms ease,
+    border-color 230ms ease, box-shadow 230ms ease, transform 230ms ease;
+}
+
+#app .capability-link:hover {
+  border-color: #eeb18e;
+  background: #eeb18e;
+  color: #173d30;
+  box-shadow: 0 .75rem 1.65rem rgba(1, 22, 16, .24);
+  transform: translateY(-2px);
 }
 
 #app .capability-link:focus-visible {
-  outline-color: #f2b58e;
+  outline: 2px solid #f2b58e;
+  outline-offset: 5px;
 }
 
 #app .support-sections {
@@ -702,31 +724,22 @@
     grid-template-columns: 1fr;
   }
 
-#app .capability-heading {
-    grid-template-columns: 1fr;
-    gap: .8rem;
+#app .capability-entry > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .35rem;
   }
 
-#app .capability-heading .eyebrow,
-#app .capability-heading h2,
-#app .capability-heading > p:last-child {
-    grid-column: 1;
-    grid-row: auto;
+  #app .capability-entry h3 {
+    max-width: none;
+    font-size: clamp(1.12rem, 2.5vw, 1.3rem);
   }
 
-#app .capability-heading > p:last-child {
-    max-width: 42rem;
-    margin-top: .5rem;
+  #app .capability-entry p {
+    font-size: .88rem;
+    line-height: 1.55;
   }
 
-#app .capability-entry,
-#app .capability-entry:nth-child(4n + 1),
-#app .capability-entry:nth-child(4n + 4) {
-    grid-column: span 6;
-    min-height: 16rem;
-  }
-
-#app .support-heading {
+  #app .support-heading {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
@@ -791,33 +804,58 @@
 
 #app .capability-showcase {
     margin-top: 3.5rem;
-    padding: 1.8rem 1.1rem;
+    padding: 1.7rem 1.05rem;
     border-radius: 1.55rem;
   }
 
-#app .capability-ledger {
+  #app .capability-heading {
+    gap: .32rem;
+    margin-bottom: 1.35rem;
+  }
+
+  #app .capability-ledger {
     gap: .65rem;
   }
 
-#app .capability-entry,
-#app .capability-entry:nth-child(4n + 1),
-#app .capability-entry:nth-child(4n + 4) {
-    grid-column: span 12;
-    min-height: 13.5rem;
-    gap: 1.5rem;
-    padding: 1.25rem;
-    border-radius: 1.05rem;
+  #app .capability-entry {
+    grid-column: auto;
+    grid-template-columns: 2.4rem minmax(0, 1fr);
+    align-items: start;
+    min-height: 0;
+    gap: .85rem;
+    padding: 1.06rem 1rem;
+    border-radius: .95rem;
   }
 
-#app .capability-entry h3 {
-    font-size: 1.5rem;
+  #app .capability-number {
+    width: 2.35rem;
+    height: 2.35rem;
+    font-size: .7rem;
   }
 
-#app .capability-entry::after {
-    font-size: 12rem;
+  #app .capability-entry > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .4rem;
   }
 
-#app .support-heading {
+  #app .capability-entry h3 {
+    font-size: 1.14rem;
+    line-height: 1.25;
+  }
+
+  #app .capability-entry p {
+    font-size: .86rem;
+    line-height: 1.57;
+  }
+
+  #app .capability-link {
+    width: 100%;
+    min-height: 3.5rem;
+    margin-top: 1.4rem;
+    padding-left: 1rem;
+  }
+
+  #app .support-heading {
     gap: .7rem;
   }
 
