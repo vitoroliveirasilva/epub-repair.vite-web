@@ -436,6 +436,23 @@ describe('Lotes limitados e isolados', () => {
       .toContain('Seus arquivos originais não são alterados');
   });
 
+  it('espelha a sombra interna e o hover integral do uploader individual', () => {
+    const source = readFileSync('src/styles/workspaceFinalPolish.css', 'utf8');
+    const batch = readFileSync('src/styles/batchWorkspaceEditorial.css', 'utf8');
+    expect(source).toContain('inset 0 13px 23px -16px');
+    expect(batch).toContain('inset 0 13px 23px -16px');
+    expect(batch).toContain('inset 0 4px 13px');
+    expect(batch).toContain('inset 0 0 0 1px');
+    expect(batch).toMatch(
+      /\.batch-studio-upload\.optional-batch-dropzone:not\(\[aria-disabled="true"\]\):is\(:hover, :focus-visible\) \.batch-studio-upload-graphic/
+    );
+    expect(batch).toMatch(
+      /\.batch-studio-upload\.optional-batch-dropzone:is\([\s\S]*?:hover, :focus-visible, \.optional-batch-dragging[\s\S]*?\):not\(\[aria-disabled="true"\]\) \{/
+    );
+    expect(batch).toContain('translateX(750%)');
+    expect(batch).toContain('batch-studio-upload-formats');
+  });
+
   it('estica a biblioteca e o painel de ações por toda a largura no mobile', () => {
     const legacyCss = readFileSync('src/styles/optionalTools.css', 'utf8');
     const batchCss = readFileSync('src/styles/batchWorkspace.css', 'utf8');
