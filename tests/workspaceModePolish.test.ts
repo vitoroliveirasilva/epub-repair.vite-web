@@ -512,7 +512,8 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(success?.querySelector('.status-highlight-kicker')?.textContent)
       .toBe('01 / SUCESSO');
     expect(success?.querySelector('.status-highlight-badge')).toBeNull();
-    expect(success?.querySelector('.status-highlight-emblem svg path')).not.toBeNull();
+    expect(success?.querySelector('.status-highlight-emblem svg[data-status-glyph="success"] path'))
+      .not.toBeNull();
     expect(success?.querySelector('.status-highlight-next-step')).toBeNull();
     expect(success?.querySelector('.status-panel-copy strong')?.textContent)
       .toBe('Concluído com sucesso');
@@ -561,8 +562,9 @@ describe('Estúdio de restauração e escolha de modo', () => {
     expect(status?.querySelector('.status-highlight-badge')).toBeNull();
     expect(status?.querySelector('.status-highlight-next-step')).toBeNull();
     expect(status?.querySelector('.status-icon')?.getAttribute('aria-hidden')).toBe('true');
-    expect(status?.querySelector('.status-highlight-seal')?.getAttribute('aria-hidden'))
-      .toBe('true');
+    expect(status?.querySelector('.status-highlight-seal')).toBeNull();
+    expect(status?.querySelector('svg.status-glyph')?.getAttribute('data-status-glyph'))
+      .toBe(kind);
   });
 
   it('mostra oito estados enxutos sem rótulos ou instruções redundantes', () => {
@@ -586,6 +588,41 @@ describe('Estúdio de restauração e escolha de modo', () => {
       .toBe('05 / INFORMAÇÃO');
     expect(info?.querySelector('.status-highlight-description')?.textContent)
       .toBe('Sem correções obrigatórias; há melhorias opcionais disponíveis.');
+  });
+
+  it('usa sete ícones vetoriais únicos, sem selo duplicado, e preserva o livro verificado', () => {
+    const cases = [
+      ['success', 'Reparo concluído e revalidado.'],
+      ['review', 'O EPUB tem problemas sem reparo automático. Consulte as pendências para revisão manual.'],
+      ['warning', 'Alterações aplicadas; confira os alertas remanescentes antes de usar.'],
+      ['info', 'Arquivo carregado localmente.'],
+      ['cancelled', 'Operação cancelada. Nenhum resultado parcial foi publicado.'],
+      ['blocked', 'EPUB inválido: o reparo automático foi bloqueado por problema fatal.'],
+      ['error', 'Arquivo EPUB inválido.'],
+    ] as const;
+    const icons = new Set<string>();
+    for (const [kind, message] of cases) {
+      const node = kind === 'error'
+        ? renderStatusMessage(undefined, message)
+        : renderStatusMessage(message);
+      const svg = node?.querySelector<SVGSVGElement>('.status-glyph');
+      expect(svg?.getAttribute('data-status-glyph')).toBe(kind);
+      expect(svg?.getAttribute('viewBox')).toBe('0 0 24 24');
+      expect(svg?.getAttribute('fill')).toBe('none');
+      expect(svg?.getAttribute('aria-hidden')).toBe('true');
+      expect(svg?.querySelectorAll('path').length).toBeGreaterThan(1);
+      expect(node?.querySelector('.status-highlight-seal, .status-review-emblem-alert'))
+        .toBeNull();
+      const d = Array.from(svg?.querySelectorAll('path') ?? [])
+        .map(path => path.getAttribute('d')).join('|');
+      expect(d.length).toBeGreaterThan(35);
+      icons.add(d);
+    }
+    expect(icons.size).toBe(cases.length);
+    const verified = renderStatusMessage('Seu EPUB já está pronto, nenhuma correção é necessária.');
+    expect(verified?.querySelector('.status-verified-seal img')?.getAttribute('src'))
+      .toBe('/status-verified-book.svg');
+    expect(verified?.querySelector('svg.status-glyph')).toBeNull();
   });
 
   it('preserva o estilo e a semântica de erros, sem transformar erros em sucesso', () => {

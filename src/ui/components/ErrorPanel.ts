@@ -29,10 +29,7 @@ export function renderStatusMessage(message?: string, error?: string): HTMLEleme
       ? [
         el('span', { className: 'status-review-emblem',
           attrs: { 'aria-hidden': 'true' },
-          children: [renderReviewDocumentGlyph(), el('span', {
-            className: 'status-review-emblem-alert',
-            attrs: { 'aria-hidden': 'true' }, text: '!',
-          })],
+          children: [renderStatusGlyph('review')],
         }),
         el('div', { className: 'status-review-content', children: [
           el('span', { className: 'status-review-kicker', text: status.kicker }),
@@ -66,15 +63,8 @@ export function renderStatusMessage(message?: string, error?: string): HTMLEleme
       ]
       : [
         el('span', { className: 'status-icon status-highlight-emblem',
-          attrs: { 'aria-hidden': 'true' }, children: [
-            renderStatusDocumentGlyph(status.kind),
-            el('span', { className: 'status-highlight-seal',
-              attrs: { 'aria-hidden': 'true' },
-              text: status.kind === 'success' ? '✓'
-                : status.kind === 'info' ? 'i'
-                  : status.kind === 'cancelled' ? '■' : '!',
-            }),
-          ] }),
+          attrs: { 'aria-hidden': 'true' },
+          children: [renderStatusGlyph(status.kind)], }),
         el('div', { className: 'status-panel-copy status-highlight-content', children: [
           el('span', { className: 'status-highlight-kicker', text: status.kicker }),
           el('strong', { className: 'status-highlight-title', text: status.title }),
@@ -82,27 +72,6 @@ export function renderStatusMessage(message?: string, error?: string): HTMLEleme
         ] }),
       ],
   });
-}
-
-function renderReviewDocumentGlyph(): SVGSVGElement {
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('viewBox', '0 0 32 32');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '1.55');
-  svg.setAttribute('stroke-linecap', 'round');
-  svg.setAttribute('stroke-linejoin', 'round');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.setAttribute('focusable', 'false');
-  const page = document.createElementNS(ns, 'path');
-  page.setAttribute('d', 'M9 4.5h11l5 5v17a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-20a2 2 0 0 1 2-2Z');
-  const fold = document.createElementNS(ns, 'path');
-  fold.setAttribute('d', 'M20 4.5v5h5');
-  const lines = document.createElementNS(ns, 'path');
-  lines.setAttribute('d', 'M11 15h10m-10 4h7m-7 4h4');
-  svg.append(page, fold, lines);
-  return svg;
 }
 
 function classifyStatus(message?: string, error?: string): StatusPresentation {
@@ -199,33 +168,70 @@ function classifyStatus(message?: string, error?: string): StatusPresentation {
   };
 }
 
-function renderStatusDocumentGlyph(kind: StatusKind): SVGSVGElement {
+/**
+ * Seven distinct, hand-tuned 24px outline glyphs. The verified state keeps its
+ * bespoke book illustration in /public/status-verified-book.svg.
+ * Shared geometry and stroke weight maintain a consistent visual family.
+ */
+const STATUS_GLYPH_PATHS: Record<StatusKind, readonly string[]> = {
+  success: [
+    'M3.85 8.62a4 4 0 0 1 4.77-4.77 4 4 0 0 1 6.76 0 4 4 0 0 1 4.77 4.77 4 4 0 0 1 0 6.76 4 4 0 0 1-4.77 4.77 4 4 0 0 1-6.76 0 4 4 0 0 1-4.77-4.77 4 4 0 0 1 0-6.76Z',
+    'm9 12 2 2 4-4',
+  ],
+  verified: [],
+  review: [
+    'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h5',
+    'M14 2v6h6',
+    'M20 8v3',
+    'M18 20.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z',
+    'm20.5 20.5 2 2',
+  ],
+  warning: [
+    'M10.3 3.86 1.5 18.66a2 2 0 0 0 1.7 3h17.6a2 2 0 0 0 1.7-3l-8.8-14.8a2 2 0 0 0-3.4 0Z',
+    'M12 9v4.5',
+    'M12 17.5h.01',
+  ],
+  info: [
+    'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z',
+    'M12 11v6',
+    'M12 7.3h.01',
+  ],
+  cancelled: [
+    'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z',
+    'M9 9h6v6H9z',
+  ],
+  blocked: [
+    'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z',
+    'M14 2v6h6',
+    'M8.7 15h6.6v5H8.7z',
+    'M10 15v-1.75a2 2 0 0 1 4 0V15',
+  ],
+  error: [
+    'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z',
+    'M14 2v6h6',
+    'm9 13 6 6',
+    'm15 13-6 6',
+  ],
+};
+
+function renderStatusGlyph(kind: StatusKind): SVGSVGElement {
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('viewBox', '0 0 36 36');
+  svg.setAttribute('class', 'status-glyph');
+  svg.setAttribute('data-status-glyph', kind);
+  svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('fill', 'none');
   svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '1.55');
+  svg.setAttribute('stroke-width', '1.75');
   svg.setAttribute('stroke-linecap', 'round');
   svg.setAttribute('stroke-linejoin', 'round');
   svg.setAttribute('aria-hidden', 'true');
   svg.setAttribute('focusable', 'false');
-  for (const path of [
-    'M10 5h11l6 6v17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z',
-    'M21 5v6h6',
-    kind === 'success'
-      ? 'M13 20l3 3 6-7'
-      : kind === 'error' || kind === 'blocked'
-        ? 'M18 16v6m0 3v.1'
-        : kind === 'cancelled'
-          ? 'M15 18h6v6h-6z'
-          : kind === 'warning'
-            ? 'M18 16v6m0 3v.1'
-            : 'M13 17h10m-10 4h8m-8 4h5',
-  ]) {
-    const element = document.createElementNS(ns, 'path');
-    element.setAttribute('d', path);
-    svg.append(element);
+
+  for (const d of STATUS_GLYPH_PATHS[kind]) {
+    const path = document.createElementNS(ns, 'path');
+    path.setAttribute('d', d);
+    svg.append(path);
   }
   return svg;
 }

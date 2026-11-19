@@ -108,30 +108,15 @@
   display: none;
   content: none;
 }
-#app .layout#app-workspace .status-panel.status-highlight .status-highlight-emblem svg {
+#app .layout#app-workspace .status-panel.status-highlight .status-highlight-emblem .status-glyph {
   display: block;
-  width: 2.95rem;
-  height: 2.95rem;
-  transition: transform 520ms cubic-bezier(.16, 1, .3, 1);
+  width: 2.75rem;
+  height: 2.75rem;
+  overflow: visible;
+  filter: drop-shadow(0 1px 0 color-mix(in srgb, var(--status-tone) 8%, transparent));
+  transition: transform 470ms cubic-bezier(.16, 1, .3, 1);
 }
-#app .layout#app-workspace .status-panel.status-highlight .status-highlight-seal {
-  position: absolute;
-  top: -.42rem;
-  right: -.42rem;
-  display: grid;
-  width: 1.58rem;
-  height: 1.58rem;
-  place-items: center;
-  border: 2px solid var(--color-surface);
-  border-radius: .53rem;
-  background: var(--status-tone);
-  box-shadow: 0 .2rem .46rem color-mix(in srgb, var(--status-deep) 23%, transparent);
-  color: #fff;
-  font-family: var(--font-sans);
-  font-size: .92rem;
-  font-weight: 850;
-  line-height: 1;
-}
+
 #app .layout#app-workspace .status-panel.status-highlight .status-panel-copy.status-highlight-content {
   position: relative;
   z-index: 1;
@@ -237,7 +222,7 @@
     box-shadow: 0 .72rem 1.7rem color-mix(in srgb, var(--status-deep) 11%, transparent);
   }
   #app .layout#app-workspace .status-panel.status-highlight:hover .status-highlight-emblem svg {
-    transform: translateY(-2px) rotate(-3deg);
+    transform: translateY(-2px) scale(1.04);
   }
 }
 :root[data-theme="dark"] #app .layout#app-workspace .status-panel.status-highlight {
@@ -274,19 +259,11 @@
     height: 3.5rem;
     border-radius: .85rem;
   }
-  #app .layout#app-workspace .status-panel.status-highlight .status-highlight-emblem svg {
-    width: 2.14rem;
-    height: 2.14rem;
+  #app .layout#app-workspace .status-panel.status-highlight .status-highlight-emblem .status-glyph {
+    width: 2.15rem;
+    height: 2.15rem;
   }
-  #app .layout#app-workspace .status-panel.status-highlight .status-highlight-seal {
-    top: -.32rem;
-    right: -.3rem;
-    width: 1.27rem;
-    height: 1.27rem;
-    border-width: 1.5px;
-    border-radius: .42rem;
-    font-size: .78rem;
-  }
+
   #app .layout#app-workspace .status-panel.status-highlight .status-highlight-heading { gap: .34rem .6rem; }
   #app .layout#app-workspace .status-panel.status-highlight .status-highlight-kicker {
     font-size: .58rem;
