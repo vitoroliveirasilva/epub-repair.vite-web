@@ -1480,74 +1480,213 @@
   }
 }
 
-/* The final action uses orange instead of the previous green and has no raised lip. */
+/* Cover actions follow the EPUB download-button language: copper CTA + quiet secondary. */
 #app .layout#app-workspace .cover-studio-picker .cover-studio-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: .15rem;
+  align-content: start;
+  justify-items: stretch;
+  gap: .65rem;
+  width: 100%;
   margin-top: auto;
-  padding-top: 1.08rem;
+  padding-top: 1.18rem;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .btn {
   min-width: 0;
-  border-radius: .76rem;
   box-shadow: none;
   transform: none;
+  transition: background-color 230ms ease, border-color 230ms ease,
+    color 230ms ease, box-shadow 230ms ease;
 }
-#app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply:not(:disabled) {
-  min-height: 3.05rem;
+#app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .85rem;
+  width: 100%;
+  min-height: 3.26rem;
+  padding: .42rem .45rem .42rem 1.08rem;
   border: 1px solid var(--cover-orange-dark);
+  border-radius: .82rem;
   background: var(--cover-orange-dark);
-  box-shadow: none;
   color: #fffaf4;
+  font-size: .85rem;
   font-weight: 815;
+  letter-spacing: -.012em;
+  line-height: 1.25;
+  text-align: left;
+  box-shadow: 0 .22rem .65rem rgba(0, 0, 0, .09);
+}
+#app .layout#app-workspace .cover-studio-picker .cover-button-apply-label {
+  display: block;
+  min-width: 0;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-button-apply-arrow {
+  display: grid;
+  flex: 0 0 2.12rem;
+  width: 2.12rem;
+  height: 2.12rem;
+  place-items: center;
+  border: 1px solid rgba(255, 250, 244, .27);
+  border-radius: .57rem;
+  background: rgba(255, 250, 244, .09);
+  color: inherit;
+  font-family: Georgia, 'Iowan Old Style', serif;
+  font-size: 1.18rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: background-color 220ms ease, transform 260ms cubic-bezier(.16, 1, .3, 1);
 }
 #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply:disabled {
-  min-height: 3.05rem;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-2);
-  box-shadow: none;
+  border-color: var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 68%, var(--color-surface-2));
   color: var(--color-text-muted);
-  opacity: .74;
+  box-shadow: none;
+  opacity: .76;
   cursor: not-allowed;
 }
+#app .layout#app-workspace .cover-studio-picker .cover-button-apply:disabled .cover-button-apply-arrow {
+  border-color: var(--color-border);
+  background: color-mix(in srgb, var(--color-surface-2) 50%, transparent);
+}
 #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .58rem;
   grid-column: 1;
   justify-self: center;
-  width: fit-content;
-  min-height: 2rem;
-  margin: 0 auto;
-  padding: .25rem .6rem;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
+  width: min(100%, 13.25rem);
+  min-height: 2.6rem;
+  margin: 0;
+  padding: .37rem .83rem;
+  border: 1px solid color-mix(in srgb, var(--cover-orange) 24%, var(--color-border));
+  border-radius: .73rem;
+  background: var(--color-surface);
   color: var(--color-text-muted);
-  font-size: .74rem;
+  font-size: .76rem;
+  font-weight: 735;
+  letter-spacing: -.008em;
+  line-height: 1.3;
+  text-decoration: none;
 }
-#app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-clear:not(:disabled):hover {
+#app .layout#app-workspace .cover-studio-picker .cover-button-clear-icon {
+  display: grid;
+  flex: 0 0 1.45rem;
+  width: 1.45rem;
+  height: 1.45rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--cover-orange) 27%, var(--color-border));
+  border-radius: .4rem;
+  background: color-mix(in srgb, var(--color-surface) 93%, var(--cover-orange));
   color: var(--cover-orange-dark);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  box-shadow: none;
-  transform: none;
+  font-family: inherit;
+  font-size: 1.08rem;
+  font-weight: 500;
+  line-height: 1;
+  transition: background-color 220ms ease, border-color 220ms ease;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-clear:disabled {
+  opacity: .55;
+  cursor: not-allowed;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance {
-  justify-content: center;
+  position: relative;
+  display: flex;
   align-items: center;
-  gap: .48rem;
-  margin: .4rem 0 0;
+  justify-content: flex-start;
+  gap: .72rem;
+  min-width: 0;
+  width: 100%;
+  margin: .75rem 0 0;
+  padding: .78rem .9rem;
+  border: 1px solid color-mix(in srgb, var(--cover-orange) 18%, var(--color-border));
+  border-radius: .78rem;
+  background: color-mix(in srgb, var(--color-surface) 91%, var(--color-surface-2));
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .025);
   color: var(--color-text-muted);
-  font-size: .71rem;
-  line-height: 1.45;
-  text-align: center;
+  text-align: left;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance::before {
-  flex: 0 0 .43rem;
-  width: .43rem;
-  height: .43rem;
-  margin: 0;
-  border: 1.5px solid var(--cover-orange);
-  border-radius: 50%;
+  display: none;
+  content: none;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance-icon {
+  display: grid;
+  flex: 0 0 1.9rem;
+  width: 1.9rem;
+  height: 1.9rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--cover-orange) 30%, var(--color-border));
+  border-radius: .56rem;
+  background: color-mix(in srgb, var(--color-surface) 89%, var(--cover-orange));
+  color: var(--cover-orange-dark);
+  font-size: .98rem;
+  font-weight: 750;
+  line-height: 1;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance-copy {
+  min-width: 0;
+  color: var(--color-text-muted);
+  font-size: .74rem;
+  font-weight: 555;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+@media (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply:not(:disabled):hover {
+    border-color: #914528;
+    background: #914528;
+    box-shadow: 0 .3rem .75rem rgba(0, 0, 0, .12);
+    transform: none;
+  }
+  #app .layout#app-workspace .cover-studio-picker .cover-button-apply:not(:disabled):hover .cover-button-apply-arrow {
+    background: rgba(255, 250, 244, .15);
+    transform: translate(1px, -1px);
+  }
+  #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-clear:not(:disabled):hover {
+    border-color: color-mix(in srgb, var(--cover-orange) 49%, var(--color-border));
+    background: color-mix(in srgb, var(--color-surface) 94%, var(--cover-orange));
+    color: var(--cover-orange-dark);
+    box-shadow: none;
+    transform: none;
+    text-decoration: none;
+  }
+  #app .layout#app-workspace .cover-studio-picker .cover-button-clear:not(:disabled):hover .cover-button-clear-icon {
+    border-color: color-mix(in srgb, var(--cover-orange) 48%, var(--color-border));
+    background: color-mix(in srgb, var(--color-surface) 84%, var(--cover-orange));
+  }
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-actions .btn:focus-visible {
+  outline: 2px solid var(--cover-orange);
+  outline-offset: 3px;
+}
+:root[data-theme="dark"] #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply:not(:disabled) {
+  color: #fffaf4;
+}
+@media (max-width: 420px) {
+  #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply {
+    min-height: 3.1rem;
+    padding-left: .83rem;
+  }
+  #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-clear {
+    width: 100%;
+  }
+  #app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance {
+    padding: .7rem .73rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #app .layout#app-workspace .cover-studio-picker .cover-button-apply-arrow,
+  #app .layout#app-workspace .cover-studio-picker .cover-button-clear-icon {
+    transition: none;
+  }
+  #app .layout#app-workspace .cover-studio-picker .cover-button-apply:not(:disabled):hover .cover-button-apply-arrow {
+    transform: none;
+  }
 }
 
 /* A single restrained outer elevation for the card, not the controls inside it. */
@@ -1555,12 +1694,6 @@
   #app .layout#app-workspace .cover-studio-picker:hover {
     border-color: color-mix(in srgb, var(--cover-orange) 50%, var(--color-border));
     box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .05);
-  }
-  #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply:not(:disabled):hover {
-    border-color: #914528;
-    background: #914528;
-    box-shadow: none;
-    transform: none;
   }
   #app .layout#app-workspace .cover-studio-picker .cover-upload-sheet-front:hover,
   #app .layout#app-workspace .cover-studio-picker .cover-upload-sheet-back:hover {
