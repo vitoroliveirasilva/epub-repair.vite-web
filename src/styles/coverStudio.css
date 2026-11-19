@@ -1357,3 +1357,181 @@
     transition: none;
   }
 }
+
+
+/* EPUB-referenced cover picker redesign. */
+#app .layout#app-workspace .cover-studio-picker {
+  --cover-picker-tone: var(--studio-copper, #b76642);
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  min-height: 27.5rem;
+  padding: clamp(1.25rem, 2.4vw, 1.9rem);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--studio-ink, var(--color-text)) 19%, var(--color-border));
+  border-radius: 1.32rem;
+  background:
+    radial-gradient(ellipse at 0% 0%,
+      color-mix(in srgb, var(--cover-picker-tone) 8%, transparent),
+      transparent 62%),
+    var(--color-surface);
+  box-shadow:
+    0 1px 1px color-mix(in srgb, var(--color-text) 3%, transparent),
+    0 .95rem 2.1rem color-mix(in srgb, var(--color-text) 5%, transparent);
+  transition: border-color 340ms ease, box-shadow 340ms ease;
+}
+#app .layout#app-workspace .cover-studio-picker::before {
+  position: absolute;
+  display: block;
+  top: 0;
+  right: clamp(1.25rem, 3vw, 2rem);
+  left: auto;
+  bottom: auto;
+  width: 3.2rem;
+  height: 3px;
+  border: 0;
+  border-radius: 0 0 999px 999px;
+  background: var(--cover-picker-tone);
+  content: '';
+  transform: none;
+  opacity: .8;
+  pointer-events: none;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: .44rem;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin: 0 0 clamp(1.02rem, 1.8vw, 1.4rem);
+  padding: 0;
+  text-align: center;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading > .cover-studio-overline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .66rem;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 .09rem;
+  color: var(--cover-picker-tone);
+  font-family: inherit;
+  font-size: .68rem;
+  font-weight: 850;
+  line-height: 1.5;
+  letter-spacing: .165em;
+  text-transform: uppercase;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading > .cover-studio-overline::before {
+  display: inline-block;
+  flex: 0 0 1.35rem;
+  width: 1.35rem;
+  height: 1px;
+  background: currentColor;
+  content: '';
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading > strong {
+  display: block;
+  max-width: 30ch;
+  margin: 0;
+  padding: 0;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.45rem, 2.25vw, 1.87rem);
+  font-weight: 750;
+  line-height: 1.14;
+  letter-spacing: -.047em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading > p {
+  max-width: 34rem;
+  margin: .06rem auto 0;
+  padding: 0;
+  color: var(--color-text-muted);
+  font-size: .84rem;
+  font-weight: 470;
+  line-height: 1.55;
+  text-align: center;
+  text-wrap: pretty;
+}
+#app .layout#app-workspace .cover-studio-picker-received .cover-studio-picker-heading {
+  margin-bottom: clamp(1.02rem, 1.8vw, 1.4rem);
+}
+#app .layout#app-workspace .cover-studio-picker-received .cover-studio-picker-heading > strong {
+  font-size: clamp(1.45rem, 2.25vw, 1.87rem);
+}
+
+/* Retain the inward depth of the chosen file field. Its two states use the same stage. */
+#app .layout#app-workspace .cover-studio-picker .cover-upload-zone {
+  flex: 0 0 auto;
+  border-radius: 1.12rem;
+  box-shadow:
+    inset 0 10px 22px -16px color-mix(in srgb, var(--color-accent) 32%, transparent),
+    inset 0 3px 10px color-mix(in srgb, var(--color-accent) 9%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-zone:not(.cover-upload-zone-disabled):is(:hover, :focus-visible, .cover-upload-zone-active) {
+  box-shadow:
+    inset 0 13px 23px -16px color-mix(in srgb, var(--color-accent) 40%, transparent),
+    inset 0 4px 13px color-mix(in srgb, var(--color-accent) 12%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 17%, transparent);
+  transform: none;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-upload-zone-disabled:is(:hover, :focus-visible, .cover-upload-zone-active) {
+  box-shadow: none;
+  transform: none;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-actions {
+  margin-top: auto;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance {
+  padding-top: .05rem;
+}
+
+/* Same subtle hover language as the EPUB upload panel, with no layout jump. */
+@media (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .cover-studio-picker:hover {
+    border-color: color-mix(in srgb, var(--cover-picker-tone) 32%, var(--color-border));
+    box-shadow:
+      0 1px 1px color-mix(in srgb, var(--color-text) 3%, transparent),
+      0 1.4rem 2.65rem color-mix(in srgb, var(--color-text) 7%, transparent);
+  }
+  #app .layout#app-workspace .cover-studio-picker .cover-upload-zone-disabled:hover {
+    transform: none;
+  }
+}
+:root[data-theme="dark"] #app .layout#app-workspace .cover-studio-picker {
+  background:
+    radial-gradient(ellipse at 0% 0%,
+      color-mix(in srgb, var(--cover-picker-tone) 7%, transparent), transparent 62%),
+    var(--color-surface);
+  border-color: color-mix(in srgb, var(--color-text) 19%, var(--color-border));
+}
+@media (max-width: 760px) {
+  #app .layout#app-workspace .cover-studio-picker {
+    min-height: 0;
+    padding: clamp(1.05rem, 3.2vw, 1.4rem);
+    border-radius: 1.1rem;
+  }
+  #app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading {
+    gap: .38rem;
+    margin-bottom: 1rem;
+  }
+  #app .layout#app-workspace .cover-studio-picker .cover-studio-picker-heading > strong,
+  #app .layout#app-workspace .cover-studio-picker-received .cover-studio-picker-heading > strong {
+    font-size: clamp(1.36rem, 5vw, 1.72rem);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #app .layout#app-workspace .cover-studio-picker {
+    transition: none;
+  }
+}
