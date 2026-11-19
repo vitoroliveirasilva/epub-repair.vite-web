@@ -303,43 +303,69 @@ function renderCoverPreviewCard(state: AppState): HTMLElement {
       el('div', {
         className: 'cover-preview-stage cover-studio-preview-stage',
         children: [
-          previewDataUrl
-            ? el('div', {
-                className: 'cover-preview-tilt',
+          el('div', {
+            className: 'cover-preview-tilt',
+            children: [
+              el('figure', {
+                className: 'cover-preview-book' +
+                  (previewDataUrl ? ' cover-preview-book-has-image' : ' cover-preview-book-empty'),
                 children: [
-                  el('figure', {
-                    className: 'cover-new-preview',
+                  el('span', {
+                    className: 'cover-preview-book-back',
+                    attrs: { 'aria-hidden': 'true' },
+                  }),
+                  el('span', {
+                    className: 'cover-preview-book-paper-block',
+                    attrs: { 'aria-hidden': 'true' },
+                  }),
+                  el('span', {
+                    className: 'cover-preview-book-sheet cover-preview-book-sheet-second',
+                    attrs: { 'aria-hidden': 'true' },
+                  }),
+                  el('span', {
+                    className: 'cover-preview-book-sheet cover-preview-book-sheet-first',
+                    attrs: { 'aria-hidden': 'true' },
+                  }),
+                  el('span', {
+                    className: 'cover-preview-book-front',
                     children: [
-                      el('img', {
-                        attrs: {
-                          src: previewDataUrl,
-                          alt: selectedCover ? 'Prévia da nova imagem de capa selecionada'
-                            : 'Prévia da capa original do EPUB',
-                          loading: 'lazy',
-                          decoding: 'async',
-                        },
+                      previewDataUrl
+                        ? el('img', {
+                            className: 'cover-preview-book-image',
+                            attrs: {
+                              src: previewDataUrl,
+                              alt: selectedCover ? 'Prévia da nova imagem de capa selecionada'
+                                : 'Prévia da capa original do EPUB',
+                              loading: 'lazy',
+                              decoding: 'async',
+                            },
+                          })
+                        : el('span', {
+                            className: 'cover-preview-book-art',
+                            attrs: { 'aria-hidden': 'true' },
+                            children: [
+                              el('span', { className: 'cover-preview-book-arch' }),
+                              el('span', { className: 'cover-preview-book-seal', children: [
+                                el('span', { className: 'cover-preview-book-seal-page cover-preview-book-seal-page-left' }),
+                                el('span', { className: 'cover-preview-book-seal-page cover-preview-book-seal-page-right' }),
+                              ] }),
+                              el('span', { className: 'cover-preview-book-title', text: 'EPUB' }),
+                            ],
+                          }),
+                      el('span', {
+                        className: 'cover-preview-book-ribbon',
+                        attrs: { 'aria-hidden': 'true' },
+                      }),
+                      el('span', {
+                        className: 'cover-preview-book-spine',
+                        attrs: { 'aria-hidden': 'true' },
                       }),
                     ],
                   }),
                 ],
-              })
-            : el('div', {
-                className: 'cover-new-preview cover-new-preview-empty cover-preview-classic-empty',
-                attrs: { 'aria-hidden': 'true' },
-                children: [
-                  el('span', { className: 'cover-preview-classic-face', children: [
-                    el('span', { className: 'cover-preview-classic-ribbon' }),
-                    el('span', { className: 'cover-preview-classic-arch', children: [
-                      el('span', { className: 'cover-preview-classic-seal', children: [
-                        el('span', { className: 'cover-preview-classic-page cover-preview-classic-page-left' }),
-                        el('span', { className: 'cover-preview-classic-page cover-preview-classic-page-right' }),
-                      ] }),
-                    ] }),
-                    el('span', { className: 'cover-preview-classic-divider' }),
-                    el('span', { className: 'cover-preview-classic-title', text: 'EPUB' }),
-                  ] }),
-                ],
               }),
+            ],
+          }),
         ],
       }),
       el('div', {
