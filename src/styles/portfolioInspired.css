@@ -471,11 +471,12 @@
   margin-bottom:clamp(3.5rem,7vw,6rem);
 }
 #app .support-heading {
-  grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);
-  align-items:end;
-  gap:clamp(1.2rem,4vw,4rem);
-  margin-bottom:clamp(.8rem,2vw,1.4rem);
-  padding-bottom:clamp(1.5rem,3vw,2.4rem);
+  grid-template-columns:minmax(0,1fr);
+  align-items:start;
+  column-gap:0;
+  row-gap:clamp(.55rem,1.3vw,.9rem);
+  margin-bottom:clamp(.35rem,.8vw,.75rem);
+  padding-bottom:clamp(1rem,2vw,1.55rem);
   border-bottom:1px solid var(--studio-line);
 }
 #app .support-heading .eyebrow {
@@ -637,7 +638,6 @@
 }
 @media (hover:hover) and (pointer:fine) {
   #app .support-sections .support-card:hover {
-    border-color:var(--support-mark);
     box-shadow:0 1rem 2.2rem rgba(20,50,38,.16),
       inset 0 1px 0 rgba(255,255,255,.13);
     transform:translateY(-5px);
