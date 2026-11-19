@@ -1,3 +1,4 @@
+import lunaCoverImageUrl from '../../assets/lumina-dracula-cover.webp';
 import type { AppState } from '../../app/state';
 import { button, el, formatBytes } from '../dom';
 
@@ -335,29 +336,20 @@ function renderCoverPreviewCard(state: AppState): HTMLElement {
                   el('span', {
                     className: 'cover-preview-book-front',
                     children: [
-                      previewDataUrl
-                        ? el('img', {
-                            className: 'cover-preview-book-image',
-                            attrs: {
-                              src: previewDataUrl,
-                              alt: selectedCover ? 'Prévia da nova imagem de capa selecionada'
-                                : 'Prévia da capa original do EPUB',
-                              loading: 'lazy',
-                              decoding: 'async',
-                            },
-                          })
-                        : el('span', {
-                            className: 'cover-preview-book-art',
-                            attrs: { 'aria-hidden': 'true' },
-                            children: [
-                              el('span', { className: 'cover-preview-book-arch' }),
-                              el('span', { className: 'cover-preview-book-seal', children: [
-                                el('span', { className: 'cover-preview-book-seal-page cover-preview-book-seal-page-left' }),
-                                el('span', { className: 'cover-preview-book-seal-page cover-preview-book-seal-page-right' }),
-                              ] }),
-                              el('span', { className: 'cover-preview-book-title', text: 'EPUB' }),
-                            ],
-                          }),
+                      el('img', {
+                        className: 'cover-preview-book-image' +
+                          (!previewDataUrl ? ' cover-preview-book-luna' : ''),
+                        attrs: {
+                          src: previewDataUrl ?? lunaCoverImageUrl,
+                          alt: previewDataUrl
+                            ? selectedCover
+                              ? 'Prévia da nova imagem de capa selecionada'
+                              : 'Prévia da capa original do EPUB'
+                            : 'Ilustração da Luna na capa do livro',
+                          loading: 'lazy',
+                          decoding: 'async',
+                        },
+                      }),
                       el('span', {
                         className: 'cover-preview-book-spine',
                         attrs: { 'aria-hidden': 'true' },
