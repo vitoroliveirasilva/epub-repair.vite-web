@@ -157,11 +157,23 @@
   display: grid;
   grid-template-columns: minmax(0, 1.14fr) minmax(17rem, .86fr);
   align-items: start;
+  justify-items: stretch;
   gap: clamp(.95rem, 1.8vw, 1.4rem);
   width: 100%;
   min-width: 0;
+  max-width: 100%;
   margin: 0;
 }
+
+#app .batch-studio-layout.batch-workspace-content > .batch-studio-library,
+#app .batch-studio-layout.batch-workspace-content > .batch-studio-console {
+  box-sizing: border-box;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
 #app .batch-studio-library,
 #app .batch-studio-console {
   position: relative;
@@ -1293,6 +1305,19 @@
     flex-basis: 2.3rem;
   }
 }
+@media (max-width: 900px) {
+  #app .batch-studio-layout.batch-workspace-content {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: stretch;
+  }
+
+  #app .batch-studio-layout.batch-workspace-content > .batch-studio-library,
+  #app .batch-studio-layout.batch-workspace-content > .batch-studio-console {
+    justify-self: stretch;
+    width: 100%;
+  }
+}
+
 @media (max-width: 760px) {
   #app .layout#app-workspace .batch-studio {
     padding: clamp(.91rem, 3.5vw, 1.3rem);

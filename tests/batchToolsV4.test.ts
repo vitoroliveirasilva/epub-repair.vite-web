@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import { Blob as NodeBlob } from 'node:buffer';
+import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { buildKindleIssueEpub } from './helpers/syntheticEpub';
 import { processEpubBatch, MAX_BATCH_FILES, MAX_BATCH_BYTES,
@@ -396,6 +397,15 @@ describe('Lotes limitados e isolados', () => {
     expect(host.querySelectorAll('.batch-studio-counter-tick-filled')).toHaveLength(1);
     expect(host.querySelector('#batch-workspace')?.getAttribute('data-batch-state'))
       .toBe('selected');
+  });
+
+  it('estica a biblioteca e o painel de ações por toda a largura no mobile', () => {
+    const legacyCss = readFileSync('src/styles/optionalTools.css', 'utf8');
+    const batchCss = readFileSync('src/styles/batchWorkspace.css', 'utf8');
+    expect(legacyCss).toMatch(/\.optional-tool-content\s*\{[^}]*justify-items:\s*start/s);
+    expect(batchCss).toMatch(/\.batch-studio-layout\.batch-workspace-content\s*\{[^}]*justify-items:\s*stretch/s);
+    expect(batchCss).toMatch(/\.batch-studio-layout\.batch-workspace-content\s*>\s*\.batch-studio-library,[\s\S]*?\.batch-studio-console\s*\{[^}]*justify-self:\s*stretch;[^}]*width:\s*100%;[^}]*max-width:\s*100%/);
+    expect(batchCss).toMatch(/@media\s*\(max-width:\s*900px\)[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)/);
   });
 
   it('tem lista e opções responsivas sem dependência da seção de ferramentas extras', () => {
