@@ -51,12 +51,12 @@ export function renderCoverChanger(
   );
   clearButton.disabled = !selectedCover || state.busy;
   clearButton.replaceChildren(
+    el('span', { className: 'cover-button-clear-label', text: 'Remover seleção' }),
     el('span', {
       className: 'cover-button-clear-icon',
       attrs: { 'aria-hidden': 'true' },
       children: [coverStudioActionIcon('trash')],
     }),
-    el('span', { className: 'cover-button-clear-label', text: 'Remover seleção' }),
   );
 
   const uploadZone = el('label', {
@@ -245,8 +245,17 @@ export function renderCoverChanger(
                     children: [coverStudioActionIcon('lock')],
                   }),
                   el('span', {
-                    className: 'cover-studio-reassurance-copy',
-                    text: 'O livro original e seu conteúdo permanecem preservados',
+                    className: 'cover-studio-reassurance-content',
+                    children: [
+                      el('span', {
+                        className: 'cover-studio-reassurance-kicker',
+                        text: 'ORIGINAL PROTEGIDO',
+                      }),
+                      el('span', {
+                        className: 'cover-studio-reassurance-copy',
+                        text: 'O livro original e seu conteúdo permanecem preservados',
+                      }),
+                    ],
                   }),
                 ],
               }),
