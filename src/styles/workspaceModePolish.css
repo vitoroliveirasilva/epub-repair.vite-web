@@ -351,6 +351,11 @@
   text-wrap: balance;
 }
 
+#app .workspace-intro-compact .workspace-intro-accent,
+#app .workflow-mode-title .workflow-mode-title-accent {
+  color: var(--brand-copper);
+}
+
 #app .workflow-mode-description {
   display: block;
   max-width: 38ch;
