@@ -685,53 +685,54 @@ function renderSupportSections(): HTMLElement {
           el('p', { className: 'eyebrow', text: 'Clareza antes de processar' }),
           el('h2', {
             children: [
-              'Seu livro continua sendo ',
-              el('span', { className: 'support-heading-accent', text: 'seu' }),
+              'O que acontece com seu ',
+              el('span', { className: 'support-heading-accent', text: 'EPUB' }),
             ],
           }),
           el('p', {
-            text: 'O EPUB Repair trabalha com limites explícitos, mantém o arquivo original ' +
-              'intacto e informa quando uma decisão ainda depende de revisão humana.',
+            text: 'O processamento acontece no navegador, preserva o arquivo original e ' +
+              'indica quando algum ajuste precisa de revisão.',
           }),
         ],
       }),
       el('article', {
         className: 'support-card support-card-local',
-        attrs: { id: 'privacy', 'data-decor': '01' },
+        attrs: { id: 'privacy' },
         children: [
           el('span', { className: 'support-index', text: 'LOCAL' }),
           el('p', { className: 'eyebrow', text: 'Privacidade' }),
-          el('h2', { text: 'Processamento local sem envio para servidor' }),
+          el('h2', { text: 'Seus arquivos ficam no dispositivo' }),
           el('p', {
             className: 'muted',
-            text: 'O arquivo é lido, validado, reparado e reempacotado no próprio navegador. Nenhum dado é enviado para servidor, nem mesmo o relatório. O EPUB original e o reparado permanecem no seu dispositivo.',
+            text: 'O EPUB é analisado, corrigido e reempacotado no próprio navegador. ' +
+              'Nem o arquivo nem o relatório são enviados a servidores.',
           }),
         ],
       }),
       el('article', {
         className: 'support-card support-card-original',
-        attrs: { 'data-decor': '02' },
         children: [
           el('span', { className: 'support-index', text: 'CÓPIA' }),
           el('p', { className: 'eyebrow', text: 'Preservação' }),
-          el('h2', { text: 'O arquivo original nunca é sobrescrito' }),
+          el('h2', { text: 'O original permanece intacto' }),
           el('p', {
             className: 'muted',
-            text: 'Reparos, otimizações, metadados e nova capa geram outro arquivo. ' +
-              'Você decide o que baixar e mantém o EPUB de origem como referência.',
+            text: 'Reparos, mudanças de capa e metadados geram uma nova cópia. ' +
+              'Você escolhe o que baixar e mantém o EPUB de origem como referência.',
           }),
         ],
       }),
       el('article', {
         className: 'support-card support-card-limits',
-        attrs: { id: 'limitations', 'data-decor': '03' },
+        attrs: { id: 'limitations' },
         children: [
           el('span', { className: 'support-index', text: 'LIMITE' }),
           el('p', { className: 'eyebrow', text: 'Limitações' }),
-          el('h2', { text: 'Transparente sobre o que é possível fazer' }),
+          el('h2', { text: 'Há limites para o reparo' }),
           el('p', {
             className: 'muted',
-            text: 'A ferramenta não remove DRM, não altera direitos autorais e não recupera arquivos irremediavelmente corrompidos. Focamos em organizar, validar e reconstruir apenas o que é tecnicamente viável e seguro reparar.',
+            text: 'A ferramenta não remove DRM, não altera direitos autorais nem recupera ' +
+              'arquivos irremediavelmente corrompidos. Casos que exigem revisão humana são sinalizados.',
           }),
         ],
       }),
