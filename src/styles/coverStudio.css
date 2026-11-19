@@ -1480,48 +1480,75 @@
   }
 }
 
-/* Cover actions follow the EPUB download-button language: copper CTA + quiet secondary. */
+/* Cover actions: editorial copper finish with expressive but controlled interactions. */
 #app .layout#app-workspace .cover-studio-picker .cover-studio-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-content: start;
-  justify-items: stretch;
-  gap: .65rem;
+  gap: .57rem;
   width: 100%;
   margin-top: auto;
-  padding-top: 1.18rem;
+  padding-top: 1.12rem;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .btn {
   min-width: 0;
-  box-shadow: none;
   transform: none;
-  transition: background-color 230ms ease, border-color 230ms ease,
-    color 230ms ease, box-shadow 230ms ease;
+  transition: border-color 260ms ease, background-color 260ms ease,
+    box-shadow 300ms ease, color 260ms ease;
 }
+
+/* Main action: a short light sweep and a small directional movement, with black shadows. */
 #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply {
   position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: .85rem;
   width: 100%;
-  min-height: 3.26rem;
-  padding: .42rem .45rem .42rem 1.08rem;
+  min-height: 3.35rem;
+  padding: .46rem .47rem .46rem 1.12rem;
+  overflow: hidden;
   border: 1px solid var(--cover-orange-dark);
-  border-radius: .82rem;
-  background: var(--cover-orange-dark);
+  border-radius: .87rem;
+  background:
+    linear-gradient(126deg, rgba(255, 255, 255, .1), transparent 53%),
+    var(--cover-orange-dark);
+  box-shadow: 0 .3rem .7rem rgba(0, 0, 0, .12);
   color: #fffaf4;
-  font-size: .85rem;
-  font-weight: 815;
-  letter-spacing: -.012em;
+  font-size: .86rem;
+  font-weight: 820;
+  letter-spacing: -.013em;
   line-height: 1.25;
   text-align: left;
-  box-shadow: 0 .22rem .65rem rgba(0, 0, 0, .09);
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply::before {
+  position: absolute;
+  z-index: 0;
+  top: -48%;
+  left: -43%;
+  width: 36%;
+  height: 196%;
+  border-radius: 50%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, .21) 50%,
+    transparent 100%);
+  content: '';
+  opacity: 0;
+  transform: translateX(0) rotate(15deg);
+  transition: opacity 180ms ease, transform 650ms cubic-bezier(.16, 1, .3, 1);
+  pointer-events: none;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-button-apply-label,
+#app .layout#app-workspace .cover-studio-picker .cover-button-apply-arrow {
+  position: relative;
+  z-index: 1;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-button-apply-label {
   display: block;
   min-width: 0;
-  line-height: 1.25;
+  line-height: 1.3;
   text-wrap: balance;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-button-apply-arrow {
@@ -1530,83 +1557,102 @@
   width: 2.12rem;
   height: 2.12rem;
   place-items: center;
-  border: 1px solid rgba(255, 250, 244, .27);
-  border-radius: .57rem;
-  background: rgba(255, 250, 244, .09);
+  border: 1px solid rgba(255, 250, 244, .3);
+  border-radius: .58rem;
+  background: rgba(255, 250, 244, .105);
   color: inherit;
   font-family: Georgia, 'Iowan Old Style', serif;
   font-size: 1.18rem;
   font-weight: 700;
   line-height: 1;
-  transition: background-color 220ms ease, transform 260ms cubic-bezier(.16, 1, .3, 1);
+  transform: none;
+  transition: transform 310ms cubic-bezier(.16, 1, .3, 1),
+    background-color 260ms ease, border-color 260ms ease;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply:disabled {
   border-color: var(--color-border);
   background: color-mix(in srgb, var(--color-surface) 68%, var(--color-surface-2));
-  color: var(--color-text-muted);
   box-shadow: none;
+  color: var(--color-text-muted);
   opacity: .76;
   cursor: not-allowed;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-button-apply:disabled::before {
+  display: none;
+  content: none;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-button-apply:disabled .cover-button-apply-arrow {
   border-color: var(--color-border);
   background: color-mix(in srgb, var(--color-surface-2) 50%, transparent);
 }
+
+/* Secondary action: full-width, quiet surface, proper trash icon instead of X. */
 #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-clear {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: .58rem;
+  justify-content: space-between;
+  gap: .75rem;
   grid-column: 1;
-  justify-self: center;
-  width: min(100%, 13.25rem);
-  min-height: 2.6rem;
+  justify-self: stretch;
+  width: 100%;
+  min-height: 2.86rem;
   margin: 0;
-  padding: .37rem .83rem;
-  border: 1px solid color-mix(in srgb, var(--cover-orange) 24%, var(--color-border));
-  border-radius: .73rem;
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  font-size: .76rem;
-  font-weight: 735;
+  padding: .4rem .46rem .4rem 1.08rem;
+  border: 1px solid color-mix(in srgb, var(--cover-orange) 28%, var(--color-border));
+  border-radius: .8rem;
+  background: color-mix(in srgb, var(--color-surface) 96%, var(--color-surface-2));
+  box-shadow: none;
+  color: var(--color-text);
+  font-size: .79rem;
+  font-weight: 720;
   letter-spacing: -.008em;
   line-height: 1.3;
+  text-align: left;
   text-decoration: none;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-button-clear-label {
+  display: block;
+  min-width: 0;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-button-clear-icon {
   display: grid;
-  flex: 0 0 1.45rem;
-  width: 1.45rem;
-  height: 1.45rem;
+  flex: 0 0 2rem;
+  width: 2rem;
+  height: 2rem;
   place-items: center;
   border: 1px solid color-mix(in srgb, var(--cover-orange) 27%, var(--color-border));
-  border-radius: .4rem;
-  background: color-mix(in srgb, var(--color-surface) 93%, var(--cover-orange));
+  border-radius: .55rem;
+  background: color-mix(in srgb, var(--color-surface) 92%, var(--cover-orange));
   color: var(--cover-orange-dark);
-  font-family: inherit;
-  font-size: 1.08rem;
-  font-weight: 500;
-  line-height: 1;
-  transition: background-color 220ms ease, border-color 220ms ease;
+  transform: none;
+  transition: border-color 250ms ease, background-color 250ms ease,
+    transform 290ms cubic-bezier(.16, 1, .3, 1);
+}
+#app .layout#app-workspace .cover-studio-picker .cover-button-clear-icon svg {
+  display: block;
+  width: 1rem;
+  height: 1rem;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-clear:disabled {
   opacity: .55;
   cursor: not-allowed;
 }
+
+/* Preservation message: an editorial footer, not a giant confirmation badge. */
 #app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: .72rem;
+  gap: .68rem;
   min-width: 0;
   width: 100%;
-  margin: .75rem 0 0;
-  padding: .78rem .9rem;
-  border: 1px solid color-mix(in srgb, var(--cover-orange) 18%, var(--color-border));
-  border-radius: .78rem;
-  background: color-mix(in srgb, var(--color-surface) 91%, var(--color-surface-2));
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .025);
+  margin: .68rem 0 0;
+  padding: .85rem .12rem .08rem;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--cover-orange) 19%, var(--color-border));
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   color: var(--color-text-muted);
   text-align: left;
 }
@@ -1616,48 +1662,71 @@
 }
 #app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance-icon {
   display: grid;
-  flex: 0 0 1.9rem;
-  width: 1.9rem;
-  height: 1.9rem;
+  flex: 0 0 2rem;
+  width: 2rem;
+  height: 2rem;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--cover-orange) 30%, var(--color-border));
-  border-radius: .56rem;
-  background: color-mix(in srgb, var(--color-surface) 89%, var(--cover-orange));
+  border: 1px solid color-mix(in srgb, var(--cover-orange) 25%, var(--color-border));
+  border-radius: .58rem;
+  background: color-mix(in srgb, var(--color-surface) 92%, var(--color-surface-2));
   color: var(--cover-orange-dark);
-  font-size: .98rem;
-  font-weight: 750;
-  line-height: 1;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance-icon svg {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance-content {
+  display: grid;
+  align-content: center;
+  min-width: 0;
+  gap: .16rem;
+}
+#app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance-kicker {
+  display: block;
+  color: var(--cover-orange-dark);
+  font-size: .59rem;
+  font-weight: 820;
+  letter-spacing: .105em;
+  line-height: 1.3;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance-copy {
-  min-width: 0;
+  display: block;
   color: var(--color-text-muted);
-  font-size: .74rem;
-  font-weight: 555;
-  line-height: 1.5;
+  font-size: .73rem;
+  font-weight: 530;
+  line-height: 1.44;
   text-wrap: pretty;
 }
+
+/* Keep motion inside the button, without changing layout or producing colored shadows. */
 @media (hover: hover) and (pointer: fine) {
   #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply:not(:disabled):hover {
-    border-color: #914528;
-    background: #914528;
-    box-shadow: 0 .3rem .75rem rgba(0, 0, 0, .12);
+    border-color: var(--cover-orange-dark);
+    box-shadow: 0 .42rem .95rem rgba(0, 0, 0, .17);
     transform: none;
   }
+  #app .layout#app-workspace .cover-studio-picker .cover-button-apply:not(:disabled):hover::before {
+    opacity: 1;
+    transform: translateX(420%) rotate(15deg);
+  }
   #app .layout#app-workspace .cover-studio-picker .cover-button-apply:not(:disabled):hover .cover-button-apply-arrow {
-    background: rgba(255, 250, 244, .15);
-    transform: translate(1px, -1px);
+    border-color: rgba(255, 250, 244, .44);
+    background: rgba(255, 250, 244, .19);
+    transform: translate(1px, -1px) rotate(5deg);
   }
   #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-clear:not(:disabled):hover {
-    border-color: color-mix(in srgb, var(--cover-orange) 49%, var(--color-border));
+    border-color: color-mix(in srgb, var(--cover-orange) 56%, var(--color-border));
     background: color-mix(in srgb, var(--color-surface) 94%, var(--cover-orange));
     color: var(--cover-orange-dark);
-    box-shadow: none;
+    box-shadow: 0 .16rem .46rem rgba(0, 0, 0, .045);
     transform: none;
     text-decoration: none;
   }
   #app .layout#app-workspace .cover-studio-picker .cover-button-clear:not(:disabled):hover .cover-button-clear-icon {
-    border-color: color-mix(in srgb, var(--cover-orange) 48%, var(--color-border));
-    background: color-mix(in srgb, var(--color-surface) 84%, var(--cover-orange));
+    border-color: color-mix(in srgb, var(--cover-orange) 49%, var(--color-border));
+    background: color-mix(in srgb, var(--color-surface) 83%, var(--cover-orange));
+    transform: rotate(-5deg);
   }
 }
 #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .btn:focus-visible {
@@ -1669,22 +1738,29 @@
 }
 @media (max-width: 420px) {
   #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-apply {
-    min-height: 3.1rem;
-    padding-left: .83rem;
+    min-height: 3.12rem;
+    padding-left: .89rem;
   }
   #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .cover-button-clear {
-    width: 100%;
+    min-height: 2.7rem;
+    padding-left: .89rem;
   }
   #app .layout#app-workspace .cover-studio-picker .cover-studio-reassurance {
-    padding: .7rem .73rem;
+    padding-top: .76rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .btn,
+  #app .layout#app-workspace .cover-studio-picker .cover-button-apply::before,
   #app .layout#app-workspace .cover-studio-picker .cover-button-apply-arrow,
   #app .layout#app-workspace .cover-studio-picker .cover-button-clear-icon {
     transition: none;
   }
-  #app .layout#app-workspace .cover-studio-picker .cover-button-apply:not(:disabled):hover .cover-button-apply-arrow {
+  #app .layout#app-workspace .cover-studio-picker .cover-button-apply::before {
+    display: none;
+  }
+  #app .layout#app-workspace .cover-studio-picker .cover-button-apply:not(:disabled):hover .cover-button-apply-arrow,
+  #app .layout#app-workspace .cover-studio-picker .cover-button-clear:not(:disabled):hover .cover-button-clear-icon {
     transform: none;
   }
 }
