@@ -1,22 +1,20 @@
 import { el } from '../dom';
 
-type StatusKind = 'success' | 'info' | 'warning' | 'blocked' | 'cancelled' | 'error';
+type StatusKind = 'success' | 'verified' | 'review' | 'warning' | 'info' |
+  'cancelled' | 'blocked' | 'error';
 
 interface StatusPresentation {
   kind: StatusKind;
   kicker: string;
   title: string;
-  badge: string;
-  nextStep?: string | undefined;
+  description: string;
 }
 
 export function renderStatusMessage(message?: string, error?: string): HTMLElement | undefined {
   if (!message && !error) return undefined;
-  const isAlreadyReady = !error && message?.includes('nenhuma correção é necessária.') === true;
-  const requiresManualReview = !error && !isAlreadyReady &&
-    (/pendências?.*revisão manual/iu.test(message ?? '') ||
-      message?.includes('problemas sem reparo automático') === true);
   const status = classifyStatus(message, error);
+  const isAlreadyReady = status.kind === 'verified';
+  const requiresManualReview = status.kind === 'review';
 
   return el('section', {
     className: error
@@ -37,17 +35,9 @@ export function renderStatusMessage(message?: string, error?: string): HTMLEleme
           })],
         }),
         el('div', { className: 'status-review-content', children: [
-          el('div', { className: 'status-review-heading', children: [
-            el('span', { className: 'status-review-kicker',
-              text: 'DIAGNÓSTICO FINALIZADO' }),
-            el('span', { className: 'status-review-badge',
-              text: 'Revisão necessária' }),
-          ] }),
-          el('strong', { className: 'status-review-title',
-            text: 'Análise concluída com pendências' }),
-          el('p', { className: 'status-review-description', text: message ?? '' }),
-          el('span', { className: 'status-review-next-step',
-            text: 'Próximo passo: conferir as pendências no relatório.' }),
+          el('span', { className: 'status-review-kicker', text: status.kicker }),
+          el('strong', { className: 'status-review-title', text: status.title }),
+          el('p', { className: 'status-review-description', text: status.description }),
         ] }),
       ]
       : isAlreadyReady
@@ -68,10 +58,9 @@ export function renderStatusMessage(message?: string, error?: string): HTMLEleme
         el('div', {
           className: 'status-verified-content',
           children: [
-            el('span', { className: 'status-verified-kicker', text: 'VERIFICAÇÃO CONCLUÍDA' }),
-            el('strong', { className: 'status-verified-title', text: 'Seu EPUB está em ordem.' }),
-            el('p', { className: 'status-verified-description', text: message ?? '' }),
-            el('span', { className: 'status-verified-footnote', text: 'Arquivo original preservado' }),
+            el('span', { className: 'status-verified-kicker', text: status.kicker }),
+            el('strong', { className: 'status-verified-title', text: status.title }),
+            el('p', { className: 'status-verified-description', text: status.description }),
           ],
         }),
       ]
@@ -87,15 +76,9 @@ export function renderStatusMessage(message?: string, error?: string): HTMLEleme
             }),
           ] }),
         el('div', { className: 'status-panel-copy status-highlight-content', children: [
-          el('div', { className: 'status-highlight-heading', children: [
-            el('span', { className: 'status-highlight-kicker', text: status.kicker }),
-            el('span', { className: 'status-highlight-badge', text: status.badge }),
-          ] }),
+          el('span', { className: 'status-highlight-kicker', text: status.kicker }),
           el('strong', { className: 'status-highlight-title', text: status.title }),
-          el('p', { className: 'status-highlight-description', text: error ?? message ?? '' }),
-          status.nextStep
-            ? el('span', { className: 'status-highlight-next-step', text: status.nextStep })
-            : undefined,
+          el('p', { className: 'status-highlight-description', text: status.description }),
         ] }),
       ],
   });
@@ -125,45 +108,94 @@ function renderReviewDocumentGlyph(): SVGSVGElement {
 function classifyStatus(message?: string, error?: string): StatusPresentation {
   if (error) {
     return {
-      kind: 'error', kicker: 'NÃO FOI POSSÍVEL CONCLUIR',
-      title: 'Não foi possível concluir', badge: 'Falha na operação',
-      nextStep: 'Confira o erro apresentado antes de tentar novamente.',
+      kind: 'error', kicker: '08 / ERRO',
+      title: 'Não foi possível concluir', description: error,
     };
   }
+
   const text = message ?? '';
-  if (/\b(?:cancelad[ao]s?|interrompid[ao]s?|interrompendo)\b/iu.test(text)) {
+
+  if (/\\b(?:cancelad[ao]s?|interrompid[ao]s?|interrompendo)\\b/iu.test(text)) {
+    let description = text;
+    if (/Nenhum resultado parcial foi publicado/iu.test(text)) {
+      description = 'Nenhum resultado parcial foi publicado.';
+    } else if (/Troca de capa cancelada/iu.test(text)) {
+      description = 'A capa original foi preservada.';
+    } else if (/O EPUB original permanece inalterado/iu.test(text)) {
+      description = 'O EPUB original foi preservado.';
+    }
     return {
-      kind: 'cancelled', kicker: 'OPERAÇÃO INTERROMPIDA',
-      title: 'Operação cancelada', badge: 'Sem alterações adicionais',
-      nextStep: 'Você pode iniciar outra operação quando quiser.',
+      kind: 'cancelled', kicker: '06 / CANCELADO',
+      title: 'Operação interrompida', description,
     };
   }
-  if (/\b(?:problemas? fatais?|problema fatal|inválido|reparo automático foi bloqueado)\b/iu.test(text)) {
+
+  if (/\\b(?:problemas? fatais?|problema fatal|inválido|reparo automático foi bloqueado)\\b/iu.test(text)) {
     return {
-      kind: 'blocked', kicker: 'ARQUIVO REQUER ATENÇÃO',
-      title: 'Reparo automático indisponível', badge: 'Verifique o diagnóstico',
-      nextStep: 'Confira os problemas apontados antes de prosseguir.',
+      kind: 'blocked', kicker: '07 / REPARO BLOQUEADO',
+      title: 'Reparo automático indisponível',
+      description: /O novo EPUB tem problemas fatais/iu.test(text)
+        ? 'O novo EPUB foi recusado; a cópia anterior continua disponível.'
+        : 'O EPUB contém problemas que impedem a correção automática.',
     };
   }
-  if (/\b(?:alertas? remanescentes?|fila cheia|problemas? sem reparo automático|pendências?)\b/iu.test(text)) {
+
+  if (/nenhuma correção é necessária\\.?/iu.test(text) ||
+    /Nenhuma correção obrigatória foi necessária/iu.test(text)) {
     return {
-      kind: 'warning', kicker: 'RESULTADO COM ALERTAS',
-      title: 'Conclusão com observações', badge: 'Atenção',
-      nextStep: 'Consulte os detalhes da análise antes de usar o arquivo.',
+      kind: 'verified', kicker: '02 / VERIFICADO',
+      title: 'Seu EPUB está em ordem', description: 'Nenhuma correção é necessária.',
     };
   }
-  if (/\b(?:arquivo carregado|capa carregada|seleção de capa removida|nenhuma alteração automática|nenhum arquivo foi gerado)\b/iu.test(text)) {
+
+  if (/pendências?.*revisão manual|problemas sem reparo automático/iu.test(text)) {
+    const description = /Nada foi alterado/iu.test(text)
+      ? 'Nenhuma alteração aplicada; ainda há pendências para revisar.'
+      : /Alterações aplicadas/iu.test(text)
+        ? 'Alterações aplicadas; restam pendências para revisão manual.'
+        : 'Alguns problemas precisam de revisão manual.';
     return {
-      kind: 'info', kicker: 'ATUALIZAÇÃO DO ARQUIVO',
-      title: 'Informação registrada', badge: 'Próxima etapa disponível',
+      kind: 'review', kicker: '03 / REVISÃO MANUAL',
+      title: 'Análise concluída com pendências', description,
     };
   }
+
+  if (/\\b(?:alertas? remanescentes?|fila cheia|pendências?)\\b/iu.test(text)) {
+    const queued = /fila cheia/iu.test(text);
+    return {
+      kind: 'warning', kicker: '04 / ATENÇÃO',
+      title: queued ? 'Fila de processamento cheia' : 'Há alertas para conferir',
+      description: queued
+        ? 'Aguarde ou cancele tarefas agendadas.'
+        : 'Alterações aplicadas, mas ainda existem avisos na análise.',
+    };
+  }
+
+  if (/\\b(?:arquivo carregado|capa carregada|seleção de capa removida|nenhuma alteração automática|nenhum arquivo foi gerado|relatório copiado|melhorias opcionais)\\b/iu.test(text)) {
+    let description = text;
+    if (/Arquivo carregado localmente/iu.test(text)) {
+      description = 'Arquivo carregado no navegador.';
+    } else if (/Nova capa carregada/iu.test(text)) {
+      description = 'Nova capa pronta para pré-visualização.';
+    } else if (/nenhuma alteração automática/iu.test(text)) {
+      description = 'Otimização avaliada; nenhuma alteração foi aplicada.';
+    } else if (/relatório copiado/iu.test(text)) {
+      description = 'Relatório copiado.';
+    } else if (/melhorias opcionais/iu.test(text)) {
+      description = 'Sem correções obrigatórias; há melhorias opcionais disponíveis.';
+    }
+    return {
+      kind: 'info', kicker: '05 / INFORMAÇÃO',
+      title: 'Atualização registrada', description,
+    };
+  }
+
   return {
-    kind: 'success', kicker: 'OPERAÇÃO CONCLUÍDA',
-    title: 'Concluído com sucesso', badge: 'Tudo certo',
-    nextStep: /análise concluída/iu.test(text)
-      ? 'O diagnóstico completo está disponível nas seções abaixo.'
-      : undefined,
+    kind: 'success', kicker: '01 / SUCESSO',
+    title: 'Concluído com sucesso',
+    description: /Análise concluída no navegador/iu.test(text)
+      ? 'Análise finalizada no navegador.'
+      : text,
   };
 }
 
