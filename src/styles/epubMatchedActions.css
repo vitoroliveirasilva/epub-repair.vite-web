@@ -275,7 +275,6 @@
 
   #app .layout#app-workspace .workspace-core .controls-panel
   .primary-action-row-download .btn.epub-upload-matched-action.epub-download-action:not(:disabled):hover .epub-download-action-icon {
-    background: #fffaf1;
     box-shadow: 0 .33rem .7rem rgba(73, 33, 26, .3), inset 0 1px 0 #fff;
     transform: translateY(-2px);
   }
