@@ -324,14 +324,27 @@ function renderCoverPreviewCard(state: AppState): HTMLElement {
                 ],
               })
             : el('div', {
-                className: 'cover-new-preview cover-new-preview-empty',
+                className: 'cover-new-preview cover-new-preview-empty cover-preview-editorial-empty',
                 attrs: { 'aria-hidden': 'true' },
                 children: [
-                  el('span', { className: 'cover-studio-preview-placeholder',
-                    children: [
-                      coverStudioPreviewPlaceholderIcon(),
-                      el('span', { className: 'cover-studio-preview-placeholder-lines' }),
+                  el('span', { className: 'cover-preview-editorial-cover', children: [
+                    el('span', { className: 'cover-preview-editorial-ribbon' }),
+                    el('span', { className: 'cover-preview-editorial-eyebrow',
+                      text: 'ATENÇÃO A CADA PÁGINA' }),
+                    el('span', { className: 'cover-preview-editorial-ornament', children: [
+                      el('span', { className: 'cover-preview-editorial-medallion' }),
+                      el('span', { className: 'cover-preview-editorial-open-book', children: [
+                        el('span', { className: 'cover-preview-editorial-page-left' }),
+                        el('span', { className: 'cover-preview-editorial-page-right' }),
+                      ] }),
                     ] }),
+                    el('span', { className: 'cover-preview-editorial-title', children: [
+                      'Um ', el('strong', { text: 'EPUB' }),
+                    ] }),
+                    el('span', { className: 'cover-preview-editorial-divider' }),
+                    el('span', { className: 'cover-preview-editorial-subtitle',
+                      text: 'ANÁLISE · CAPA · REPAROS' }),
+                  ] }),
                 ],
               }),
         ],
@@ -353,59 +366,6 @@ function coverDescription(state: AppState): string {
   return 'Escolha uma imagem, confira a prévia e crie uma nova cópia do seu EPUB';
 }
 
-
-function coverStudioPreviewPlaceholderIcon(): SVGSVGElement {
-  const ns = 'http://www.w3.org/2000/svg';
-  const icon = document.createElementNS(ns, 'svg');
-  icon.setAttribute('class', 'cover-studio-preview-placeholder-glyph');
-  icon.setAttribute('viewBox', '0 0 96 120');
-  icon.setAttribute('fill', 'none');
-  icon.setAttribute('aria-hidden', 'true');
-  icon.setAttribute('focusable', 'false');
-
-  const add = (
-    tag: 'rect' | 'path' | 'circle',
-    className: string,
-    attrs: Record<string, string>,
-  ) => {
-    const node = document.createElementNS(ns, tag);
-    node.setAttribute('class', className);
-    for (const [key, value] of Object.entries(attrs)) {
-      node.setAttribute(key, value);
-    }
-    icon.append(node);
-  };
-
-  add('rect', 'cover-studio-preview-book-body', {
-    x: '14', y: '6', width: '66', height: '104', rx: '6',
-  });
-  add('rect', 'cover-studio-preview-book-spine', {
-    x: '14', y: '6', width: '10', height: '104', rx: '4',
-  });
-  add('rect', 'cover-studio-preview-book-panel', {
-    x: '28', y: '28', width: '44', height: '58', rx: '4',
-  });
-  add('path', 'cover-studio-preview-book-title', {
-    d: 'M31 38h24',
-  });
-  add('path', 'cover-studio-preview-book-subtitle', {
-    d: 'M31 45h18',
-  });
-  add('rect', 'cover-studio-preview-book-mark', {
-    x: '46', y: '53', width: '3', height: '14', rx: '1.5',
-  });
-  add('path', 'cover-studio-preview-book-footer-1', {
-    d: 'M31 74h27',
-  });
-  add('path', 'cover-studio-preview-book-footer-2', {
-    d: 'M31 79h20',
-  });
-  add('path', 'cover-studio-preview-book-shadow-line', {
-    d: 'M27 92h38',
-  });
-
-  return icon;
-}
 
 function coverStudioActionIcon(kind: 'trash' | 'lock'): SVGSVGElement {
   const ns = 'http://www.w3.org/2000/svg';
