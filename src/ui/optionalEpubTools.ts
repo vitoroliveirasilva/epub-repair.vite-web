@@ -734,7 +734,7 @@ export function renderBatchWorkspace(
           ],
         }),
       ] }),
-      renderBatchFlow(count, Boolean(s.batchZip)),
+      renderBatchFlow(count, Boolean(s.batchZip), state.busy && s.batchStarted),
       renderBatch(state, s, rerender, enqueue, cancelAll, totalBytes),
     ],
   });
@@ -773,13 +773,24 @@ function renderBatch(
       'aria-disabled': String(state.busy),
     },
     children: [
-      el('span', { className: 'batch-studio-upload-icon',
+      el('span', { className: 'batch-studio-upload-graphic',
         attrs: { 'aria-hidden': 'true' },
-        children: [renderBatchUploadGlyph()] }),
+        children: [
+          el('span', { className: 'batch-studio-upload-book batch-studio-upload-book-back' }),
+          el('span', { className: 'batch-studio-upload-book batch-studio-upload-book-middle' }),
+          el('span', { className: 'batch-studio-upload-book batch-studio-upload-book-front',
+            children: [
+              el('span', { className: 'batch-studio-upload-book-lines' }),
+              el('span', { className: 'batch-studio-upload-bookmark' }),
+            ] }),
+          el('span', { className: 'batch-studio-upload-graphic-tag', text: 'EPUB' }),
+        ] }),
       el('span', { className: 'batch-studio-upload-copy', children: [
-        el('strong', { text: hasFiles ? 'Adicionar mais livros' : 'Arraste seus EPUBs aqui' }),
-        el('small', { text: hasFiles ? 'Arraste mais arquivos ou selecione no dispositivo'
-          : 'Escolha arquivos do seu dispositivo ou solte-os nesta área' }),
+        el('span', { className: 'batch-studio-upload-kicker',
+          text: hasFiles ? 'CONTINUE SUA SELEÇÃO' : 'SUA BIBLIOTECA DIGITAL' }),
+        el('strong', { text: hasFiles ? 'Adicione mais livros' : 'Arraste seus EPUBs aqui' }),
+        el('small', { text: hasFiles ? 'Solte mais arquivos ou escolha no seu dispositivo'
+          : 'Ou selecione os arquivos no seu dispositivo para começar.' }),
       ] }),
       el('span', { className: 'batch-studio-upload-action',
         text: hasFiles ? 'Adicionar EPUBs' : 'Escolher arquivos' }),
@@ -882,9 +893,8 @@ function renderBatch(
           el('span', { className: 'batch-studio-empty-mark',
             attrs: { 'aria-hidden': 'true' } }),
           el('strong', { text: 'Nenhum livro na lista' }),
-          el('small', { text: 'Adicione entre 1 e ' + MAX_BATCH_FILES +
-            ' EPUBs para começar. O limite total é de ' +
-            formatBytes(MAX_BATCH_BYTES) + '.' }),
+          el('small', { text: 'Escolha até ' + MAX_BATCH_FILES +
+            ' EPUBs para montar seu lote.' }),
         ] })],
   });
 
@@ -924,8 +934,8 @@ function renderBatch(
         ] }),
         el('progress', { attrs: { max: String(MAX_BATCH_BYTES),
           value: String(totalBytes), 'aria-label': 'Espaço total de EPUBs utilizado' } }),
-        el('small', { text: 'Até ' + MAX_BATCH_FILES + ' livros · ' +
-          formatBytes(MAX_BATCH_BYTES) + ' no total' }),
+        el('small', { text: 'Limite compartilhado entre até ' +
+          MAX_BATCH_FILES + ' EPUBs' }),
       ] }),
       message,
     ],
@@ -936,8 +946,8 @@ function renderBatch(
     children: [
       el('legend', { text: 'Escolha o tipo de processamento' }),
       ...([
-        ['repair', 'Corrigir e melhorar', 'Reparos e melhorias seguras. Gera novos EPUBs.'],
-        ['validate', 'Somente verificar', 'Apenas diagnósticos, sem alterar os livros.'],
+        ['repair', 'Corrigir e melhorar', 'Reparos seguros e novos EPUBs para baixar.'],
+        ['validate', 'Somente verificar', 'Diagnósticos sem alterar os livros originais.'],
       ] as const).map(([mode, title, description]) => {
         const radio = el('input', { attrs: {
           type: 'radio', name: 'optional-batch-mode', value: mode,
@@ -1023,7 +1033,7 @@ function renderBatch(
           ' · ' + (s.batchMode === 'repair' ? 'Correção' : 'Verificação') }),
         el('small', { text: hasFiles ? formatBytes(totalBytes) +
           ' selecionados · arquivos originais preservados'
-          : 'Adicione arquivos para habilitar a operação' }),
+          : 'Selecione os livros para continuar' }),
       ] }),
       s.batchStarted ? el('div', { className: 'batch-studio-job-progress',
         attrs: { role: 'status', 'aria-live': 'polite' },
@@ -1071,16 +1081,20 @@ function renderBatch(
 }
 
 
-function renderBatchFlow(count: number, zipReady: boolean): HTMLElement {
+function renderBatchFlow(count: number, zipReady: boolean, working: boolean): HTMLElement {
   const stages = [
-    ['01', 'Selecionar', count ? 'complete' : 'current'],
-    ['02', 'Processar', zipReady ? 'complete' : count ? 'current' : 'waiting'],
-    ['03', 'Baixar ZIP', zipReady ? 'current' : 'waiting'],
+    ['01', 'Selecionar', count ? count + ' de ' + MAX_BATCH_FILES + ' livros' : 'Escolha seus livros',
+      count ? 'complete' : 'current'],
+    ['02', 'Processar', zipReady ? 'Finalizado' : working ? 'Em andamento'
+      : count ? 'Pronto para começar' : 'Próxima etapa',
+      zipReady ? 'complete' : count ? 'current' : 'waiting'],
+    ['03', 'Baixar ZIP', zipReady ? 'Pacote disponível' : 'Cópias e relatórios',
+      zipReady ? 'current' : 'waiting'],
   ] as const;
   return el('ol', {
     className: 'batch-studio-flow',
     attrs: { 'aria-label': 'Etapas do processamento em lote' },
-    children: stages.map(([number, label, status]) =>
+    children: stages.map(([number, label, subtitle, status]) =>
       el('li', {
         className: 'batch-studio-flow-step batch-studio-flow-' + status,
         attrs: status === 'current' ? { 'aria-current': 'step' } : {},
@@ -1088,31 +1102,13 @@ function renderBatchFlow(count: number, zipReady: boolean): HTMLElement {
           el('span', { className: 'batch-studio-flow-number',
             attrs: { 'aria-hidden': 'true' },
             text: status === 'complete' ? '✓' : number }),
-          el('span', { className: 'batch-studio-flow-text', text: label }),
+          el('span', { className: 'batch-studio-flow-text', children: [
+            el('strong', { text: label }),
+            el('small', { text: subtitle }),
+          ] }),
         ],
       })),
   });
-}
-
-function renderBatchUploadGlyph(): SVGSVGElement {
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('viewBox', '0 0 36 36');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '1.6');
-  svg.setAttribute('stroke-linecap', 'round');
-  svg.setAttribute('stroke-linejoin', 'round');
-  svg.setAttribute('focusable', 'false');
-  svg.setAttribute('aria-hidden', 'true');
-  const back = document.createElementNS(ns, 'path');
-  back.setAttribute('d', 'M10 7.5h11l5.5 5.5V27a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V9.5a2 2 0 0 1 2-2Z');
-  const fold = document.createElementNS(ns, 'path');
-  fold.setAttribute('d', 'M21 7.5V13h5.5');
-  const content = document.createElementNS(ns, 'path');
-  content.setAttribute('d', 'M12.5 18h8M12.5 21.5H18');
-  svg.append(back, fold, content);
-  return svg;
 }
 
 function renderBatchModeGlyph(mode: 'repair' | 'validate'): SVGSVGElement {
@@ -1124,11 +1120,18 @@ function renderBatchModeGlyph(mode: 'repair' | 'validate'): SVGSVGElement {
   svg.setAttribute('stroke-linecap', 'round');
   svg.setAttribute('stroke-linejoin', 'round');
   svg.setAttribute('aria-hidden', 'true');
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  path.setAttribute('d', mode === 'repair'
-    ? 'M12.5 3.25H6.5a2 2 0 0 0-2 2v13.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-9L12.5 3.25Zm0 0v6.5h7M8 15h8m-8 3h5'
-    : 'M10.5 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm5.3-1.4L21 22M7.8 11l2 2 3.6-3.7');
-  svg.append(path);
+  const ns = 'http://www.w3.org/2000/svg';
+  const paths = mode === 'repair'
+    ? ['M12 3.5 4.75 6.4v5.65c0 4.5 2.62 7.5 7.25 9.95 4.63-2.45 7.25-5.45 7.25-9.95V6.4L12 3.5Z',
+      'm8.75 12.4 2.2 2.2 4.5-4.65']
+    : ['M10.75 18.25a7.25 7.25 0 1 0 0-14.5 7.25 7.25 0 0 0 0 14.5Z',
+      'm16.1 16.1 5 5',
+      'M8.2 10.8h5.1m-5.1 2.5h3.2'];
+  for (const d of paths) {
+    const path = document.createElementNS(ns, 'path');
+    path.setAttribute('d', d);
+    svg.append(path);
+  }
   return svg;
 }
 

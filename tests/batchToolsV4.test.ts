@@ -386,7 +386,13 @@ describe('Lotes limitados e isolados', () => {
     expect(steps[1]?.classList.contains('batch-studio-flow-waiting')).toBe(true);
     expect(host.querySelector('.batch-studio-counter-meter')?.children).toHaveLength(6);
     expect(host.querySelectorAll('.batch-studio-counter-tick-filled')).toHaveLength(0);
-    expect(host.querySelector('.batch-studio-upload-icon svg path')).not.toBeNull();
+    expect(host.querySelectorAll('.batch-studio-upload-book')).toHaveLength(3);
+    expect(host.querySelector('.batch-studio-upload-graphic-tag')?.textContent)
+      .toBe('EPUB');
+    expect(host.querySelector('.batch-studio-upload-kicker')?.textContent)
+      .toBe('SUA BIBLIOTECA DIGITAL');
+    expect(host.querySelector('.batch-studio-flow-step[aria-current="step"] .batch-studio-flow-text small')?.textContent)
+      .toBe('Escolha seus livros');
     expect(host.querySelector('#batch-workspace')?.getAttribute('data-batch-state'))
       .toBe('empty');
     openBatchWithFiles(state, [new File(['epub'], 'um.epub')]);
@@ -394,9 +400,32 @@ describe('Lotes limitados e isolados', () => {
     steps = Array.from(host.querySelectorAll('.batch-studio-flow-step'));
     expect(steps[0]?.classList.contains('batch-studio-flow-complete')).toBe(true);
     expect(steps[1]?.getAttribute('aria-current')).toBe('step');
+    expect(steps[1]?.querySelector('.batch-studio-flow-text small')?.textContent)
+      .toBe('Pronto para começar');
+    expect(host.querySelector('.batch-studio-upload-kicker')?.textContent)
+      .toBe('CONTINUE SUA SELEÇÃO');
     expect(host.querySelectorAll('.batch-studio-counter-tick-filled')).toHaveLength(1);
     expect(host.querySelector('#batch-workspace')?.getAttribute('data-batch-state'))
       .toBe('selected');
+  });
+
+  it('preserva a hierarquia visual editorial com a biblioteca e a ação independentes', () => {
+    const state = createInitialState();
+    const panel = renderBatchWorkspace(state, () => {}, () => {}, () => {});
+    const sections = panel.querySelector('.batch-studio-layout');
+    expect(sections?.children).toHaveLength(2);
+    expect(sections?.children[0]?.classList.contains('batch-studio-library')).toBe(true);
+    expect(sections?.children[1]?.classList.contains('batch-studio-console')).toBe(true);
+    expect(panel.querySelector('.batch-studio-upload-action')?.textContent)
+      .toBe('Escolher arquivos');
+    expect(panel.querySelector('.batch-studio-choice input[type="radio"]:checked')?.getAttribute('value'))
+      .toBe('repair');
+    expect(panel.querySelectorAll('.batch-studio-choice-icon svg path').length)
+      .toBeGreaterThanOrEqual(4);
+    expect(panel.querySelector('.batch-studio-file-scroll[data-has-files="false"]'))
+      .not.toBeNull();
+    expect(panel.querySelector('.batch-studio-reassurance')?.textContent)
+      .toContain('Seus arquivos originais não são alterados');
   });
 
   it('estica a biblioteca e o painel de ações por toda a largura no mobile', () => {
