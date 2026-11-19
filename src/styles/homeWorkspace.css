@@ -322,7 +322,7 @@
   border-right: 0;
 }
 
-.capability-entry:nth-last-child(-n + 3) {
+.capability-entry:nth-child(n + 4) {
   border-bottom: 0;
 }
 
@@ -495,7 +495,7 @@
     border-bottom: 1px solid rgba(255, 249, 241, .16);
   }
 
-.capability-entry:nth-last-child(-n + 2) {
+.capability-entry:nth-child(n + 5) {
     border-bottom: 0;
   }
 
