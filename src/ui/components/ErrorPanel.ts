@@ -115,7 +115,7 @@ function classifyStatus(message?: string, error?: string): StatusPresentation {
 
   const text = message ?? '';
 
-  if (/\\b(?:cancelad[ao]s?|interrompid[ao]s?|interrompendo)\\b/iu.test(text)) {
+  if (/\b(?:cancelad[ao]s?|interrompid[ao]s?|interrompendo)\b/iu.test(text)) {
     let description = text;
     if (/Nenhum resultado parcial foi publicado/iu.test(text)) {
       description = 'Nenhum resultado parcial foi publicado.';
@@ -130,7 +130,7 @@ function classifyStatus(message?: string, error?: string): StatusPresentation {
     };
   }
 
-  if (/\\b(?:problemas? fatais?|problema fatal|inválido|reparo automático foi bloqueado)\\b/iu.test(text)) {
+  if (/\b(?:problemas? fatais?|problema fatal|inválido|reparo automático foi bloqueado)\b/iu.test(text)) {
     return {
       kind: 'blocked', kicker: '07 / REPARO BLOQUEADO',
       title: 'Reparo automático indisponível',
@@ -140,7 +140,7 @@ function classifyStatus(message?: string, error?: string): StatusPresentation {
     };
   }
 
-  if (/nenhuma correção é necessária\\.?/iu.test(text) ||
+  if (/nenhuma correção é necessária\.?/iu.test(text) ||
     /Nenhuma correção obrigatória foi necessária/iu.test(text)) {
     return {
       kind: 'verified', kicker: '02 / VERIFICADO',
@@ -160,7 +160,7 @@ function classifyStatus(message?: string, error?: string): StatusPresentation {
     };
   }
 
-  if (/\\b(?:alertas? remanescentes?|fila cheia|pendências?)\\b/iu.test(text)) {
+  if (/\b(?:alertas? remanescentes?|fila cheia|pendências?)\b/iu.test(text)) {
     const queued = /fila cheia/iu.test(text);
     return {
       kind: 'warning', kicker: '04 / ATENÇÃO',
@@ -171,7 +171,7 @@ function classifyStatus(message?: string, error?: string): StatusPresentation {
     };
   }
 
-  if (/\\b(?:arquivo carregado|capa carregada|seleção de capa removida|nenhuma alteração automática|nenhum arquivo foi gerado|relatório copiado|melhorias opcionais)\\b/iu.test(text)) {
+  if (/\b(?:arquivo carregado|capa carregada|seleção de capa removida|nenhuma alteração automática|nenhum arquivo foi gerado|relatório copiado|melhorias opcionais)\b/iu.test(text)) {
     let description = text;
     if (/Arquivo carregado localmente/iu.test(text)) {
       description = 'Arquivo carregado no navegador.';
