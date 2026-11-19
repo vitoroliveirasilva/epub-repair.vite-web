@@ -1173,8 +1173,8 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  flex: 0 0 auto;
-  min-height: 14.15rem;
+  flex: 1 0 auto;
+  min-height: 15.05rem;
   gap: .45rem;
   padding: 1.1rem 1rem;
   border: 1.5px dashed color-mix(in srgb, var(--cover-orange) 48%, var(--color-border));
@@ -1191,7 +1191,7 @@
 }
 #app .layout#app-workspace .cover-studio-picker .cover-upload-zone-selected {
   --cover-upload-surface: color-mix(in srgb, var(--color-surface) 94%, var(--color-surface-2));
-  min-height: 14.15rem;
+  min-height: 15.05rem;
   border-style: solid;
   border-color: color-mix(in srgb, var(--cover-orange) 44%, var(--color-border));
 }
@@ -1505,8 +1505,8 @@
   align-content: start;
   gap: .57rem;
   width: 100%;
-  margin-top: auto;
-  padding-top: 1.12rem;
+  margin-top: 0;
+  padding-top: .58rem;
 }
 #app .layout#app-workspace .cover-studio-picker .cover-studio-actions .btn {
   min-width: 0;
@@ -1820,7 +1820,7 @@
     font-size: clamp(1.36rem, 5vw, 1.76rem);
   }
   #app .layout#app-workspace .cover-studio-picker .cover-upload-zone {
-    min-height: 13.6rem;
+    min-height: 14.45rem;
     padding: 1rem .82rem;
   }
 }
