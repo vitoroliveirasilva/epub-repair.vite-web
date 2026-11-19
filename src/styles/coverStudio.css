@@ -1096,7 +1096,10 @@
     radial-gradient(ellipse at 50% 18%,
       color-mix(in srgb, var(--color-accent) 7%, transparent), transparent 78%),
     var(--color-surface);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 40%, transparent);
+  box-shadow:
+    inset 0 10px 22px -16px color-mix(in srgb, var(--color-accent) 32%, transparent),
+    inset 0 3px 10px color-mix(in srgb, var(--color-accent) 9%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 11%, transparent);
   transform: none;
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-upload-received {
@@ -1168,8 +1171,11 @@
     radial-gradient(ellipse at 50% 18%,
       color-mix(in srgb, var(--color-accent) 9%, transparent), transparent 78%),
     var(--color-surface);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 40%, transparent),
-    0 .55rem 1.15rem color-mix(in srgb, var(--color-accent) 9%, transparent);
+  box-shadow:
+    inset 0 13px 23px -16px color-mix(in srgb, var(--color-accent) 40%, transparent),
+    inset 0 4px 13px color-mix(in srgb, var(--color-accent) 12%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 17%, transparent);
+  transform: none;
 }
 #app .layout#app-workspace .cover-studio-picker-received .cover-upload-zone-selected:not(.cover-upload-zone-disabled):is(:hover, :focus-visible, .cover-upload-zone-active) .cover-upload-cta {
   border-color: var(--color-accent-strong);
