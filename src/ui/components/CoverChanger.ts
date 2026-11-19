@@ -83,13 +83,13 @@ export function renderCoverChanger(
           el('strong', {
             text: selectedCover
               ? 'Sua nova capa está pronta para conferir'
-              : hasEpub ? 'Arraste sua nova capa aqui' : 'Aguardando um EPUB',
+              : hasEpub ? 'Escolha a imagem da nova capa' : 'Aguardando um EPUB',
           }),
           el('small', {
             text: selectedCover
               ? 'Confira o resultado ao lado ou escolha outra imagem'
               : hasEpub
-                ? 'JPG ou PNG, arraste ou selecione no dispositivo'
+                ? 'Arraste uma imagem até aqui ou selecione no seu dispositivo'
                 : 'Selecione um livro para habilitar a troca de capa',
           }),
         ],
@@ -176,9 +176,15 @@ export function renderCoverChanger(
                       'aria-label': 'Nova imagem selecionada: ' +
                         selectedCover.fileName },
                     children: [
-                      el('span', { className: 'cover-selected-file-icon',
-                        text: selectedCover.mediaType === 'image/png' ? 'PNG' : 'JPG',
-                        attrs: { 'aria-hidden': 'true' } }),
+                      el('span', {
+                        className: 'cover-selected-file-icon',
+                        attrs: { 'aria-hidden': 'true' },
+                        children: [
+                          el('img', { className: 'cover-selected-file-thumbnail',
+                            attrs: { src: selectedCover.previewDataUrl,
+                              alt: '', loading: 'lazy', decoding: 'async' } }),
+                        ],
+                      }),
                       el('span', {
                         className: 'cover-selected-file-info',
                         children: [
@@ -189,6 +195,9 @@ export function renderCoverChanger(
                             ' · Imagem selecionada' }),
                         ],
                       }),
+                      el('span', { className: 'cover-selected-file-format',
+                        text: selectedCover.mediaType === 'image/png' ? 'PNG' : 'JPG',
+                        attrs: { 'aria-hidden': 'true' } }),
                     ],
                   })
                 : undefined,
