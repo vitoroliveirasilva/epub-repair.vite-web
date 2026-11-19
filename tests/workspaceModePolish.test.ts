@@ -473,6 +473,36 @@ describe('Estúdio de restauração e escolha de modo', () => {
       .toBe('Análise concluída no navegador.');
   });
 
+  it('destaca pendências manuais sem comunicar sucesso completo', () => {
+    const message = 'O EPUB tem problemas sem reparo automático. ' +
+      'Consulte as pendências para revisão manual.';
+    const review = renderStatusMessage(message);
+    expect(review?.classList.contains('status-review')).toBe(true);
+    expect(review?.classList.contains('status-verified')).toBe(false);
+    expect(review?.getAttribute('role')).toBe('status');
+    expect(review?.querySelector('.status-review-kicker')?.textContent)
+      .toBe('DIAGNÓSTICO FINALIZADO');
+    expect(review?.querySelector('.status-review-title')?.textContent)
+      .toBe('Análise concluída com pendências');
+    expect(review?.querySelector('.status-review-description')?.textContent)
+      .toBe(message);
+    expect(review?.querySelector('.status-review-emblem svg path')).not.toBeNull();
+    expect(review?.querySelector('.status-review-emblem')?.getAttribute('aria-hidden'))
+      .toBe('true');
+    expect(review?.textContent).not.toContain('Concluído com sucesso');
+  });
+
+  it('mantém o mesmo aviso para resultados reparados com pendências manuais', () => {
+    const review = renderStatusMessage(
+      'Alterações aplicadas, mas ainda existem pendências que exigem revisão manual.');
+    expect(review?.classList.contains('status-review')).toBe(true);
+    expect(review?.querySelector('.status-review-badge')?.textContent)
+      .toBe('Revisão necessária');
+    const ready = renderStatusMessage('Seu EPUB já está pronto, nenhuma correção é necessária.');
+    expect(ready?.classList.contains('status-verified')).toBe(true);
+    expect(ready?.classList.contains('status-review')).toBe(false);
+  });
+
   it('preserva o estilo e a semântica de erros, sem transformar erros em sucesso', () => {
     const error = renderStatusMessage(undefined, 'Arquivo EPUB inválido.');
     expect(error?.classList.contains('status-error')).toBe(true);
