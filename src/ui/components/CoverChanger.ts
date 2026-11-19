@@ -324,26 +324,19 @@ function renderCoverPreviewCard(state: AppState): HTMLElement {
                 ],
               })
             : el('div', {
-                className: 'cover-new-preview cover-new-preview-empty cover-preview-editorial-empty',
+                className: 'cover-new-preview cover-new-preview-empty cover-preview-classic-empty',
                 attrs: { 'aria-hidden': 'true' },
                 children: [
-                  el('span', { className: 'cover-preview-editorial-cover', children: [
-                    el('span', { className: 'cover-preview-editorial-ribbon' }),
-                    el('span', { className: 'cover-preview-editorial-eyebrow',
-                      text: 'ATENÇÃO A CADA PÁGINA' }),
-                    el('span', { className: 'cover-preview-editorial-ornament', children: [
-                      el('span', { className: 'cover-preview-editorial-medallion' }),
-                      el('span', { className: 'cover-preview-editorial-open-book', children: [
-                        el('span', { className: 'cover-preview-editorial-page-left' }),
-                        el('span', { className: 'cover-preview-editorial-page-right' }),
+                  el('span', { className: 'cover-preview-classic-face', children: [
+                    el('span', { className: 'cover-preview-classic-ribbon' }),
+                    el('span', { className: 'cover-preview-classic-arch', children: [
+                      el('span', { className: 'cover-preview-classic-seal', children: [
+                        el('span', { className: 'cover-preview-classic-page cover-preview-classic-page-left' }),
+                        el('span', { className: 'cover-preview-classic-page cover-preview-classic-page-right' }),
                       ] }),
                     ] }),
-                    el('span', { className: 'cover-preview-editorial-title', children: [
-                      'Um ', el('strong', { text: 'EPUB' }),
-                    ] }),
-                    el('span', { className: 'cover-preview-editorial-divider' }),
-                    el('span', { className: 'cover-preview-editorial-subtitle',
-                      text: 'ANÁLISE · CAPA · REPAROS' }),
+                    el('span', { className: 'cover-preview-classic-divider' }),
+                    el('span', { className: 'cover-preview-classic-title', text: 'EPUB' }),
                   ] }),
                 ],
               }),
