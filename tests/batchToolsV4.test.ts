@@ -364,7 +364,15 @@ describe('Lotes limitados e isolados', () => {
     expect(input?.classList.contains('visually-hidden')).toBe(true);
     expect(dropzone?.contains(input ?? null)).toBe(false);
     expect(dropzone?.getAttribute('for')).toBe('batch-epub-input');
-    expect(panel.querySelector('.batch-studio-empty-mark[aria-hidden="true"]')).not.toBeNull();
+    expect(panel.querySelector('.batch-studio-empty-art[aria-hidden="true"]')).not.toBeNull();
+    expect(panel.querySelector('.batch-studio-empty-mark')).not.toBeNull();
+    expect(panel.querySelector<HTMLButtonElement>('.batch-studio-empty-action')?.textContent)
+      .toBe('Adicionar EPUBs');
+    expect(panel.querySelectorAll('.batch-studio-file-heading > *')).toHaveLength(3);
+    const capacity = panel.querySelector('.batch-studio-file-capacity');
+    expect(capacity?.textContent).toBe('Espaço utilizado0%');
+    expect(panel.querySelector('.batch-studio-capacity-track progress')?.getAttribute('value'))
+      .toBe('0');
     expect(panel.querySelectorAll('.batch-studio-choice-icon svg')).toHaveLength(2);
     expect(panel.querySelectorAll('input[name="optional-batch-mode"]')).toHaveLength(2);
     expect(panel.querySelector<HTMLButtonElement>('.batch-studio-primary')?.disabled)
@@ -389,6 +397,14 @@ describe('Lotes limitados e isolados', () => {
     expect(host.querySelectorAll('.batch-studio-upload-book')).toHaveLength(3);
     expect(host.querySelector('.batch-studio-upload-graphic-tag')?.textContent)
       .toBe('EPUB');
+    expect(host.querySelector('.batch-studio-epub-accent')?.textContent)
+      .toBe('EPUBs');
+    expect(host.querySelector('.batch-studio-flow-rail')?.tagName).toBe('NAV');
+    expect(host.querySelectorAll('.batch-studio-flow-connector svg')).toHaveLength(2);
+    expect(steps[0]?.querySelector('.batch-studio-flow-status')?.textContent)
+      .toBe('Comece aqui');
+    expect(steps[1]?.querySelector('.batch-studio-flow-status')?.textContent)
+      .toBe('Próxima');
     expect(host.querySelector('.batch-studio-upload-kicker')?.textContent)
       .toBe('SUA BIBLIOTECA DIGITAL');
     const upload = host.querySelector('.batch-studio-upload');
@@ -410,11 +426,46 @@ describe('Lotes limitados e isolados', () => {
     expect(steps[1]?.getAttribute('aria-current')).toBe('step');
     expect(steps[1]?.querySelector('.batch-studio-flow-text small')?.textContent)
       .toBe('Pronto para começar');
+    expect(steps[0]?.querySelector('.batch-studio-flow-status')?.textContent)
+      .toBe('Concluída');
+    expect(steps[1]?.querySelector('.batch-studio-flow-status')?.textContent)
+      .toBe('Etapa atual');
     expect(host.querySelector('.batch-studio-upload-kicker')?.textContent)
       .toBe('CONTINUE SUA SELEÇÃO');
     expect(host.querySelectorAll('.batch-studio-counter-tick-filled')).toHaveLength(1);
     expect(host.querySelector('#batch-workspace')?.getAttribute('data-batch-state'))
       .toBe('selected');
+  });
+
+  it('coloca a capacidade no centro e o progresso entre o resumo e a lista', () => {
+    const state = createInitialState();
+    openBatchWithFiles(state, [new File(['conteúdo'], 'minha-obra.epub')]);
+    const panel = renderBatchWorkspace(state, () => {}, () => {}, () => {});
+    const heading = panel.querySelector('.batch-studio-file-heading');
+    const bar = panel.querySelector('.batch-studio-capacity-track');
+    const list = panel.querySelector('.batch-studio-file-scroll');
+    expect(heading?.children[0]?.textContent).toBe('1 EPUB selecionado');
+    expect(heading?.children[1]?.classList.contains('batch-studio-file-capacity')).toBe(true);
+    expect(heading?.children[2]?.textContent).toContain('80 MB');
+    expect(bar?.querySelector('progress')).not.toBeNull();
+    expect(heading?.nextElementSibling).toBe(bar);
+    expect(bar?.nextElementSibling).toBe(list);
+    expect(list?.getAttribute('data-has-files')).toBe('true');
+    expect(list?.querySelectorAll('.batch-studio-file-row')).toHaveLength(1);
+    expect(list?.querySelector('.batch-studio-empty-action')).toBeNull();
+  });
+
+  it('usa a mesma hierarquia de trilho do EPUB individual', () => {
+    const css = readFileSync('src/styles/batchWorkspaceShelfPolish.css', 'utf8');
+    const individual = readFileSync('src/styles/epubStageRail.css', 'utf8');
+    expect(individual).toContain('epub-stage-rail');
+    expect(css).toContain('.batch-studio-flow-rail');
+    expect(css).toContain('.batch-studio-flow-connector');
+    expect(css).toContain('.batch-studio-flow-status');
+    expect(css).toContain('var(--studio-copper');
+    expect(css).toContain('@media (max-width: 680px)');
+    expect(css).toContain('.batch-studio-file-row:hover');
+    expect(css).toContain('.batch-studio-file-scroll[data-has-files="false"]:hover');
   });
 
   it('preserva a hierarquia visual editorial com a biblioteca e a ação independentes', () => {
