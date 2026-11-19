@@ -491,7 +491,8 @@
   line-height:1.3;
 }
 #app .support-heading h2 {
-  max-width:19ch;
+  max-width:none;
+  width:100%;
   margin:0;
   padding:0;
   font-family:var(--font-serif);
@@ -499,7 +500,8 @@
   font-weight:750;
   letter-spacing:-.055em;
   line-height:1.06;
-  text-wrap:balance;
+  text-wrap:normal;
+  white-space:normal;
 }
 #app .support-heading h2 .support-heading-accent {
   color:var(--studio-copper);
@@ -527,9 +529,10 @@
   overflow:hidden;
   border:1px solid var(--studio-line);
   border-radius:clamp(1.3rem,2vw,1.65rem);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+  box-shadow:0 0 0 rgba(20,50,38,0),
+    inset 0 1px 0 rgba(255,255,255,.07);
   transition:transform 360ms var(--studio-ease),
-    border-color 300ms ease,box-shadow 360ms ease;
+    border-color 300ms ease,box-shadow 360ms var(--studio-ease);
 }
 #app .support-sections .support-card-local {
   grid-column:span 5;
@@ -842,6 +845,12 @@
 #app .support-heading h2 {
     max-width: 18ch;
     font-size: clamp(2rem, 8vw, 2.9rem);
+  }
+
+#app .support-heading h2 {
+    max-width:none;
+    width:100%;
+    text-wrap:normal;
   }
 
 #app .workspace-signals {
