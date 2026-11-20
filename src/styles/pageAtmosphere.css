@@ -1,0 +1,50 @@
+#app {
+  --page-atmosphere-top: #fcf8f2;
+  --page-atmosphere-base: var(--color-bg);
+  --page-atmosphere-sage: #f0f4ed;
+  --page-atmosphere-paper: #f8f5ef;
+  --page-atmosphere-peach: #faf0e7;
+  --page-atmosphere-green-glow: rgba(81, 123, 99, .075);
+  --page-atmosphere-copper-glow: rgba(193, 113, 77, .075);
+  background:
+    radial-gradient(ellipse 70% 22% at 92% 33%, var(--page-atmosphere-green-glow), transparent 100%),
+    radial-gradient(ellipse 74% 24% at 5% 72%, var(--page-atmosphere-copper-glow), transparent 100%),
+    linear-gradient(180deg,
+      var(--page-atmosphere-top) 0%,
+      var(--page-atmosphere-base) 24%,
+      var(--page-atmosphere-sage) 44%,
+      var(--page-atmosphere-paper) 63%,
+      var(--page-atmosphere-peach) 82%,
+      var(--page-atmosphere-base) 100%);
+}
+
+#app .hero.editorial-hero.epub-home {
+  background: linear-gradient(180deg,
+    var(--home-paper) 0%,
+    color-mix(in srgb, var(--home-paper) 84%, transparent) 52%,
+    transparent 100%);
+}
+
+:root[data-theme="dark"] #app {
+  --page-atmosphere-top: #17231e;
+  --page-atmosphere-sage: #1b2720;
+  --page-atmosphere-paper: #1b221d;
+  --page-atmosphere-peach: #211f1b;
+  --page-atmosphere-green-glow: rgba(116, 172, 137, .07);
+  --page-atmosphere-copper-glow: rgba(218, 146, 107, .05);
+}
+
+@media (max-width: 760px) {
+  #app {
+    background:
+      radial-gradient(ellipse 92% 21% at 95% 35%, var(--page-atmosphere-green-glow), transparent 100%),
+      radial-gradient(ellipse 92% 24% at 5% 75%, var(--page-atmosphere-copper-glow), transparent 100%),
+      linear-gradient(180deg,
+        var(--page-atmosphere-top) 0%,
+        var(--page-atmosphere-base) 21%,
+        var(--page-atmosphere-sage) 43%,
+        var(--page-atmosphere-paper) 65%,
+        var(--page-atmosphere-peach) 84%,
+        var(--page-atmosphere-base) 100%);
+  }
+}

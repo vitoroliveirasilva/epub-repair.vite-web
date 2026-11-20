@@ -1,0 +1,513 @@
+#app .layout#app-workspace .workspace-core .controls-panel {
+  --epub-action-tone: #245e48;
+  --epub-action-tone-dark: #163c30;
+}
+
+:root[data-theme="dark"] #app .layout#app-workspace .workspace-core .controls-panel {
+  --epub-action-tone: #7eb99b;
+  --epub-action-tone-dark: #325b49;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .btn.epub-upload-matched-action {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .9rem;
+  min-width: 0;
+  min-height: 3.15rem;
+  padding: .4rem .42rem .4rem 1.12rem;
+  overflow: hidden;
+  border: 1px solid var(--epub-action-tone-dark);
+  border-radius: .82rem;
+  background:
+    linear-gradient(150deg, color-mix(in srgb, #fff 10%, transparent), transparent 58%),
+    var(--epub-action-tone);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 19%, transparent),
+    inset 0 -2px 0 color-mix(in srgb, var(--epub-action-tone-dark) 19%, transparent),
+    0 2px 5px color-mix(in srgb, var(--epub-action-tone-dark) 13%, transparent);
+  color: #fffaf1;
+  font-size: .84rem;
+  font-weight: 800;
+  letter-spacing: -.012em;
+  line-height: 1.2;
+  text-align: left;
+  transform: none;
+  transition:
+    box-shadow 380ms ease,
+    background-color 380ms ease,
+    border-color 380ms ease,
+    transform 380ms cubic-bezier(.16, 1, .3, 1);
+}
+
+:root[data-theme="dark"] #app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .btn.epub-upload-matched-action {
+  color: #16291f;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .btn.epub-upload-matched-action::before {
+  position: absolute;
+  z-index: 0;
+  top: -50%;
+  left: -38%;
+  width: 45%;
+  height: 200%;
+  border-radius: 50%;
+  background: linear-gradient(100deg, transparent,
+    color-mix(in srgb, #fff 18%, transparent) 50%, transparent);
+  content: '';
+  opacity: 0;
+  transform: translateX(0) rotate(18deg);
+  transition: transform 740ms cubic-bezier(.16, 1, .3, 1), opacity 280ms ease;
+  pointer-events: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .btn.epub-upload-matched-action::after {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  content: '↗';
+  width: 1.98rem;
+  height: 1.98rem;
+  flex: 0 0 1.98rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, currentColor 29%, transparent);
+  border-radius: .55rem;
+  background: color-mix(in srgb, currentColor 9%, transparent);
+  font-family: Georgia, 'Iowan Old Style', serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1;
+  transition: transform 420ms cubic-bezier(.16, 1, .3, 1),
+    border-color 320ms ease, background-color 320ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .btn.epub-upload-matched-action:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+  transform: none;
+  box-shadow: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .btn.epub-upload-matched-action:disabled::before {
+  display: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .btn.epub-upload-matched-action:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row .btn.epub-upload-matched-action:not(:disabled):hover {
+    background:
+      linear-gradient(145deg, color-mix(in srgb, #fff 15%, transparent), transparent 60%),
+      var(--epub-action-tone);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #fff 23%, transparent),
+      inset 0 -2px 0 color-mix(in srgb, var(--epub-action-tone-dark) 20%, transparent),
+      0 3px 7px color-mix(in srgb, var(--epub-action-tone-dark) 17%, transparent);
+    transform: translateY(-1px);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row .btn.epub-upload-matched-action:not(:disabled):hover::before {
+    opacity: 1;
+    transform: translateX(750%) rotate(18deg);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row .btn.epub-upload-matched-action:not(:disabled):hover::after {
+    border-color: color-mix(in srgb, currentColor 40%, transparent);
+    background: color-mix(in srgb, currentColor 14%, transparent);
+    transform: translate(1px, -1px) rotate(4deg);
+  }
+}
+
+@media (max-width: 420px) {
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row .btn.epub-upload-matched-action {
+    min-height: 3rem;
+    padding-left: .87rem;
+    gap: .52rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row .btn.epub-upload-matched-action,
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row .btn.epub-upload-matched-action::before,
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row .btn.epub-upload-matched-action::after {
+    transition: none;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row .btn.epub-upload-matched-action:not(:disabled):hover,
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row .btn.epub-upload-matched-action:not(:disabled):hover::after {
+    transform: none;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row .btn.epub-upload-matched-action::before {
+    display: none;
+  }
+}
+
+/* O download é a ação final: destaque cobre, mantendo a família visual dos botões de upload. */
+#app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row-download .btn.epub-upload-matched-action.epub-download-action {
+  --epub-action-tone: #9e4d30;
+  --epub-action-tone-dark: #6e3224;
+  flex: 1 1 100%;
+  width: 100%;
+  min-height: 4.25rem;
+  padding: .7rem .8rem .7rem 1.35rem;
+  gap: 1rem;
+  border: 1px solid #743b2b;
+  border-radius: .96rem;
+  background:
+    linear-gradient(111deg, rgba(255, 225, 188, .18), transparent 43%),
+    linear-gradient(125deg, #b76642 0%, #995034 49%, #783e2c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 250, 234, .32),
+    inset 0 -3px 0 rgba(71, 31, 25, .24),
+    0 0 0 2px color-mix(in srgb, var(--studio-copper) 12%, transparent),
+    0 .6rem 1.2rem rgba(103, 52, 35, .22);
+  color: #fffaf2;
+  font-size: clamp(.89rem, 1.12vw, 1rem);
+  font-weight: 850;
+  line-height: 1.3;
+  letter-spacing: -.015em;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+  text-align: left;
+}
+
+:root[data-theme="dark"] #app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row-download .btn.epub-upload-matched-action.epub-download-action {
+  --epub-action-tone: #a85a37;
+  --epub-action-tone-dark: #683725;
+  border-color: #d18d65;
+  background:
+    linear-gradient(111deg, rgba(255, 230, 194, .15), transparent 43%),
+    linear-gradient(125deg, #ab603f 0%, #934a31 54%, #703b2d 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 214, .27),
+    inset 0 -3px 0 rgba(51, 22, 17, .23),
+    0 0 0 2px rgba(219, 141, 95, .21),
+    0 .6rem 1.2rem rgba(0, 0, 0, .28);
+  color: #fffaf2;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .btn.epub-download-action::after {
+  content: none;
+  display: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .epub-download-action-icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 2.75rem;
+  place-items: center;
+  border: 1px solid rgba(255, 246, 230, .95);
+  border-radius: .72rem;
+  background: linear-gradient(145deg, #fffdf7, #f7e4d2);
+  color: #87402c;
+  box-shadow:
+    0 .24rem .6rem rgba(73, 33, 26, .23),
+    inset 0 1px 0 rgba(255, 255, 255, .98);
+  transition: transform 430ms cubic-bezier(.16, 1, .3, 1),
+    box-shadow 380ms ease, background-color 320ms ease;
+}
+
+:root[data-theme="dark"] #app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .epub-download-action-icon {
+  border-color: #fce9d7;
+  background: linear-gradient(145deg, #fff8ec, #ead4bb);
+  color: #7d3b28;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .epub-download-action-icon svg {
+  display: block;
+  width: 1.55rem;
+  height: 1.55rem;
+  overflow: visible;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .epub-download-action-icon .epub-download-arrow {
+  transition: transform 460ms cubic-bezier(.16, 1, .3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row-download .btn.epub-upload-matched-action.epub-download-action:not(:disabled):hover {
+    border-color: #d58f67;
+    background:
+      linear-gradient(111deg, rgba(255, 225, 188, .22), transparent 46%),
+      linear-gradient(125deg, #bf704b 0%, #a45739 50%, #82422e 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 250, 234, .37),
+      inset 0 -3px 0 rgba(71, 31, 25, .24),
+      0 0 0 3px color-mix(in srgb, var(--studio-copper) 19%, transparent),
+      0 .9rem 1.7rem rgba(103, 52, 35, .3);
+    transform: translateY(-3px);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row-download .btn.epub-upload-matched-action.epub-download-action:not(:disabled):hover .epub-download-action-icon {
+    box-shadow: 0 .33rem .7rem rgba(73, 33, 26, .3), inset 0 1px 0 #fff;
+    transform: translateY(-2px);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row-download .btn.epub-upload-matched-action.epub-download-action:not(:disabled):hover .epub-download-arrow {
+    transform: translateY(2.5px);
+  }
+}
+
+@media (max-width: 420px) {
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row-download .btn.epub-upload-matched-action.epub-download-action {
+    min-height: 4.05rem;
+    padding: .65rem .68rem .65rem .95rem;
+    gap: .72rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row .epub-download-action-icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    flex-basis: 2.4rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row .epub-download-action-icon,
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row .epub-download-action-icon .epub-download-arrow {
+    transition: none;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row-download .btn.epub-upload-matched-action.epub-download-action:not(:disabled):hover,
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row-download .btn.epub-upload-matched-action.epub-download-action:not(:disabled):hover .epub-download-action-icon,
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row-download .btn.epub-upload-matched-action.epub-download-action:not(:disabled):hover .epub-download-arrow {
+    transform: none;
+  }
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .epub-repair-state {
+  display: inline-flex;
+  flex: 1 1 13rem;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.15rem;
+  gap: .68rem;
+  padding: .68rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-success) 34%, var(--color-border));
+  border-radius: .82rem;
+  background: color-mix(in srgb, var(--color-success) 9%, var(--color-surface));
+  color: var(--color-accent-strong);
+  font-size: .87rem;
+  font-weight: 800;
+  line-height: 1.35;
+  text-align: center;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .epub-repair-state::before {
+  display: grid;
+  flex: 0 0 1.72rem;
+  width: 1.72rem;
+  height: 1.72rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-success) 34%, transparent);
+  border-radius: .55rem;
+  background: color-mix(in srgb, var(--color-success) 14%, transparent);
+  content: '✓';
+  font-size: 1rem;
+  line-height: 1;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .epub-repair-state-review {
+  border-color: color-mix(in srgb, var(--studio-copper) 46%, var(--color-border));
+  background: color-mix(in srgb, var(--studio-copper) 9%, var(--color-surface));
+  color: var(--color-text);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.primary-action-row .epub-repair-state-review::before {
+  border-color: color-mix(in srgb, var(--studio-copper) 40%, transparent);
+  background: color-mix(in srgb, var(--studio-copper) 15%, transparent);
+  color: var(--studio-copper);
+  content: '!';
+  font-weight: 900;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.technical-report-actions .btn.technical-report-download {
+  --report-action-tone: #a85b3c;
+  border-color: color-mix(in srgb, #b86a48 43%, var(--color-border));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, #b86a48 15%, transparent), transparent 83%),
+    var(--color-surface);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 32%, transparent),
+    0 .15rem .43rem color-mix(in srgb, #89462f 9%, transparent);
+}
+
+:root[data-theme="dark"] #app .layout#app-workspace .workspace-core .controls-panel
+.technical-report-actions .btn.technical-report-download {
+  --report-action-tone: #e0a07e;
+  border-color: color-mix(in srgb, #e0a07e 48%, var(--color-border));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, #c87d58 16%, transparent), transparent 85%),
+    var(--color-surface);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.technical-report-actions .technical-report-download .technical-report-action-icon {
+  border-color: color-mix(in srgb, var(--report-action-tone) 47%, var(--color-border));
+  background: color-mix(in srgb, var(--report-action-tone) 15%, var(--color-surface));
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.technical-report-actions .technical-report-download .technical-report-action-icon::after {
+  position: absolute;
+  right: -.19rem;
+  bottom: -.24rem;
+  display: grid;
+  width: .95rem;
+  height: .95rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--report-action-tone) 60%, var(--color-border));
+  border-radius: .34rem;
+  background: var(--color-surface);
+  color: var(--report-action-tone);
+  content: '↓';
+  font-family: sans-serif;
+  font-size: .73rem;
+  font-weight: 800;
+  line-height: 1;
+  transition: transform 320ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.processing-status .btn.epub-cancel-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .56rem;
+  min-height: 2.8rem;
+  padding: .62rem .94rem;
+  border: 1px solid color-mix(in srgb, #a74e42 42%, var(--color-border));
+  border-radius: .76rem;
+  background: color-mix(in srgb, #a74e42 8%, var(--color-surface));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 25%, transparent);
+  color: color-mix(in srgb, #ad5144 76%, var(--color-text));
+  font-size: .83rem;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: normal;
+  transition: transform 260ms cubic-bezier(.16, 1, .3, 1),
+    border-color 260ms ease, background-color 260ms ease, box-shadow 260ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.processing-status .btn.epub-cancel-action::before {
+  display: block;
+  flex: 0 0 .73rem;
+  width: .73rem;
+  height: .73rem;
+  border: 2px solid currentColor;
+  border-radius: .22rem;
+  content: '';
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.processing-status .btn.epub-cancel-action:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+  box-shadow: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel
+.processing-status .btn.epub-cancel-action:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .technical-report-actions .btn.technical-report-download:not(:disabled):hover {
+    border-color: color-mix(in srgb, var(--report-action-tone) 70%, var(--color-border));
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #fff 32%, transparent),
+      0 .37rem .85rem color-mix(in srgb, #9e5336 17%, transparent);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .technical-report-actions .btn.technical-report-download:not(:disabled):hover
+  .technical-report-action-icon::after {
+    transform: translateY(2px);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .processing-status .btn.epub-cancel-action:not(:disabled):hover {
+    border-color: color-mix(in srgb, #aa5146 70%, var(--color-border));
+    background: color-mix(in srgb, #a74e42 14%, var(--color-surface));
+    box-shadow: 0 .32rem .8rem color-mix(in srgb, #a74e42 14%, transparent);
+    transform: translateY(-1px);
+  }
+}
+
+@media (max-width: 560px) {
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .primary-action-row .epub-repair-state {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .technical-report-actions .technical-report-download .technical-report-action-icon::after,
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .processing-status .btn.epub-cancel-action {
+    transition: none;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .technical-report-actions .btn.technical-report-download:not(:disabled):hover
+  .technical-report-action-icon::after,
+  #app .layout#app-workspace .workspace-core .controls-panel
+  .processing-status .btn.epub-cancel-action:not(:disabled):hover {
+    transform: none;
+  }
+}

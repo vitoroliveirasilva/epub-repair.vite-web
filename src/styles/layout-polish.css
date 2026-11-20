@@ -172,19 +172,6 @@ video {
   min-width: min(100%, 10rem);
 }
 
-.flow-steps {
-  align-items: stretch;
-}
-
-.flow-step {
-  height: 100%;
-}
-
-.flow-step>div {
-  min-width: 0;
-}
-
- 
 .upload-panel .section-heading,
 .dropzone {
   text-align: center;
@@ -636,17 +623,6 @@ video {
   .technical-report-actions {
     width: min(100%, 26rem);
     margin-inline: auto;
-  }
-
-  .flow-steps {
-    grid-template-columns: 1fr;
-    width: min(100%, 32rem);
-    margin-inline: auto;
-  }
-
-  .flow-step {
-    align-items: center;
-    text-align: left;
   }
 
   .report-heading {

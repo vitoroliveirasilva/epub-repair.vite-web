@@ -12,6 +12,7 @@ import { buildRepairConsentMessage } from './repairConsent';
 import { buildJsonReport, buildTextReport, createReportEvidence, makeReportFileName } from '../ui/copyReport';
 import { renderControls } from '../ui/components/Controls';
 import { renderCoverChanger } from '../ui/components/CoverChanger';
+import { enableCoverPreviewTilt } from '../ui/coverPreviewTilt';
 import { renderStatusMessage } from '../ui/components/ErrorPanel';
 import { renderFileSummary } from '../ui/components/FileSummary';
 import { renderIssueList } from '../ui/components/IssueList';
@@ -19,7 +20,19 @@ import { renderOptionsPanel } from '../ui/components/OptionsPanel';
 import { renderRepairSummary } from '../ui/components/RepairSummary';
 import { renderUploader } from '../ui/components/Uploader';
 import { button, downloadBlob, el } from '../ui/dom';
+import { startHeroStarAnimation } from '../ui/heroStarAnimation';
+import { setupScrollReveals } from '../ui/scrollReveals';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
+import { renderDesktopNavigation } from '../ui/desktopNavigation';
+import { renderBrandName } from '../ui/brand';
+import { renderEditorialFooter } from '../ui/footer';
+import {
+  isBatchWorkspaceActive,
+  openBatchWithFiles,
+  renderBatchWorkspace,
+  renderOptionalEpubTools,
+  setBatchWorkspaceActive,
+} from '../ui/optionalEpubTools';
 import { abortProcessingError } from './zipWorkerClient';
 import { SerialTaskQueue } from './taskQueue';
 
@@ -68,11 +81,16 @@ export function createApp(root: HTMLElement): void {
     rerender();
   };
   const rerender = (): void => {
+    const scrollPosition = root.querySelector<HTMLElement>('.batch-studio-file-scroll')?.scrollTop ?? 0;
     const restoreFocus = captureFocusForRerender(root);
     render(root, state, rerender, enqueue, cancelAll);
+    const fileList = root.querySelector<HTMLElement>('.batch-studio-file-scroll');
+    if (fileList && scrollPosition > 0) fileList.scrollTop = scrollPosition;
     restoreFocus();
+    setupScrollReveals(root);
   };
   render(root, state, rerender, enqueue, cancelAll);
+  setupScrollReveals(root);
 }
 
 function render(
@@ -86,9 +104,10 @@ function render(
   ) => void,
   cancelAll: () => void,
 ): void {
+  const batchActive = isBatchWorkspaceActive(state);
   root.replaceChildren(
     renderAppHeader(),
-    renderHero(state.report),
+    renderHero(),
     el('main', {
       className: 'layout',
       attrs: { id: 'app-workspace', tabindex: '-1' },
@@ -96,11 +115,23 @@ function render(
         el('div', {
           className: 'workspace',
           children: [
-            renderUploader(state, (file) => {
+            renderWorkspaceIntro(),
+            renderWorkflowModeSelector(batchActive, state, rerender),
+            batchActive ? renderBatchWorkspace(state, rerender, enqueue, cancelAll) : el('div', {
+              className: 'workspace-core',
+              children: [
+                renderUploader(state, (file) => {
               enqueue('Carregar e analisar EPUB', (ctx) =>
                 loadAndAnalyzeCandidate(file, state, ctx));
-            }),
-            renderControls(state, {
+            }, (files) => {
+              openBatchWithFiles(state, files);
+              rerender();
+              requestAnimationFrame(() =>
+                root.querySelector<HTMLElement>('#batch-workspace')?.scrollIntoView({
+                  behavior: 'smooth', block: 'start',
+                }));
+                }),
+                renderControls(state, {
               analyze: () => {
                 enqueue('Verificar EPUB', (ctx) => analyzeCurrentFile(state, ctx));
               },
@@ -124,9 +155,11 @@ function render(
               downloadJsonReport: () => {
                 void downloadCurrentReport(state, 'json');
               },
-              cancel: cancelAll,
-
+                  cancel: cancelAll,
+                }),
+              ],
             }),
+            ...(!batchActive ? [
             renderCoverChanger(state, {
               selectCoverImage: (file) => {
                 enqueue('Selecionar capa', (ctx) =>
@@ -166,16 +199,189 @@ function render(
                   rerender();
                 })
               : undefined,
+            renderOptionalEpubTools(state, rerender, enqueue),
+            renderOptionsPanel(state, rerender),
+            ] : []),
           ],
         }),
-        renderOptionsPanel(state, rerender),
       ],
     }),
+    renderCapabilityShowcase(),
     renderSupportSections(),
     renderFooter(),
   );
+  const hero = root.querySelector<HTMLElement>('.epub-home');
+  if (hero) startHeroStarAnimation(hero);
+  enableCoverPreviewTilt(root);
 }
 
+function renderWorkflowModeSelector(
+  batchActive: boolean, state: AppState, rerender: () => void,
+): HTMLElement {
+  const makeBook = (className: string): HTMLElement => el('span', {
+    className: `workflow-mode-book ${className}`,
+    attrs: { 'aria-hidden': 'true' },
+    children: [
+      el('span', { className: 'workflow-mode-book-pages' }),
+      el('span', { className: 'workflow-mode-book-cover', children: [
+        el('span', { className: 'workflow-mode-book-decoration' }),
+        el('span', { className: 'workflow-mode-book-mark' }),
+      ] }),
+    ],
+  });
+
+  const buildChoice = (
+    batch: boolean, number: string, title: string, description: string,
+  ): HTMLButtonElement => {
+    const selected = batch === batchActive;
+    const choice = button(
+      '',
+      'workflow-mode-card workflow-mode-card-' + (batch ? 'batch' : 'single') +
+      (selected ? ' workflow-mode-card-active' : ''),
+      () => {
+        if (state.busy || selected) return;
+        setBatchWorkspaceActive(state, batch);
+        rerender();
+      },
+    );
+    choice.disabled = state.busy;
+    choice.setAttribute('aria-pressed', String(selected));
+    choice.setAttribute('aria-label', title + '. ' + description);
+    choice.append(
+      el('span', {
+        className: 'workflow-mode-visual',
+        attrs: { 'aria-hidden': 'true' },
+        children: [
+          el('span', { className: 'workflow-mode-visual-orbit' }),
+          batch
+            ? el('span', { className: 'workflow-mode-book-stack', children: [
+              makeBook('workflow-mode-book-back'),
+              makeBook('workflow-mode-book-middle'),
+              makeBook('workflow-mode-book-front'),
+            ] })
+            : makeBook('workflow-mode-book-solo'),
+        ],
+      }),
+      el('span', { className: 'workflow-mode-content', children: [
+        el('span', { className: 'workflow-mode-kicker', text: batch ? 'SUA BIBLIOTECA' : 'ATENÇÃO A CADA PÁGINA' }),
+        el('strong', { className: 'workflow-mode-title', children: [
+          batch ? 'Vários ' : 'Um ',
+          el('span', {
+            className: 'workflow-mode-title-accent',
+            text: batch ? 'EPUBs' : 'EPUB',
+          }),
+        ] }),
+        el('small', { className: 'workflow-mode-description', text: description }),
+      ] }),
+      el('span', {
+        className: 'workflow-mode-bottom',
+        attrs: { 'aria-hidden': 'true' },
+        children: [
+          el('span', { className: 'workflow-mode-choice-text', text: selected ? 'Modo selecionado' : 'Escolher este modo' }),
+          el('span', { className: 'workflow-mode-choice-arrow' }),
+        ],
+      }),
+      el('span', { className: 'workflow-mode-number', attrs: { 'aria-hidden': 'true' }, text: number }),
+    );
+    return choice;
+  };
+
+  return el('section', {
+    className: 'workflow-mode-selector',
+    attrs: { 'aria-labelledby': 'workflow-mode-heading-title' },
+    children: [
+      el('div', { className: 'workflow-mode-heading', children: [
+        el('h3', { text: 'Quantos livros vamos cuidar?',
+          attrs: { id: 'workflow-mode-heading-title' } }),
+        el('p', { text: 'Escolha um modo para ver só as opções necessárias' }),
+      ] }),
+      el('div', { className: 'workflow-mode-options',
+        attrs: { role: 'group', 'aria-label': 'Modo de trabalho' },
+        children: [
+          buildChoice(false, '01', 'Um EPUB',
+            'Análise detalhada, capa e reparos individuais'),
+          buildChoice(true, '02–06', 'Vários EPUBs',
+            'Selecione até 6 livros, processe juntos e baixe um ZIP'),
+        ],
+      }),
+    ],
+  });
+}
+
+function renderWorkspaceIntro(): HTMLElement {
+  return el('section', {
+    className: 'workspace-intro workspace-intro-compact',
+    attrs: { 'aria-labelledby': 'workspace-intro-title' },
+    children: [
+      el('div', { className: 'workspace-intro-copy', children: [
+        el('h2', {
+          attrs: { id: 'workspace-intro-title' },
+          children: [
+            'Estúdio de ',
+            el('span', { className: 'workspace-intro-accent', text: 'restauração' }),
+          ],
+        }),
+      ] }),
+    ],
+  });
+}
+
+function renderCapabilityShowcase(): HTMLElement {
+  const capabilities = [
+    ['01', 'Análise e correção',
+      'Identifique problemas na estrutura do EPUB e aplique correções para melhorar sua integridade e compatibilidade.'],
+    ['02', 'Capas e metadados',
+      'Atualize a capa e revise informações como título, autoria, idioma e outros dados do livro.'],
+    ['03', 'Leitura e comparação',
+      'Visualize os capítulos e compare as versões original e corrigida para conferir as alterações.'],
+    ['04', 'Compatibilidade com Kindle',
+      'Verifique possíveis problemas de compatibilidade e prepare uma versão do EPUB com os ajustes necessários para o Kindle.'],
+    ['05', 'Processamento em lote',
+      'Analise ou corrija até seis EPUBs em uma única operação e baixe os arquivos e relatórios reunidos em um ZIP.'],
+  ] as const;
+
+  return el('section', {
+    className: 'capability-showcase',
+    attrs: { 'aria-labelledby': 'capability-title' },
+    children: [
+      el('header', {
+        className: 'capability-heading',
+        children: [
+          el('p', { className: 'eyebrow', text: 'Recursos disponíveis' }),
+          el('h2', {
+            attrs: { id: 'capability-title' },
+            children: [
+              'Ferramentas para seus ',
+              el('span', {
+                className: 'capability-title-accent',
+                text: 'EPUBs',
+              }),
+            ],
+          }),
+        ],
+      }),
+      el('div', {
+        className: 'capability-ledger',
+        children: capabilities.map(([number, title, description]) =>
+          el('article', {
+            className: 'capability-entry',
+            attrs: { 'data-sequence': number },
+            children: [
+              el('span', { className: 'capability-number', text: number }),
+              el('div', {
+                children: [el('h3', { text: title }), el('p', { text: description })],
+              }),
+            ],
+          })),
+      }),
+      el('a', {
+        className: 'capability-link',
+        text: 'Ver todas as ferramentas',
+        attrs: { href: '#optional-tools' },
+      }),
+    ],
+  });
+}
 
 
 
@@ -304,25 +510,22 @@ function renderAppHeader(): HTMLElement {
       el('a', {
         className: 'brand-mark',
         attrs: { href: '/', 'aria-label': 'EPUB Repair, início' },
-        children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })],
+        children: [renderLogoSymbol(), renderBrandName()],
       }),
-      el('nav', {
-        className: 'header-nav',
-        attrs: { 'aria-label': 'Navegação principal' },
-        children: [
-          el('a', { text: 'Converter PDF', attrs: { href: '/converter' } }),
-          el('a', { text: 'Como funciona', attrs: { href: '#privacy' } }),
-          el('a', { text: 'Limitações', attrs: { href: '#limitations' } }),
-          el('a', { text: 'Relatório', attrs: { href: '#app-workspace' } }),
-        ],
-      }),
+      renderDesktopNavigation([
+        { label: 'Reparar EPUB', href: '/', current: true },
+        { label: 'Converter PDF', href: '/converter' },
+        { label: 'Como funciona', href: '#privacy' },
+        { label: 'Limitações', href: '#limitations' },
+        { label: 'Relatório', href: '#app-workspace' },
+      ]),
       renderMobileNavigation('repair'),
       el('div', {
         className: 'header-actions',
         children: [
           renderThemeToggle(),
           el('a', {
-            className: 'btn btn-primary btn-small',
+            className: 'btn btn-primary btn-small nav-primary-action',
             text: 'Validar EPUB',
             attrs: { href: '#upload' },
           }),
@@ -332,120 +535,141 @@ function renderAppHeader(): HTMLElement {
   });
 }
 
-function renderHero(report: AppState['report']): HTMLElement {
+function renderHero(): HTMLElement {
   return el('section', {
-    className: 'hero',
-    attrs: { id: 'top' },
+    className: 'hero editorial-hero epub-home',
+    attrs: { id: 'top', 'aria-label': 'EPUB Repair' },
     children: [
       el('div', {
-        className: 'hero-content',
+        className: 'home-star-field',
+        attrs: { 'aria-hidden': 'true' },
+        children: Array.from({ length: 14 }, (_, index) =>
+          el('span', {
+            className: `home-star home-star-${index + 1}`,
+            attrs: { 'aria-hidden': 'true' },
+          })),
+      }),
+      el('div', {
+        className: 'home-showcase',
         children: [
-          el('p', { className: 'eyebrow', text: 'Validação e reparo local de EPUB' }),
-          el('h1', { text: 'Conserte arquivos EPUB antes de enviar para o seu leitor' }),
-          el('p', {
-            className: 'hero-copy',
-            text: 'Analise a estrutura, limpe arquivos problemáticos, reconstrua pacotes e gere um EPUB mais amigável para Kindle e e-readers direto no navegador',
+          el('div', {
+            className: 'home-art',
+            children: [
+              el('span', {
+                className: 'home-art-halo',
+                attrs: { 'aria-hidden': 'true' },
+              }),
+              el('img', {
+                className: 'home-mascot',
+                attrs: {
+                  src: '/lumina-hero.svg',
+                  width: '820',
+                  height: '1089',
+                  alt: 'Lumina sentada, lendo um livro e segurando uma xícara de café',
+                  decoding: 'async',
+                  fetchpriority: 'high',
+                },
+              }),
+            ],
           }),
           el('div', {
-            className: 'hero-actions',
+            className: 'home-content',
             children: [
-              el('a', {
-                className: 'btn btn-primary btn-large',
-                text: 'Selecionar EPUB',
-                attrs: { href: '#upload' },
+              el('h1', {
+                attrs: { 'aria-label': 'Conserte seus arquivos EPUB' },
+                children: [
+                  el('span', { className: 'home-title-row', text: 'Conserte seus ' }),
+                  el('span', {
+                    className: 'home-title-row',
+                    children: [
+                      el('span', { text: 'arquivos ' }),
+                      el('span', { className: 'home-title-accent', text: 'EPUB' }),
+                    ],
+                  }),
+                ],
               }),
-              el('a', {
-                className: 'btn btn-ghost btn-large',
-                text: 'Converter PDF em EPUB',
-                attrs: { href: '/converter' },
+              el('p', {
+                className: 'home-subtitle',
+                text: 'Analise a estrutura, corrija arquivos problemáticos e prepare seus EPUBs para Kindle e outros e-readers, diretamente no navegador',
+              }),
+              el('nav', {
+                className: 'home-actions',
+                attrs: { 'aria-label': 'Ações principais' },
+                children: [
+                  el('span', {
+                    className: 'home-action-shell home-action-shell-repair',
+                    children: [
+                      el('a', {
+                        className: 'home-action home-action-repair',
+                        attrs: { href: '#upload' },
+                        children: [
+                          el('strong', { text: 'Reparar EPUB' }),
+                          el('span', {
+                            className: 'home-action-direction',
+                            attrs: { 'aria-hidden': 'true' },
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                  el('span', {
+                    className: 'home-action-shell home-action-shell-converter',
+                    children: [
+                      el('a', {
+                        className: 'home-action home-action-converter',
+                        attrs: { href: '/converter' },
+                        children: [
+                          el('strong', { text: 'Converter PDF' }),
+                          el('span', {
+                            className: 'home-action-direction',
+                            attrs: { 'aria-hidden': 'true' },
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                ],
               }),
             ],
           }),
         ],
       }),
-      renderHeroPreview(report),
     ],
-  });
-}
-
-function renderHeroPreview(report: AppState['report']): HTMLElement {
-  
-  
-  const hasReport = Boolean(report);
-  return el('aside', {
-    className: 'hero-preview',
-    attrs: {
-      'aria-label': hasReport
-        ? 'Resumo do EPUB analisado'
-        : 'Exemplo ilustrativo de relatório EPUB Repair',
-    },
-    children: [
-      el('div', {
-        className: 'preview-toolbar',
-        children: [el('span'), el('span'), el('span'), el('strong', {
-          text: hasReport ? 'Relatório atual' : 'Exemplo ilustrativo',
-        })],
-      }),
-      el('div', {
-        className: 'preview-score score-good',
-        children: [
-          el('span', { text: report ? String(report.stats.kindleScore) : '92' }),
-          el('small', { text: 'Kindle score' }),
-        ],
-      }),
-      el('div', {
-        className: 'preview-grid',
-        children: [
-          renderPreviewMetric(String(report?.stats.fatalCount ?? 0), 'Fatais', 'success'),
-          renderPreviewMetric(String(report?.stats.errorCount ?? 2), 'Erros', 'error'),
-          renderPreviewMetric(String(report?.stats.warningCount ?? 6), 'Avisos', 'warning'),
-        ],
-      }),
-      el('div', {
-        className: 'preview-list',
-        children: [
-          renderPreviewLine('Manifest revisado', 'success'),
-          renderPreviewLine('Capa Kindle identificada', 'info'),
-          renderPreviewLine('Relatório simples e técnico', 'warning'),
-        ],
-      }),
-    ],
-  });
-}
-
-function renderPreviewMetric(value: string, label: string, tone: string): HTMLElement {
-  return el('div', {
-    className: `preview-metric preview-metric-${tone}`,
-    children: [el('strong', { text: value }), el('small', { text: label })],
-  });
-}
-
-function renderPreviewLine(text: string, tone: string): HTMLElement {
-  return el('p', {
-    className: `preview-line preview-line-${tone}`,
-    children: [el('span'), text],
   });
 }
 
 function renderEmptyState(): HTMLElement {
   return el('section', {
-    className: 'panel empty-state',
+    className: 'panel empty-state report-welcome',
+    attrs: { 'aria-labelledby': 'report-welcome-title' },
     children: [
-      el('div', {
-        className: 'empty-illustration',
-        attrs: { 'aria-hidden': 'true' },
-        children: [el('span'), el('span'), el('span')],
-      }),
-      el('div', {
-        children: [
-          el('p', { className: 'eyebrow', text: 'Relatório' }),
-          el('h2', { text: 'Envie um EPUB para começar' }),
-          el('p', {
-            className: 'muted',
-            text: 'O diagnóstico aparecerá aqui com score Kindle, severidades, arquivos afetados e detalhes técnicos recolhidos para não poluir a leitura.',
-          }),
-        ],
-      }),
+      el('div', { className: 'report-welcome-art', attrs: { 'aria-hidden': 'true' }, children: [
+        el('span', { className: 'report-welcome-art-ring' }),
+        el('div', { className: 'empty-illustration', children: [
+          el('span'), el('span'), el('span'),
+        ] }),
+        el('span', { className: 'report-welcome-art-stamp', text: 'EPUB' }),
+      ] }),
+      el('div', { className: 'report-welcome-copy', children: [
+        el('span', { className: 'report-welcome-kicker', text: '03 / DIAGNÓSTICO' }),
+        el('h2', { text: 'Envie um EPUB para começar',
+          attrs: { id: 'report-welcome-title' } }),
+        el('p', { className: 'report-welcome-description',
+          text: 'Depois da verificação, você encontrará aqui um relatório claro, com o que está certo e o que merece atenção.' }),
+        el('div', { className: 'report-welcome-highlights',
+          attrs: { 'aria-label': 'Informações disponíveis no relatório' },
+          children: [
+            el('span', { text: 'Score Kindle' }),
+            el('span', { text: 'Prioridades de correção' }),
+            el('span', { text: 'Arquivos afetados' }),
+          ],
+        }),
+        el('a', { className: 'report-welcome-link', text: 'Escolher um EPUB',
+          attrs: { href: '#upload' }, children: [
+            el('span', { attrs: { 'aria-hidden': 'true' }, text: '↗' }),
+          ],
+        }),
+      ] }),
     ],
   });
 }
@@ -455,27 +679,56 @@ function renderSupportSections(): HTMLElement {
     className: 'support-sections',
     attrs: { 'aria-label': 'Informações sobre privacidade e limitações' },
     children: [
-      el('article', {
-        className: 'support-card',
-        attrs: { id: 'privacy' },
+      el('header', {
+        className: 'support-heading',
         children: [
-          el('p', { className: 'eyebrow', text: 'Privacidade' }),
-          el('h2', { text: 'Processamento local sem envio para servidor' }),
-          el('p', {
-            className: 'muted',
-            text: 'O arquivo é lido, validado, reparado e reempacotado no próprio navegador. Nenhum dado é enviado para servidor, nem mesmo o relatório. O EPUB original e o reparado permanecem no seu dispositivo.',
+          el('p', { className: 'eyebrow', text: 'Clareza antes de processar' }),
+          el('h2', {
+            children: [
+              'O que acontece com seu ',
+              el('span', { className: 'support-heading-accent', text: 'EPUB' }),
+            ],
           }),
         ],
       }),
       el('article', {
-        className: 'support-card',
-        attrs: { id: 'limitations' },
+        className: 'support-card support-card-local',
+        attrs: { id: 'privacy' },
         children: [
-          el('p', { className: 'eyebrow', text: 'Limitações' }),
-          el('h2', { text: 'Transparente sobre o que é possível fazer' }),
+          el('span', { className: 'support-index', text: 'LOCAL' }),
+          el('p', { className: 'eyebrow', text: 'Privacidade' }),
+          el('h2', { text: 'Seus arquivos ficam no dispositivo' }),
           el('p', {
             className: 'muted',
-            text: 'A ferramenta não remove DRM, não altera direitos autorais e não recupera arquivos irremediavelmente corrompidos. Focamos em organizar, validar e reconstruir apenas o que é tecnicamente viável e seguro reparar.',
+            text: 'O EPUB é analisado, corrigido e reempacotado no próprio navegador. ' +
+              'Nem o arquivo nem o relatório são enviados a servidores.',
+          }),
+        ],
+      }),
+      el('article', {
+        className: 'support-card support-card-original',
+        children: [
+          el('span', { className: 'support-index', text: 'CÓPIA' }),
+          el('p', { className: 'eyebrow', text: 'Preservação' }),
+          el('h2', { text: 'O original permanece intacto' }),
+          el('p', {
+            className: 'muted',
+            text: 'Reparos, mudanças de capa e metadados geram uma nova cópia. ' +
+              'Você escolhe o que baixar e mantém o EPUB de origem como referência.',
+          }),
+        ],
+      }),
+      el('article', {
+        className: 'support-card support-card-limits',
+        attrs: { id: 'limitations' },
+        children: [
+          el('span', { className: 'support-index', text: 'LIMITE' }),
+          el('p', { className: 'eyebrow', text: 'Limitações' }),
+          el('h2', { text: 'Há limites para o reparo' }),
+          el('p', {
+            className: 'muted',
+            text: 'A ferramenta não remove DRM, não altera direitos autorais nem recupera ' +
+              'arquivos irremediavelmente corrompidos. Casos que exigem revisão humana são sinalizados.',
           }),
         ],
       }),
@@ -484,75 +737,29 @@ function renderSupportSections(): HTMLElement {
 }
 
 function renderFooter(): HTMLElement {
-  const currentYear = new Date().getFullYear();
-
-  return el('footer', {
-    className: 'footer app-footer',
-    children: [
-      el('div', {
-        className: 'footer-main',
-        children: [
-          el('div', {
-            className: 'footer-brand-block',
-            children: [
-              el('a', {
-                className: 'footer-brand',
-                attrs: { href: '#top', 'aria-label': 'EPUB Repair, voltar ao início' },
-                children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })],
-              }),
-            ],
-          }),
-          el('nav', {
-            className: 'footer-links',
-            attrs: { 'aria-label': 'Links de navegação e projeto' },
-            children: [
-              renderFooterLink('Desenvolvedor', 'https://github.com/vitoroliveirasilva', true),
-              renderFooterLink(
-                'Projeto no GitHub',
-                'https://github.com/vitoroliveirasilva/epub-repair.vite-web',
-                true,
-              ),
-              renderFooterLink('Reparar EPUB', '/', false),
-              renderFooterLink('Converter PDF', '/converter', false),
-            ],
-          }),
-        ],
-      }),
-      el('div', {
-        className: 'footer-bottom',
-        children: [
-          el('span', { text: `© ${currentYear} Vitor Oliveira Silva` }),
-          el('span', { text: 'Feito para leitores, dispositivos de leitura e arquivos EPUB.' }),
-        ],
-      }),
-    ],
-  });
-}
-
-function renderFooterLink(text: string, href: string, external = false): HTMLElement {
-  return el('a', {
-    text,
-    attrs: external ? { href, target: '_blank', rel: 'noreferrer noopener' } : { href },
+  return renderEditorialFooter(() => {
+    applyTheme(getCurrentTheme() === 'dark' ? 'light' : 'dark');
   });
 }
 
 function renderLogoSymbol(): HTMLElement {
-  return el('span', {
-    className: 'logo-symbol',
-    attrs: { 'aria-hidden': 'true' },
-    children: [
-      el('span', { className: 'logo-fold' }),
-      el('span', { className: 'logo-line logo-line-1' }),
-      el('span', { className: 'logo-line logo-line-2' }),
-      el('span', { className: 'logo-check' }),
-    ],
+  return el('img', {
+    className: 'brand-icon',
+    attrs: {
+      src: '/favicon.svg',
+      alt: '',
+      width: '44',
+      height: '44',
+      decoding: 'async',
+      'aria-hidden': 'true',
+    },
   });
 }
 
 function renderThemeToggle(): HTMLElement {
   const currentTheme = getCurrentTheme();
   const toggle = el('button', {
-    className: 'theme-toggle',
+    className: 'theme-toggle nav-theme-toggle',
     attrs: { type: 'button', 'aria-label': 'Alternar tema claro e escuro' },
     children: [
       el('span', { attrs: { 'aria-hidden': 'true' } }),

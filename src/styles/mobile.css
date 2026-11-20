@@ -138,10 +138,6 @@
     bottom: 1.25rem;
   }
 
-  .flow-step {
-    padding: var(--space-3);
-  }
-
   .primary-action-row,
   .technical-report-actions {
     align-items: stretch;

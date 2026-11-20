@@ -1,0 +1,1287 @@
+
+/*
+ * Batch workspace | Editorial companion to the individual EPUB upload.
+ * The prior layout and behavior remain the fallback; these rules are scoped
+ * to the batch studio to prevent regressions in optional tools and the PDF flow.
+ */
+#app .layout#app-workspace .batch-studio {
+  --batch-surface: var(--color-surface);
+  --batch-wash: color-mix(in srgb, var(--batch-surface) 95%, var(--color-accent-soft));
+  --batch-faint: color-mix(in srgb, var(--batch-ink) 5%, var(--batch-surface));
+  --batch-rule: color-mix(in srgb, var(--color-border) 84%, var(--batch-ink) 10%);
+  width: 100%;
+  min-width: 0;
+  padding: clamp(1.15rem, 2.65vw, 2.2rem);
+  gap: clamp(1.2rem, 2.65vw, 1.9rem);
+  border-color: color-mix(in srgb, var(--batch-ink) 17%, var(--color-border));
+  border-radius: 1.35rem;
+  background:
+    radial-gradient(ellipse 55% 45% at 100% 0%,
+      color-mix(in srgb, var(--batch-copper) 6%, transparent), transparent 92%),
+    var(--batch-surface);
+  box-shadow: 0 .12rem .4rem color-mix(in srgb, var(--color-text) 3%, transparent),
+    0 1.2rem 2.7rem color-mix(in srgb, var(--color-text) 5%, transparent);
+}
+
+#app .layout#app-workspace .batch-studio::before {
+  left: clamp(1.15rem, 2.65vw, 2.2rem);
+  width: 3.8rem;
+  height: 2px;
+}
+
+/* Intro: the same editorial type scale as the mode selector and EPUB uploader. */
+#app .batch-studio-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .78rem clamp(1rem, 2.3vw, 1.8rem);
+  padding: .1rem 0 1.4rem;
+  border-bottom: 1px solid var(--batch-rule);
+}
+#app .batch-studio-intro {
+  grid-column: 1;
+  grid-row: 1;
+  gap: .56rem;
+}
+#app .batch-studio-eyebrow {
+  gap: .48rem;
+  padding: .34rem .68rem;
+  border-radius: 100px;
+  font-size: .61rem;
+  letter-spacing: .12em;
+  color: var(--batch-copper);
+  background: color-mix(in srgb, var(--batch-copper) 5%, var(--batch-surface));
+}
+#app .batch-studio-intro h2 {
+  margin: .22rem 0 .05rem;
+  max-width: 30ch;
+  font-family: var(--font-serif);
+  font-size: clamp(1.8rem, 3vw, 2.45rem);
+  font-weight: 750;
+  line-height: 1.1;
+  letter-spacing: -.051em;
+}
+#app .batch-studio-intro .batch-studio-title-accent { color: var(--brand-copper); }
+#app .batch-studio-subtitle {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  min-width: 0;
+  max-width: none;
+  margin: .08rem 0 0;
+  color: var(--color-text-muted);
+  font-size: clamp(.8rem, 1.05vw, .89rem);
+  line-height: 1.6;
+  white-space: nowrap;
+  text-wrap: auto;
+}
+
+/* Compact book counter with a restrained numeric hierarchy and six progress marks. */
+#app .batch-studio-counter {
+  position: relative;
+  display: grid;
+  grid-column: 2;
+  grid-row: 1;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  align-content: center;
+  justify-content: stretch;
+  gap: 0;
+  flex: none;
+  width: 11.6rem;
+  min-width: 0;
+  min-height: 6.5rem;
+  padding: .94rem 1.13rem .96rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--batch-copper) 30%, var(--batch-rule));
+  border-radius: 1.02rem;
+  background: linear-gradient(150deg,
+    color-mix(in srgb, var(--batch-copper) 6%, var(--batch-surface)),
+    var(--batch-surface) 78%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 23%, transparent),
+    0 .3rem 1rem color-mix(in srgb, var(--color-text) 4%, transparent);
+  color: var(--color-text);
+}
+#app .batch-studio-counter::before {
+  position: absolute;
+  top: 0;
+  left: 1.13rem;
+  width: 2.6rem;
+  height: 2px;
+  border: 0;
+  border-radius: 0 0 99px 99px;
+  background: var(--batch-copper);
+  content: '';
+}
+#app .batch-studio-counter .batch-studio-counter-label {
+  display: block;
+  grid-row: 1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  justify-self: start;
+  color: var(--batch-copper);
+  font-size: .62rem;
+  font-weight: 850;
+  line-height: 1.3;
+  letter-spacing: .16em;
+}
+#app .batch-studio-counter-count {
+  display: flex;
+  grid-row: 2;
+  align-items: baseline;
+  gap: .36rem;
+  margin-top: .26rem;
+  white-space: nowrap;
+}
+#app .batch-studio-counter-count strong {
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: 2.18rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.065em;
+  line-height: 1.02;
+}
+#app .batch-studio-counter-count > span {
+  color: color-mix(in srgb, var(--batch-copper) 70%, var(--color-text-muted));
+  font-family: var(--font-serif);
+  font-size: 1.02rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.025em;
+}
+#app .batch-studio-counter-meter {
+  display: grid;
+  grid-row: 3;
+  grid-column: 1;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: .26rem;
+  width: 100%;
+  margin-top: .72rem;
+}
+#app .batch-studio-counter-meter i {
+  display: block;
+  height: .26rem;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--batch-ink) 15%, var(--batch-surface));
+  box-shadow: none;
+  transition: background-color 250ms ease, box-shadow 250ms ease;
+}
+#app .batch-studio-counter-meter .batch-studio-counter-tick-filled {
+  background: var(--batch-copper);
+  box-shadow: 0 0 .36rem color-mix(in srgb, var(--batch-copper) 20%, transparent);
+}
+
+/* Stage rail: three related chapters, each with a number, title and context. */
+#app .batch-studio-flow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: clamp(.5rem, 1.3vw, .85rem);
+  width: 100%;
+  min-width: 0;
+  margin: -.13rem 0 0;
+  padding: 0;
+}
+#app .batch-studio-flow-step {
+  display: grid;
+  grid-template-columns: 2.35rem minmax(0, 1fr);
+  gap: .7rem;
+  align-items: center;
+  min-width: 0;
+  min-height: 4.35rem;
+  padding: .74rem .86rem;
+  border: 1px solid var(--batch-rule);
+  border-radius: .88rem;
+  background: color-mix(in srgb, var(--batch-surface) 96%, var(--color-surface-2));
+  box-shadow: none;
+  color: var(--color-text-muted);
+}
+#app .batch-studio-flow-step::after {
+  right: .85rem;
+  left: .85rem;
+  height: 2px;
+}
+#app .batch-studio-flow-number {
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  min-width: 2.35rem;
+  flex-basis: 2.35rem;
+  border: 1px solid var(--batch-rule);
+  border-radius: .63rem;
+  background: var(--batch-surface);
+  color: var(--color-text-muted);
+  font-family: var(--font-serif);
+  font-size: .9rem;
+  font-weight: 750;
+}
+#app .batch-studio-flow-text {
+  display: grid;
+  gap: .22rem;
+  min-width: 0;
+  color: inherit;
+  line-height: 1.3;
+}
+#app .batch-studio-flow-text strong {
+  color: var(--color-text);
+  font-size: .8rem;
+  font-weight: 825;
+}
+#app .batch-studio-flow-text small {
+  color: var(--color-text-muted);
+  font-size: .69rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+#app .batch-studio-flow-current {
+  border-color: color-mix(in srgb, var(--batch-ink) 40%, var(--color-border));
+  background: color-mix(in srgb, var(--batch-ink) 6%, var(--batch-surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--batch-ink) 7%, transparent);
+}
+#app .batch-studio-flow-current .batch-studio-flow-number {
+  border-color: var(--batch-ink-deep);
+  background: #245e48;
+  color: #fffaf3;
+}
+#app .batch-studio-flow-complete {
+  border-color: color-mix(in srgb, var(--batch-ink) 25%, var(--color-border));
+  background: color-mix(in srgb, var(--batch-ink) 3%, var(--batch-surface));
+}
+#app .batch-studio-flow-complete .batch-studio-flow-number {
+  color: var(--color-accent-strong);
+  border-color: color-mix(in srgb, var(--batch-ink) 25%, var(--color-border));
+  background: color-mix(in srgb, var(--batch-ink) 9%, var(--batch-surface));
+}
+
+/* Balanced, complete-width main panels; nothing should hug the left edge. */
+#app .batch-studio-layout.batch-workspace-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr);
+  justify-items: stretch;
+  align-items: start;
+  gap: clamp(.9rem, 1.7vw, 1.35rem);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+}
+#app .batch-studio-layout.batch-workspace-content > .batch-studio-library,
+#app .batch-studio-layout.batch-workspace-content > .batch-studio-console {
+  box-sizing: border-box;
+  display: grid;
+  align-content: start;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  gap: 1rem;
+  padding: clamp(1.04rem, 1.9vw, 1.45rem);
+  border: 1px solid var(--batch-rule);
+  border-radius: 1.05rem;
+  background: var(--batch-surface);
+  box-shadow: 0 .16rem .55rem color-mix(in srgb, var(--color-text) 2.7%, transparent);
+}
+#app .batch-studio-layout.batch-workspace-content > .batch-studio-library {
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--batch-copper) 2.9%, var(--batch-surface)),
+    var(--batch-surface) 36%);
+}
+#app .batch-studio-layout.batch-workspace-content > .batch-studio-console {
+  position: sticky;
+  top: 1rem;
+  border-color: color-mix(in srgb, var(--batch-ink) 22%, var(--color-border));
+  background: linear-gradient(155deg,
+    color-mix(in srgb, var(--batch-ink) 3.3%, var(--batch-surface)),
+    var(--batch-surface) 45%);
+}
+#app .batch-studio-library::before,
+#app .batch-studio-console::before {
+  left: 1.2rem;
+  width: 2.65rem;
+  background: var(--batch-copper);
+}
+#app .batch-studio-console::before { background: var(--batch-ink); }
+#app .batch-studio-section-heading {
+  gap: .6rem;
+  padding: .06rem 0 .45rem;
+}
+#app .batch-studio-section-heading > div { gap: .33rem; }
+#app .batch-studio-section-index {
+  color: var(--batch-copper);
+  font-size: .65rem;
+  font-weight: 850;
+  letter-spacing: .13em;
+}
+#app .batch-studio-console .batch-studio-section-index {
+  color: var(--color-accent-strong);
+}
+#app .batch-studio-section-heading h3 {
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.48rem, 2vw, 1.78rem);
+  line-height: 1.17;
+  letter-spacing: -.045em;
+}
+#app .batch-studio-clear.btn {
+  align-self: end;
+  padding: .46rem .8rem;
+  border-radius: .64rem;
+}
+
+/* The single-upload dropzone language, adapted for multiple books. */
+#app .batch-studio-upload.optional-batch-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  justify-items: center;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  min-height: clamp(16.5rem, 23vw, 19.7rem);
+  padding: clamp(1.2rem, 2.4vw, 1.7rem);
+  border: 1.5px dashed color-mix(in srgb, var(--batch-ink) 37%, var(--color-border));
+  border-radius: 1.05rem;
+  background:
+    radial-gradient(ellipse 65% 66% at 50% 18%,
+      color-mix(in srgb, var(--batch-ink) 7%, transparent), transparent 100%),
+    radial-gradient(circle, color-mix(in srgb, var(--batch-ink) 16%, transparent) .6px, transparent .9px)
+      0 0 / 19px 19px,
+    color-mix(in srgb, var(--batch-surface) 91%, var(--color-accent-soft));
+  box-shadow: inset 0 0 0 5px color-mix(in srgb, var(--batch-surface) 63%, transparent);
+  color: var(--color-text);
+  text-align: center;
+  transition: border-color 320ms ease, background-color 320ms ease,
+    box-shadow 380ms ease;
+}
+#app .batch-studio-upload.optional-batch-dropzone:is(:hover, :focus-visible, .optional-batch-dragging):not([aria-disabled="true"]) {
+  border-color: color-mix(in srgb, var(--batch-ink) 74%, var(--color-border));
+  box-shadow: inset 0 0 0 5px color-mix(in srgb, var(--batch-surface) 65%, transparent),
+    0 .7rem 1.35rem color-mix(in srgb, var(--batch-ink) 9%, transparent);
+}
+#app .batch-studio-upload.optional-batch-dropzone.optional-batch-dragging {
+  border-style: solid;
+  background-color: color-mix(in srgb, var(--batch-ink) 6%, var(--batch-surface));
+}
+#app .batch-studio-upload-graphic {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  width: 6.7rem;
+  height: 5.85rem;
+  margin: 0 auto .87rem;
+  color: var(--color-accent-strong);
+}
+#app .batch-studio-upload-book {
+  position: absolute;
+  display: block;
+  width: 3.5rem;
+  height: 4.4rem;
+  border: 1.5px solid color-mix(in srgb, var(--batch-ink) 44%, var(--color-border));
+  border-radius: .46rem .6rem .55rem .43rem;
+  background: var(--batch-surface);
+  box-shadow: 0 .52rem 1.1rem color-mix(in srgb, var(--batch-ink-deep) 12%, transparent);
+  transition: transform 400ms cubic-bezier(.16, 1, .3, 1);
+}
+#app .batch-studio-upload-book-back {
+  top: .56rem;
+  left: 2.63rem;
+  background: color-mix(in srgb, var(--batch-copper) 14%, var(--batch-surface));
+  border-color: color-mix(in srgb, var(--batch-copper) 42%, var(--color-border));
+  transform: rotate(13deg);
+}
+#app .batch-studio-upload-book-middle {
+  top: .25rem;
+  left: 1.92rem;
+  background: color-mix(in srgb, var(--batch-ink) 13%, var(--batch-surface));
+  border-color: color-mix(in srgb, var(--batch-ink) 34%, var(--color-border));
+  transform: rotate(2deg);
+}
+#app .batch-studio-upload-book-front {
+  top: .33rem;
+  left: .85rem;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--batch-ink) 65%, var(--color-border));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--batch-ink) 15%, transparent) 0 .42rem, transparent .42rem),
+    var(--batch-surface);
+  transform: rotate(-11deg);
+}
+#app .batch-studio-upload-book-lines {
+  position: absolute;
+  top: 1.48rem;
+  left: 1.05rem;
+  width: 1.55rem;
+  height: 1.3rem;
+  opacity: .65;
+  background: repeating-linear-gradient(to bottom,
+    var(--batch-copper) 0 1.5px, transparent 1.5px 8px);
+}
+#app .batch-studio-upload-bookmark {
+  position: absolute;
+  top: -.05rem;
+  right: .62rem;
+  width: .59rem;
+  height: 1.38rem;
+  background: var(--batch-copper);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 73%, 0 100%);
+}
+#app .batch-studio-upload-graphic-tag {
+  position: absolute;
+  right: -.04rem;
+  bottom: .24rem;
+  display: grid;
+  min-width: 2.56rem;
+  min-height: 1.45rem;
+  padding: .16rem .3rem;
+  place-items: center;
+  border: 2px solid var(--batch-surface);
+  border-radius: .44rem;
+  background: #245e48;
+  box-shadow: 0 .23rem .55rem color-mix(in srgb, var(--batch-ink-deep) 19%, transparent);
+  color: #fffaf0;
+  font-size: .61rem;
+  font-weight: 850;
+  letter-spacing: .05em;
+}
+#app .batch-studio-upload-copy {
+  display: grid;
+  justify-items: center;
+  gap: .3rem;
+  width: 100%;
+  min-width: 0;
+}
+#app .batch-studio-upload-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  margin: 0 0 .16rem;
+  color: var(--batch-copper);
+  font-size: .62rem;
+  font-weight: 850;
+  letter-spacing: .13em;
+  line-height: 1.35;
+}
+#app .batch-studio-upload-kicker::before {
+  display: block;
+  width: .34rem;
+  height: .34rem;
+  flex: 0 0 .34rem;
+  border-radius: 50%;
+  background: var(--batch-copper);
+  content: '';
+}
+#app .batch-studio-upload-copy strong {
+  max-width: 24ch;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.23rem, 1.8vw, 1.51rem);
+  font-weight: 750;
+  line-height: 1.23;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+#app .batch-studio-upload-copy small {
+  max-width: 39ch;
+  color: var(--color-text-muted);
+  font-size: .79rem;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+#app .batch-studio-upload-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .8rem;
+  grid-column: auto;
+  justify-self: center;
+  width: auto;
+  min-width: 11.3rem;
+  min-height: 2.9rem;
+  margin-top: 1rem;
+  padding: .42rem .45rem .42rem .96rem;
+  border: 1px solid #173f31;
+  border-radius: .77rem;
+  background: linear-gradient(150deg, rgba(255, 255, 255, .09), transparent 63%), #245e48;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .21),
+    0 .21rem .4rem color-mix(in srgb, var(--batch-ink-deep) 15%, transparent);
+  color: #fffaf2;
+  font-size: .81rem;
+  font-weight: 800;
+  letter-spacing: -.009em;
+}
+#app .batch-studio-upload-action::after {
+  width: 1.88rem;
+  height: 1.88rem;
+  flex-basis: 1.88rem;
+  border-radius: .52rem;
+}
+#app .batch-studio-upload.optional-batch-dropzone[aria-disabled="true"] {
+  opacity: .68;
+}
+@media (hover: hover) and (pointer: fine) {
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):hover
+  .batch-studio-upload-book-front { transform: translate(-.16rem, -.13rem) rotate(-14deg); }
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):hover
+  .batch-studio-upload-book-back { transform: translate(.15rem, -.13rem) rotate(17deg); }
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):hover
+  .batch-studio-upload-book-middle { transform: translateY(-.1rem) rotate(1deg); }
+}
+
+/* Files become a quiet shelf with clear controls, not a large nested dashboard. */
+#app .batch-studio-file-heading {
+  padding: .12rem .05rem 0;
+  gap: .4rem .7rem;
+}
+#app .batch-studio-file-heading strong {
+  color: var(--color-text);
+  font-size: .8rem;
+  font-weight: 820;
+}
+#app .batch-studio-file-heading small {
+  color: var(--color-text-muted);
+  font-size: .72rem;
+}
+#app .batch-studio-file-scroll {
+  min-height: 8.2rem;
+  max-height: min(24rem, 44vh);
+  border: 1px solid var(--batch-rule);
+  border-radius: .86rem;
+  background: color-mix(in srgb, var(--batch-surface) 97%, var(--color-surface-2));
+}
+#app .batch-studio-empty {
+  min-height: 8.2rem;
+  padding: 1.15rem .9rem;
+  gap: .38rem;
+}
+#app .batch-studio-empty-mark {
+  width: 2.9rem;
+  height: 2.62rem;
+  margin: 0 0 .3rem;
+  opacity: .83;
+}
+#app .batch-studio-empty-mark::before,
+#app .batch-studio-empty-mark::after {
+  height: 2.2rem;
+  width: 1.12rem;
+}
+#app .batch-studio-empty strong {
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-weight: 750;
+  letter-spacing: -.02em;
+}
+#app .batch-studio-empty small {
+  color: var(--color-text-muted);
+  font-size: .74rem;
+}
+#app .batch-studio-file-main {
+  column-gap: .67rem;
+  padding: .74rem .85rem;
+}
+#app .batch-studio-file-meta strong { font-size: .82rem; }
+#app .batch-studio-file-number { border-radius: .4rem; }
+#app .batch-studio-file-status { border-radius: .5rem; }
+#app .batch-studio-capacity {
+  gap: .54rem;
+  padding: .75rem .88rem;
+  border: 1px solid var(--batch-rule);
+  border-radius: .75rem;
+  background: color-mix(in srgb, var(--batch-ink) 2.3%, var(--batch-surface));
+}
+#app .batch-studio-capacity progress {
+  height: .38rem;
+  background: color-mix(in srgb, var(--batch-ink) 11%, var(--batch-surface));
+}
+#app .batch-studio-capacity small {
+  font-size: .66rem;
+  color: var(--color-text-muted);
+}
+
+/* Operation selection echoes the individual Verificar / Corrigir step language. */
+#app .batch-studio-modes.optional-batch-mode {
+  display: grid;
+  gap: .7rem;
+  min-width: 0;
+  padding: 0;
+}
+#app .batch-studio-modes legend {
+  margin-bottom: .34rem;
+  color: var(--color-text-muted);
+  font-size: .76rem;
+}
+#app .batch-studio-choice.optional-batch-choice {
+  display: grid;
+  grid-template-columns: 2.7rem minmax(0, 1fr) 1.15rem;
+  align-items: center;
+  gap: .72rem;
+  min-height: 5.5rem;
+  padding: .85rem .88rem;
+  border: 1px solid var(--batch-rule);
+  border-radius: .8rem;
+  background: var(--batch-surface);
+  box-shadow: 0 .12rem .35rem color-mix(in srgb, var(--color-text) 2%, transparent);
+  transform: none;
+}
+#app .batch-studio-choice.optional-batch-choice:has(input:checked) {
+  border-color: color-mix(in srgb, var(--batch-ink) 43%, var(--color-border));
+  background: color-mix(in srgb, var(--batch-ink) 5%, var(--batch-surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--batch-ink) 7%, transparent);
+}
+#app .batch-studio-choice.optional-batch-choice::before {
+  top: .8rem;
+  bottom: .8rem;
+  width: 3px;
+}
+#app .batch-studio-choice-icon {
+  display: grid;
+  place-items: center;
+  width: 2.7rem;
+  height: 2.7rem;
+  border: 1px solid color-mix(in srgb, var(--batch-ink) 20%, var(--color-border));
+  border-radius: .73rem;
+  background: color-mix(in srgb, var(--batch-ink) 5%, var(--batch-surface));
+  color: var(--color-accent-strong);
+}
+#app .batch-studio-choice-icon svg {
+  width: 1.42rem;
+  height: 1.42rem;
+}
+#app .batch-studio-choice-copy { gap: .25rem; }
+#app .batch-studio-choice strong {
+  color: var(--color-text);
+  font-size: .84rem;
+  font-weight: 825;
+}
+#app .batch-studio-choice small {
+  color: var(--color-text-muted);
+  font-size: .74rem;
+  line-height: 1.48;
+}
+#app .batch-studio-choice input[type="radio"] {
+  flex: 0 0 1.12rem;
+  border-color: color-mix(in srgb, var(--batch-ink) 42%, var(--color-border));
+}
+#app .batch-studio-action-area {
+  gap: .76rem;
+  margin-top: .2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--batch-rule);
+}
+#app .batch-studio-summary {
+  gap: .4rem;
+  padding: .88rem 1.02rem .88rem 1.1rem;
+  border: 1px solid var(--batch-rule);
+  border-radius: .78rem;
+  background: color-mix(in srgb, var(--batch-copper) 3%, var(--batch-surface));
+}
+#app .batch-studio-summary::before {
+  top: .76rem;
+  bottom: .76rem;
+  background: var(--batch-copper);
+}
+#app .batch-studio-summary > span {
+  color: var(--batch-copper);
+  font-size: .6rem;
+  letter-spacing: .12em;
+}
+#app .batch-studio-summary strong {
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: 1.24rem;
+  line-height: 1.25;
+}
+#app .batch-studio-summary small { color: var(--color-text-muted); }
+
+/* Preserve the established green processing and copper ZIP action hierarchy. */
+#app .batch-studio-primary.btn {
+  min-height: 3.42rem;
+  border-radius: .81rem;
+  font-size: .84rem;
+}
+#app .batch-studio-primary.btn:disabled {
+  color: var(--color-text-muted);
+  opacity: .75;
+}
+#app .batch-studio-zip-action.btn { min-height: 4.1rem; }
+#app .batch-studio-cancel.btn,
+#app .batch-studio-repeat.btn {
+  border-radius: .75rem;
+}
+#app .batch-studio-ready {
+  padding: .85rem;
+  border-radius: .78rem;
+}
+#app .batch-studio-job-progress { padding: .3rem 0; }
+#app .batch-studio-reassurance {
+  gap: .48rem;
+  margin: .05rem 0 0;
+  padding: .1rem .06rem 0;
+  font-size: .7rem;
+  line-height: 1.56;
+}
+
+/* Keep strong contrast in both themes, while all surfaces honor theme tokens. */
+:root[data-theme="dark"] #app .batch-studio-counter strong,
+:root[data-theme="dark"] #app .batch-studio-flow-current .batch-studio-flow-text strong,
+:root[data-theme="dark"] #app .batch-studio-choice:has(input:checked) strong {
+  color: var(--color-text);
+}
+:root[data-theme="dark"] #app .batch-studio-flow-current .batch-studio-flow-number {
+  border-color: #79b596;
+  background: #245e48;
+  color: #fffaf1;
+}
+:root[data-theme="dark"] #app .batch-studio-upload-action {
+  border-color: #5b9f7f;
+  background: linear-gradient(145deg, #89c5a5, #70ab8a);
+  color: #163a2a;
+}
+:root[data-theme="dark"] #app .batch-studio-upload-action::after {
+  border-color: rgba(18, 58, 36, .27);
+  background: rgba(18, 58, 36, .07);
+}
+
+/* Long documents and narrow phones must use the entire interior width. */
+@container batch-studio (max-width: 990px) {
+  #app .batch-studio-layout.batch-workspace-content {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: stretch;
+    gap: .9rem;
+  }
+  #app .batch-studio-layout.batch-workspace-content > .batch-studio-library,
+  #app .batch-studio-layout.batch-workspace-content > .batch-studio-console {
+    position: static;
+    top: auto;
+    justify-self: stretch;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  #app .batch-studio-upload.optional-batch-dropzone {
+    min-height: 17.2rem;
+  }
+}
+@media (max-width: 990px) {
+  #app .batch-studio-layout.batch-workspace-content {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: stretch;
+  }
+  #app .batch-studio-layout.batch-workspace-content > .batch-studio-library,
+  #app .batch-studio-layout.batch-workspace-content > .batch-studio-console {
+    position: static;
+    justify-self: stretch;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+@container batch-studio (max-width: 690px) {
+  #app .batch-studio-subtitle {
+    white-space: normal;
+    text-wrap: pretty;
+  }
+}
+@container batch-studio (max-width: 600px) {
+  #app .batch-studio-header {
+    align-items: start;
+    gap: .85rem;
+  }
+  #app .batch-studio-flow-step {
+    grid-template-columns: 1.85rem minmax(0,1fr);
+    gap: .48rem;
+    min-height: 3.7rem;
+    padding: .59rem .62rem;
+  }
+  #app .batch-studio-flow-number {
+    width: 1.85rem;
+    height: 1.85rem;
+    min-width: 1.85rem;
+    flex-basis: 1.85rem;
+    border-radius: .53rem;
+    font-size: .76rem;
+  }
+  #app .batch-studio-flow-text strong { font-size: .72rem; }
+  #app .batch-studio-flow-text small { font-size: .62rem; }
+}
+@container batch-studio (max-width: 470px) {
+  #app .batch-studio-header {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+  #app .batch-studio-intro {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+  }
+  #app .batch-studio-intro h2 {
+    max-width: none;
+    font-size: clamp(1.72rem, 6.2vw, 2.05rem);
+  }
+  #app .batch-studio-subtitle {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  #app .batch-studio-counter {
+    grid-column: 1;
+    grid-row: 3;
+    width: min(100%, 12rem);
+    min-height: 0;
+    padding: .78rem 1rem .82rem;
+    border-radius: .88rem;
+  }
+  #app .batch-studio-counter-count strong {
+    font-size: 1.95rem;
+  }
+  #app .batch-studio-flow {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .36rem;
+  }
+  #app .batch-studio-flow-step {
+    grid-template-columns: auto minmax(0,1fr);
+    gap: .35rem;
+    min-height: 3.05rem;
+    padding: .4rem .48rem;
+    border-radius: .65rem;
+  }
+  #app .batch-studio-flow-number {
+    width: 1.48rem;
+    height: 1.48rem;
+    min-width: 1.48rem;
+    flex-basis: 1.48rem;
+    border-radius: .4rem;
+    font-size: .64rem;
+  }
+  #app .batch-studio-flow-text strong { font-size: .66rem; }
+  #app .batch-studio-flow-text small { display: none; }
+  #app .batch-studio-layout.batch-workspace-content > .batch-studio-library,
+  #app .batch-studio-layout.batch-workspace-content > .batch-studio-console {
+    padding: .93rem;
+    gap: .85rem;
+    border-radius: .92rem;
+  }
+  #app .batch-studio-upload.optional-batch-dropzone {
+    min-height: 15.6rem;
+    padding: 1rem .75rem 1.18rem;
+  }
+  #app .batch-studio-upload-graphic {
+    margin-bottom: .65rem;
+    transform: scale(.86);
+    transform-origin: center bottom;
+  }
+  #app .batch-studio-upload-copy strong { font-size: 1.25rem; }
+  #app .batch-studio-upload-copy small { font-size: .74rem; }
+  #app .batch-studio-upload-action {
+    grid-column: auto;
+    width: min(100%, 14rem);
+    min-width: 0;
+    margin-top: .76rem;
+  }
+  #app .batch-studio-choice.optional-batch-choice {
+    grid-template-columns: 2.36rem minmax(0,1fr) 1.12rem;
+    gap: .57rem;
+    padding: .73rem;
+  }
+  #app .batch-studio-choice-icon {
+    width: 2.36rem;
+    height: 2.36rem;
+  }
+  #app .batch-studio-choice-icon svg {
+    width: 1.27rem;
+    height: 1.27rem;
+  }
+  #app .batch-studio-file-main { padding: .68rem .64rem; }
+}
+@media (max-width: 760px) {
+  #app .layout#app-workspace .batch-studio {
+    padding: clamp(.85rem, 3vw, 1.25rem);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #app .batch-studio .batch-studio-upload-book,
+  #app .batch-studio .batch-studio-upload-action,
+  #app .batch-studio .batch-studio-upload-action::after {
+    transition: none;
+  }
+  #app .batch-studio .batch-studio-upload:hover .batch-studio-upload-book {
+    transform: none;
+  }
+}
+
+/*
+ * Parity with the approved individual EPUB dropzone.
+ * In particular, the inward cast shadow is the intentional hover treatment:
+ * no extra floating outer shadow or raised upload surface.
+ */
+#app .batch-studio-upload.optional-batch-dropzone {
+  --batch-upload-tone: #245e48;
+  --batch-upload-tone-dark: #163c30;
+  --batch-upload-surface: color-mix(in srgb, var(--color-surface) 93%, var(--color-accent-soft));
+  isolation: isolate;
+  position: relative;
+  min-height: clamp(19rem, 28vw, 22rem);
+  padding: clamp(1.5rem, 2.9vw, 2.15rem) clamp(1.15rem, 3vw, 2rem);
+  overflow: hidden;
+  border: 1.5px dashed color-mix(in srgb, var(--batch-upload-tone) 42%, var(--color-border));
+  border-radius: 1.22rem;
+  background:
+    radial-gradient(circle at 50% 50%,
+      color-mix(in srgb, var(--batch-upload-tone) 10%, transparent), transparent 68%),
+    radial-gradient(circle,
+      color-mix(in srgb, var(--batch-upload-tone) 13%, transparent) .7px, transparent 1px)
+      0 0 / 22px 22px,
+    var(--batch-upload-surface);
+  box-shadow:
+    inset 0 10px 22px -16px color-mix(in srgb, var(--batch-upload-tone-dark) 32%, transparent),
+    inset 0 3px 10px color-mix(in srgb, var(--batch-upload-tone-dark) 9%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--batch-upload-tone) 11%, transparent);
+  transform: none;
+  transition: border-color 420ms ease, background-color 420ms ease,
+    box-shadow 520ms cubic-bezier(.16, 1, .3, 1);
+}
+#app .batch-studio-upload.optional-batch-dropzone::before,
+#app .batch-studio-upload.optional-batch-dropzone::after {
+  display: none;
+  content: none;
+}
+#app .batch-studio-upload.optional-batch-dropzone:is(
+  :hover, :focus-visible, .optional-batch-dragging
+):not([aria-disabled="true"]) {
+  border-color: color-mix(in srgb, var(--batch-upload-tone) 72%, var(--color-border));
+  background:
+    radial-gradient(circle at 50% 50%,
+      color-mix(in srgb, var(--batch-upload-tone) 12%, transparent), transparent 68%),
+    radial-gradient(circle,
+      color-mix(in srgb, var(--batch-upload-tone) 15%, transparent) .7px, transparent 1px)
+      0 0 / 22px 22px,
+    var(--batch-upload-surface);
+  box-shadow:
+    inset 0 13px 23px -16px color-mix(in srgb, var(--batch-upload-tone-dark) 40%, transparent),
+    inset 0 4px 13px color-mix(in srgb, var(--batch-upload-tone-dark) 12%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--batch-upload-tone) 17%, transparent);
+  transform: none;
+}
+#app .batch-studio-upload.optional-batch-dropzone.optional-batch-dragging:not([aria-disabled="true"]) {
+  border-style: dashed;
+  border-color: var(--batch-upload-tone);
+  box-shadow:
+    inset 0 14px 23px -14px color-mix(in srgb, var(--batch-upload-tone-dark) 42%, transparent),
+    inset 0 0 0 2px color-mix(in srgb, var(--batch-upload-tone) 21%, transparent);
+}
+#app .batch-studio-upload .batch-studio-upload-kicker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .58rem;
+  width: auto;
+  max-width: 100%;
+  min-height: 2rem;
+  margin: 0 0 1.15rem;
+  padding: .43rem .85rem;
+  border: 1px solid color-mix(in srgb, var(--batch-upload-tone) 24%, var(--color-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-surface) 93%, var(--color-accent-soft));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 58%, transparent);
+  color: color-mix(in srgb, var(--color-text-muted) 82%, var(--batch-upload-tone-dark));
+  font-size: .66rem;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+}
+#app .batch-studio-upload-kicker::before {
+  display: none;
+  content: none;
+}
+#app .batch-studio-upload-dot {
+  display: block;
+  flex: 0 0 .48rem;
+  width: .48rem;
+  height: .48rem;
+  border-radius: 50%;
+  background: var(--batch-upload-tone);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--batch-upload-tone) 12%, transparent);
+}
+#app .batch-studio-upload .batch-studio-upload-graphic {
+  isolation: isolate;
+  width: 6.15rem;
+  height: 5.6rem;
+  margin: 0 auto 1.35rem;
+  perspective: 400px;
+  transform: translateZ(0);
+  transition: transform 580ms cubic-bezier(.16, 1, .3, 1);
+}
+#app .batch-studio-upload-graphic::before {
+  position: absolute;
+  z-index: -1;
+  top: 49%;
+  left: 50%;
+  width: 7.4rem;
+  height: 7.4rem;
+  border: 1px dashed color-mix(in srgb, var(--color-accent) 25%, var(--color-border));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+  content: '';
+  transform: translate(-50%, -49%) rotate(0deg) scale(1);
+  transition: transform 850ms cubic-bezier(.16, 1, .3, 1), border-color 380ms ease;
+  pointer-events: none;
+}
+#app .batch-studio-upload .batch-studio-upload-book {
+  width: 3.63rem;
+  height: 4.4rem;
+  border-radius: .35rem .62rem .56rem .32rem;
+  box-shadow: none;
+  transform-origin: 12% 78%;
+  transition: transform 670ms cubic-bezier(.16, 1, .3, 1),
+    background-color 470ms ease;
+}
+#app .batch-studio-upload .batch-studio-upload-book-back {
+  z-index: 0;
+  top: .32rem;
+  left: 1.62rem;
+  border-color: color-mix(in srgb, var(--batch-upload-tone) 35%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent-soft) 76%, var(--color-surface));
+  transform: rotate(14deg);
+}
+#app .batch-studio-upload .batch-studio-upload-book-middle {
+  z-index: 1;
+  top: .26rem;
+  left: 1.34rem;
+  border-color: color-mix(in srgb, var(--batch-copper) 60%, var(--color-border));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--batch-copper) 35%, transparent)
+      0 .32rem, transparent .32rem),
+    color-mix(in srgb, var(--batch-copper) 9%, var(--color-surface));
+  transform: rotate(4deg);
+}
+#app .batch-studio-upload .batch-studio-upload-book-front {
+  z-index: 2;
+  top: .12rem;
+  left: .96rem;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--batch-upload-tone) 20%, transparent)
+      0 .32rem, transparent .32rem),
+    var(--color-surface);
+  transform: rotate(-8deg);
+}
+#app .batch-studio-upload-book-front::after {
+  position: absolute;
+  top: .42rem;
+  right: .48rem;
+  width: .45rem;
+  height: .45rem;
+  border-top: 1px solid color-mix(in srgb, var(--batch-copper) 48%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--batch-copper) 48%, transparent);
+  content: '';
+  pointer-events: none;
+}
+#app .batch-studio-upload .batch-studio-upload-bookmark {
+  z-index: 3;
+  top: -.28rem;
+  right: .53rem;
+  width: .54rem;
+  height: 1.95rem;
+  background: var(--batch-copper);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
+}
+#app .batch-studio-upload .batch-studio-upload-book-lines {
+  left: .87rem;
+  top: 1.35rem;
+  width: 1.85rem;
+  opacity: .43;
+}
+#app .batch-studio-upload .batch-studio-upload-graphic-tag {
+  z-index: 4;
+  right: -.05rem;
+  bottom: .08rem;
+  box-shadow: none;
+  transition: transform 500ms cubic-bezier(.16, 1, .3, 1);
+}
+#app .batch-studio-upload-copy {
+  gap: .4rem;
+}
+#app .batch-studio-upload-copy strong {
+  max-width: 30rem;
+  font-size: clamp(1.32rem, 2.2vw, 1.78rem);
+  line-height: 1.21;
+  letter-spacing: -.045em;
+}
+#app .batch-studio-upload-copy small {
+  max-width: 29rem;
+  font-size: .88rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+#app .batch-studio-upload .batch-studio-upload-action {
+  position: relative;
+  isolation: isolate;
+  justify-content: space-between;
+  gap: .9rem;
+  min-width: min(100%, 14.4rem);
+  min-height: 3.15rem;
+  margin-top: 1.25rem;
+  padding: .4rem .42rem .4rem 1.12rem;
+  overflow: hidden;
+  border: 1px solid var(--batch-upload-tone-dark);
+  border-radius: .82rem;
+  background: linear-gradient(150deg, color-mix(in srgb, #fff 10%, transparent),
+    transparent 58%), var(--batch-upload-tone);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 19%, transparent),
+    inset 0 -2px 0 color-mix(in srgb, var(--batch-upload-tone-dark) 19%, transparent),
+    0 2px 5px color-mix(in srgb, var(--batch-upload-tone-dark) 13%, transparent);
+  color: #fffaf1;
+  font-weight: 800;
+  letter-spacing: -.012em;
+  transform: none;
+  transition: box-shadow 380ms ease, background-color 380ms ease,
+    border-color 380ms ease, transform 380ms cubic-bezier(.16, 1, .3, 1);
+}
+#app .batch-studio-upload .batch-studio-upload-action::before {
+  position: absolute;
+  z-index: -1;
+  top: -50%;
+  left: -38%;
+  width: 45%;
+  height: 200%;
+  border-radius: 50%;
+  background: linear-gradient(100deg, transparent,
+    color-mix(in srgb, #fff 18%, transparent) 50%, transparent);
+  content: '';
+  opacity: 0;
+  transform: translateX(0) rotate(18deg);
+  transition: transform 740ms cubic-bezier(.16, 1, .3, 1), opacity 280ms ease;
+  pointer-events: none;
+}
+#app .batch-studio-upload .batch-studio-upload-action::after {
+  width: 1.98rem;
+  height: 1.98rem;
+  flex-basis: 1.98rem;
+  border: 1px solid color-mix(in srgb, currentColor 29%, transparent);
+  border-radius: .55rem;
+  background: color-mix(in srgb, currentColor 9%, transparent);
+  font-family: Georgia, 'Iowan Old Style', serif;
+  font-size: 1.2rem;
+  transform: none;
+  transition: transform 420ms cubic-bezier(.16, 1, .3, 1),
+    border-color 320ms ease, background-color 320ms ease;
+}
+#app .batch-studio-upload-formats {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  max-width: 32rem;
+  margin-top: 1.15rem;
+  color: var(--color-text-muted);
+  font-size: .68rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  text-wrap: balance;
+}
+#app .batch-studio-upload-formats::before {
+  display: inline-block;
+  width: 1.15rem;
+  height: 1px;
+  flex: 0 0 auto;
+  background: color-mix(in srgb, var(--batch-copper) 68%, transparent);
+  content: '';
+}
+@media (hover: hover) and (pointer: fine) {
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):is(:hover, :focus-visible) .batch-studio-upload-graphic {
+    transform: translateY(-.14rem);
+  }
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):is(:hover, :focus-visible) .batch-studio-upload-graphic::before {
+    transform: translate(-50%, -49%) rotate(22deg) scale(1.035);
+    border-color: color-mix(in srgb, var(--batch-copper) 36%, var(--color-border));
+  }
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):is(:hover, :focus-visible) .batch-studio-upload-book-back {
+    transform: translate(.29rem, -.28rem) rotate(19deg);
+  }
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):is(:hover, :focus-visible) .batch-studio-upload-book-middle {
+    transform: translate(.1rem, -.19rem) rotate(8deg);
+  }
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):is(:hover, :focus-visible) .batch-studio-upload-book-front {
+    transform: translate(-.17rem, -.16rem) rotate(-12deg);
+  }
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):is(:hover, :focus-visible) .batch-studio-upload-graphic-tag {
+    transform: translate(.14rem, -.17rem) rotate(3deg);
+    box-shadow: none;
+  }
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):is(:hover, :focus-visible) .batch-studio-upload-action {
+    background: linear-gradient(145deg, color-mix(in srgb, #fff 15%, transparent),
+      transparent 60%), var(--batch-upload-tone);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #fff 23%, transparent),
+      inset 0 -2px 0 color-mix(in srgb, var(--batch-upload-tone-dark) 20%, transparent),
+      0 3px 7px color-mix(in srgb, var(--batch-upload-tone-dark) 17%, transparent);
+    transform: translateY(-1px);
+  }
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):is(:hover, :focus-visible) .batch-studio-upload-action::before {
+    opacity: 1;
+    transform: translateX(750%) rotate(18deg);
+  }
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):is(:hover, :focus-visible) .batch-studio-upload-action::after {
+    border-color: color-mix(in srgb, currentColor 40%, transparent);
+    background: color-mix(in srgb, currentColor 14%, transparent);
+    transform: translate(1px, -1px) rotate(4deg);
+  }
+}
+:root[data-theme="dark"] #app .batch-studio-upload.optional-batch-dropzone {
+  --batch-upload-tone: #89c5a5;
+  --batch-upload-tone-dark: #4f8c70;
+}
+:root[data-theme="dark"] #app .batch-studio-upload .batch-studio-upload-action {
+  border-color: #5b9f7f;
+  background: linear-gradient(145deg, #89c5a5, #70ab8a);
+  color: #163a2a;
+}
+:root[data-theme="dark"] #app .batch-studio-upload .batch-studio-upload-graphic-tag {
+  color: #163a2a;
+  background: #89c5a5;
+}
+@container batch-studio (max-width: 600px) {
+  #app .batch-studio-upload.optional-batch-dropzone {
+    min-height: 19rem;
+  }
+}
+@container batch-studio (max-width: 470px) {
+  #app .batch-studio-upload.optional-batch-dropzone {
+    min-height: 19rem;
+    padding: 1.28rem 1rem 1.4rem;
+  }
+  #app .batch-studio-upload .batch-studio-upload-graphic {
+    margin-bottom: 1.03rem;
+    transform: scale(.9);
+  }
+  #app .batch-studio-upload .batch-studio-upload-kicker {
+    font-size: .6rem;
+    margin-bottom: .85rem;
+  }
+  #app .batch-studio-upload .batch-studio-upload-action {
+    width: min(100%, 14.4rem);
+    min-width: min(100%, 12rem);
+    margin-top: 1rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #app .batch-studio-upload .batch-studio-upload-graphic,
+  #app .batch-studio-upload .batch-studio-upload-book,
+  #app .batch-studio-upload .batch-studio-upload-graphic::before,
+  #app .batch-studio-upload .batch-studio-upload-graphic-tag,
+  #app .batch-studio-upload .batch-studio-upload-action,
+  #app .batch-studio-upload .batch-studio-upload-action::before,
+  #app .batch-studio-upload .batch-studio-upload-action::after {
+    transition: none;
+  }
+  #app .batch-studio-upload:is(:hover, :focus-visible) .batch-studio-upload-graphic,
+  #app .batch-studio-upload:is(:hover, :focus-visible) .batch-studio-upload-graphic::before,
+  #app .batch-studio-upload:is(:hover, :focus-visible) .batch-studio-upload-action {
+    transform: none;
+  }
+}

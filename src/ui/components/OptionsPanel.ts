@@ -6,11 +6,6 @@ type RepairOptionDescriptor = readonly [keyof RepairOptions, string, string];
 
 const options: readonly RepairOptionDescriptor[] = [
   [
-    'kindleSafeMode',
-    'Modo Kindle Safe',
-    'Neutraliza recursos interativos e prioriza compatibilidade.',
-  ],
-  [
     'conservativeMode',
     'Modo conservador',
     'Preserva textos e recursos passivos. Scripts e URLs são removidos apenas quando suas opções de limpeza estiverem ativas.',
@@ -65,6 +60,8 @@ const options: readonly RepairOptionDescriptor[] = [
   ],
 ];
 
+const expandedOptions = new WeakMap<AppState, boolean>();
+
 export function renderOptionsPanel(state: AppState, onChange: () => void): HTMLElement {
   const form = el('div', { className: 'options-list' });
 
@@ -92,26 +89,30 @@ export function renderOptionsPanel(state: AppState, onChange: () => void): HTMLE
     );
   }
 
-  return el('aside', {
-    className: 'sidebar',
+  const details = el('details', {
+    className: 'panel options-panel advanced-settings',
     children: [
-      el('section', {
-        className: 'panel options-panel',
+      el('summary', {
         children: [
-          el('div', {
-            className: 'section-heading',
-            children: [
-              el('p', { className: 'eyebrow', text: 'Opções' }),
-              el('h2', { text: 'Reparo automático' }),
-              el('p', {
-                className: 'muted',
-                text: 'Deixe marcado o que a ferramenta pode ajustar sozinha durante a reconstrução do EPUB',
-              }),
-            ],
+          el('span', { className: 'settings-summary-copy', children: [
+            el('strong', { text: 'Configurações de reparo' }),
+            el('small', {
+              text: 'Opcional: personalize o que pode ser corrigido automaticamente',
+            }),
+          ] }),
+          el('span', {
+            className: 'settings-disclosure',
+            text: '+',
+            attrs: { 'aria-hidden': 'true' },
           }),
-          form,
         ],
       }),
+      form,
     ],
   });
+  details.open = expandedOptions.get(state) ?? false;
+  details.addEventListener('toggle', () => {
+    if (details.isConnected) expandedOptions.set(state, details.open);
+  });
+  return details;
 }

@@ -95,7 +95,6 @@ label {
 .stats-grid,
 .score-breakdown,
 .repair-delta-grid,
-.flow-steps,
 .cover-action-grid,
 .support-sections {
   min-width: 0;
@@ -274,10 +273,6 @@ label {
   .sidebar,
   .support-card {
     max-width: 44rem;
-  }
-
-  .flow-step {
-    align-items: center;
   }
 
   .cover-action-grid,
@@ -461,11 +456,6 @@ label {
   .technical-report-tools summary::after {
     position: absolute;
     right: var(--space-4);
-  }
-
-  .flow-step {
-    align-items: flex-start;
-    text-align: left;
   }
 
   .option-item {

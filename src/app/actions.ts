@@ -144,7 +144,7 @@ export async function repairCurrentFile(
   state.busy = true;
   state.error = undefined;
   
-  const appliedOptions = { ...state.options };
+  const appliedOptions = { ...state.options, kindleSafeMode: true };
   try {
     const loaded = await loadZipForTask(state, context);
     publishProgress(context, 'Conferindo estrutura e preparando reparo...');

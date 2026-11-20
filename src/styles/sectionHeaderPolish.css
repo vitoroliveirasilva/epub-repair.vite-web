@@ -1,0 +1,45 @@
+#app .layout#app-workspace .advanced-settings {
+  display: block;
+  align-self: start;
+}
+
+#app .layout#app-workspace .advanced-settings > summary,
+#app .layout#app-workspace .advanced-settings[open] > summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2rem;
+  align-items: center;
+  gap: 1rem;
+  box-sizing: border-box;
+  width: 100%;
+  block-size: 5.4rem;
+  min-block-size: 5.4rem;
+  max-block-size: 5.4rem;
+  margin: 0;
+  padding: 0 1.4rem;
+}
+
+#app .layout#app-workspace .advanced-settings > summary .settings-summary-copy {
+  min-width: 0;
+  margin: 0;
+  align-self: center;
+}
+
+#app .layout#app-workspace .advanced-settings > summary .settings-disclosure {
+  width: 2rem;
+  height: 2rem;
+  justify-self: end;
+  margin: 0;
+}
+
+#app .layout#app-workspace .advanced-settings::details-content {
+  transition: none;
+}
+
+@media (max-width: 720px) {#app .layout#app-workspace .advanced-settings > summary,
+#app .layout#app-workspace .advanced-settings[open] > summary {
+    block-size: 5.8rem;
+    min-block-size: 5.8rem;
+    max-block-size: 5.8rem;
+    padding: 0 1.05rem;
+  }
+}

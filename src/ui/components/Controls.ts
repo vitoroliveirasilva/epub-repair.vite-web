@@ -22,6 +22,8 @@ export function renderControls(
 ): HTMLElement {
   const hasFile = Boolean(state.payload);
   const hasReport = Boolean(state.report);
+  const pageTitle = controlsTitle(state);
+  const pageDescription = controlsDescription(state);
   const hasRepair = Boolean(state.repairResult?.changed && state.repairResult.blob);
   const hasFatalIssues = Boolean(state.report?.stats.fatalCount);
   const canRepair = canRepairReport(state.report, state.options);
@@ -55,41 +57,33 @@ export function renderControls(
         className: 'controls-copy',
         children: [
           el('p', { className: 'eyebrow', text: 'Verificação e correção' }),
-          el('h2', { text: controlsTitle(state) }),
-          el('p', { className: 'muted', text: controlsDescription(state) }),
+          pageTitle === 'Escolha um EPUB para começar'
+            ? el('h2', { children: [
+              'Escolha um ',
+              el('span', { className: 'editorial-epub-word', text: 'EPUB' }),
+              ' para começar',
+            ] })
+            : el('h2', { text: pageTitle }),
+          pageDescription
+            ? el('p', { className: 'muted', text: pageDescription })
+            : undefined,
         ],
       }),
-      el('div', {
-        className: 'flow-steps',
-        attrs: { 'aria-label': 'Etapas principais' },
+      el('nav', {
+        className: 'epub-stage-rail',
+        attrs: { 'aria-label': 'Etapas do reparo do EPUB' },
         children: [
-          renderFlowStep(
-            '1',
-            'Verificar',
-            'Encontrar problemas de estrutura, capa, sumário e Kindle',
-            {
-              active: hasFile && !hasReport,
-              done: hasReport,
-            },
-          ),
-          renderFlowStep(
-            '2',
-            'Corrigir, otimizar ou trocar capa',
-            'Gerar uma nova cópia somente quando houver mudança real',
-            {
-              active: hasReport && !hasRepair,
-              done: hasRepair,
-            },
-          ),
-          renderFlowStep(
-            '3',
-            'Baixar',
-            'Salvar o EPUB alterado e se quiser, o relatório técnico',
-            {
-              active: hasRepair,
-              done: hasRepair,
-            },
-          ),
+          el('ol', { className: 'epub-stage-track', children: [
+            renderFlowStep('1', 'Verificar',
+              hasFile ? 'Estrutura e capa' : 'Selecione um EPUB',
+              { active: !hasReport, done: hasReport },
+              !hasFile ? 'Comece aqui' : undefined),
+            renderFlowStep('2', 'Corrigir', 'Reparos e ajustes',
+              { active: hasReport && !hasRepair, done: hasRepair }),
+            renderFlowStep('3', 'Baixar', 'Cópia final',
+              { active: hasRepair, done: false },
+              hasRepair ? 'Pronto para baixar' : undefined),
+          ] }),
         ],
       }),
       el('div', {
@@ -116,7 +110,7 @@ function buildPrimaryActionButtons(
     canRepair: boolean;
     canOptimize: boolean;
   },
-): HTMLButtonElement[] {
+): HTMLElement[] {
   if (flags.hasRepair) {
     const downloadButton = button(
       hasManualReviewIssues(state.repairResult?.after ?? state.report)
@@ -134,6 +128,9 @@ function buildPrimaryActionButtons(
     );
     downloadButton.disabled = state.busy;
     downloadButton.dataset.focusKey = 'epub-download';
+    matchUploadActionStyle(downloadButton);
+    downloadButton.classList.add('epub-download-action');
+    downloadButton.append(renderDownloadActionIcon());
 
     if (flags.canRepair && !flags.hasFatalIssues) {
       const retryButton = button(
@@ -144,6 +141,7 @@ function buildPrimaryActionButtons(
       retryButton.disabled = state.busy;
       retryButton.dataset.focusKey = 'epub-repair-remaining';
       retryButton.title = 'Reparar problemas ainda identificados na cópia atual, preservando o download anterior.';
+      matchUploadActionStyle(retryButton);
       return [downloadButton, retryButton];
     }
     if (!flags.canOptimize) return [downloadButton];
@@ -156,6 +154,7 @@ function buildPrimaryActionButtons(
     optimizeButton.disabled = state.busy;
     optimizeButton.dataset.focusKey = 'epub-optimize';
     optimizeButton.title = repairButtonTitle(state, false, true);
+    matchUploadActionStyle(optimizeButton);
 
     return [downloadButton, optimizeButton];
   }
@@ -171,8 +170,10 @@ function buildPrimaryActionButtons(
   analyzeButton.disabled = !flags.hasFile ||
     !mayEnqueueAnalysis || (state.pendingTasks ?? 0) >= 8;
   analyzeButton.dataset.focusKey = 'epub-analyze';
+  matchUploadActionStyle(analyzeButton);
 
-  const repairButton = button(
+  if (!flags.hasFatalIssues && (flags.canRepair || flags.canOptimize)) {
+    const repairButton = button(
     state.busy && (flags.canRepair || flags.canOptimize)
       ? 'Enfileirar reparo'
       : flags.canRepair
@@ -194,9 +195,54 @@ function buildPrimaryActionButtons(
     )) ||
     flags.hasFatalIssues ||
     (!flags.canRepair && !flags.canOptimize);
-  repairButton.title = repairButtonTitle(state, flags.canRepair, flags.canOptimize);
+    repairButton.title = repairButtonTitle(state, flags.canRepair, flags.canOptimize);
+    matchUploadActionStyle(repairButton);
+    return [analyzeButton, repairButton];
+  }
 
-  return [analyzeButton, repairButton];
+  if (!state.report) return [analyzeButton];
+
+  const needsReview = !state.report.validZip || flags.hasFatalIssues ||
+    hasManualReviewIssues(state.report);
+  const repairStatus = el('span', {
+    className: 'epub-repair-state ' +
+      (needsReview ? 'epub-repair-state-review' : 'epub-repair-state-clear'),
+    attrs: { role: 'status' },
+    text: needsReview ? 'Revisão manual necessária' : 'Nenhum reparo necessário',
+  });
+  return [analyzeButton, repairStatus];
+}
+
+function matchUploadActionStyle(actionButton: HTMLButtonElement): void {
+  const label = actionButton.textContent ?? '';
+  actionButton.classList.add('epub-upload-matched-action');
+  actionButton.setAttribute('aria-label', label);
+}
+
+function renderDownloadActionIcon(): HTMLElement {
+  const icon = el('span', {
+    className: 'epub-download-action-icon',
+    attrs: { 'aria-hidden': 'true' },
+  });
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.85');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('focusable', 'false');
+
+  const shaft = document.createElementNS(ns, 'path');
+  shaft.setAttribute('class', 'epub-download-arrow');
+  shaft.setAttribute('d', 'M12 3.5v11.2m-4-4 4 4 4-4');
+  const tray = document.createElementNS(ns, 'path');
+  tray.setAttribute('class', 'epub-download-tray');
+  tray.setAttribute('d', 'M4.5 16.1v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3');
+  svg.append(shaft, tray);
+  icon.append(svg);
+  return icon;
 }
 
 function controlsTitle(state: AppState): string {
@@ -237,7 +283,7 @@ function controlsDescription(state: AppState): string {
     return 'Baixe a nova versão otimizada do arquivo. O relatório técnico mostra quais melhorias opcionais foram aplicadas';
   }
   if (state.repairResult?.changed && state.repairResult.blob) {
-    return 'Baixe a nova versão do arquivo, o relatório técnico fica separado abaixo';
+    return '';
   }
   if (state.report?.stats.fatalCount) {
     return 'Encontramos um problema fatal, o reparo automático fica bloqueado para evitar gerar um arquivo incompleto ou pior que o original.';
@@ -258,7 +304,7 @@ function controlsDescription(state: AppState): string {
   if (state.payload) {
     return 'A análise acontece localmente no navegador e prepara o arquivo para uma correção segura';
   }
-  return 'Envie o arquivo, confira o diagnóstico e baixe uma cópia corrigida. O arquivo original não é alterado';
+  return '';
 }
 
 function repairButtonTitle(state: AppState, canRepair: boolean, canOptimize: boolean): string {
@@ -279,19 +325,99 @@ function formatCount(count: number, singular: string, plural: string): string {
 function renderFlowStep(
   number: string,
   title: string,
-  description: string,
+  detail: string,
   state: { active: boolean; done: boolean },
+  statusOverride?: string,
 ): HTMLElement {
   const status = state.done ? 'done' : state.active ? 'active' : 'pending';
-  return el('article', {
-    className: `flow-step flow-step-${status}`,
+  const statusText = statusOverride ??
+    (state.done ? 'Concluída' : state.active ? 'Etapa atual' : 'Próxima');
+  return el('li', {
+    className: `epub-stage-item epub-stage-item-${status}`,
+    attrs: state.active ? { 'aria-current': 'step' } : {},
     children: [
-      el('span', { className: 'flow-step-number', text: state.done ? '✓' : number }),
-      el('div', {
-        children: [el('strong', { text: title }), el('small', { text: description })],
-      }),
+      el('span', { className: 'epub-stage-item-number', text: number,
+        attrs: { 'aria-hidden': 'true' } }),
+      el('span', { className: 'epub-stage-item-copy', children: [
+        el('strong', { text: title }),
+        el('small', { text: detail }),
+        el('span', { className: 'epub-stage-item-status', text: statusText }),
+      ] }),
+      number !== '3'
+        ? el('span', { className: 'epub-stage-connector',
+          attrs: { 'aria-hidden': 'true' },
+          children: [renderStageArrow()] })
+        : undefined,
     ],
   });
+}
+
+function renderStageArrow(): SVGSVGElement {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  const arrow = document.createElementNS(ns, 'path');
+  arrow.setAttribute('d', 'M4 12h15m-6-6 6 6-6 6');
+  svg.append(arrow);
+  return svg;
+}
+
+function technicalReportGlyph(kind: 'report' | 'copy' | 'txt' | 'json'): SVGSVGElement {
+  const namespace = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(namespace, 'svg');
+  svg.setAttribute('class', `technical-report-glyph technical-report-glyph-${kind}`);
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.8');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+
+  const paths: Record<typeof kind, Array<[string, boolean?]>> = {
+    report: [
+      ['M14 2.75H6.5a2 2 0 0 0-2 2v14.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8.25L14 2.75Z'],
+      ['M14 2.75v5.5h5.5'],
+      ['M8.75 17v-2.2', true],
+      ['M12 17v-5.3', true],
+      ['M15.25 17v-3.7', true],
+    ],
+    copy: [
+      ['M8.5 7.5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2v-10a2 2 0 0 1 2-2Z'],
+      ['M16.5 7.5v-3a2 2 0 0 0-2-2h-10a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2'],
+    ],
+    txt: [
+      ['M14 2.75H6.5a2 2 0 0 0-2 2v14.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8.25L14 2.75Z'],
+      ['M14 2.75v5.5h5.5'],
+      ['M8.5 12.5h7'],
+      ['M8.5 16.5h7'],
+    ],
+    json: [
+      ['M9 3.5H7.5A2.5 2.5 0 0 0 5 6v3a2.5 2.5 0 0 1-2.5 2.5A2.5 2.5 0 0 1 5 14v3a2.5 2.5 0 0 0 2.5 2.5H9'],
+      ['M15 3.5h1.5A2.5 2.5 0 0 1 19 6v3a2.5 2.5 0 0 0 2.5 2.5A2.5 2.5 0 0 0 19 14v3a2.5 2.5 0 0 1-2.5 2.5H15'],
+      ['M11.5 9.5l-1 5', true],
+      ['M14 9.5l-1 5', true],
+    ],
+  };
+
+  for (const [d, accent] of paths[kind]) {
+    const path = document.createElementNS(namespace, 'path');
+    path.setAttribute('d', d);
+    if (accent) path.setAttribute('class', 'technical-report-icon-accent');
+    if (kind === 'report' && d === paths.report[0]?.[0]) {
+      path.setAttribute('class', 'technical-report-paper-front');
+    }
+    svg.append(path);
+  }
+
+  return svg;
 }
 
 function renderTechnicalReportTools(
@@ -302,16 +428,46 @@ function renderTechnicalReportTools(
 ): HTMLElement {
   const details = el('details', { className: 'technical-report-tools' });
   details.open = false;
+  copyButton.classList.add('technical-report-action-copy');
+  textReportButton.classList.add('technical-report-action-txt');
+  jsonReportButton.classList.add('technical-report-action-json');
+  for (const [actionButton, kind, label] of [
+    [copyButton, 'copy', 'Copiar'],
+    [textReportButton, 'txt', 'TXT'],
+    [jsonReportButton, 'json', 'JSON'],
+  ] as const) {
+    if (kind !== 'copy') {
+      actionButton.classList.add('technical-report-download');
+      actionButton.setAttribute('aria-label', 'Baixar relatório técnico em ' + label);
+      actionButton.title = 'Baixar relatório técnico em ' + label;
+    }
+    actionButton.replaceChildren(
+      el('span', { className: 'technical-report-action-icon',
+        attrs: { 'aria-hidden': 'true' }, children: [technicalReportGlyph(kind)] }),
+      el('span', { className: 'technical-report-action-label', text: label }),
+    );
+  }
 
   details.append(
     el('summary', {
       children: [
-        el('span', { text: 'Relatório técnico' }),
-        el('small', {
-          text: hasReport
-            ? 'Copiar ou baixar detalhes da análise'
-            : 'Disponível após verificar o EPUB',
-        }),
+        el('span', { className: 'technical-report-mark',
+          attrs: { 'aria-hidden': 'true' }, children: [
+            el('span', { className: 'technical-report-sheet' }),
+            technicalReportGlyph('report'),
+          ] }),
+        el('span', { className: 'technical-report-heading', children: [
+          el('strong', { text: 'Relatório técnico' }),
+          el('small', {
+            text: hasReport
+              ? 'Copiar ou baixar detalhes da análise'
+              : 'Disponível após verificar o EPUB',
+          }),
+        ] }),
+        el('span', { className: 'technical-report-disclosure',
+          attrs: { 'aria-hidden': 'true' }, children: [
+            el('span', { className: 'technical-report-chevron' }),
+          ] }),
       ],
     }),
     el('div', {
@@ -343,6 +499,7 @@ function renderProcessingStatus(state: AppState, cancel?: () => void): HTMLEleme
     'btn btn-ghost', cancel,
   ) : undefined;
   if (cancelButton) {
+    cancelButton.classList.add('epub-cancel-action');
     cancelButton.dataset.focusKey = 'epub-cancel-processing';
     cancelButton.disabled = state.processingController?.signal.aborted ?? false;
   }

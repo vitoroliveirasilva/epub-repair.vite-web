@@ -38,10 +38,11 @@ export function reconstructDocument(
 ): ReconstructedDocument {
   const trailingNavigationStart = detectTrailingNavigationStart(pages);
   const contentPages = trailingNavigationStart >= 0 ? pages.slice(0, trailingNavigationStart) : pages;
-  const repeatedMarginLines = options.removeRepeatedMargins
+  const marginPatterns = options.removeRepeatedMargins
     ? detectRepeatedMarginLines(contentPages)
-    : [];
-  const repeated = new Set(repeatedMarginLines.map(normalizeMarginKey));
+    : { samples: [], keys: new Set<string>() };
+  const repeatedMarginLines = marginPatterns.samples;
+  const repeated = marginPatterns.keys;
   const warnings: ConversionWarning[] = [];
   const blocks: Block[] = [];
   const tocHeadings = extractTocHeadings(contentPages);
@@ -51,8 +52,8 @@ export function reconstructDocument(
     const filtered = ordered.filter((line) => {
       const text = normalizeSpaces(line.text);
       if (!text) return false;
-      const margin = line.y > page.height * 0.88 || line.y < page.height * 0.12;
-      if (margin && repeated.has(normalizeMarginKey(text))) return false;
+      const zone = marginZone(line.y, page.height);
+      if (zone && repeated.has(zone + ':' + normalizeMarginKey(text))) return false;
       const paginationMargin = line.y > page.height * 0.96 || line.y < page.height * 0.06;
       if (options.removePageNumbers && paginationMargin && PAGE_NUMBER.test(text)) return false;
       return true;
@@ -211,32 +212,68 @@ export function detectColumnCount(lines: PdfLine[], pageWidth: number): number {
   return left >= 5 && right >= 5 && spanning < candidates.length * 0.22 ? 2 : 1;
 }
 
-function detectRepeatedMarginLines(pages: PdfPageAnalysis[]): string[] {
+function marginZone(y: number, height: number): 'top' | 'bottom' | undefined {
+  if (!Number.isFinite(height) || height <= 0) return undefined;
+  if (y > height * 0.88) return 'top';
+  if (y < height * 0.12) return 'bottom';
+  return undefined;
+}
+
+function detectRepeatedMarginLines(pages: PdfPageAnalysis[]): {
+  samples: string[];
+  keys: Set<string>;
+} {
   const occurrences = new Map<string, { count: number; sample: string }>();
   for (const page of pages) {
     const pageKeys = new Set<string>();
     for (const line of page.lines) {
-      if (!(line.y > page.height * 0.88 || line.y < page.height * 0.12)) continue;
+      const zone = marginZone(line.y, page.height);
+      if (!zone) continue;
       const sample = normalizeSpaces(line.text);
-      const key = normalizeMarginKey(sample);
-      if (key.length < 3 || pageKeys.has(key) || PAGE_NUMBER.test(sample)) continue;
+      if (PAGE_NUMBER.test(sample) ||
+        CHAPTER_HEADING.test(sample) || EDITORIAL_HEADING.test(sample)) continue;
+      const name = normalizeMarginKey(sample);
+      const key = zone + ':' + name;
+      if (name.length < 3 || pageKeys.has(key)) continue;
       pageKeys.add(key);
       const current = occurrences.get(key);
-      occurrences.set(key, { count: (current?.count ?? 0) + 1, sample: current?.sample ?? sample });
+      occurrences.set(key, {
+        count: (current?.count ?? 0) + 1,
+        sample: current?.sample ?? sample,
+      });
     }
   }
   const threshold = Math.max(3, Math.ceil(pages.length * 0.35));
-  return [...occurrences.values()]
-    .filter((entry) => entry.count >= threshold)
-    .sort((a, b) => b.count - a.count)
-    .map((entry) => entry.sample);
+  const repeated = [...occurrences.entries()]
+    .filter(([, entry]) => entry.count >= threshold)
+    .sort((a, b) => b[1].count - a[1].count);
+  return {
+    samples: repeated.map(([, entry]) => entry.sample),
+    keys: new Set(repeated.map(([key]) => key)),
+  };
 }
 
 function orderLines(lines: PdfLine[], pageWidth: number, columnCount: number): PdfLine[] {
-  if (columnCount < 2) return [...lines].sort(readingOrder);
-  const left = lines.filter((line) => line.x < pageWidth * 0.48 || line.width > pageWidth * 0.7);
-  const right = lines.filter((line) => line.x >= pageWidth * 0.48 && line.width <= pageWidth * 0.7);
-  return [...left.sort(readingOrder), ...right.sort(readingOrder)];
+  const ordered = [...lines].sort(readingOrder);
+  if (columnCount < 2) return ordered;
+  const bandOrder = (band: PdfLine[]): PdfLine[] => {
+    const left = band.filter((line) => line.x < pageWidth * 0.48);
+    const right = band.filter((line) => line.x >= pageWidth * 0.48);
+    return [...left.sort(readingOrder), ...right.sort(readingOrder)];
+  };
+  const spanning = ordered.filter((line) => line.width > pageWidth * 0.7);
+  let remaining = ordered.filter((line) => line.width <= pageWidth * 0.7);
+  if (!spanning.length) return bandOrder(remaining);
+  const result: PdfLine[] = [];
+  for (const divider of spanning) {
+    const above = remaining.filter((line) =>
+      line.y > divider.y + Math.max(line.fontSize, divider.fontSize) * 0.3);
+    result.push(...bandOrder(above), divider);
+    const used = new Set(above);
+    remaining = remaining.filter((line) => !used.has(line));
+  }
+  result.push(...bandOrder(remaining));
+  return result;
 }
 
 function readingOrder(a: PdfLine, b: PdfLine): number {
@@ -251,7 +288,7 @@ function linesToBlocks(
   tocHeadings: Map<number, string>,
   tocPage: boolean,
 ): Block[] {
-  if (lines.length === 0) return [];
+  if (lines.length === 0 && !(page.figures?.length)) return [];
   const sizes = lines.map((line) => line.fontSize).filter((size) => size > 0).sort((a, b) => a - b);
   const median = sizes[Math.floor(sizes.length / 2)] ?? 12;
   const bodyLeftCandidates = lines
@@ -265,6 +302,18 @@ function linesToBlocks(
   let paragraph = '';
   let previous: PdfLine | undefined;
   const figures = [...(page.figures ?? [])].sort((a, b) => a.y - b.y || a.x - b.x);
+  const imageLines = new Map<PdfLine, NonNullable<PdfPageAnalysis['figures']>[number]>();
+  if (page.columnCount > 1) {
+    for (const figure of figures) {
+      imageLines.set({
+        text: '', x: figure.x, y: page.height - figure.y,
+        width: figure.width, fontSize: median, fontName: 'pdf-figure',
+      }, figure);
+    }
+  }
+  const readingLines = page.columnCount > 1 && imageLines.size
+    ? orderLines([...lines, ...imageLines.keys()], page.width, page.columnCount)
+    : lines;
   let figureIndex = 0;
 
   const flush = (): void => {
@@ -273,21 +322,30 @@ function linesToBlocks(
     paragraph = '';
   };
 
+  const appendFigure = (figure: NonNullable<PdfPageAnalysis['figures']>[number]): void => {
+    flush();
+    blocks.push({
+      kind: 'figure',
+      text: `[[figura:${figure.id}]]`,
+      figureId: figure.id,
+      sourcePages: [page.pageNumber],
+    });
+  };
   const includeFiguresBefore = (top: number): void => {
+    if (page.columnCount > 1) return;
     while (figureIndex < figures.length && figures[figureIndex]!.y <= top) {
-      flush();
-      const figure = figures[figureIndex]!;
-      blocks.push({
-        kind: 'figure',
-        text: `[[figura:${figure.id}]]`,
-        figureId: figure.id,
-        sourcePages: [page.pageNumber],
-      });
+      appendFigure(figures[figureIndex]!);
       figureIndex += 1;
     }
   };
 
-  for (const [index, line] of lines.entries()) {
+  for (const [index, line] of readingLines.entries()) {
+    const figure = imageLines.get(line);
+    if (figure) {
+      appendFigure(figure);
+      previous = undefined;
+      continue;
+    }
     includeFiguresBefore(page.height - line.y);
     let text = normalizeSpaces(line.text);
     if (!text) continue;
@@ -297,7 +355,8 @@ function linesToBlocks(
       (EDITORIAL_HEADING.test(text) || line.fontSize >= median * 1.3 || standaloneHeading);
     const knownHeading = isKnownHeading(text, tocHeadings);
     const editorialHeading = EDITORIAL_HEADING.test(text) && (!tocPage || /^(?:sum[aá]rio|contents)$/iu.test(text));
-    const subheading = looksLikeSubheading(text, line, lines[index - 1], lines[index + 1], page, median);
+    const subheading = looksLikeSubheading(text, line, readingLines[index - 1],
+      readingLines[index + 1], page, median);
     const heading = !CATALOG_ENTRY.test(text) && (tocPage
       ? /^(?:sum[aá]rio|contents)$/iu.test(text)
       : short && (headingPattern || knownHeading || editorialHeading || standaloneHeading || subheading));
@@ -334,7 +393,11 @@ function linesToBlocks(
     const readableBoundary = previous && STRONG_SENTENCE_END.test(paragraph) && /^\p{Lu}/u.test(text);
     const safetyBoundary = wordCount >= 120 && readableBoundary;
     const listBoundary = /^[•▪◦‣–—*-]\s+|^\d{1,3}[.)]\s+/u.test(text);
-    if (paragraph && (paragraphGap || (indented && SENTENCE_END.test(paragraph)) || safetyBoundary || listBoundary)) flush();
+    const sideOf = (value: PdfLine): number => value.width > page.width * 0.7 ? 2
+      : value.x >= page.width * 0.48 ? 1 : 0;
+    const columnBoundary = previous && page.columnCount > 1 && sideOf(previous) !== sideOf(line);
+    if (paragraph && (columnBoundary || paragraphGap ||
+      (indented && SENTENCE_END.test(paragraph)) || safetyBoundary || listBoundary)) flush();
     paragraph = joinLine(paragraph, text, options.dehyphenate);
     previous = line;
   }

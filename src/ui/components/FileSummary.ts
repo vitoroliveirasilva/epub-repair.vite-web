@@ -5,6 +5,7 @@ import {
   type ValidationReport,
 } from '../../epub';
 import { el, formatBytes } from '../dom';
+import { renderKindleReadiness } from './KindleReadiness';
 
 export function renderFileSummary(report: ValidationReport): HTMLElement {
   const requiredRepairableCount = getRequiredRepairableCount(report);
@@ -60,6 +61,7 @@ export function renderFileSummary(report: ValidationReport): HTMLElement {
       }),
       renderScoreBar(report.stats.kindleScore),
       renderScoreBreakdown(report),
+      renderKindleReadiness(report),
       renderCoverSummary(report.cover),
     ],
   });
