@@ -639,37 +639,75 @@ function renderHero(): HTMLElement {
 }
 
 function renderEmptyState(): HTMLElement {
+  const previews = [
+    ['Compatibilidade', 'Score Kindle', 'Entenda como o arquivo se comporta em leitores digitais.', 'score'],
+    ['Reparo', 'Prioridades de correção', 'Saiba quais problemas merecem atenção primeiro.', 'priority'],
+    ['Estrutura', 'Arquivos afetados', 'Identifique os recursos relacionados às ocorrências.', 'files'],
+  ] as const;
+
   return el('section', {
-    className: 'panel empty-state report-welcome',
+    className: 'panel empty-state report-welcome diagnostic-welcome',
     attrs: { 'aria-labelledby': 'report-welcome-title' },
     children: [
-      el('div', { className: 'report-welcome-art', attrs: { 'aria-hidden': 'true' }, children: [
-        el('span', { className: 'report-welcome-art-ring' }),
-        el('div', { className: 'empty-illustration', children: [
-          el('span'), el('span'), el('span'),
-        ] }),
-        el('span', { className: 'report-welcome-art-stamp', text: 'EPUB' }),
-      ] }),
-      el('div', { className: 'report-welcome-copy', children: [
-        el('span', { className: 'report-welcome-kicker', text: '03 / DIAGNÓSTICO' }),
-        el('h2', { text: 'Envie um EPUB para começar',
-          attrs: { id: 'report-welcome-title' } }),
-        el('p', { className: 'report-welcome-description',
-          text: 'Depois da verificação, você encontrará aqui um relatório claro, com o que está certo e o que merece atenção.' }),
-        el('div', { className: 'report-welcome-highlights',
-          attrs: { 'aria-label': 'Informações disponíveis no relatório' },
-          children: [
-            el('span', { text: 'Score Kindle' }),
-            el('span', { text: 'Prioridades de correção' }),
-            el('span', { text: 'Arquivos afetados' }),
-          ],
-        }),
-        el('a', { className: 'report-welcome-link', text: 'Escolher um EPUB',
-          attrs: { href: '#upload' }, children: [
-            el('span', { attrs: { 'aria-hidden': 'true' }, text: '↗' }),
-          ],
-        }),
-      ] }),
+      el('div', {
+        className: 'diagnostic-visual',
+        attrs: { 'aria-hidden': 'true' },
+        children: [
+          el('span', { className: 'diagnostic-visual-label', text: 'INSPEÇÃO DO ARQUIVO' }),
+          el('div', {
+            className: 'diagnostic-art',
+            children: [
+              el('div', { className: 'diagnostic-sheet diagnostic-sheet-back' }),
+              el('div', { className: 'diagnostic-sheet diagnostic-sheet-front', children: [
+                el('span', { className: 'diagnostic-sheet-title', text: 'EPUB' }),
+                el('div', { className: 'diagnostic-sheet-lines', children: [
+                  el('i'), el('i'), el('i'), el('i'),
+                ] }),
+                el('span', { className: 'diagnostic-sheet-chart', children: [
+                  el('i'), el('i'), el('i'),
+                ] }),
+              ] }),
+              el('span', { className: 'diagnostic-lens' }),
+              el('span', { className: 'diagnostic-scan-line' }),
+            ],
+          }),
+          el('span', { className: 'diagnostic-visual-caption', text: 'Estrutura · Compatibilidade · Recursos' }),
+        ],
+      }),
+      el('div', {
+        className: 'report-welcome-copy diagnostic-copy',
+        children: [
+          el('div', { className: 'diagnostic-intro', children: [
+            el('span', { className: 'report-welcome-kicker', text: '03 / DIAGNÓSTICO' }),
+            el('span', { className: 'diagnostic-waiting', text: 'Aguardando EPUB' }),
+          ] }),
+          el('h2', { text: 'Envie um EPUB para começar',
+            attrs: { id: 'report-welcome-title' } }),
+          el('p', { className: 'report-welcome-description',
+            text: 'Descubra o que está certo no seu livro, o que pode ser corrigido e quais pontos precisam de uma revisão.' }),
+          el('div', {
+            className: 'diagnostic-preview-grid',
+            attrs: { 'aria-label': 'Informações disponíveis no relatório' },
+            children: previews.map(([category, title, description, type]) =>
+              el('div', {
+                className: 'diagnostic-preview diagnostic-preview-' + type,
+                children: [
+                  el('span', { className: 'diagnostic-preview-icon', attrs: { 'aria-hidden': 'true' } }),
+                  el('small', { className: 'diagnostic-preview-category', text: category }),
+                  el('strong', { text: title }),
+                  el('p', { text: description }),
+                ],
+              }),
+            ),
+          }),
+          el('a', { className: 'report-welcome-link diagnostic-upload-link',
+            attrs: { href: '#upload' }, children: [
+              'Escolher um EPUB',
+              el('span', { attrs: { 'aria-hidden': 'true' }, text: '↗' }),
+            ],
+          }),
+        ],
+      }),
     ],
   });
 }
