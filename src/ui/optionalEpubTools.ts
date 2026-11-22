@@ -1246,10 +1246,46 @@ function renderWorkbenchBookIcon(): SVGSVGElement {
   return svg;
 }
 
+function renderWorkbenchTabIcon(key: ExtraTab): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'workbench-tool-icon');
+  svg.setAttribute('viewBox', '0 0 32 32');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.65');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+
+  const strokes: Record<ExtraTab, string[]> = {
+    preview: [
+      'M16 8C12 5.5 7.5 5.3 3.5 7V24C8 22 12.5 22.5 16 25C19.5 22.5 24 22 28.5 24V7C24.5 5.3 20 5.5 16 8Z',
+      'M16 8V25M7 11L12.5 12M7 15L12.5 16M19.5 12L25 11M19.5 16L25 15',
+    ],
+    compare: [
+      'M4 5H13.5V27H4ZM18.5 5H28V27H18.5Z',
+      'M7 10H10.5M7 14H10.5M7 18H10.5M21.5 10H25M21.5 14H25M21.5 22H25',
+      'M21.5 18H25',
+    ],
+    metadata: [
+      'M6 4H20L26 10V28H6Z M20 4V10H26',
+      'M10 13H15M10 17H22M10 21H19M10 25H16',
+      'M19 13H22',
+    ],
+  };
+
+  for (const d of strokes[key]) {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    svg.append(path);
+  }
+  return svg;
+}
+
 export function renderOptionalEpubTools(state: AppState, rerender: () => void, enqueue: Queue): HTMLElement {
   const s = sessionFor(state);
   const details = el('details', {
-    className: 'panel optional-tools optional-studio optional-workbench',
+    className: 'panel optional-tools optional-studio optional-workbench workbench-editorial-v2',
     attrs: { id: 'optional-tools' },
     children: [
       el('summary', { className: 'workbench-heading-row', children: [
@@ -1257,15 +1293,26 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
           children: [
             el('span', { className: 'workbench-header-orbit' }),
             renderWorkbenchBookIcon(),
+            el('span', { className: 'workbench-art-label', text: 'EPUB / STUDIO' }),
           ],
         }),
         el('span', { className: 'optional-studio-heading workbench-heading', children: [
           el('span', { className: 'workbench-heading-eyebrow-row', children: [
             el('span', { className: 'optional-studio-eyebrow', text: 'RECURSOS COMPLEMENTARES' }),
-            el('span', { className: 'workbench-heading-count', text: '03 FERRAMENTAS' }),
+            el('span', { className: 'workbench-heading-count', children: [
+              el('b', { text: '03' }),
+              el('span', { text: 'FERRAMENTAS' }),
+            ] }),
           ] }),
           el('strong', { text: 'Ferramentas extras' }),
           el('small', { text: 'Leia, compare versões e edite metadados.' }),
+          el('span', { className: 'workbench-summary-features', attrs: { 'aria-hidden': 'true' },
+            children: [
+              el('span', { text: 'Leitura' }),
+              el('span', { text: 'Comparação' }),
+              el('span', { text: 'Metadados' }),
+            ],
+          }),
         ] }),
         el('span', { className: 'optional-studio-summary-action workbench-disclosure',
           attrs: { 'aria-hidden': 'true' }, children: [
@@ -1290,7 +1337,10 @@ export function renderOptionalEpubTools(state: AppState, rerender: () => void, e
             });
             tab.setAttribute('aria-pressed', String(active));
             tab.setAttribute('aria-label', label);
+            tab.setAttribute('data-workbench-tool', key);
             tab.append(
+              el('span', { className: 'workbench-tool-emblem', attrs: { 'aria-hidden': 'true' },
+                children: [renderWorkbenchTabIcon(key)] }),
               el('span', { className: 'optional-studio-tab-index workbench-tab-number',
                 attrs: { 'aria-hidden': 'true' },
                 text: String(index + 1).padStart(2, '0') }),
