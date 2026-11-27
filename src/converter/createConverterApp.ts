@@ -53,6 +53,31 @@ function render(root: HTMLElement, state: ConverterState, rerender: () => void):
   );
 }
 
+function renderPdfJourneyIcon(index: number): SVGSVGElement {
+  const iconPaths = [
+    ['M8 3.5h11l5 5V27H8z', 'M19 3.5v5h5', 'M12 15h8', 'M12 19h8', 'M12 23h5'],
+    ['M5 9l11-5 11 5-11 5z', 'M5 15l11 5 11-5', 'M5 20l11 5 11-5'],
+    ['M6 4h13l5 5v17H6z', 'M19 4v5h5', 'M10 14h9', 'M10 18h6', 'M14 25l3.2-.5L25 16.7l-2.7-2.7-7.8 7.8z'],
+    ['M6 5h11v16H6z', 'M17 5h9v16h-9', 'M11 24v4h10v-4', 'M18 12v7', 'M15.5 16.5L18 19l2.5-2.5'],
+  ];
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 32 32');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.55');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('class', 'pdf-journey-icon');
+
+  for (const d of iconPaths[index] ?? iconPaths[0]!) {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    svg.append(path);
+  }
+  return svg;
+}
+
 function renderWorkflowRail(state: ConverterState): HTMLElement {
   const generating = state.busy && /montando|renderizando|compactando|acabamento|validando/iu.test(state.progress);
   const current = state.result
@@ -67,51 +92,82 @@ function renderWorkflowRail(state: ConverterState): HTMLElement {
   const steps = [
     ['Selecionar PDF', 'Escolha o documento de origem'],
     ['Reconstruir', 'Texto, imagens e estrutura'],
-    ['Revisar', 'Confira e ajuste antes de gerar'],
+    ['Revisar', 'Confira e ajuste o conteúdo'],
     [
       generating && !state.result ? 'Gerando EPUB' : 'Baixar EPUB',
-      generating && !state.result ? 'Montagem e validação do arquivo' : 'Arquivo validado e pronto',
+      generating && !state.result ? 'Montagem e validação' : 'Arquivo validado e pronto',
     ],
   ];
 
   return el('nav', {
-    className: 'converter-workflow pdf-conversion-journey',
+    className: 'converter-workflow pdf-conversion-journey pdf-journey-editorial',
     attrs: { 'aria-label': 'Etapas da conversão' },
-    children: [el('ol', {
-      children: steps.map(([title, detail], index) => {
+    children: [
+      el('div', { className: 'pdf-journey-header', children: [
+        el('div', { className: 'pdf-journey-intro', children: [
+          el('span', { className: 'pdf-journey-eyebrow', text: 'PDF  /  EPUB' }),
+          el('strong', { className: 'pdf-journey-title', text: 'Seu percurso' }),
+          el('span', { className: 'pdf-journey-subtitle',
+            text: 'Do documento original ao livro digital.' }),
+        ] }),
+        el('div', { className: 'pdf-journey-counter',
+          attrs: { 'aria-label': state.result
+            ? 'Conversão concluída, quatro de quatro etapas'
+            : `Etapa ${current} de 4` },
+          children: [
+            el('span', { className: 'pdf-journey-counter-label',
+              text: state.result ? 'CONCLUÍDO' : 'PROGRESSO' }),
+            el('span', { className: 'pdf-journey-counter-value', children: [
+              el('strong', { text: String(current).padStart(2, '0') }),
+              el('small', { text: '/ 04' }),
+            ] }),
+          ],
+        }),
+      ] }),
+      el('div', { className: 'pdf-journey-progress-track',
+        attrs: { 'aria-hidden': 'true' },
+        children: steps.map((_, index) => {
+          const number = index + 1;
+          const status = number < current || (state.result && number === current)
+            ? 'complete'
+            : number === current ? 'active' : 'pending';
+          return el('span', { className: `pdf-journey-progress-segment pdf-journey-progress-${status}` });
+        }),
+      }),
+      el('ol', { children: steps.map(([title, detail], index) => {
         const number = index + 1;
         const status = number < current || (state.result && number === current)
           ? 'complete'
           : number === current
             ? 'active'
             : 'pending';
-
         return el('li', {
           className: `converter-workflow-step converter-workflow-${status}`,
           attrs: status === 'active' ? { 'aria-current': 'step' } : {},
           children: [
-            el('span', {
-              className: 'converter-workflow-number',
-              text: String(number).padStart(2, '0'),
-              attrs: { 'aria-hidden': 'true' },
-            }),
-            el('span', {
-              className: 'converter-workflow-copy',
-              children: [
-                status === 'active'
-                  ? el('span', { className: 'pdf-journey-state', text: 'Agora' })
-                  : undefined,
-                status === 'complete'
-                  ? el('span', { className: 'visually-hidden', text: 'Etapa concluída: ' })
-                  : undefined,
-                el('strong', { text: title ?? '' }),
-                el('small', { text: detail ?? '' }),
-              ],
-            }),
+            el('span', { className: 'pdf-journey-stage-head', children: [
+              el('span', { className: 'converter-workflow-number',
+                attrs: { 'aria-hidden': 'true' },
+                text: String(number).padStart(2, '0') }),
+              el('span', { className: 'pdf-journey-stage-symbol',
+                attrs: { 'aria-hidden': 'true' }, children: [
+                  renderPdfJourneyIcon(index),
+                ] }),
+            ] }),
+            el('span', { className: 'converter-workflow-copy', children: [
+              el('strong', { text: title ?? '' }),
+              el('small', { text: detail ?? '' }),
+            ] }),
+            status === 'active'
+              ? el('span', { className: 'pdf-journey-stage-status', text: 'AGORA' })
+              : undefined,
+            status === 'complete'
+              ? el('span', { className: 'visually-hidden', text: 'Etapa concluída' })
+              : undefined,
           ],
         });
-      }),
-    })],
+      }) }),
+    ],
   });
 }
 
