@@ -65,37 +65,53 @@ function renderWorkflowRail(state: ConverterState): HTMLElement {
           ? 2
           : 1;
   const steps = [
-    ['Selecionar PDF', 'Escolha o documento'],
-    ['Processar', 'Texto, imagens e estrutura'],
-    ['Revisar', 'Confira e ajuste'],
-    ['Gerar e baixar', 'EPUB validado'],
+    ['Selecionar PDF', 'Escolha o documento de origem'],
+    ['Reconstruir', 'Texto, imagens e estrutura'],
+    ['Revisar', 'Confira e ajuste antes de gerar'],
+    [
+      generating && !state.result ? 'Gerando EPUB' : 'Baixar EPUB',
+      generating && !state.result ? 'Montagem e validação do arquivo' : 'Arquivo validado e pronto',
+    ],
   ];
+
   return el('nav', {
     className: 'converter-workflow pdf-conversion-journey',
     attrs: { 'aria-label': 'Etapas da conversão' },
-    children: [el('ol', { children: steps.map(([title, detail], index) => {
-      const number = index + 1;
-      const status = number < current || (state.result && number === current)
-        ? 'complete'
-        : number === current
-          ? 'active'
-          : 'pending';
-      return el('li', {
-        className: `converter-workflow-step converter-workflow-${status}`,
-        attrs: status === 'active' ? { 'aria-current': 'step' } : {},
-        children: [
-          el('span', { className: 'converter-workflow-number',
-            attrs: { 'aria-hidden': 'true' },
-            text: status === 'complete' ? '✓' : String(number).padStart(2, '0') }),
-          el('span', { className: 'converter-workflow-copy', children: [
-            el('span', { className: 'pdf-journey-state',
-              text: status === 'complete' ? 'Concluída' : status === 'active' ? 'Etapa atual' : 'A seguir' }),
-            el('strong', { text: title ?? '' }),
-            el('small', { text: detail ?? '' }),
-          ] }),
-        ],
-      });
-    }) })],
+    children: [el('ol', {
+      children: steps.map(([title, detail], index) => {
+        const number = index + 1;
+        const status = number < current || (state.result && number === current)
+          ? 'complete'
+          : number === current
+            ? 'active'
+            : 'pending';
+
+        return el('li', {
+          className: `converter-workflow-step converter-workflow-${status}`,
+          attrs: status === 'active' ? { 'aria-current': 'step' } : {},
+          children: [
+            el('span', {
+              className: 'converter-workflow-number',
+              text: String(number).padStart(2, '0'),
+              attrs: { 'aria-hidden': 'true' },
+            }),
+            el('span', {
+              className: 'converter-workflow-copy',
+              children: [
+                status === 'active'
+                  ? el('span', { className: 'pdf-journey-state', text: 'Agora' })
+                  : undefined,
+                status === 'complete'
+                  ? el('span', { className: 'visually-hidden', text: 'Etapa concluída: ' })
+                  : undefined,
+                el('strong', { text: title ?? '' }),
+                el('small', { text: detail ?? '' }),
+              ],
+            }),
+          ],
+        });
+      }),
+    })],
   });
 }
 
