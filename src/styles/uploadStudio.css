@@ -1,0 +1,1729 @@
+#app .upload-studio-panel {
+  --upload-tone: #245e48;
+  --upload-tone-dark: #163c30;
+  --upload-tone-wash: #e9f1e8;
+  --upload-paper: #fffaf3;
+  --upload-copper: #c67a55;
+}
+
+#app .converter-upload-panel.upload-studio-panel {
+  --upload-tone: #a95d3e;
+  --upload-tone-dark: #733e2c;
+  --upload-tone-wash: #f7e6d8;
+}
+
+#app .upload-studio-panel .upload-studio-heading {
+  display: grid;
+  justify-items: center;
+  gap: .48rem;
+  width: 100%;
+  max-width: 39rem;
+  margin: 0 auto clamp(.9rem, 2vw, 1.4rem);
+  text-align: center;
+}
+
+#app .upload-studio-heading .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: .7rem;
+  width: fit-content;
+  margin: 0 0 .1rem;
+  color: var(--studio-copper);
+  font-size: .68rem;
+  font-weight: 850;
+  letter-spacing: .18em;
+}
+
+#app .upload-studio-heading .eyebrow::before {
+  width: 1.2rem;
+  height: 1px;
+  background: currentColor;
+  content: "";
+}
+
+#app .upload-studio-heading h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.65rem, 2.35vw, 2.3rem);
+  font-weight: 750;
+  letter-spacing: -.048em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+#app .upload-studio-heading .muted {
+  max-width: 34rem;
+  margin: .08rem 0 0;
+  color: var(--color-text-muted);
+  font-size: .89rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+#app .dropzone.upload-studio-zone,
+#app .converter-dropzone.upload-studio-zone {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  min-height: clamp(19rem, 28vw, 23.5rem);
+  padding: clamp(1.4rem, 3.2vw, 2.4rem) clamp(1rem, 3vw, 2rem);
+  overflow: hidden;
+  border: 1.5px dashed color-mix(in srgb, var(--upload-tone) 39%, var(--color-border));
+  border-radius: 1.3rem;
+  background:
+    radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--upload-tone) 9%, transparent), transparent 12rem),
+    radial-gradient(circle, color-mix(in srgb, var(--upload-tone) 19%, transparent) .7px, transparent .95px) 0 0 / 19px 19px,
+    color-mix(in srgb, var(--color-surface) 90%, var(--upload-tone-wash));
+  box-shadow: inset 0 0 0 6px color-mix(in srgb, var(--color-surface) 72%, transparent);
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: center;
+  transform: none;
+  transition: border-color 240ms ease, background-color 240ms ease,
+    box-shadow 300ms ease, transform 320ms cubic-bezier(.2,.8,.2,1);
+}
+
+#app .dropzone.upload-studio-zone::before {
+  display: none;
+  content: none;
+}
+
+#app .upload-studio-zone::after {
+  position: absolute;
+  z-index: -1;
+  right: -5rem;
+  bottom: -8rem;
+  width: 17rem;
+  height: 17rem;
+  border: 1px solid color-mix(in srgb, var(--upload-tone) 13%, transparent);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+#app .dropzone.upload-studio-zone:is(:hover, :focus-visible, .dropzone-active),
+#app .converter-dropzone.upload-studio-zone:is(:hover, :focus-visible, .converter-dropzone-active) {
+  border-color: color-mix(in srgb, var(--upload-tone) 78%, var(--color-border));
+  background:
+    radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--upload-tone) 12%, transparent), transparent 12rem),
+    radial-gradient(circle, color-mix(in srgb, var(--upload-tone) 20%, transparent) .7px, transparent .95px) 0 0 / 19px 19px,
+    color-mix(in srgb, var(--color-surface) 83%, var(--upload-tone-wash));
+  box-shadow: inset 0 0 0 6px color-mix(in srgb, var(--color-surface) 70%, transparent),
+    0 .9rem 1.8rem color-mix(in srgb, var(--upload-tone) 10%, transparent);
+  transform: translateY(-2px);
+}
+
+#app .upload-studio-zone:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 4px;
+}
+
+#app .upload-studio-zone.upload-studio-busy {
+  cursor: progress;
+  transform: none;
+}
+
+#app .upload-studio-zone.upload-studio-busy:hover {
+  transform: none;
+}
+
+#app .upload-studio-zone.upload-studio-loaded {
+  min-height: clamp(17rem, 23vw, 20rem);
+  border-style: solid;
+}
+
+#app .upload-studio-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: .48rem;
+  max-width: 100%;
+  margin-bottom: 1.25rem;
+  padding: .45rem .78rem;
+  border: 1px solid color-mix(in srgb, var(--upload-tone) 20%, var(--color-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-surface) 86%, transparent);
+  color: var(--color-text-muted);
+  font-size: .66rem;
+  font-weight: 800;
+  letter-spacing: .075em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+#app .upload-studio-dot {
+  display: block;
+  width: .43rem;
+  height: .43rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--upload-tone);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--upload-tone) 13%, transparent);
+}
+
+#app .upload-studio-graphic {
+  position: relative;
+  display: block;
+  width: 5.9rem;
+  height: 5.4rem;
+  margin: 0 auto 1.28rem;
+  color: var(--upload-tone);
+  transform: translateZ(0);
+}
+
+#app .upload-studio-sheet {
+  position: absolute;
+  display: block;
+  width: 3.55rem;
+  height: 4.4rem;
+  border: 1.5px solid color-mix(in srgb, var(--upload-tone) 60%, var(--color-border));
+  border-radius: .55rem .65rem .65rem .55rem;
+  background: var(--color-surface);
+  box-shadow: 0 .7rem 1.6rem rgba(21, 54, 39, .09);
+  transition: transform 340ms cubic-bezier(.2,.8,.2,1);
+}
+
+#app .upload-studio-sheet-back {
+  top: .32rem;
+  left: 1.44rem;
+  border-color: color-mix(in srgb, var(--upload-tone) 32%, var(--color-border));
+  background: color-mix(in srgb, var(--upload-tone-wash) 75%, var(--color-surface));
+  transform: rotate(12deg);
+}
+
+#app .upload-studio-sheet-front {
+  top: .15rem;
+  left: 1rem;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--upload-tone) 12%, transparent) 0 .34rem, transparent .34rem),
+    var(--color-surface);
+  transform: rotate(-7deg);
+}
+
+#app .upload-studio-lines {
+  position: absolute;
+  z-index: 1;
+  top: 1.3rem;
+  left: .8rem;
+  width: 2rem;
+  height: 1.9rem;
+  background: repeating-linear-gradient(180deg, var(--upload-tone) 0 2px, transparent 2px 9px);
+  opacity: .43;
+  pointer-events: none;
+}
+
+#app .upload-studio-graphic-tag {
+  position: absolute;
+  z-index: 2;
+  right: .1rem;
+  bottom: .05rem;
+  display: grid;
+  min-width: 2.55rem;
+  min-height: 1.48rem;
+  padding: .15rem .35rem;
+  place-items: center;
+  border: 2px solid var(--color-surface);
+  border-radius: .45rem;
+  background: var(--upload-tone);
+  box-shadow: 0 .35rem .7rem rgba(21, 54, 39, .15);
+  color: #fffaf1;
+  font-size: .62rem;
+  font-weight: 900;
+  letter-spacing: .055em;
+}
+
+#app .upload-studio-content {
+  display: grid;
+  justify-items: center;
+  gap: .4rem;
+  width: 100%;
+  min-width: 0;
+}
+
+#app .upload-studio-zone strong.upload-studio-title {
+  display: block;
+  max-width: min(100%, 32rem);
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.3rem, 2.1vw, 1.7rem);
+  font-weight: 750;
+  letter-spacing: -.042em;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+#app .upload-studio-subtitle {
+  display: block;
+  max-width: min(100%, 29rem);
+  color: var(--color-text-muted);
+  font-size: .88rem;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+#app .upload-studio-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .8rem;
+  min-width: min(100%, 12.5rem);
+  min-height: 2.85rem;
+  margin-top: 1.3rem;
+  padding: .68rem 1rem;
+  border: 1px solid var(--upload-tone-dark);
+  border-radius: .75rem;
+  background: var(--upload-tone);
+  box-shadow: 0 .3rem 0 color-mix(in srgb, var(--upload-tone-dark) 34%, transparent);
+  color: #fffaf1;
+  font-size: .84rem;
+  font-weight: 800;
+  letter-spacing: -.008em;
+  line-height: 1.2;
+  transition: background-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+
+#app .upload-studio-action-arrow {
+  font-size: 1.03rem;
+  line-height: 1;
+  transition: transform 200ms ease;
+}
+
+#app .upload-studio-formats {
+  max-width: 100%;
+  margin-top: .95rem;
+  color: var(--color-text-muted);
+  font-size: .68rem;
+  line-height: 1.5;
+}
+
+#app .upload-studio-zone.upload-studio-loaded .upload-studio-action {
+  border-color: color-mix(in srgb, var(--upload-tone) 55%, var(--color-border));
+  background: var(--color-surface);
+  box-shadow: none;
+  color: var(--upload-tone);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #app .upload-studio-zone:not(.upload-studio-busy):hover .upload-studio-sheet-back {
+    transform: translate(.25rem, -.22rem) rotate(15deg);
+  }
+  #app .upload-studio-zone:not(.upload-studio-busy):hover .upload-studio-sheet-front {
+    transform: translate(-.18rem, -.18rem) rotate(-10deg);
+  }
+  #app .upload-studio-zone:not(.upload-studio-busy):hover .upload-studio-action {
+    box-shadow: 0 .36rem 0 color-mix(in srgb, var(--upload-tone-dark) 27%, transparent);
+    transform: translateY(-2px);
+  }
+  #app .upload-studio-zone:not(.upload-studio-busy):hover .upload-studio-action-arrow {
+    transform: translate(.15rem, -.15rem);
+  }
+}
+
+#app .upload-studio-file.file-pill {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: .85rem;
+  width: 100%;
+  min-width: 0;
+  margin-top: .1rem;
+  padding: .85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-success) 29%, var(--color-border));
+  border-radius: .9rem;
+  background: color-mix(in srgb, var(--color-success) 6%, var(--color-surface));
+  box-shadow: none;
+}
+
+#app .upload-studio-file-symbol {
+  display: grid;
+  width: 2.65rem;
+  height: 3.1rem;
+  flex: 0 0 2.65rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--upload-tone) 38%, var(--color-border));
+  border-radius: .55rem;
+  background: color-mix(in srgb, var(--upload-tone) 9%, var(--color-surface));
+  color: var(--upload-tone);
+  font-size: .61rem;
+  font-weight: 850;
+  letter-spacing: .05em;
+}
+
+#app .upload-studio-file-copy {
+  display: grid;
+  flex: 1 1 auto;
+  gap: .2rem;
+  min-width: 0;
+}
+
+#app .upload-studio-file-name {
+  display: block;
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: .88rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#app .upload-studio-file-copy small {
+  color: var(--color-text-muted);
+  font-size: .73rem;
+  line-height: 1.4;
+}
+
+#app .upload-studio-file-size {
+  flex: 0 0 auto;
+  padding: .37rem .58rem;
+  border: 1px solid var(--color-border);
+  border-radius: .55rem;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: .74rem;
+  white-space: nowrap;
+}
+
+#app .layout#app-workspace .cover-picker-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2.2rem;
+  min-height: 15rem;
+  padding: clamp(1.3rem, 2.5vw, 1.85rem);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--studio-copper) 31%, var(--color-border));
+  border-radius: 1.2rem;
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--studio-copper) 13%, transparent), transparent 15rem),
+    var(--color-surface);
+}
+
+#app .layout#app-workspace .cover-picker-card::before {
+  position: absolute;
+  top: 1.45rem;
+  right: 1.45rem;
+  width: 2.8rem;
+  height: 3.5rem;
+  border: 1.5px solid color-mix(in srgb, var(--studio-copper) 67%, transparent);
+  border-radius: .28rem .6rem .38rem .3rem;
+  background: color-mix(in srgb, var(--studio-copper) 10%, transparent);
+  content: "";
+  transform: rotate(9deg);
+  pointer-events: none;
+}
+
+#app .layout#app-workspace .cover-picker-content {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  padding-right: 3.5rem;
+}
+
+#app .layout#app-workspace .cover-picker-content strong {
+  font-family: var(--font-serif);
+  font-size: 1.32rem;
+  letter-spacing: -.03em;
+}
+
+#app .layout#app-workspace .cover-picker-content p {
+  max-width: 33rem;
+  margin-top: .6rem;
+  font-size: .86rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+#app .layout#app-workspace .cover-action-buttons {
+  position: relative;
+  z-index: 1;
+  gap: .65rem;
+}
+
+#app .layout#app-workspace .cover-action-buttons .btn {
+  min-height: 2.95rem;
+  border-radius: .75rem;
+}
+
+#app .layout#app-workspace .cover-preview-card {
+  border: 1px solid var(--studio-line);
+  border-radius: 1.2rem;
+}
+
+#app .optional-batch-dropzone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+  min-height: 15rem;
+  padding: 1.6rem 1.2rem;
+  overflow: hidden;
+  border: 1.5px dashed color-mix(in srgb, var(--color-accent) 50%, var(--color-border));
+  border-radius: 1.1rem;
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--color-accent) 11%, transparent), transparent 13rem),
+    var(--color-surface);
+  transition: background-color 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+#app .optional-batch-dropzone:is(:hover, .optional-batch-dragging, :focus-visible) {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
+  box-shadow: 0 .7rem 1.6rem color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+#app .upload-studio-batch-icon {
+  display: grid;
+  width: 3.1rem;
+  height: 3.55rem;
+  place-items: center;
+  margin-bottom: .4rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 48%, var(--color-border));
+  border-radius: .45rem .75rem .55rem .45rem;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+  font-size: .65rem;
+  font-weight: 900;
+  letter-spacing: .05em;
+  transform: rotate(-6deg);
+}
+
+#app .optional-batch-dropzone > strong {
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  letter-spacing: -.03em;
+}
+
+#app .optional-batch-dropzone > span:not(.upload-studio-batch-icon):not(.upload-studio-batch-action) {
+  max-width: 30rem;
+  line-height: 1.55;
+}
+
+#app .upload-studio-batch-action {
+  display: inline-flex;
+  justify-content: center;
+  min-width: 11rem;
+  margin-top: .55rem;
+  padding: .72rem 1rem;
+  border: 1px solid var(--color-accent);
+  border-radius: .72rem;
+  color: #fffaf1 !important;
+  background: #245e48;
+  font-size: .84rem !important;
+  font-weight: 800;
+}
+
+#app .optional-batch-dropzone > small {
+  color: var(--color-text-muted);
+  font-size: .72rem;
+}
+
+#app .converter-form-section {
+  padding: clamp(1.1rem, 2.4vw, 1.6rem);
+  border: 1px solid var(--studio-line);
+  border-radius: 1.15rem;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--color-accent) 3%, transparent), transparent 70%),
+    var(--color-surface);
+}
+
+#app .converter-form-section-heading h3 {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  letter-spacing: -.04em;
+}
+
+#app .converter-field {
+  gap: .52rem;
+  color: var(--color-text);
+  font-size: .81rem;
+  font-weight: 750;
+  letter-spacing: .01em;
+}
+
+#app .converter-field input,
+#app .converter-field select,
+#app .converter-field textarea,
+#app .converter-editor textarea,
+#app .optional-metadata-grid input:not([type="checkbox"]),
+#app .optional-metadata-grid textarea {
+  min-height: 3.05rem;
+  padding: .8rem .95rem;
+  border: 1px solid color-mix(in srgb, var(--color-text) 12%, var(--color-border));
+  border-radius: .8rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-surface) 80%, transparent);
+  font-size: .9rem;
+  line-height: 1.45;
+  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+#app .converter-field input::placeholder,
+#app .converter-field textarea::placeholder,
+#app .optional-metadata-grid input::placeholder {
+  color: var(--color-text-muted);
+  opacity: .8;
+}
+
+#app .converter-field :is(input, select, textarea):hover,
+#app .converter-editor textarea:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 53%, var(--color-border));
+}
+
+#app .converter-field :is(input, select, textarea):focus-visible,
+#app .converter-editor textarea:focus-visible,
+#app .optional-metadata-grid input:focus-visible,
+#app .optional-metadata-grid textarea:focus-visible {
+  border-color: var(--color-accent);
+  outline: 2px solid color-mix(in srgb, var(--color-accent) 33%, transparent);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+#app .converter-option,
+#app .optional-batch-choice {
+  border-radius: .95rem;
+  background: var(--color-surface);
+}
+
+#app .converter-option:has(input:checked),
+#app .optional-batch-choice:has(input:checked) {
+  border-color: color-mix(in srgb, var(--color-accent) 58%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+}
+
+#app .converter-option:focus-within,
+#app .optional-batch-choice:focus-within {
+  outline: 2px solid color-mix(in srgb, var(--color-accent) 65%, transparent);
+  outline-offset: 2px;
+}
+
+#app .converter-how-card {
+  border: 1px solid var(--studio-line);
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--studio-copper) 9%, transparent), transparent 12rem),
+    var(--color-surface);
+}
+
+:root[data-theme="dark"] #app .upload-studio-panel {
+  --upload-tone: #7eb99b;
+  --upload-tone-dark: #325b49;
+  --upload-tone-wash: #293e32;
+  --upload-paper: #202b26;
+}
+
+:root[data-theme="dark"] #app .converter-upload-panel.upload-studio-panel {
+  --upload-tone: #e09c79;
+  --upload-tone-dark: #815038;
+  --upload-tone-wash: #48372d;
+}
+
+:root[data-theme="dark"] #app .upload-studio-action {
+  color: #16291f;
+}
+
+:root[data-theme="dark"] #app .upload-studio-zone.upload-studio-loaded .upload-studio-action,
+:root[data-theme="dark"] #app .upload-studio-zone .upload-studio-graphic-tag {
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] #app .upload-studio-batch-action {
+  border-color: #83b89d;
+  background: #32654d;
+}
+
+@media (max-width: 760px) {
+  #app .upload-studio-panel .upload-studio-heading {
+    margin-bottom: 1rem;
+  }
+
+  #app .dropzone.upload-studio-zone,
+  #app .converter-dropzone.upload-studio-zone {
+    min-height: 20rem;
+    padding: 1.25rem .9rem 1.35rem;
+    border-radius: 1.05rem;
+  }
+
+  #app .upload-studio-zone.upload-studio-loaded {
+    min-height: 18rem;
+  }
+
+  #app .upload-studio-heading h2 {
+    font-size: 1.7rem;
+  }
+
+  #app .upload-studio-formats {
+    max-width: 18rem;
+  }
+
+  #app .upload-studio-file.file-pill {
+    flex-direction: row;
+    gap: .65rem;
+    padding: .7rem .8rem;
+  }
+
+  #app .upload-studio-file-symbol {
+    width: 2.2rem;
+    height: 2.8rem;
+    flex-basis: 2.2rem;
+    font-size: .55rem;
+  }
+
+  #app .upload-studio-file-size {
+    font-size: .68rem;
+    padding: .32rem .42rem;
+  }
+
+  #app .layout#app-workspace .cover-picker-card {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 390px) {
+  #app .upload-studio-kicker {
+    font-size: .6rem;
+    padding: .4rem .58rem;
+  }
+
+  #app .upload-studio-zone strong.upload-studio-title {
+    font-size: 1.28rem;
+  }
+
+  #app .upload-studio-file.file-pill {
+    flex-wrap: wrap;
+  }
+
+  #app .upload-studio-file-size {
+    margin-left: 2.9rem;
+  }
+
+  #app .upload-studio-action {
+    min-height: 2.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .upload-studio-zone,
+  #app .upload-studio-sheet,
+  #app .upload-studio-action,
+  #app .upload-studio-action-arrow,
+  #app .optional-batch-dropzone,
+  #app .converter-field :is(input, select, textarea) {
+    transition: none;
+  }
+
+  #app .upload-studio-zone:is(:hover, :focus-visible),
+  #app .upload-studio-zone:hover .upload-studio-action,
+  #app .upload-studio-zone:hover .upload-studio-sheet {
+    transform: none;
+  }
+}
+
+
+/* Etapas da conversão PDF: uma composição única com progresso por marco. */
+#app .converter-workflow.pdf-journey-editorial {
+  --pdf-ink: #24553f;
+  --pdf-warm: #bf744e;
+  --pdf-line: color-mix(in srgb, var(--pdf-ink) 16%, var(--color-border));
+  --pdf-ease: cubic-bezier(.2,.8,.2,1);
+  position: relative;
+  display: grid;
+  gap: 0;
+  width: min(var(--container-wide), calc(100% - 2 * var(--page-gutter)));
+  margin: 0 auto clamp(1.15rem, 2.5vw, 1.75rem);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--pdf-line);
+  border-radius: clamp(1.1rem,2vw,1.5rem);
+  background: var(--color-surface);
+  box-shadow: 0 .8rem 2.2rem color-mix(in srgb,var(--color-text) 6%,transparent);
+  backdrop-filter: none;
+}
+
+:root[data-theme="dark"] #app .converter-workflow.pdf-journey-editorial {
+  --pdf-ink: #9dccb0;
+  --pdf-warm: #eda07a;
+  --pdf-line: color-mix(in srgb,var(--pdf-ink) 19%,var(--color-border));
+}
+
+#app .pdf-journey-editorial .pdf-journey-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(1.1rem,2.4vw,1.6rem) clamp(1.15rem,3vw,2.1rem) clamp(.85rem,1.8vw,1.2rem);
+  background: linear-gradient(108deg,color-mix(in srgb,var(--pdf-ink) 6%,var(--color-surface)),var(--color-surface) 76%);
+}
+
+#app .pdf-journey-editorial .pdf-journey-intro {
+  display: grid;
+  gap: .2rem;
+  min-width: 0;
+}
+
+#app .pdf-journey-editorial .pdf-journey-eyebrow {
+  color: var(--pdf-warm);
+  font-size: .63rem;
+  font-weight: 860;
+  letter-spacing: .17em;
+  line-height: 1.35;
+}
+
+#app .pdf-journey-editorial .pdf-journey-title {
+  color: var(--color-text);
+  font-family: var(--font-serif,Georgia,serif);
+  font-size: clamp(1.5rem,2.55vw,2.1rem);
+  font-weight: 780;
+  letter-spacing: -.047em;
+  line-height: 1.12;
+}
+
+#app .pdf-journey-editorial .pdf-journey-subtitle {
+  color: var(--color-text-muted);
+  font-size: .77rem;
+  line-height: 1.55;
+}
+
+#app .pdf-journey-editorial .pdf-journey-counter {
+  display: grid;
+  justify-items: end;
+  gap: .25rem;
+  flex: 0 0 auto;
+  min-width: 6.4rem;
+  padding-left: clamp(.7rem,2vw,1.5rem);
+  border-left: 1px solid var(--pdf-line);
+  color: var(--pdf-ink);
+}
+
+#app .pdf-journey-editorial .pdf-journey-counter-label {
+  color: var(--color-text-muted);
+  font-size: .59rem;
+  font-weight: 790;
+  line-height: 1.2;
+  letter-spacing: .1em;
+}
+
+#app .pdf-journey-editorial .pdf-journey-counter-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: .4rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+#app .pdf-journey-editorial .pdf-journey-counter-value strong {
+  font-family: var(--font-serif,Georgia,serif);
+  font-size: clamp(1.65rem,2.6vw,2.2rem);
+  font-weight: 780;
+  letter-spacing: -.045em;
+}
+#app .pdf-journey-editorial .pdf-journey-counter-value small {
+  color: var(--color-text-muted);
+  font-family: var(--font-serif,Georgia,serif);
+  font-size: .89rem;
+}
+
+#app .pdf-journey-editorial .pdf-journey-progress-track {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: .3rem;
+  padding: 0 clamp(1.15rem,3vw,2.1rem);
+  overflow: hidden;
+}
+
+#app .pdf-journey-editorial .pdf-journey-progress-segment {
+  position: relative;
+  display: block;
+  height: 3px;
+  border-radius: 1px;
+  overflow: hidden;
+  background: var(--pdf-line);
+}
+
+#app .pdf-journey-editorial .pdf-journey-progress-segment::after {
+  position: absolute;
+  inset: 0;
+  background: var(--pdf-ink);
+  content: '';
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 550ms var(--pdf-ease);
+}
+
+#app .pdf-journey-editorial .pdf-journey-progress-complete::after {
+  transform: scaleX(1);
+}
+
+#app .pdf-journey-editorial .pdf-journey-progress-active::after {
+  background: var(--pdf-warm);
+  transform: scaleX(.5);
+}
+
+#app .converter-workflow.pdf-journey-editorial ol {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 0;
+  align-items: stretch;
+  width: 100%;
+  margin: 0;
+  padding: clamp(.65rem,1.5vw,1rem);
+  list-style: none;
+  border: 0;
+}
+
+#app .converter-workflow.pdf-journey-editorial .converter-workflow-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  min-width: 0;
+  min-height: 10.25rem;
+  padding: clamp(.8rem,1.55vw,1.15rem) clamp(.7rem,1.45vw,1.35rem);
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: .95rem;
+  background: transparent;
+  color: var(--color-text);
+  box-shadow: none;
+  transition: background-color 350ms ease,box-shadow 350ms var(--pdf-ease),border-color 350ms ease;
+}
+
+#app .converter-workflow.pdf-journey-editorial .converter-workflow-step:not(:last-child)::after {
+  position: absolute;
+  top: 16%;
+  right: 0;
+  width: 1px;
+  height: 68%;
+  border: 0;
+  border-radius: 0;
+  background: var(--pdf-line);
+  content: '';
+  opacity: .85;
+  transform: none;
+}
+
+#app .converter-workflow.pdf-journey-editorial .converter-workflow-step::before {
+  display: none;
+  content: none;
+}
+
+#app .pdf-journey-editorial .pdf-journey-stage-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: .5rem;
+  min-width: 0;
+  margin-bottom: clamp(.7rem,1.4vw,1.1rem);
+}
+
+#app .converter-workflow.pdf-journey-editorial .converter-workflow-number {
+  position: relative;
+  display: block;
+  width: auto;
+  height: auto;
+  flex: initial;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: color-mix(in srgb,var(--pdf-ink) 50%,var(--color-text-muted));
+  box-shadow: none;
+  font-family: var(--font-serif,Georgia,serif);
+  font-size: clamp(1.9rem,2.65vw,2.55rem);
+  font-weight: 800;
+  line-height: .95;
+  letter-spacing: -.075em;
+}
+
+#app .pdf-journey-editorial .pdf-journey-stage-symbol {
+  position: relative;
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 2.35rem;
+  place-items: center;
+  border: 1px solid var(--pdf-line);
+  border-radius: .6rem;
+  background: color-mix(in srgb,var(--pdf-ink) 5%,var(--color-surface));
+  color: var(--pdf-ink);
+  transition: transform 400ms var(--pdf-ease),border-color 300ms ease,background-color 300ms ease;
+}
+
+#app .pdf-journey-editorial .pdf-journey-icon {
+  display: block;
+  width: 1.48rem;
+  height: 1.48rem;
+}
+
+#app .converter-workflow.pdf-journey-editorial .converter-workflow-copy {
+  display: grid;
+  gap: .4rem;
+  min-width: 0;
+  margin: 0;
+  align-content: start;
+}
+
+#app .converter-workflow.pdf-journey-editorial .converter-workflow-copy strong {
+  display: block;
+  color: inherit;
+  font-family: var(--font-serif,Georgia,serif);
+  font-size: clamp(1.04rem,1.55vw,1.35rem);
+  font-weight: 760;
+  letter-spacing: -.033em;
+  line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: initial;
+}
+
+#app .converter-workflow.pdf-journey-editorial .converter-workflow-copy small {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: clamp(.7rem,.92vw,.79rem);
+  font-weight: 450;
+  line-height: 1.55;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: initial;
+}
+
+#app .converter-workflow.pdf-journey-editorial .converter-workflow-active {
+  border-color: #285c44;
+  background: linear-gradient(140deg,#285e46,#194333);
+  color: #fff8ee;
+  box-shadow: 0 .5rem 1rem rgba(20,57,37,.13);
+  z-index: 1;
+}
+
+#app .converter-workflow.pdf-journey-editorial .converter-workflow-active::after {
+  display: none;
+  content: none;
+}
+
+#app .converter-workflow.pdf-journey-editorial .converter-workflow-active .converter-workflow-number {
+  color: #f4bf98;
+  background: none;
+  box-shadow: none;
+  border: 0;
+}
+
+#app .pdf-journey-editorial .converter-workflow-active .pdf-journey-stage-symbol {
+  border-color: rgba(247,193,151,.44);
+  background: rgba(255,248,238,.09);
+  color: #f3bb90;
+}
+
+#app .pdf-journey-editorial .converter-workflow-active .converter-workflow-copy small { color: #d9e7d9; }
+
+#app .pdf-journey-editorial .pdf-journey-stage-status {
+  display: inline-flex;
+  align-self: start;
+  align-items: center;
+  gap: .35rem;
+  margin-top: auto;
+  padding-top: .8rem;
+  color: #f3c4a3;
+  font-size: .63rem;
+  font-weight: 850;
+  letter-spacing: .11em;
+  line-height: 1.3;
+}
+
+#app .pdf-journey-editorial .pdf-journey-stage-status::before {
+  display: block;
+  width: .7rem;
+  height: 2px;
+  background: currentColor;
+  content: '';
+}
+
+#app .converter-workflow.pdf-journey-editorial .converter-workflow-complete {
+  color: var(--color-text);
+  background: color-mix(in srgb,var(--pdf-ink) 5%,var(--color-surface));
+}
+
+#app .converter-workflow.pdf-journey-editorial .converter-workflow-complete .converter-workflow-number {
+  color: var(--pdf-ink);
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+
+#app .pdf-journey-editorial .converter-workflow-complete .pdf-journey-stage-symbol {
+  border-color: color-mix(in srgb,var(--pdf-ink) 28%,var(--color-border));
+  background: color-mix(in srgb,var(--pdf-ink) 10%,var(--color-surface));
+  color: var(--pdf-ink);
+}
+
+#app .pdf-journey-editorial .converter-workflow-complete .pdf-journey-stage-symbol::after {
+  position: absolute;
+  right: -.15rem;
+  bottom: -.12rem;
+  width: .8rem;
+  height: .8rem;
+  display: grid;
+  place-items: center;
+  border-radius: .2rem;
+  background: var(--pdf-ink);
+  color: var(--color-surface);
+  font-family: var(--font-sans,sans-serif);
+  font-size: .6rem;
+  font-weight: 800;
+  content: '✓';
+}
+
+#app .converter-workflow.pdf-journey-editorial .converter-workflow-complete .converter-workflow-copy small { color: var(--color-text-muted); }
+
+@media (hover:hover) and (pointer:fine) {
+  #app .converter-workflow.pdf-journey-editorial .converter-workflow-step:not(.converter-workflow-active):hover {
+    background: color-mix(in srgb,var(--pdf-ink) 8%,var(--color-surface));
+  }
+  #app .converter-workflow.pdf-journey-editorial .converter-workflow-step:hover .pdf-journey-stage-symbol {
+    transform: translateY(-2px);
+  }
+}
+
+/* Upload panel */
+#app .converter-main > .converter-upload-panel.pdf-upload-studio {
+  --pdf-upload-ink: #245740;
+  --pdf-upload-copper: #c77b52;
+  --pdf-upload-rule: color-mix(in srgb, var(--pdf-upload-ink) 21%, var(--color-border));
+  --pdf-upload-ease: cubic-bezier(.2,.8,.2,1);
+  border-color: var(--pdf-upload-rule);
+  border-radius: 1.35rem;
+  background: var(--color-surface);
+  box-shadow: 0 .6rem 1.9rem color-mix(in srgb,var(--color-text) 5%,transparent);
+}
+
+:root[data-theme="dark"] #app .converter-main > .converter-upload-panel.pdf-upload-studio {
+  --pdf-upload-ink: #9dbfa8;
+  --pdf-upload-copper: #eda381;
+  --pdf-upload-rule: color-mix(in srgb, var(--pdf-upload-ink) 18%, var(--color-border));
+}
+
+#app .pdf-upload-studio .upload-studio-heading.pdf-upload-heading {
+  display: grid;
+  justify-items: start;
+  gap: .5rem;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 clamp(1.25rem,2.7vw,1.75rem);
+  text-align: left;
+}
+
+#app .pdf-upload-studio .pdf-upload-eyebrow-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .55rem 1rem;
+  width: 100%;
+  justify-content: space-between;
+}
+
+#app .pdf-upload-studio .pdf-upload-heading .eyebrow {
+  margin: 0;
+  color: var(--pdf-upload-copper);
+  font-size: .68rem;
+  letter-spacing: .12em;
+}
+
+#app .pdf-upload-studio .pdf-upload-process-label {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .3rem .55rem;
+  border: 1px solid var(--pdf-upload-rule);
+  border-radius: .45rem;
+  background: color-mix(in srgb,var(--pdf-upload-ink) 5%,var(--color-surface));
+  color: var(--pdf-upload-ink);
+  font-size: .61rem;
+  font-weight: 780;
+  letter-spacing: .075em;
+  line-height: 1.2;
+}
+
+#app .pdf-upload-studio .pdf-upload-process-label::before {
+  display: block;
+  width: .48rem;
+  height: .48rem;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  content: '';
+  transform: rotate(45deg);
+}
+
+#app .pdf-upload-studio .upload-studio-heading.pdf-upload-heading h2 {
+  font-size: clamp(1.7rem, 2.8vw, 2.35rem);
+  line-height: 1.13;
+  text-wrap: normal;
+}
+
+#app .pdf-upload-studio .upload-studio-heading.pdf-upload-heading .muted {
+  max-width: 65ch;
+  margin: 0;
+  font-size: .88rem;
+  line-height: 1.6;
+}
+
+#app .converter-dropzone.upload-studio-zone-pdf.pdf-drop-stage {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: clamp(7.2rem,18%,9.2rem) minmax(0,1fr);
+  grid-template-areas:
+    "kicker kicker"
+    "graphic content"
+    "graphic action"
+    "formats formats";
+  justify-items: start;
+  align-items: center;
+  align-content: center;
+  column-gap: clamp(.8rem,2.5vw,1.7rem);
+  row-gap: .8rem;
+  width: 100%;
+  min-height: clamp(17.5rem,24vw,21rem);
+  padding: clamp(1.15rem,2.3vw,1.7rem);
+  overflow: hidden;
+  border: 1.5px dashed color-mix(in srgb,var(--pdf-upload-copper) 49%,var(--color-border));
+  border-radius: 1rem;
+  background:
+    linear-gradient(135deg,color-mix(in srgb,var(--pdf-upload-copper) 7%,var(--color-surface)),var(--color-surface) 70%);
+  box-shadow: inset 0 0 0 5px color-mix(in srgb,var(--pdf-upload-copper) 3%,transparent), 0 0 0 rgba(0,0,0,0);
+  text-align: left;
+  transform: none;
+  transition: border-color 320ms ease, background-color 320ms ease,
+    box-shadow 380ms var(--pdf-upload-ease), transform 380ms var(--pdf-upload-ease);
+}
+
+#app .converter-dropzone.upload-studio-zone-pdf.pdf-drop-stage::before {
+  position: absolute;
+  top: .95rem;
+  right: .95rem;
+  display: block;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-top: 1.5px solid var(--pdf-upload-copper);
+  border-right: 1.5px solid var(--pdf-upload-copper);
+  content: "";
+  opacity: .72;
+  pointer-events: none;
+}
+
+#app .converter-dropzone.upload-studio-zone-pdf.pdf-drop-stage::after {
+  position: absolute;
+  z-index: 0;
+  right: 1rem;
+  bottom: .95rem;
+  width: 1.3rem;
+  height: 1.3rem;
+  border: 0;
+  border-bottom: 1.5px solid var(--pdf-upload-copper);
+  border-right: 1.5px solid var(--pdf-upload-copper);
+  border-radius: 0;
+  background: transparent;
+  content: "";
+  pointer-events: none;
+}
+
+#app .pdf-drop-stage .upload-studio-kicker {
+  grid-area: kicker;
+  margin: 0 0 .35rem;
+  border-color: color-mix(in srgb,var(--pdf-upload-ink) 25%,var(--color-border));
+  border-radius: .45rem;
+  background: color-mix(in srgb,var(--pdf-upload-ink) 5%,var(--color-surface));
+  color: var(--pdf-upload-ink);
+  font-size: .64rem;
+  letter-spacing: .07em;
+}
+
+#app .pdf-drop-stage .upload-studio-dot { background: var(--pdf-upload-copper); box-shadow: none; border-radius: 2px; }
+
+#app .pdf-drop-stage .upload-studio-graphic-pdf {
+  grid-area: graphic;
+  align-self: center;
+  justify-self: center;
+  width: 8.5rem;
+  height: 8.7rem;
+  max-width: 100%;
+  margin: 0;
+  color: var(--pdf-upload-copper);
+  transition: transform 480ms var(--pdf-upload-ease);
+}
+
+#app .pdf-drop-stage .upload-studio-sheet {
+  width: 5rem;
+  height: 6.3rem;
+  border-color: color-mix(in srgb,var(--pdf-upload-ink) 45%,var(--color-border));
+  border-radius: .5rem;
+  box-shadow: 0 .75rem 1.3rem color-mix(in srgb,var(--color-text) 11%,transparent);
+  transition: transform 500ms var(--pdf-upload-ease), box-shadow 500ms var(--pdf-upload-ease);
+}
+
+#app .pdf-drop-stage .upload-studio-sheet-back {
+  top: 1rem;
+  left: 2rem;
+  background: color-mix(in srgb,var(--pdf-upload-copper) 18%,var(--color-surface));
+  transform: rotate(10deg);
+}
+
+#app .pdf-drop-stage .upload-studio-sheet-front {
+  top: .5rem;
+  left: 1.1rem;
+  background:
+    linear-gradient(90deg,color-mix(in srgb,var(--pdf-upload-copper) 15%,transparent) 0 .36rem,transparent .36rem),
+    var(--color-surface);
+  transform: rotate(-7deg);
+}
+
+#app .pdf-drop-stage .upload-studio-lines {
+  top: 1.5rem;
+  left: .95rem;
+  width: 2.8rem;
+  height: 3.2rem;
+  opacity: .38;
+}
+
+#app .pdf-drop-stage .upload-studio-graphic-tag {
+  bottom: .1rem;
+  right: .15rem;
+  border-color: var(--color-surface);
+  border-radius: .45rem;
+  background: #285b43;
+  color: #fff8ec;
+  font-size: .72rem;
+  padding: .25rem .5rem;
+  box-shadow: 0 .25rem .6rem rgba(18,51,34,.15);
+}
+
+#app .pdf-drop-stage .upload-studio-content {
+  grid-area: content;
+  justify-items: start;
+  align-self: end;
+  gap: .5rem;
+  min-width: 0;
+  text-align: left;
+}
+
+#app .pdf-drop-stage .upload-studio-title.converter-file-name {
+  max-width: 100%;
+  font-size: clamp(1.38rem,2.2vw,1.8rem);
+  line-height: 1.15;
+  text-align: left;
+  text-wrap: normal;
+}
+
+#app .pdf-drop-stage .upload-studio-subtitle {
+  max-width: 43ch;
+  font-size: .85rem;
+  line-height: 1.6;
+  text-align: left;
+}
+
+#app .pdf-drop-stage .upload-studio-action {
+  grid-area: action;
+  justify-self: start;
+  align-self: start;
+  min-width: min(100%,13.6rem);
+  min-height: 3rem;
+  margin: .35rem 0 0;
+  border: 1px solid #24523d;
+  border-radius: .7rem;
+  background: #245740;
+  color: #fff9ef;
+  box-shadow: 0 .2rem 0 #163a2c, 0 .45rem .75rem rgba(15,50,30,.07);
+  transition: transform 330ms var(--pdf-upload-ease), box-shadow 330ms var(--pdf-upload-ease),
+    background-color 260ms ease, border-color 260ms ease;
+}
+
+#app .pdf-drop-stage .upload-studio-action-arrow { color: #f3ba90; }
+
+#app .pdf-drop-stage .upload-studio-formats {
+  grid-area: formats;
+  max-width: 100%;
+  margin: .3rem 0 0;
+  padding: .8rem 0 0;
+  border-top: 1px solid var(--pdf-upload-rule);
+  width: 100%;
+  color: var(--color-text-muted);
+  text-align: left;
+  font-size: .72rem;
+}
+
+#app .converter-dropzone.upload-studio-zone-pdf.pdf-drop-stage.upload-studio-loaded {
+  border-style: solid;
+  border-color: color-mix(in srgb,var(--pdf-upload-ink) 40%,var(--color-border));
+}
+
+#app .pdf-drop-stage.upload-studio-loaded .upload-studio-action {
+  border-color: var(--pdf-upload-rule);
+  background: var(--color-surface);
+  color: var(--pdf-upload-ink);
+  box-shadow: none;
+}
+
+#app .pdf-drop-stage.upload-studio-busy {
+  cursor: progress;
+  opacity: .78;
+  transform: none;
+}
+
+#app .converter-dropzone.upload-studio-zone-pdf.pdf-drop-stage:is(:hover,:focus-visible,.converter-dropzone-active):not(.upload-studio-busy) {
+  border-color: var(--pdf-upload-copper);
+  background: linear-gradient(135deg,
+    color-mix(in srgb,var(--pdf-upload-copper) 11%,var(--color-surface)),var(--color-surface) 70%);
+  box-shadow: inset 0 0 0 5px color-mix(in srgb,var(--pdf-upload-copper) 4%,transparent),
+    0 .6rem 1.4rem color-mix(in srgb,var(--pdf-upload-copper) 10%,transparent);
+  transform: translateY(-2px);
+}
+
+@media (hover:hover) and (pointer:fine) {
+  #app .pdf-drop-stage:not(.upload-studio-busy):hover .upload-studio-sheet-back {
+    transform: translate(.2rem,-.15rem) rotate(14deg);
+  }
+  #app .pdf-drop-stage:not(.upload-studio-busy):hover .upload-studio-sheet-front {
+    transform: translate(-.18rem,-.3rem) rotate(-10deg);
+    box-shadow: 0 1rem 1.7rem color-mix(in srgb,var(--color-text) 14%,transparent);
+  }
+  #app .pdf-drop-stage:not(.upload-studio-busy):hover .upload-studio-action {
+    transform: translateY(-2px);
+    box-shadow: 0 .27rem 0 #163a2c, 0 .55rem .9rem rgba(15,50,30,.12);
+  }
+}
+
+:root[data-theme="dark"] #app .pdf-drop-stage .upload-studio-action:not(:empty) { color: #fff9ef; }
+:root[data-theme="dark"] #app .pdf-drop-stage.upload-studio-loaded .upload-studio-action { color: var(--pdf-upload-ink); }
+
+/* Sidebar: no fake scores; its visual shows placeholders until an actual PDF is analysed. */
+#app .converter-sidebar.pdf-converter-sidebar {
+  --pdf-sidebar-ink: #25543e;
+  --pdf-sidebar-copper: #c37a55;
+  --pdf-sidebar-rule: color-mix(in srgb,var(--pdf-sidebar-ink) 19%,var(--color-border));
+  --pdf-sidebar-ease: cubic-bezier(.2,.8,.2,1);
+  gap: 1rem;
+}
+
+:root[data-theme="dark"] #app .converter-sidebar.pdf-converter-sidebar {
+  --pdf-sidebar-ink: #9cc4a9;
+  --pdf-sidebar-copper: #e6a17c;
+  --pdf-sidebar-rule: color-mix(in srgb,var(--pdf-sidebar-ink) 18%,var(--color-border));
+}
+
+#app .converter-sidebar.pdf-converter-sidebar .pdf-quality-studio {
+  position: relative;
+  display: grid;
+  gap: .75rem;
+  padding: clamp(1.2rem,2.5vw,1.6rem);
+  overflow: hidden;
+  border: 1px solid var(--pdf-sidebar-rule);
+  border-radius: 1.15rem;
+  background: linear-gradient(140deg,
+    color-mix(in srgb,var(--pdf-sidebar-ink) 7%,var(--color-surface)),
+    var(--color-surface) 72%);
+  box-shadow: 0 .35rem 1.35rem color-mix(in srgb,var(--color-text) 5%,transparent);
+}
+
+#app .pdf-converter-sidebar .pdf-sidebar-heading {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  min-width: 0;
+}
+
+#app .pdf-converter-sidebar .pdf-sidebar-heading .eyebrow {
+  margin: 0;
+  color: var(--pdf-sidebar-copper);
+  font-size: .68rem;
+  font-weight: 850;
+  letter-spacing: .095em;
+}
+
+#app .pdf-converter-sidebar .pdf-sidebar-symbol {
+  position: relative;
+  display: grid;
+  flex: 0 0 2.2rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  border: 1px solid var(--pdf-sidebar-rule);
+  border-radius: .65rem;
+  background: var(--color-surface);
+  color: var(--pdf-sidebar-ink);
+}
+
+#app .pdf-converter-sidebar .pdf-quality-symbol::before {
+  width: 1.1rem;
+  height: .82rem;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  content: '';
+  transform: skewY(-10deg);
+}
+
+#app .pdf-converter-sidebar .pdf-quality-symbol::after {
+  position: absolute;
+  top: .62rem;
+  left: .76rem;
+  width: .75rem;
+  height: .35rem;
+  border-left: 2px solid var(--pdf-sidebar-copper);
+  border-top: 2px solid var(--pdf-sidebar-copper);
+  content: '';
+  transform: rotate(-25deg);
+}
+
+#app .pdf-converter-sidebar .pdf-quality-studio h2 {
+  margin: .2rem 0 0;
+  color: var(--color-text);
+  font-family: var(--font-serif,Georgia,serif);
+  font-size: clamp(1.55rem,2.3vw,2rem);
+  font-weight: 760;
+  letter-spacing: -.04em;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+#app .pdf-converter-sidebar .pdf-quality-studio > .muted {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: .82rem;
+  line-height: 1.65;
+}
+
+#app .pdf-converter-sidebar .pdf-quality-placeholder {
+  display: flex;
+  align-items: end;
+  gap: .4rem;
+  height: 2.8rem;
+  padding: .65rem .25rem 0;
+  border-bottom: 1px solid var(--pdf-sidebar-rule);
+}
+
+#app .pdf-converter-sidebar .pdf-quality-placeholder span {
+  width: 25%;
+  background: color-mix(in srgb,var(--pdf-sidebar-ink) 13%,var(--color-surface));
+  border-radius: .3rem .3rem 0 0;
+}
+
+#app .pdf-converter-sidebar .pdf-quality-placeholder span:nth-child(1) { height: 54%; }
+#app .pdf-converter-sidebar .pdf-quality-placeholder span:nth-child(2) { height: 90%; }
+#app .pdf-converter-sidebar .pdf-quality-placeholder span:nth-child(3) { height: 70%; }
+
+#app .pdf-converter-sidebar .pdf-quality-meter { width: 100%; padding: .3rem 0 .35rem; }
+#app .pdf-converter-sidebar .pdf-quality-meter-track {
+  display: block;
+  height: .55rem;
+  overflow: hidden;
+  border-radius: .3rem;
+  background: color-mix(in srgb,var(--pdf-sidebar-ink) 12%,var(--color-surface));
+}
+#app .pdf-converter-sidebar .pdf-quality-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg,#326f50,var(--pdf-sidebar-copper));
+  transition: width 500ms var(--pdf-sidebar-ease);
+}
+#app .pdf-converter-sidebar .pdf-quality-footnote {
+  color: var(--color-text-muted);
+  font-size: .67rem;
+  font-weight: 680;
+  line-height: 1.4;
+}
+
+#app .converter-sidebar.pdf-converter-sidebar .pdf-privacy-studio {
+  position: relative;
+  display: grid;
+  gap: .85rem;
+  padding: clamp(1.2rem,2.5vw,1.65rem);
+  overflow: hidden;
+  border: 1px solid #2a654a;
+  border-radius: 1.15rem;
+  background: linear-gradient(145deg,#255540,#173b30);
+  color: #fff7e9;
+  box-shadow: 0 .45rem 1.3rem rgba(15,45,29,.12);
+}
+
+#app .pdf-converter-sidebar .pdf-privacy-studio::before {
+  position: absolute;
+  top: -1.5rem;
+  right: -1rem;
+  width: 7.5rem;
+  height: 7.5rem;
+  border: 1px solid rgba(239,178,135,.2);
+  border-radius: .25rem;
+  content: '';
+  transform: rotate(-24deg);
+  pointer-events: none;
+}
+
+#app .pdf-converter-sidebar .pdf-privacy-studio .pdf-sidebar-heading .eyebrow { color: #f0b68f; }
+#app .pdf-converter-sidebar .pdf-privacy-studio .pdf-sidebar-symbol {
+  border-color: rgba(240,186,145,.34);
+  background: rgba(255,249,236,.07);
+  color: #f0b68f;
+}
+#app .pdf-converter-sidebar .pdf-privacy-symbol::before {
+  position: absolute;
+  top: .55rem;
+  left: .7rem;
+  width: .74rem;
+  height: .79rem;
+  border: 1.8px solid currentColor;
+  border-radius: .4rem .4rem .08rem .08rem;
+  content: '';
+}
+#app .pdf-converter-sidebar .pdf-privacy-symbol::after {
+  position: absolute;
+  top: 1rem;
+  left: .58rem;
+  width: .98rem;
+  height: .72rem;
+  border: 1.8px solid currentColor;
+  border-radius: .17rem;
+  background: #245540;
+  content: '';
+}
+#app .converter-sidebar.pdf-converter-sidebar .pdf-privacy-studio h3 {
+  position: relative;
+  margin: 0;
+  color: #fff7e9;
+  font-family: var(--font-serif,Georgia,serif);
+  font-size: clamp(1.25rem,1.8vw,1.55rem);
+  letter-spacing: -.04em;
+  line-height: 1.17;
+}
+#app .converter-sidebar.pdf-converter-sidebar .pdf-privacy-studio > .muted {
+  position: relative;
+  margin: 0;
+  color: #d8e8d9;
+  font-size: .81rem;
+  line-height: 1.67;
+}
+#app .pdf-converter-sidebar .pdf-privacy-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .45rem;
+  padding-top: .9rem;
+  border-top: 1px solid rgba(234,196,165,.25);
+}
+#app .pdf-converter-sidebar .pdf-privacy-footer span {
+  display: block;
+  padding: .23rem .4rem;
+  border: 1px solid rgba(234,196,165,.3);
+  border-radius: .35rem;
+  color: #f0b68f;
+  font-size: .59rem;
+  letter-spacing: .075em;
+  font-weight: 800;
+}
+
+@media (max-width: 1040px) {
+  #app .converter-workflow.pdf-journey-editorial ol {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  #app .converter-workflow.pdf-journey-editorial .converter-workflow-step {
+    min-height: 9.2rem;
+  }
+  #app .converter-workflow.pdf-journey-editorial .converter-workflow-step:nth-child(2)::after { display: none; }
+  #app .converter-workflow.pdf-journey-editorial .converter-workflow-step:nth-child(-n+2) { 
+    border-bottom: 1px solid var(--pdf-line);
+  }
+}
+@media (max-width: 600px) {
+  #app .pdf-journey-editorial .pdf-journey-header {
+    padding: 1rem;
+    gap: .65rem;
+  }
+  #app .pdf-journey-editorial .pdf-journey-title { font-size: 1.48rem; }
+  #app .pdf-journey-editorial .pdf-journey-subtitle { font-size: .71rem; }
+  #app .pdf-journey-editorial .pdf-journey-counter { min-width: 4.3rem; padding-left: .7rem; }
+  #app .pdf-journey-editorial .pdf-journey-counter-label { font-size: .52rem; }
+  #app .pdf-journey-editorial .pdf-journey-counter-value strong { font-size: 1.55rem; }
+  #app .pdf-journey-editorial .pdf-journey-progress-track { padding: 0 1rem; }
+  #app .converter-workflow.pdf-journey-editorial ol { padding: .48rem; }
+  #app .converter-workflow.pdf-journey-editorial .converter-workflow-step {
+    min-height: 10rem;
+    padding: .8rem .68rem;
+  }
+  #app .converter-workflow.pdf-journey-editorial .converter-workflow-number { font-size: 1.65rem; }
+  #app .pdf-journey-editorial .pdf-journey-stage-symbol {
+    width: 1.9rem;
+    height: 1.9rem;
+    flex-basis: 1.9rem;
+  }
+  #app .pdf-journey-editorial .pdf-journey-icon { width: 1.25rem; height: 1.25rem; }
+  #app .converter-workflow.pdf-journey-editorial .converter-workflow-copy strong { font-size: .98rem; }
+  #app .converter-workflow.pdf-journey-editorial .converter-workflow-copy small { font-size: .7rem; }
+}
+
+@media (max-width: 650px) {
+  #app .converter-dropzone.upload-studio-zone-pdf.pdf-drop-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 19rem;
+    padding: 1.3rem .9rem;
+    gap: .65rem;
+    text-align: center;
+  }
+  #app .pdf-drop-stage .upload-studio-kicker { margin: 0 0 .3rem; }
+  #app .pdf-drop-stage .upload-studio-graphic-pdf { width: 6.2rem; height: 6.5rem; margin: 0 auto .35rem; }
+  #app .pdf-drop-stage .upload-studio-sheet { width: 3.65rem; height: 4.55rem; }
+  #app .pdf-drop-stage .upload-studio-sheet-back { top: .45rem; left: 1.4rem; }
+  #app .pdf-drop-stage .upload-studio-sheet-front { top: .25rem; left: .9rem; }
+  #app .pdf-drop-stage .upload-studio-lines { top: 1.32rem; left: .75rem; width: 2.25rem; height: 2.1rem; }
+  #app .pdf-drop-stage .upload-studio-graphic-tag { right: 0; bottom: .05rem; }
+  #app .pdf-drop-stage .upload-studio-content { align-self: center; justify-items: center; text-align: center; }
+  #app .pdf-drop-stage .upload-studio-title.converter-file-name,
+  #app .pdf-drop-stage .upload-studio-subtitle { text-align: center; }
+  #app .pdf-drop-stage .upload-studio-action { justify-self: center; align-self: center; margin: .55rem 0 0; }
+  #app .pdf-drop-stage .upload-studio-formats { text-align: center; padding-top: .75rem; margin-top: .35rem; }
+  #app .pdf-upload-studio .upload-studio-heading.pdf-upload-heading { text-align: left; justify-items: start; }
+  #app .pdf-upload-studio .pdf-upload-process-label { font-size: .56rem; }
+}
+@media (max-width: 425px) {
+  #app .converter-workflow.pdf-journey-editorial { border-radius: 1rem; }
+  #app .pdf-journey-editorial .pdf-journey-header { padding: .8rem .75rem; }
+  #app .pdf-journey-editorial .pdf-journey-title { font-size: 1.25rem; }
+  #app .pdf-journey-editorial .pdf-journey-counter { min-width: 3.75rem; }
+  #app .pdf-journey-editorial .pdf-journey-counter-value strong { font-size: 1.35rem; }
+  #app .converter-workflow.pdf-journey-editorial .converter-workflow-step {
+    min-height: 9.6rem;
+    padding: .68rem .5rem;
+    border-radius: .75rem;
+  }
+  #app .converter-workflow.pdf-journey-editorial .converter-workflow-copy strong { font-size: .86rem; }
+  #app .converter-workflow.pdf-journey-editorial .converter-workflow-copy small { font-size: .65rem; }
+  #app .pdf-journey-editorial .pdf-journey-stage-head { margin-bottom: .52rem; }
+  #app .pdf-upload-studio .pdf-upload-eyebrow-row { align-items: flex-start; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  #app .converter-workflow.pdf-journey-editorial *,
+  #app .converter-workflow.pdf-journey-editorial *::before,
+  #app .converter-workflow.pdf-journey-editorial *::after,
+  #app .pdf-upload-studio .pdf-drop-stage,
+  #app .pdf-upload-studio .pdf-drop-stage *,
+  #app .pdf-converter-sidebar .pdf-quality-meter-fill {
+    transition: none !important;
+  }
+  #app .converter-workflow.pdf-journey-editorial .converter-workflow-step:hover,
+  #app .pdf-upload-studio .pdf-drop-stage:hover,
+  #app .pdf-upload-studio .pdf-drop-stage:hover .upload-studio-action {
+    transform: none !important;
+  }
+}

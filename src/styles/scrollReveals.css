@@ -1,0 +1,26 @@
+#app .scroll-reveal-element {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 480ms ease,
+    translate 620ms cubic-bezier(.18, .74, .28, 1);
+}
+
+#app .scroll-reveal-element[data-scroll-reveal-state="hidden"] {
+  opacity: 0;
+  translate: 0 1.2rem;
+  transition-delay: 0ms;
+}
+
+#app .scroll-reveal-element[data-scroll-reveal-state="visible"] {
+  transition-delay: var(--scroll-reveal-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .scroll-reveal-element,
+  #app .scroll-reveal-element[data-scroll-reveal-state="hidden"] {
+    opacity: 1;
+    translate: 0 0;
+    transition: none;
+  }
+}

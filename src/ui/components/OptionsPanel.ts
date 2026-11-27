@@ -6,11 +6,6 @@ type RepairOptionDescriptor = readonly [keyof RepairOptions, string, string];
 
 const options: readonly RepairOptionDescriptor[] = [
   [
-    'kindleSafeMode',
-    'Modo Kindle Safe',
-    'Neutraliza recursos interativos e prioriza compatibilidade.',
-  ],
-  [
     'conservativeMode',
     'Modo conservador',
     'Preserva textos e recursos passivos. Scripts e URLs são removidos apenas quando suas opções de limpeza estiverem ativas.',
@@ -65,53 +60,142 @@ const options: readonly RepairOptionDescriptor[] = [
   ],
 ];
 
-export function renderOptionsPanel(state: AppState, onChange: () => void): HTMLElement {
-  const form = el('div', { className: 'options-list' });
+type RepairGroup = {
+  id: string;
+  title: string;
+  description: string;
+  keys: readonly (keyof RepairOptions)[];
+};
 
-  for (const [key, label, description] of options) {
+const groups: readonly RepairGroup[] = [
+  {
+    id: 'profile',
+    title: 'Perfil de reparo',
+    description: 'Defina como a ferramenta deve preservar o conteúdo original.',
+    keys: ['conservativeMode'],
+  },
+  {
+    id: 'structure',
+    title: 'Estrutura e navegação',
+    description: 'Organize os componentes internos e a navegação do EPUB.',
+    keys: [
+      'normalizeMimetype', 'rebuildContainer', 'repairManifest',
+      'repairSpine', 'generateNavigation', 'generateNcx',
+    ],
+  },
+  {
+    id: 'cleanup',
+    title: 'Limpeza e compatibilidade',
+    description: 'Elimine arquivos desnecessários e corrija recursos problemáticos.',
+    keys: ['stripSystemFiles', 'sanitizeScripts', 'repairCssReferences'],
+  },
+  {
+    id: 'editorial',
+    title: 'Alterações opcionais de conteúdo',
+    description: 'Ative somente se desejar modificar referências, metadados de imagens ou sua apresentação.',
+    keys: ['removeRemoteResourceLinks', 'stripImageMetadata', 'replaceMissingImagesWithText'],
+  },
+];
+
+const expandedOptions = new WeakMap<AppState, boolean>();
+
+export function renderOptionsPanel(state: AppState, onChange: () => void): HTMLElement {
+  const activeCount = options.filter(([key]) => Boolean(state.options[key])).length;
+
+  function renderOption([key, label, description]: RepairOptionDescriptor): HTMLElement {
     const checkbox = el('input', { attrs: { type: 'checkbox', id: key } });
     checkbox.checked = Boolean(state.options[key]);
     checkbox.disabled = state.busy;
     checkbox.addEventListener('change', () => {
       if (state.busy) return;
+      const details = checkbox.closest('details');
+      if (details) expandedOptions.set(state, details.open);
       state.options[key] = checkbox.checked;
       onChange();
     });
 
-    form.append(
-      el('label', {
-        className: key === 'conservativeMode' ? 'option-item option-item-featured' : 'option-item',
-        attrs: { for: key },
-        children: [
-          checkbox,
-          el('span', {
-            children: [el('strong', { text: label }), el('small', { text: description })],
-          }),
-        ],
-      }),
-    );
+    return el('label', {
+      className: key === 'conservativeMode'
+        ? 'option-item option-item-featured repair-setting-item'
+        : 'option-item repair-setting-item',
+      attrs: { for: key },
+      children: [
+        el('span', {
+          className: 'repair-setting-copy',
+          children: [el('strong', { text: label }), el('small', { text: description })],
+        }),
+        el('span', {
+          className: 'repair-setting-switch',
+          children: [
+            checkbox,
+            el('span', { className: 'repair-setting-track', attrs: { 'aria-hidden': 'true' } }),
+          ],
+        }),
+      ],
+    });
   }
 
-  return el('aside', {
-    className: 'sidebar',
-    children: [
-      el('section', {
-        className: 'panel options-panel',
+  const form = el('div', {
+    className: 'options-list repair-settings-grid',
+    children: groups.map((group) => {
+      const titleId = 'repair-settings-' + group.id + '-title';
+      const descriptors = group.keys.flatMap((key) => options.filter(([optionKey]) => optionKey === key));
+      return el('section', {
+        className: 'repair-settings-group repair-settings-group-' + group.id,
+        attrs: { 'aria-labelledby': titleId },
         children: [
           el('div', {
-            className: 'section-heading',
+            className: 'repair-settings-group-heading',
             children: [
-              el('p', { className: 'eyebrow', text: 'Opções' }),
-              el('h2', { text: 'Reparo automático' }),
-              el('p', {
-                className: 'muted',
-                text: 'Deixe marcado o que a ferramenta pode ajustar sozinha durante a reconstrução do EPUB',
-              }),
+              el('h3', { text: group.title, attrs: { id: titleId } }),
+              el('p', { text: group.description }),
             ],
           }),
-          form,
+          el('div', {
+            className: 'repair-settings-group-items',
+            children: descriptors.map(renderOption),
+          }),
+        ],
+      });
+    }),
+  });
+
+  const details = el('details', {
+    className: 'panel options-panel advanced-settings repair-settings-studio',
+    children: [
+      el('summary', {
+        children: [
+          el('span', {
+            className: 'repair-settings-emblem',
+            attrs: { 'aria-hidden': 'true' },
+            children: [el('i'), el('i'), el('i')],
+          }),
+          el('span', { className: 'settings-summary-copy', children: [
+            el('strong', { text: 'Configurações de reparo' }),
+            el('small', {
+              text: 'Opcional: personalize o que pode ser corrigido automaticamente',
+            }),
+          ] }),
+          el('span', {
+            className: 'repair-settings-count',
+            children: [
+              el('strong', { text: String(activeCount) + '/' + String(options.length) }),
+              el('small', { text: 'opções ativas' }),
+            ],
+          }),
+          el('span', {
+            className: 'settings-disclosure',
+            text: '+',
+            attrs: { 'aria-hidden': 'true' },
+          }),
         ],
       }),
+      form,
     ],
   });
+  details.open = expandedOptions.get(state) ?? false;
+  details.addEventListener('toggle', () => {
+    if (details.isConnected) expandedOptions.set(state, details.open);
+  });
+  return details;
 }

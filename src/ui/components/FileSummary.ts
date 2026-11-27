@@ -5,6 +5,7 @@ import {
   type ValidationReport,
 } from '../../epub';
 import { el, formatBytes } from '../dom';
+import { renderKindleReadiness } from './KindleReadiness';
 
 export function renderFileSummary(report: ValidationReport): HTMLElement {
   const requiredRepairableCount = getRequiredRepairableCount(report);
@@ -30,7 +31,7 @@ export function renderFileSummary(report: ValidationReport): HTMLElement {
   const score = renderScore(report.stats.kindleScore);
 
   return el('section', {
-    className: 'panel report-panel',
+    className: 'panel report-panel diagnostic-results',
     attrs: { 'aria-label': 'Resumo do EPUB' },
     children: [
       el('div', {
@@ -38,7 +39,7 @@ export function renderFileSummary(report: ValidationReport): HTMLElement {
         children: [
           el('div', {
             children: [
-              el('p', { className: 'eyebrow', text: 'Diagnóstico' }),
+              el('p', { className: 'eyebrow', text: '03 / DIAGNÓSTICO' }),
               el('h2', { text: report.fileName }),
               el('p', {
                 className: 'muted',
@@ -60,6 +61,7 @@ export function renderFileSummary(report: ValidationReport): HTMLElement {
       }),
       renderScoreBar(report.stats.kindleScore),
       renderScoreBreakdown(report),
+      renderKindleReadiness(report),
       renderCoverSummary(report.cover),
     ],
   });

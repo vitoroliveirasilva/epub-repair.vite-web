@@ -1,0 +1,535 @@
+#app .editorial-epub-word {
+  color: var(--studio-copper);
+  transition: color 320ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #app .upload-studio-zone-epub:not(.upload-studio-busy):hover .editorial-epub-word {
+    color: color-mix(in srgb, var(--studio-copper) 78%, #f7b98d);
+  }
+}
+
+
+
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools {
+  margin-top: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 24%, var(--color-border));
+  border-radius: 1.04rem;
+  background:
+    linear-gradient(118deg, color-mix(in srgb, var(--studio-copper) 4%, transparent), transparent 70%),
+    color-mix(in srgb, var(--color-surface) 95%, var(--color-surface-2));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 37%, transparent);
+  transition: border-color 350ms ease, box-shadow 400ms ease, background-color 350ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary {
+  display: grid;
+  grid-template-columns: 3.36rem minmax(0, 1fr) 2.4rem;
+  gap: 1rem;
+  align-items: center;
+  min-width: 0;
+  padding: 1.02rem 1.08rem;
+  text-align: left;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary::after {
+  display: none;
+  content: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-mark {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  width: 3.36rem;
+  height: 3.36rem;
+  border: 1px solid color-mix(in srgb, var(--studio-copper) 26%, var(--color-border));
+  border-radius: .81rem;
+  background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface));
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-surface) 52%, transparent);
+  pointer-events: none;
+  transition: border-color 380ms ease, background-color 380ms ease,
+    box-shadow 420ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-mark::after {
+  position: absolute;
+  z-index: 3;
+  top: -34%;
+  left: -73%;
+  width: 33%;
+  height: 168%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent,
+    color-mix(in srgb, #fff 28%, transparent), transparent);
+  content: '';
+  opacity: 0;
+  transform: rotate(25deg);
+  transition: transform 850ms cubic-bezier(.16, 1, .3, 1), opacity 360ms ease;
+  pointer-events: none;
+}
+
+
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-sheet {
+  position: absolute;
+  z-index: 0;
+  top: .72rem;
+  left: .96rem;
+  display: block;
+  width: 1.57rem;
+  height: 1.94rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--studio-copper) 38%, var(--color-border));
+  border-radius: .3rem .42rem .38rem .3rem;
+  background: linear-gradient(158deg,
+    color-mix(in srgb, var(--studio-copper) 10%, var(--color-surface)),
+    var(--color-surface) 72%);
+  box-shadow: .06rem .13rem .23rem color-mix(in srgb, var(--color-text) 7%, transparent);
+  transform: translate(.05rem, .05rem) rotate(-8deg);
+  transform-origin: 30% 85%;
+  transition: transform 690ms cubic-bezier(.16, 1, .3, 1),
+    border-color 350ms ease, box-shadow 570ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-sheet::before {
+  position: absolute;
+  top: .48rem;
+  left: .29rem;
+  width: 1.04rem;
+  height: .91rem;
+  background: repeating-linear-gradient(to bottom,
+    color-mix(in srgb, var(--studio-copper) 38%, transparent) 0 1px,
+    transparent 1px .3rem);
+  content: '';
+  opacity: .55;
+  transform: scaleX(.68);
+  transform-origin: left center;
+  transition: transform 670ms cubic-bezier(.16, 1, .3, 1), opacity 470ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-mark .technical-report-glyph {
+  position: relative;
+  z-index: 1;
+  width: 1.84rem;
+  height: 1.84rem;
+  color: var(--color-accent-strong);
+  transform: translate(0, 0) rotate(0);
+  transform-origin: 29% 81%;
+  transition: transform 700ms cubic-bezier(.16, 1, .3, 1),
+    color 350ms ease, filter 550ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-mark .technical-report-paper-front {
+  fill: var(--color-surface);
+  transition: fill 350ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-icon-accent {
+  stroke: var(--studio-copper);
+  transition: stroke 300ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-heading {
+  display: grid;
+  gap: .27rem;
+  min-width: 0;
+  text-align: left;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-heading strong {
+  color: var(--color-text);
+  font-size: .91rem;
+  font-weight: 850;
+  line-height: 1.36;
+  letter-spacing: -.014em;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-heading small {
+  display: block;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: .73rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: left;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-disclosure {
+  display: grid;
+  width: 2.38rem;
+  height: 2.38rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, var(--color-border));
+  border-radius: .7rem;
+  background: var(--color-surface);
+  transition: background-color 350ms ease, border-color 350ms ease, box-shadow 350ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-chevron {
+  width: .57rem;
+  height: .57rem;
+  border-right: 2px solid var(--color-accent-strong);
+  border-bottom: 2px solid var(--color-accent-strong);
+  transform: translateY(-.13rem) rotate(45deg);
+  transition: transform 420ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools[open] {
+  border-color: color-mix(in srgb, var(--studio-copper) 39%, var(--color-border));
+  box-shadow: 0 .48rem 1.1rem color-mix(in srgb, var(--color-text) 4%, transparent);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools[open] > summary {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 15%, var(--color-border));
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools[open] .technical-report-chevron {
+  transform: translateY(.12rem) rotate(225deg);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-body {
+  display: grid;
+  gap: 1rem;
+  padding: 1.08rem 1.08rem 1.22rem;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-body > p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: .76rem;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .68rem;
+  width: 100%;
+  min-width: 0;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn {
+  --report-action-tone: var(--color-accent);
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: .69rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 3.5rem;
+  flex: none;
+  margin: 0;
+  padding: .5rem .7rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--report-action-tone) 27%, var(--color-border));
+  border-radius: .88rem;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--report-action-tone) 4%, transparent), transparent 78%),
+    var(--color-surface);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 35%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--report-action-tone) 5%, transparent),
+    0 1px 3px color-mix(in srgb, var(--color-text) 4%, transparent);
+  color: var(--color-text);
+  font-size: .79rem;
+  font-weight: 800;
+  letter-spacing: .012em;
+  transform: none;
+  transition: border-color 350ms ease, background-color 350ms ease,
+    box-shadow 450ms cubic-bezier(.16, 1, .3, 1), color 300ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .technical-report-action-txt {
+  --report-action-tone: var(--color-accent-strong);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .technical-report-action-json {
+  --report-action-tone: var(--studio-copper);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: linear-gradient(105deg,
+    color-mix(in srgb, var(--report-action-tone) 14%, transparent),
+    color-mix(in srgb, var(--report-action-tone) 6%, transparent) 58%,
+    transparent 93%);
+  content: '';
+  transform: translateX(-102%);
+  transition: transform 590ms cubic-bezier(.16, 1, .3, 1);
+  pointer-events: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn::after {
+  position: absolute;
+  z-index: 1;
+  right: .75rem;
+  bottom: 0;
+  left: .75rem;
+  height: 2px;
+  border-radius: 999px 999px 0 0;
+  background: var(--report-action-tone);
+  content: '';
+  opacity: .86;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 530ms cubic-bezier(.16, 1, .3, 1);
+  pointer-events: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .technical-report-action-icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  flex: 0 0 2.05rem;
+  place-items: center;
+  width: 2.05rem;
+  height: 2.05rem;
+  border: 1px solid color-mix(in srgb, var(--report-action-tone) 25%, var(--color-border));
+  border-radius: .62rem;
+  background: color-mix(in srgb, var(--report-action-tone) 6%, var(--color-surface));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 35%, transparent);
+  transition: border-color 380ms ease, background-color 380ms ease,
+    box-shadow 380ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .technical-report-glyph {
+  display: block;
+  width: 1.12rem;
+  height: 1.12rem;
+  flex: 0 0 auto;
+  color: var(--report-action-tone);
+  transform: none;
+  transition: color 380ms ease;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .technical-report-action-label {
+  position: relative;
+  z-index: 1;
+  display: block;
+  min-width: 0;
+  white-space: nowrap;
+  transition: color 350ms ease, transform 490ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:disabled {
+  opacity: .46;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:disabled::before,
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:disabled::after {
+  display: none;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
+@keyframes epub-report-action-appear {
+  from {
+    opacity: 0;
+    transform: translateY(.48rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools[open] .technical-report-actions .btn {
+  animation: epub-report-action-appear 500ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools[open] .technical-report-actions .btn:nth-child(2) {
+  animation-delay: 75ms;
+}
+
+#app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools[open] .technical-report-actions .btn:nth-child(3) {
+  animation-delay: 145ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 41%, var(--color-border));
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary:is(:hover, :focus-visible) .technical-report-mark {
+    border-color: color-mix(in srgb, var(--studio-copper) 55%, var(--color-border));
+    background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #fff 45%, transparent),
+      0 .29rem .6rem color-mix(in srgb, var(--color-text) 9%, transparent);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary:is(:hover, :focus-visible) .technical-report-sheet {
+    border-color: color-mix(in srgb, var(--studio-copper) 70%, var(--color-border));
+    box-shadow: -.15rem .27rem .42rem color-mix(in srgb, var(--color-text) 15%, transparent);
+    transform: translate(-.25rem, .06rem) rotate(-19deg);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary:is(:hover, :focus-visible) .technical-report-sheet::before {
+    opacity: .82;
+    transform: scaleX(1);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary:is(:hover, :focus-visible) .technical-report-mark .technical-report-glyph {
+    color: var(--color-accent-strong);
+    filter: drop-shadow(.1rem .14rem .1rem color-mix(in srgb, var(--color-text) 16%, transparent));
+    transform: translate(.17rem, -.13rem) rotate(7deg);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary:is(:hover, :focus-visible) .technical-report-mark::after {
+    opacity: 1;
+    transform: translateX(410%) rotate(25deg);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary:hover .technical-report-disclosure {
+    border-color: color-mix(in srgb, var(--studio-copper) 44%, var(--color-border));
+    background: color-mix(in srgb, var(--studio-copper) 8%, var(--color-surface));
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:not(:disabled):hover {
+    border-color: color-mix(in srgb, var(--report-action-tone) 62%, var(--color-border));
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #fff 42%, transparent),
+      inset 0 -1px 0 color-mix(in srgb, var(--report-action-tone) 16%, transparent),
+      0 .3rem .8rem color-mix(in srgb, var(--report-action-tone) 11%, transparent);
+    color: var(--color-text);
+    transform: none;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:not(:disabled):hover::before {
+    transform: translateX(0);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:not(:disabled):hover::after {
+    transform: scaleX(1);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:not(:disabled):hover .technical-report-action-icon {
+    border-color: color-mix(in srgb, var(--report-action-tone) 44%, var(--color-border));
+    background: color-mix(in srgb, var(--report-action-tone) 14%, var(--color-surface));
+    box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 35%, transparent);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:not(:disabled):hover .technical-report-action-label {
+    transform: translateX(.11rem);
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:not(:disabled):active {
+    box-shadow: inset 0 2px 4px color-mix(in srgb, var(--color-text) 8%, transparent);
+  }
+
+}
+
+@media (max-width: 760px) {
+
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary {
+    gap: .75rem;
+    grid-template-columns: 3.05rem minmax(0, 1fr) 2.25rem;
+    padding: .9rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-mark {
+    width: 3.05rem;
+    height: 3.05rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-disclosure {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+}
+
+@media (max-width: 420px) {
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions {
+    gap: .38rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn {
+    min-height: 3.13rem;
+    padding: .4rem .28rem;
+    gap: .28rem;
+    font-size: .73rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .technical-report-action-icon {
+    flex-basis: 1.61rem;
+    width: 1.61rem;
+    height: 1.84rem;
+    border-radius: .47rem;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .technical-report-glyph {
+    width: .91rem;
+    height: .91rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .editorial-epub-word,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-mark .technical-report-glyph,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-mark::after,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-sheet::before,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-mark,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-sheet,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-paper-front,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-icon-accent,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn .technical-report-glyph,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn::before,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn::after,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .technical-report-action-icon,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .technical-report-action-label,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-disclosure,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-chevron,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn {
+    transition: none;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary:hover .technical-report-mark .technical-report-glyph,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:hover .technical-report-glyph,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:not(:disabled):hover,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn:hover .technical-report-action-label {
+    transform: none;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-actions .btn::before {
+    transform: none;
+    opacity: 0;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary:is(:hover, :focus-visible) .technical-report-sheet,
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary:is(:hover, :focus-visible) .technical-report-mark .technical-report-glyph {
+    transform: none;
+    filter: none;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools > summary:is(:hover, :focus-visible) .technical-report-mark::after {
+    opacity: 0;
+    transform: none;
+  }
+
+  #app .layout#app-workspace .workspace-core .controls-panel .technical-report-tools[open] .technical-report-actions .btn {
+    animation: none;
+  }
+}

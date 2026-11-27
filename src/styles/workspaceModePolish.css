@@ -1,0 +1,635 @@
+#app .layout#app-workspace .workspace-intro.workspace-intro-compact {
+  display: block;
+  padding: 0 0 clamp(1.1rem, 2.5vw, 1.8rem);
+  border-bottom: 1px solid var(--studio-line);
+}
+
+#app .workspace-intro-compact .workspace-intro-copy {
+  display: block;
+  width: 100%;
+}
+
+#app .workspace-intro-compact .workspace-intro-copy h2 {
+  max-width: none;
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(2.15rem, 4.4vw, 4rem);
+  font-weight: 750;
+  letter-spacing: -.055em;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+#app .layout#app-workspace .workflow-mode-selector {
+  display: grid;
+  gap: clamp(1.1rem, 2vw, 1.55rem);
+  width: 100%;
+  padding: clamp(.2rem, .7vw, .45rem) 0;
+  border: 0;
+  background: transparent;
+}
+
+#app .workflow-mode-heading {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: .35rem;
+  min-width: 0;
+}
+
+#app .workflow-mode-heading h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.4rem, 2.1vw, 1.92rem);
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+
+#app .workflow-mode-heading p {
+  max-width: 42rem;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: .88rem;
+  line-height: 1.55;
+}
+
+#app .workflow-mode-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: clamp(.85rem, 1.7vw, 1.2rem);
+  min-width: 0;
+}
+
+#app .workflow-mode-card {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: clamp(5.6rem, 9vw, 7.15rem) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: clamp(1rem, 2vw, 1.4rem);
+  row-gap: 1.05rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 12rem;
+  padding: clamp(1.25rem, 2.2vw, 1.6rem);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--studio-ink, var(--color-accent)) 16%, var(--color-border));
+  border-radius: 1.3rem;
+  background:
+    radial-gradient(ellipse 60% 95% at -8% 10%, color-mix(in srgb, var(--studio-copper, var(--brand-copper)) 6%, transparent), transparent 100%),
+    var(--color-surface);
+  box-shadow: 0 .25rem .6rem color-mix(in srgb, var(--color-text) 3%, transparent),
+    0 .85rem 2.2rem color-mix(in srgb, var(--color-text) 4%, transparent);
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 420ms cubic-bezier(.16, 1, .3, 1),
+    border-color 320ms ease, background-color 320ms ease, box-shadow 420ms ease;
+}
+
+#app .workflow-mode-card::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(110deg,
+    transparent 25%,
+    color-mix(in srgb, var(--studio-copper, var(--brand-copper)) 8%, transparent) 50%,
+    transparent 75%);
+  content: '';
+  opacity: 0;
+  transform: translateX(-65%);
+  transition: transform 760ms cubic-bezier(.16, 1, .3, 1), opacity 330ms ease;
+  pointer-events: none;
+}
+
+#app .workflow-mode-card::after {
+  position: absolute;
+  top: 0;
+  left: clamp(1.25rem, 2.2vw, 1.6rem);
+  width: 3.8rem;
+  height: 3px;
+  border-radius: 0 0 6px 6px;
+  background: var(--studio-copper, var(--brand-copper));
+  content: '';
+  transform: scaleX(.55);
+  transform-origin: left;
+  opacity: .5;
+  transition: transform 400ms cubic-bezier(.16, 1, .3, 1), opacity 400ms ease;
+  pointer-events: none;
+}
+
+#app .workflow-mode-card.workflow-mode-card-active {
+  border-color: color-mix(in srgb, var(--color-accent) 54%, var(--color-border));
+  background:
+    radial-gradient(ellipse 65% 100% at 0 5%, color-mix(in srgb, var(--color-accent) 11%, transparent), transparent 100%),
+    var(--color-surface);
+  box-shadow: 0 .25rem .6rem color-mix(in srgb, var(--color-text) 3%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 14%, transparent),
+    0 1.05rem 2.5rem color-mix(in srgb, var(--color-text) 5%, transparent);
+}
+
+#app .workflow-mode-card.workflow-mode-card-active::after {
+  transform: scaleX(1);
+  opacity: 1;
+}
+
+#app .workflow-mode-card:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+#app .workflow-mode-card:disabled {
+  opacity: .65;
+  cursor: progress;
+}
+
+#app .workflow-mode-visual {
+  position: relative;
+  display: grid;
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+  height: 7.5rem;
+  place-items: center;
+  perspective: 440px;
+}
+
+#app .workflow-mode-visual-orbit {
+  position: absolute;
+  width: 94%;
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 18%, transparent);
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent 69%);
+  transform: rotate(-12deg) scale(.95);
+  transition: transform 600ms cubic-bezier(.16, 1, .3, 1), border-color 300ms ease;
+}
+
+#app .workflow-mode-visual-orbit::after {
+  position: absolute;
+  top: 14%;
+  right: 10%;
+  width: .38rem;
+  height: .38rem;
+  border-radius: 50%;
+  background: var(--studio-copper, var(--brand-copper));
+  content: '';
+}
+
+#app .workflow-mode-book {
+  position: relative;
+  display: block;
+  width: 4.25rem;
+  height: 5.8rem;
+  transform-style: preserve-3d;
+}
+
+#app .workflow-mode-book-pages,
+#app .workflow-mode-book-cover {
+  position: absolute;
+  display: block;
+  inset: 0;
+  border-radius: .36rem .55rem .55rem .36rem;
+}
+
+#app .workflow-mode-book-pages {
+  top: .26rem;
+  left: .16rem;
+  right: -.25rem;
+  bottom: -.22rem;
+  border: 1px solid #c4ac90;
+  background: repeating-linear-gradient(0deg, #efe0c9 0 2px, #fff8ed 2px 5px);
+  box-shadow: .25rem .55rem .8rem rgba(29, 42, 33, .14);
+}
+
+#app .workflow-mode-book-solo::before {
+  position: absolute;
+  inset: 0;
+  border: 1px solid #194a37;
+  border-radius: .36rem .55rem .55rem .36rem;
+  background: linear-gradient(134deg, #346d52, #194a37 75%);
+  content: '';
+}
+
+#app .workflow-mode-book-solo .workflow-mode-book-pages {
+  z-index: 1;
+  top: .3rem;
+  right: .14rem;
+  bottom: .3rem;
+  left: .4rem;
+  box-shadow: .09rem .15rem .3rem rgba(29, 42, 33, .13);
+}
+
+#app .workflow-mode-book-solo .workflow-mode-book-cover {
+  z-index: 2;
+}
+
+#app .workflow-mode-book-cover {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-accent-strong) 76%, #0c2e22);
+  background: linear-gradient(134deg, #346d52, #194a37 75%);
+  box-shadow: inset .42rem 0 rgba(8, 28, 21, .22), inset .58rem 0 rgba(255, 255, 255, .06),
+    0 .35rem 1rem rgba(22, 50, 34, .14);
+  transform-origin: 7% center;
+  transition: transform 700ms cubic-bezier(.16, 1, .3, 1), box-shadow 450ms ease;
+}
+
+#app .workflow-mode-book-decoration {
+  position: absolute;
+  top: 1.1rem;
+  left: 1.16rem;
+  right: .83rem;
+  height: 2.7rem;
+  border: 1px solid rgba(245, 221, 180, .5);
+  border-radius: 999px 999px .32rem .32rem;
+}
+
+#app .workflow-mode-book-decoration::after {
+  position: absolute;
+  top: .92rem;
+  left: 50%;
+  width: .72rem;
+  height: .72rem;
+  border: 1px solid rgba(245, 221, 180, .7);
+  border-radius: 50%;
+  content: '';
+  transform: translateX(-50%);
+}
+
+#app .workflow-mode-book-mark {
+  position: absolute;
+  top: -.1rem;
+  right: .65rem;
+  width: .65rem;
+  height: 2.1rem;
+  background: #d9986d;
+  clip-path: polygon(0 0,100% 0,100% 100%,50% 79%,0 100%);
+  transition: height 420ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .workflow-mode-book-solo {
+  z-index: 2;
+  transform: translateX(-.1rem) rotate(-9deg);
+  transition: transform 650ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .workflow-mode-card-batch .workflow-mode-visual-orbit {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--studio-copper, var(--brand-copper)) 32%, transparent);
+}
+
+#app .workflow-mode-book-stack {
+  position: relative;
+  display: block;
+  width: 6.45rem;
+  height: 6.7rem;
+}
+
+#app .workflow-mode-book-stack .workflow-mode-book {
+  position: absolute;
+  bottom: .25rem;
+  left: 1.2rem;
+  width: 3.55rem;
+  height: 5.15rem;
+  transition: transform 650ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .workflow-mode-book-stack .workflow-mode-book-back {
+  z-index: 1;
+  transform: translate(-.74rem, .09rem) rotate(-17deg);
+}
+
+#app .workflow-mode-book-stack .workflow-mode-book-middle {
+  z-index: 2;
+  transform: translate(1rem, -.08rem) rotate(17deg);
+}
+
+#app .workflow-mode-book-stack .workflow-mode-book-front {
+  z-index: 3;
+  transform: translate(.15rem, .26rem) rotate(2deg);
+}
+
+#app .workflow-mode-book-stack .workflow-mode-book-back .workflow-mode-book-cover {
+  background: linear-gradient(135deg, #c78361, #99573e);
+  border-color: #92553f;
+}
+
+#app .workflow-mode-book-stack .workflow-mode-book-middle .workflow-mode-book-cover {
+  background: linear-gradient(135deg, #668b74, #315d4b);
+  border-color: #315d4b;
+}
+
+#app .workflow-mode-book-stack .workflow-mode-book-front .workflow-mode-book-cover {
+  background: linear-gradient(135deg, #d8ad7e, #b57a53);
+  border-color: #a77250;
+}
+
+#app .workflow-mode-book-stack .workflow-mode-book-mark {
+  height: 1.4rem;
+  width: .45rem;
+  right: .48rem;
+}
+
+#app .workflow-mode-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  grid-column: 2;
+  grid-row: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+  gap: .42rem;
+}
+
+#app .workflow-mode-kicker {
+  display: block;
+  color: var(--studio-copper, var(--brand-copper));
+  font-size: .63rem;
+  font-weight: 850;
+  line-height: 1.3;
+  letter-spacing: .13em;
+  white-space: nowrap;
+}
+
+#app .workflow-mode-title {
+  display: block;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.2rem, 1.9vw, 1.52rem);
+  font-weight: 750;
+  line-height: 1.15;
+  letter-spacing: -.042em;
+  text-wrap: nowrap;
+  white-space: nowrap;
+}
+
+#app .workspace-intro-compact .workspace-intro-accent,
+#app .workflow-mode-title .workflow-mode-title-accent {
+  color: var(--brand-copper);
+}
+
+#app .workflow-mode-description {
+  display: block;
+  max-width: none;
+  color: var(--color-text-muted);
+  font-size: .8rem;
+  font-weight: 500;
+  line-height: 1.55;
+  overflow-wrap: normal;
+}
+
+@media (min-width: 1200px) {
+  #app .workflow-mode-description {
+    white-space: nowrap;
+  }
+}
+
+#app .workflow-mode-number {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.3rem;
+  color: color-mix(in srgb, var(--color-text-muted) 66%, var(--color-surface));
+  font-family: var(--font-mono);
+  font-size: .62rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: .045em;
+}
+
+#app .workflow-mode-bottom {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding-top: .85rem;
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 68%, transparent);
+  transition: border-color 320ms ease;
+}
+
+#app .workflow-mode-choice-text {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  color: var(--color-accent-strong);
+  font-size: .79rem;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+#app .workflow-mode-card-active .workflow-mode-choice-text::before {
+  display: grid;
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-accent-strong);
+  color: var(--color-surface);
+  font-size: .71rem;
+  content: '✓';
+}
+
+#app .workflow-mode-choice-arrow {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 33%, var(--color-border));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface));
+  color: var(--color-accent-strong);
+  font-size: 1.15rem;
+  line-height: 1;
+  transition: transform 450ms cubic-bezier(.16, 1, .3, 1),
+    background-color 350ms ease, color 350ms ease, border-color 350ms ease;
+}
+
+#app .workflow-mode-choice-arrow::before {
+  content: '↗';
+}
+
+#app .workflow-mode-card-active .workflow-mode-choice-arrow {
+  border-color: var(--color-accent-strong);
+  background: var(--color-accent-strong);
+  color: var(--color-surface);
+}
+
+#app .workflow-mode-card-active .workflow-mode-choice-arrow::before {
+  content: '✓';
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #app .workflow-mode-card:not(:disabled):hover {
+    border-color: color-mix(in srgb, var(--color-accent) 62%, var(--color-border));
+    box-shadow: 0 .45rem .75rem color-mix(in srgb, var(--color-text) 4%, transparent),
+      0 1.25rem 2.9rem color-mix(in srgb, var(--color-text) 11%, transparent);
+    transform: translateY(-5px);
+  }
+
+  #app .workflow-mode-card:not(:disabled):hover::before {
+    opacity: 1;
+    transform: translateX(65%);
+  }
+
+  #app .workflow-mode-card:not(:disabled):hover::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  #app .workflow-mode-card:not(:disabled):hover .workflow-mode-visual-orbit {
+    border-color: color-mix(in srgb, var(--studio-copper, var(--brand-copper)) 48%, transparent);
+    transform: rotate(14deg) scale(1.04);
+  }
+
+  #app .workflow-mode-card-single:not(:disabled):hover .workflow-mode-book-solo {
+    transform: translateY(-.2rem) rotate(-4deg);
+  }
+
+  #app .workflow-mode-card-single:not(:disabled):hover .workflow-mode-book-solo .workflow-mode-book-cover {
+    transform: rotateY(-29deg);
+    box-shadow: inset .42rem 0 rgba(8, 28, 21, .22), .5rem .65rem .9rem rgba(22, 50, 34, .16);
+  }
+
+  #app .workflow-mode-card-batch:not(:disabled):hover .workflow-mode-book-back {
+    transform: translate(-1.1rem, -.25rem) rotate(-24deg);
+  }
+
+  #app .workflow-mode-card-batch:not(:disabled):hover .workflow-mode-book-middle {
+    transform: translate(1.5rem, -.4rem) rotate(24deg);
+  }
+
+  #app .workflow-mode-card-batch:not(:disabled):hover .workflow-mode-book-front {
+    transform: translate(.12rem, -.28rem) rotate(-2deg);
+  }
+
+  #app .workflow-mode-card:not(:disabled):hover .workflow-mode-book-mark {
+    height: 2.55rem;
+  }
+
+  #app .workflow-mode-card:not(:disabled):hover .workflow-mode-choice-arrow {
+    transform: translate(2px, -2px);
+    background: var(--color-accent-strong);
+    border-color: var(--color-accent-strong);
+    color: var(--color-surface);
+  }
+
+  #app .workflow-mode-card-active:not(:disabled):hover .workflow-mode-choice-arrow {
+    transform: scale(1.07);
+  }
+}
+
+
+:root[data-theme="dark"] #app .workflow-mode-book-pages {
+  background: repeating-linear-gradient(0deg,#c4b59b 0 2px,#ece0cd 2px 5px);
+}
+
+:root[data-theme="dark"] #app .workflow-mode-card-active .workflow-mode-choice-arrow,
+:root[data-theme="dark"] #app .workflow-mode-card-active .workflow-mode-choice-text::before {
+  color: #16271d;
+}
+
+@media (max-width: 1030px) {
+  #app .workflow-mode-card {
+    grid-template-columns: 5rem minmax(0, 1fr);
+    column-gap: .85rem;
+    padding: 1.2rem;
+  }
+  #app .workflow-mode-visual {
+    height: 6rem;
+    transform: scale(.85);
+  }
+  #app .workflow-mode-number {
+    top: .75rem;
+    right: .9rem;
+  }
+}
+
+@media (max-width: 720px) {
+  #app .workflow-mode-options {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .85rem;
+  }
+  #app .workflow-mode-card {
+    grid-template-columns: 5.8rem minmax(0, 1fr);
+    min-height: 10.8rem;
+    padding: 1.15rem;
+    column-gap: 1.1rem;
+    row-gap: .85rem;
+  }
+  #app .workflow-mode-visual {
+    height: 6.25rem;
+    transform: none;
+  }
+  #app .workflow-mode-heading h3 {
+    font-size: 1.43rem;
+  }
+  #app .workflow-mode-heading p {
+    font-size: .82rem;
+  }
+}
+
+@media (max-width: 420px) {
+  #app .workflow-mode-card {
+    grid-template-columns: 4.35rem minmax(0, 1fr);
+    column-gap: .85rem;
+    min-height: 10rem;
+    padding: 1rem;
+  }
+  #app .workflow-mode-visual {
+    height: 5.1rem;
+    transform: scale(.78);
+    transform-origin: 45% 50%;
+  }
+  #app .workflow-mode-kicker {
+    font-size: .58rem;
+    letter-spacing: .085em;
+  }
+  #app .workflow-mode-title {
+    font-size: 1.24rem;
+  }
+  #app .workflow-mode-description {
+    font-size: .75rem;
+  }
+  #app .workflow-mode-bottom {
+    padding-top: .65rem;
+  }
+  #app .workflow-mode-choice-text {
+    font-size: .75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .workflow-mode-card,
+  #app .workflow-mode-card::before,
+  #app .workflow-mode-card::after,
+  #app .workflow-mode-card *,
+  #app .workflow-mode-card *::before,
+  #app .workflow-mode-card *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  #app .workflow-mode-card:not(:disabled):hover,
+  #app .workflow-mode-card:not(:disabled):hover .workflow-mode-book,
+  #app .workflow-mode-card:not(:disabled):hover .workflow-mode-book-cover,
+  #app .workflow-mode-card:not(:disabled):hover .workflow-mode-visual-orbit,
+  #app .workflow-mode-card:not(:disabled):hover .workflow-mode-choice-arrow {
+    transform: none;
+  }
+}

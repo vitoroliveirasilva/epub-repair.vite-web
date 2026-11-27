@@ -1,0 +1,1653 @@
+
+#app .layout#app-workspace .batch-studio {
+  --batch-ink: #245e48;
+  --batch-ink-deep: #173f31;
+  --batch-copper: var(--studio-copper, #c47752);
+  --batch-line: color-mix(in srgb, var(--color-border) 79%, var(--batch-ink) 12%);
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  gap: clamp(1.15rem, 2.5vw, 1.8rem);
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  margin: 0;
+  padding: clamp(1.35rem, 2.7vw, 2.35rem);
+  overflow: visible;
+  border: 1px solid var(--batch-line);
+  border-radius: clamp(1.18rem, 2vw, 1.65rem);
+  background:
+    radial-gradient(ellipse 72% 68% at 100% -12%, color-mix(in srgb, var(--batch-copper) 10%, transparent), transparent 94%),
+    radial-gradient(ellipse 60% 90% at -20% 110%, color-mix(in srgb, var(--batch-ink) 6%, transparent), transparent 93%),
+    var(--color-surface);
+  box-shadow: 0 .2rem .8rem color-mix(in srgb, var(--color-text) 3%, transparent),
+    0 1.25rem 3rem color-mix(in srgb, var(--color-text) 6%, transparent);
+  container: batch-studio / inline-size;
+}
+
+#app .layout#app-workspace .batch-studio::before {
+  position: absolute;
+  top: 0;
+  left: clamp(1.35rem, 2.7vw, 2.35rem);
+  width: 5.1rem;
+  height: 3px;
+  border-radius: 0 0 6px 6px;
+  background: var(--batch-copper);
+  content: '';
+  pointer-events: none;
+}
+#app .batch-studio:focus { outline: none; }
+#app .batch-studio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  min-width: 0;
+  padding: .25rem .08rem clamp(1.1rem, 2.2vw, 1.65rem);
+  border-bottom: 1px solid var(--batch-line);
+}
+#app .batch-studio-intro {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: .7rem;
+  min-width: 0;
+}
+#app .batch-studio-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: .56rem;
+  padding: .42rem .74rem;
+  border: 1px solid color-mix(in srgb, var(--batch-copper) 28%, var(--color-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--batch-copper) 6%, var(--color-surface));
+  color: color-mix(in srgb, var(--batch-copper) 85%, var(--color-text));
+  font-size: .64rem;
+  font-weight: 850;
+  letter-spacing: .145em;
+  line-height: 1.25;
+}
+#app .batch-studio-eyebrow::before {
+  display: block;
+  width: .4rem;
+  height: .4rem;
+  flex: 0 0 .4rem;
+  border-radius: 50%;
+  background: var(--batch-copper);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--batch-copper) 12%, transparent);
+  content: '';
+}
+#app .batch-studio-intro h2 {
+  max-width: 28ch;
+  margin: .13rem 0 0;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.96rem, 3.8vw, 3.1rem);
+  font-weight: 750;
+  line-height: 1.09;
+  letter-spacing: -.058em;
+  text-wrap: balance;
+}
+#app .batch-studio-title-accent { color: var(--color-accent-strong); }
+#app .batch-studio-intro p {
+  max-width: 53ch;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: clamp(.82rem, 1vw, .91rem);
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+#app .batch-studio-counter {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: 1fr auto;
+  justify-content: center;
+  align-items: baseline;
+  gap: .08rem .26rem;
+  flex: 0 0 auto;
+  min-width: 7.25rem;
+  min-height: 7.1rem;
+  padding: 1.1rem 1rem .82rem;
+  overflow: hidden;
+  border: 1px solid rgba(175, 198, 184, .3);
+  border-radius: 1.13rem;
+  background: linear-gradient(145deg, #28694f 0%, #1a4b39 47%, #163a2d 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .13),
+    0 .6rem 1.25rem color-mix(in srgb, var(--batch-ink-deep) 14%, transparent);
+  color: #fffaf1;
+}
+#app .batch-studio-counter::before {
+  position: absolute;
+  top: .8rem;
+  right: .8rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-top: 1px solid rgba(255, 245, 225, .24);
+  border-right: 1px solid rgba(255, 245, 225, .24);
+  border-radius: 0 .45rem 0 0;
+  content: '';
+}
+#app .batch-studio-counter strong {
+  font-family: var(--font-serif);
+  font-size: clamp(2.45rem, 3.2vw, 2.95rem);
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -.07em;
+}
+#app .batch-studio-counter > span {
+  color: #c7e1d2;
+  font-family: var(--font-serif);
+  font-size: .98rem;
+  font-weight: 700;
+}
+#app .batch-studio-counter small {
+  grid-column: 1 / -1;
+  justify-self: center;
+  padding-top: .48rem;
+  border-top: 1px solid rgba(255, 255, 255, .13);
+  color: #edbe9b;
+  font-size: .6rem;
+  font-weight: 850;
+  letter-spacing: .19em;
+  line-height: 1.2;
+}
+
+#app .batch-studio-layout.batch-workspace-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.14fr) minmax(17rem, .86fr);
+  align-items: start;
+  justify-items: stretch;
+  gap: clamp(.95rem, 1.8vw, 1.4rem);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+}
+
+#app .batch-studio-layout.batch-workspace-content > .batch-studio-library,
+#app .batch-studio-layout.batch-workspace-content > .batch-studio-console {
+  box-sizing: border-box;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+#app .batch-studio-library,
+#app .batch-studio-console {
+  position: relative;
+  display: grid;
+  align-content: start;
+  min-width: 0;
+  gap: 1.05rem;
+  padding: clamp(1.05rem, 2vw, 1.5rem);
+  border: 1px solid var(--batch-line);
+  border-radius: 1.14rem;
+  background: var(--color-surface);
+  box-shadow: 0 .18rem .55rem color-mix(in srgb, var(--color-text) 3%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 27%, transparent);
+}
+#app .batch-studio-library {
+  background: linear-gradient(155deg,
+    color-mix(in srgb, var(--color-accent) 2.8%, var(--color-surface)),
+    var(--color-surface) 42%);
+}
+#app .batch-studio-console {
+  position: sticky;
+  top: 1rem;
+  border-color: color-mix(in srgb, var(--batch-ink) 25%, var(--color-border));
+  background: radial-gradient(ellipse at 110% -15%,
+    color-mix(in srgb, var(--batch-ink) 11%, transparent), transparent 70%),
+    var(--color-surface);
+}
+#app .batch-studio-library::before,
+#app .batch-studio-console::before {
+  position: absolute;
+  top: 0;
+  left: 1.25rem;
+  width: 3.1rem;
+  height: 2px;
+  border-radius: 0 0 3px 3px;
+  background: var(--batch-copper);
+  content: '';
+}
+#app .batch-studio-console::before { background: var(--batch-ink); }
+#app .batch-studio-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: .65rem;
+  min-width: 0;
+  padding: .08rem 0 .18rem;
+}
+#app .batch-studio-section-heading > div {
+  display: grid;
+  gap: .34rem;
+  min-width: 0;
+}
+#app .batch-studio-section-index {
+  color: var(--batch-copper);
+  font-size: .64rem;
+  font-weight: 850;
+  line-height: 1.4;
+  letter-spacing: .14em;
+}
+#app .batch-studio-console .batch-studio-section-index { color: var(--color-accent-strong); }
+#app .batch-studio-section-heading h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: clamp(1.48rem, 2.15vw, 1.9rem);
+  font-weight: 750;
+  letter-spacing: -.045em;
+  line-height: 1.14;
+}
+#app .batch-studio-clear.btn {
+  flex: 0 0 auto;
+  min-height: 2.15rem;
+  padding: .43rem .72rem;
+  border: 1px solid var(--batch-line);
+  border-radius: .61rem;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: .72rem;
+  font-weight: 750;
+}
+#app .batch-studio-clear.btn:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--batch-copper) 49%, var(--color-border));
+  background: color-mix(in srgb, var(--batch-copper) 7%, var(--color-surface));
+  color: var(--color-text);
+}
+
+#app .batch-studio-upload.optional-batch-dropzone {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 3.55rem minmax(0, 1fr) auto;
+  align-items: center;
+  justify-items: stretch;
+  gap: .85rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 8rem;
+  margin: 0;
+  padding: clamp(1rem, 1.8vw, 1.25rem);
+  overflow: hidden;
+  border: 1.5px dashed color-mix(in srgb, var(--batch-ink) 44%, var(--color-border));
+  border-radius: 1.05rem;
+  background:
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--batch-ink) 9%, transparent), transparent 58%),
+    radial-gradient(circle, color-mix(in srgb, var(--batch-ink) 13%, transparent) .6px, transparent .85px) 0 0 / 20px 20px,
+    color-mix(in srgb, var(--color-surface) 90%, var(--color-accent-soft));
+  box-shadow: inset 0 10px 20px -18px color-mix(in srgb, var(--batch-ink-deep) 35%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--batch-ink) 7%, transparent);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 380ms ease, background-color 380ms ease,
+    box-shadow 470ms cubic-bezier(.16, 1, .3, 1);
+}
+#app .batch-studio-upload.optional-batch-dropzone:is(:hover, :focus-visible, .optional-batch-dragging):not([aria-disabled="true"]) {
+  border-color: color-mix(in srgb, var(--batch-ink) 78%, var(--color-border));
+  box-shadow: inset 0 12px 22px -17px color-mix(in srgb, var(--batch-ink-deep) 39%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--batch-ink) 19%, transparent),
+    0 .5rem 1.15rem color-mix(in srgb, var(--batch-ink) 9%, transparent);
+}
+#app .batch-studio-upload.optional-batch-dropzone.optional-batch-dragging {
+  border-style: solid;
+  background-color: color-mix(in srgb, var(--batch-ink) 8%, var(--color-surface));
+}
+#app .batch-studio-upload.optional-batch-dropzone:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+#app .batch-studio-upload.optional-batch-dropzone[aria-disabled="true"] {
+  cursor: progress;
+  opacity: .59;
+}
+#app .batch-studio-upload-icon {
+  display: grid;
+  flex: 0 0 3.55rem;
+  width: 3.55rem;
+  height: 3.55rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--batch-copper) 39%, var(--color-border));
+  border-radius: .94rem;
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--batch-copper) 13%, var(--color-surface)),
+    color-mix(in srgb, var(--batch-ink) 7%, var(--color-surface)));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent),
+    0 .2rem .5rem color-mix(in srgb, var(--color-text) 5%, transparent);
+  color: var(--color-accent-strong);
+  font-family: sans-serif;
+  font-size: 1.88rem;
+  font-weight: 400;
+  line-height: 1;
+  transition: transform 430ms cubic-bezier(.16, 1, .3, 1),
+    border-color 280ms ease;
+}
+#app .batch-studio-upload-copy {
+  display: grid;
+  gap: .27rem;
+  min-width: 0;
+}
+#app .batch-studio-upload-copy strong {
+  color: var(--color-text);
+  font-size: .92rem;
+  font-weight: 850;
+  line-height: 1.28;
+  text-wrap: pretty;
+}
+#app .batch-studio-upload-copy small {
+  color: var(--color-text-muted);
+  font-size: .76rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+#app .batch-studio-upload-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .65rem;
+  min-width: 9.2rem;
+  min-height: 2.85rem;
+  padding: .44rem .48rem .44rem .82rem;
+  border: 1px solid #173f31;
+  border-radius: .76rem;
+  background: linear-gradient(145deg, rgba(255, 255, 255, .11), transparent 65%), #245e48;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .21),
+    inset 0 -2px 0 rgba(6, 43, 31, .15),
+    0 .19rem .42rem color-mix(in srgb, var(--batch-ink-deep) 16%, transparent);
+  color: #fffaf2;
+  font-size: .76rem;
+  font-weight: 850;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: transform 380ms cubic-bezier(.16, 1, .3, 1),
+    box-shadow 380ms ease;
+}
+#app .batch-studio-upload-action::after {
+  display: grid;
+  flex: 0 0 1.72rem;
+  width: 1.72rem;
+  height: 1.72rem;
+  place-items: center;
+  border: 1px solid rgba(255, 250, 240, .32);
+  border-radius: .48rem;
+  background: rgba(255, 252, 243, .1);
+  content: '↗';
+  font-family: Georgia, serif;
+  font-size: 1.02rem;
+  line-height: 1;
+  transition: transform 420ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .batch-studio-file-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .4rem .8rem;
+  padding: .06rem .08rem;
+}
+#app .batch-studio-file-heading strong {
+  color: var(--color-text);
+  font-size: .79rem;
+  font-weight: 850;
+}
+#app .batch-studio-file-heading small {
+  color: var(--color-text-muted);
+  font-size: .73rem;
+  font-weight: 700;
+}
+#app .batch-studio-file-scroll {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 9.8rem;
+  max-height: clamp(16rem, 35vh, 23rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--batch-ink) 35%, var(--color-border)) transparent;
+  border: 1px solid var(--batch-line);
+  border-radius: .92rem;
+  background: color-mix(in srgb, var(--color-surface) 94%, var(--color-surface-2));
+}
+#app .batch-studio-file-scroll:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+#app .batch-studio-file-scroll .batch-workspace-files.optional-batch-files {
+  display: grid;
+  gap: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+#app .batch-studio-file-row {
+  display: block;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+#app .batch-studio-file-row + .batch-studio-file-row {
+  border-top: 1px solid var(--batch-line);
+}
+#app .batch-studio-file-main {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  min-width: 0;
+  min-height: 4.75rem;
+  padding: .77rem .88rem;
+  transition: background-color 240ms ease;
+}
+#app .batch-studio-file-number {
+  position: relative;
+  display: grid;
+  flex: 0 0 2.48rem;
+  width: 2.48rem;
+  height: 3.18rem;
+  overflow: hidden;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--batch-ink) 24%, var(--color-border));
+  border-radius: .48rem;
+  background: color-mix(in srgb, var(--batch-ink) 8%, var(--color-surface));
+  color: var(--batch-copper);
+  font-family: var(--font-serif);
+  font-size: .85rem;
+  font-weight: 850;
+}
+#app .batch-studio-file-meta {
+  display: grid;
+  flex: 1 1 auto;
+  gap: .26rem;
+  min-width: 0;
+}
+#app .batch-studio-file-meta strong {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: .81rem;
+  font-weight: 800;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#app .batch-studio-file-meta small {
+  color: var(--color-text-muted);
+  font-size: .72rem;
+  font-weight: 650;
+}
+#app .batch-studio-file-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .36rem;
+  flex: 0 1 auto;
+  max-width: 7.25rem;
+  min-height: 1.85rem;
+  padding: .34rem .5rem;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: .56rem;
+  font-size: .65rem;
+  font-weight: 850;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#app .batch-studio-file-status::before {
+  display: block;
+  flex: 0 0 .4rem;
+  width: .4rem;
+  height: .4rem;
+  border-radius: 50%;
+  background: currentColor;
+  content: '';
+}
+#app .batch-studio-status-queued {
+  border-color: var(--batch-line);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+#app .batch-studio-status-working {
+  border-color: color-mix(in srgb, var(--color-info) 22%, var(--color-border));
+  background: var(--severity-info-soft);
+  color: var(--color-info);
+}
+#app .batch-studio-status-success {
+  border-color: color-mix(in srgb, var(--color-success) 24%, var(--color-border));
+  background: var(--severity-success-soft);
+  color: var(--color-success);
+}
+#app .batch-studio-status-warning {
+  border-color: color-mix(in srgb, var(--color-warning) 30%, var(--color-border));
+  background: var(--severity-warning-soft);
+  color: var(--color-warning);
+}
+#app .batch-studio-status-error {
+  border-color: color-mix(in srgb, var(--color-danger) 28%, var(--color-border));
+  background: var(--severity-error-soft);
+  color: var(--color-danger);
+}
+#app .batch-studio-remove.btn {
+  flex: 0 0 auto;
+  min-width: 3.7rem;
+  min-height: 2.15rem;
+  padding: .33rem .56rem;
+  border: 1px solid transparent;
+  border-radius: .59rem;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: .67rem;
+  font-weight: 750;
+  transition: color 220ms ease, border-color 220ms ease, background-color 220ms ease;
+}
+#app .batch-studio-result-detail {
+  display: block;
+  min-width: 0;
+  margin: -.15rem .86rem .75rem 4.05rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+#app .batch-studio-result-detail summary {
+  display: inline-flex;
+  align-items: center;
+  gap: .42rem;
+  min-height: 1.8rem;
+  padding: .27rem .3rem;
+  border-radius: .35rem;
+  background: transparent;
+  color: var(--color-accent-strong);
+  font-size: .73rem;
+  font-weight: 760;
+  cursor: pointer;
+}
+#app .batch-studio-result-detail summary:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+#app .batch-studio-result-detail > div {
+  display: grid;
+  gap: .39rem;
+  min-width: 0;
+  margin-top: .34rem;
+  padding: .82rem 1rem;
+  border-left: 3px solid var(--batch-copper);
+  border-radius: .35rem .69rem .69rem .35rem;
+  background: var(--color-surface-2);
+}
+#app .batch-studio-result-detail p,
+#app .batch-studio-result-detail small {
+  margin: 0;
+  font-size: .73rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+#app .batch-studio-result-detail p { color: var(--color-text); }
+#app .batch-studio-result-detail small { color: var(--color-text-muted); }
+#app .batch-studio-empty {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: .49rem;
+  min-height: 10rem;
+  padding: 1.2rem 1rem;
+  text-align: center;
+}
+#app .batch-studio-empty-mark {
+  position: relative;
+  display: block;
+  width: 3.55rem;
+  height: 3.3rem;
+  margin: .04rem 0 .3rem;
+}
+#app .batch-studio-empty-mark::before,
+#app .batch-studio-empty-mark::after {
+  position: absolute;
+  bottom: .37rem;
+  width: 1.25rem;
+  height: 2.54rem;
+  border: 1.5px solid color-mix(in srgb, var(--batch-ink) 35%, var(--color-border));
+  border-radius: .25rem .35rem .32rem .25rem;
+  background: color-mix(in srgb, var(--batch-ink) 6%, var(--color-surface));
+  box-shadow: inset .22rem 0 0 color-mix(in srgb, var(--batch-ink) 12%, transparent);
+  content: '';
+}
+#app .batch-studio-empty-mark::before {
+  left: .39rem;
+  transform: rotate(-12deg);
+}
+#app .batch-studio-empty-mark::after {
+  right: .37rem;
+  border-color: color-mix(in srgb, var(--batch-copper) 51%, var(--color-border));
+  background: color-mix(in srgb, var(--batch-copper) 8%, var(--color-surface));
+  box-shadow: inset .22rem 0 0 color-mix(in srgb, var(--batch-copper) 16%, transparent);
+  transform: rotate(10deg);
+}
+#app .batch-studio-empty strong {
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: 1.11rem;
+  font-weight: 750;
+}
+#app .batch-studio-empty small {
+  max-width: 28ch;
+  color: var(--color-text-muted);
+  font-size: .75rem;
+  line-height: 1.55;
+}
+#app .batch-studio-capacity {
+  display: grid;
+  gap: .55rem;
+  min-width: 0;
+  padding: .9rem 1rem;
+  border: 1px solid var(--batch-line);
+  border-radius: .83rem;
+  background: color-mix(in srgb, var(--batch-ink) 3%, var(--color-surface));
+}
+#app .batch-studio-capacity > div,
+#app .batch-studio-job-progress > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6rem;
+  color: var(--color-text-muted);
+  font-size: .75rem;
+}
+#app .batch-studio-capacity strong {
+  color: var(--color-text);
+  font-weight: 850;
+}
+#app .batch-studio-capacity progress,
+#app .batch-studio-job-progress progress {
+  display: block;
+  width: 100%;
+  height: .48rem;
+  appearance: none;
+  border: none;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--batch-ink) 14%, var(--color-surface-2));
+  accent-color: var(--batch-ink);
+}
+#app .batch-studio-capacity progress::-webkit-progress-bar,
+#app .batch-studio-job-progress progress::-webkit-progress-bar {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--batch-ink) 14%, var(--color-surface-2));
+}
+#app .batch-studio-capacity progress::-webkit-progress-value,
+#app .batch-studio-capacity progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: var(--batch-copper);
+}
+#app .batch-studio-capacity small {
+  color: var(--color-text-muted);
+  font-size: .7rem;
+}
+#app .batch-studio-alert,
+#app .batch-studio-notice {
+  margin: 0;
+  padding: .85rem .98rem;
+  border: 1px solid var(--batch-line);
+  border-radius: .7rem;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: .78rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+#app .batch-studio-alert {
+  border-color: color-mix(in srgb, var(--color-danger) 36%, var(--color-border));
+  background: color-mix(in srgb, var(--severity-error-soft) 72%, var(--color-surface));
+}
+
+#app .batch-studio-modes.optional-batch-mode {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: .7rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+#app .batch-studio-modes legend {
+  width: 100%;
+  margin: 0 0 .2rem;
+  padding: 0;
+  color: var(--color-text-muted);
+  font-size: .77rem;
+  font-weight: 650;
+}
+#app .batch-studio-choice.optional-batch-choice {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.65rem minmax(0, 1fr) 1.15rem;
+  align-items: center;
+  gap: .72rem;
+  min-width: 0;
+  min-height: 5.65rem;
+  margin: 0;
+  padding: .88rem .94rem;
+  overflow: hidden;
+  border: 1px solid var(--batch-line);
+  border-radius: .86rem;
+  background: var(--color-surface);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent);
+  cursor: pointer;
+  transition: border-color 310ms ease, background-color 310ms ease,
+    box-shadow 400ms ease, transform 400ms cubic-bezier(.16, 1, .3, 1);
+}
+#app .batch-studio-choice.optional-batch-choice::before {
+  position: absolute;
+  top: .75rem;
+  bottom: .75rem;
+  left: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--batch-ink);
+  content: '';
+  transform: scaleY(.38);
+  opacity: 0;
+  transition: transform 350ms cubic-bezier(.16, 1, .3, 1), opacity 290ms ease;
+}
+#app .batch-studio-choice.optional-batch-choice:has(input:checked) {
+  border-color: color-mix(in srgb, var(--batch-ink) 53%, var(--color-border));
+  background: radial-gradient(ellipse 76% 125% at 0 60%,
+    color-mix(in srgb, var(--batch-ink) 10%, transparent), transparent 100%),
+    var(--color-surface);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--batch-ink) 10%, transparent),
+    0 .25rem .62rem color-mix(in srgb, var(--batch-ink) 5%, transparent);
+}
+#app .batch-studio-choice.optional-batch-choice:has(input:checked)::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
+#app .batch-studio-choice.optional-batch-choice:focus-within {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+#app .batch-studio-choice-icon {
+  display: grid;
+  width: 2.65rem;
+  height: 2.65rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--batch-ink) 17%, var(--color-border));
+  border-radius: .74rem;
+  background: color-mix(in srgb, var(--batch-ink) 5%, var(--color-surface));
+  color: var(--color-accent-strong);
+  transition: transform 440ms cubic-bezier(.16, 1, .3, 1),
+    border-color 260ms ease, background-color 260ms ease;
+}
+#app .batch-studio-choice-icon svg {
+  display: block;
+  width: 1.36rem;
+  height: 1.36rem;
+}
+#app .batch-studio-choice:has(input:checked) .batch-studio-choice-icon {
+  border-color: color-mix(in srgb, var(--batch-ink) 35%, var(--color-border));
+  background: color-mix(in srgb, var(--batch-ink) 13%, var(--color-surface));
+}
+#app .batch-studio-choice-copy {
+  display: grid;
+  gap: .28rem;
+  min-width: 0;
+}
+#app .batch-studio-choice strong {
+  color: var(--color-text);
+  font-size: .84rem;
+  font-weight: 850;
+  line-height: 1.32;
+}
+#app .batch-studio-choice small {
+  color: var(--color-text-muted);
+  font-size: .73rem;
+  line-height: 1.55;
+}
+#app .batch-studio-choice input[type="radio"] {
+  display: grid;
+  width: 1.12rem;
+  height: 1.12rem;
+  min-width: 1.12rem;
+  margin: 0;
+  place-items: center;
+  appearance: none;
+  border: 1.8px solid color-mix(in srgb, var(--batch-ink) 38%, var(--color-border));
+  border-radius: 50%;
+  background: var(--color-surface);
+  cursor: pointer;
+}
+#app .batch-studio-choice input[type="radio"]::before {
+  display: block;
+  width: .56rem;
+  height: .56rem;
+  border-radius: 50%;
+  background: var(--batch-ink);
+  content: '';
+  transform: scale(0);
+  transition: transform 260ms cubic-bezier(.16, 1, .3, 1);
+}
+#app .batch-studio-choice input[type="radio"]:checked { border-color: var(--batch-ink); }
+#app .batch-studio-choice input[type="radio"]:checked::before { transform: scale(1); }
+#app .batch-studio-choice input[type="radio"]:disabled { cursor: progress; }
+
+#app .batch-studio-action-area {
+  display: grid;
+  gap: .8rem;
+  min-width: 0;
+  margin-top: .2rem;
+  padding-top: 1.05rem;
+  border-top: 1px solid var(--batch-line);
+}
+#app .batch-studio-summary {
+  position: relative;
+  display: grid;
+  gap: .38rem;
+  min-width: 0;
+  padding: 1.02rem 1.05rem 1.05rem 1.18rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--batch-ink) 20%, var(--color-border));
+  border-radius: .86rem;
+  background: radial-gradient(ellipse 100% 100% at -12% 20%,
+    color-mix(in srgb, var(--batch-ink) 9%, transparent), transparent 100%),
+    var(--color-surface);
+}
+#app .batch-studio-summary::before {
+  position: absolute;
+  top: 1rem;
+  bottom: 1rem;
+  left: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--batch-copper);
+  content: '';
+}
+#app .batch-studio-summary > span {
+  color: var(--batch-copper);
+  font-size: .64rem;
+  font-weight: 850;
+  letter-spacing: .125em;
+}
+#app .batch-studio-summary strong {
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: 1.33rem;
+  font-weight: 750;
+  letter-spacing: -.025em;
+}
+#app .batch-studio-summary small {
+  color: var(--color-text-muted);
+  font-size: .73rem;
+  line-height: 1.5;
+}
+#app .batch-studio-job-progress {
+  display: grid;
+  gap: .6rem;
+  padding: .35rem .12rem .45rem;
+}
+#app .batch-studio-job-progress > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6rem;
+  color: var(--color-text-muted);
+  font-size: .75rem;
+}
+#app .batch-studio-job-progress strong {
+  color: var(--color-text);
+  font-size: .78rem;
+  font-weight: 850;
+}
+#app .batch-studio-job-progress progress::-webkit-progress-value,
+#app .batch-studio-job-progress progress::-moz-progress-bar {
+  background: var(--batch-ink);
+}
+
+#app .batch-studio-ready {
+  display: flex;
+  gap: .78rem;
+  align-items: center;
+  padding: .88rem .96rem;
+  border: 1px solid color-mix(in srgb, var(--color-success) 31%, var(--color-border));
+  border-radius: .86rem;
+  background: color-mix(in srgb, var(--color-success) 9%, var(--color-surface));
+}
+#app .batch-studio-ready-marker {
+  display: grid;
+  flex: 0 0 2rem;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-success) 22%, transparent);
+  border-radius: .64rem;
+  background: color-mix(in srgb, var(--color-success) 17%, var(--color-surface));
+  color: var(--color-success);
+  font-size: 1.02rem;
+  font-weight: 900;
+}
+#app .batch-studio-ready > div {
+  display: grid;
+  gap: .2rem;
+  min-width: 0;
+}
+#app .batch-studio-ready strong {
+  color: var(--color-text);
+  font-size: .81rem;
+  font-weight: 850;
+}
+#app .batch-studio-ready small {
+  color: var(--color-text-muted);
+  font-size: .72rem;
+  line-height: 1.48;
+}
+
+#app .batch-studio-primary.btn,
+#app .batch-studio-retry.btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .83rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 3.55rem;
+  margin: 0;
+  padding: .56rem .56rem .56rem 1.04rem;
+  overflow: hidden;
+  border: 1px solid var(--batch-ink-deep);
+  border-radius: .85rem;
+  background: linear-gradient(150deg, rgba(255, 255, 255, .12), transparent 58%), var(--batch-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .23),
+    inset 0 -2px 0 rgba(9, 43, 30, .19),
+    0 .28rem .7rem color-mix(in srgb, var(--batch-ink-deep) 16%, transparent);
+  color: #fffaf2;
+  font-size: .86rem;
+  font-weight: 850;
+  letter-spacing: -.01em;
+  line-height: 1.3;
+  text-align: left;
+  white-space: normal;
+  cursor: pointer;
+  transition: transform 390ms cubic-bezier(.16, 1, .3, 1),
+    box-shadow 390ms ease, background-color 320ms ease;
+}
+#app .batch-studio-primary.btn::after,
+#app .batch-studio-retry.btn::after {
+  display: grid;
+  flex: 0 0 2.08rem;
+  width: 2.08rem;
+  height: 2.08rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: .56rem;
+  background: rgba(255, 255, 255, .09);
+  content: '↗';
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: transform 390ms cubic-bezier(.16, 1, .3, 1);
+}
+#app .batch-studio-primary.btn:disabled {
+  border-color: var(--batch-line);
+  background: color-mix(in srgb, var(--batch-ink) 10%, var(--color-surface));
+  box-shadow: none;
+  color: var(--color-text-muted);
+  opacity: .67;
+  cursor: not-allowed;
+}
+#app .batch-studio-primary.btn:disabled::after {
+  border-color: color-mix(in srgb, var(--batch-ink) 18%, var(--color-border));
+  background: color-mix(in srgb, var(--batch-ink) 4%, transparent);
+}
+#app .batch-studio-retry.btn {
+  border-color: color-mix(in srgb, var(--batch-ink) 27%, var(--color-border));
+  background: color-mix(in srgb, var(--batch-ink) 8%, var(--color-surface));
+  box-shadow: none;
+  color: var(--color-accent-strong);
+}
+#app .batch-studio-retry.btn::after {
+  border-color: color-mix(in srgb, var(--batch-ink) 25%, var(--color-border));
+  background: color-mix(in srgb, var(--batch-ink) 8%, var(--color-surface));
+}
+#app .batch-studio-zip-action.btn {
+  min-height: 4.25rem;
+  padding: .7rem .78rem .7rem 1.15rem;
+  border: 1px solid #78422f;
+  border-radius: .95rem;
+  background: linear-gradient(111deg, rgba(255, 226, 190, .2), transparent 45%),
+    linear-gradient(125deg, #b76642 0%, #995034 49%, #783e2c 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 250, 234, .32),
+    inset 0 -3px 0 rgba(71, 31, 25, .22),
+    0 0 0 2px color-mix(in srgb, var(--batch-copper) 13%, transparent),
+    0 .6rem 1.2rem rgba(103, 52, 35, .2);
+  color: #fffaf2;
+  font-size: .91rem;
+}
+#app .batch-studio-zip-action.btn::after { display: none; content: none; }
+#app .batch-studio-download-icon {
+  display: grid;
+  flex: 0 0 2.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border: 1px solid rgba(255, 245, 229, .96);
+  border-radius: .72rem;
+  background: linear-gradient(145deg, #fffdf7, #f7e4d2);
+  box-shadow: 0 .24rem .6rem rgba(73, 33, 26, .23),
+    inset 0 1px 0 rgba(255, 255, 255, .96);
+  color: #87402c;
+  transition: transform 450ms cubic-bezier(.16, 1, .3, 1);
+}
+#app .batch-studio-download-icon svg { display: block; width: 1.55rem; height: 1.55rem; }
+#app .batch-studio-download-arrow { transition: transform 450ms cubic-bezier(.16, 1, .3, 1); }
+
+#app .batch-studio-cancel.btn,
+#app .batch-studio-repeat.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  width: 100%;
+  min-height: 2.8rem;
+  margin: 0;
+  padding: .66rem .86rem;
+  border: 1px solid var(--batch-line);
+  border-radius: .78rem;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: .78rem;
+  font-weight: 800;
+  line-height: 1.3;
+  white-space: normal;
+  transition: border-color 270ms ease, background-color 270ms ease, color 270ms ease;
+}
+#app .batch-studio-cancel.btn {
+  border-color: color-mix(in srgb, #aa5647 43%, var(--color-border));
+  background: color-mix(in srgb, #aa5647 7%, var(--color-surface));
+  color: color-mix(in srgb, #ac4f43 82%, var(--color-text));
+}
+#app .batch-studio-cancel.btn::before {
+  display: block;
+  flex: 0 0 .76rem;
+  width: .76rem;
+  height: .76rem;
+  border: 2px solid currentColor;
+  border-radius: .23rem;
+  content: '';
+}
+#app .batch-studio-reassurance {
+  display: flex;
+  align-items: flex-start;
+  gap: .55rem;
+  margin: .03rem 0 0;
+  padding: .25rem .12rem 0;
+  color: var(--color-text-muted);
+  font-size: .71rem;
+  line-height: 1.6;
+}
+#app .batch-studio-reassurance::before {
+  display: block;
+  flex: 0 0 .44rem;
+  width: .44rem;
+  height: .44rem;
+  margin-top: .39rem;
+  border-radius: 50%;
+  background: var(--batch-copper);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--batch-copper) 11%, transparent);
+  content: '';
+}
+
+#app .batch-studio :is(
+  .batch-studio-upload, .batch-studio-clear, .batch-studio-remove,
+  .batch-studio-result-detail summary, .batch-studio-primary,
+  .batch-studio-retry, .batch-studio-cancel, .batch-studio-repeat
+):focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):hover .batch-studio-upload-icon {
+    transform: translateY(-2px) rotate(-5deg);
+    border-color: color-mix(in srgb, var(--batch-copper) 58%, var(--color-border));
+  }
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):hover .batch-studio-upload-action {
+    transform: translateY(-1px);
+    box-shadow: 0 .37rem .65rem color-mix(in srgb, var(--batch-ink-deep) 20%, transparent);
+  }
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):hover .batch-studio-upload-action::after {
+    transform: translate(1px, -1px) rotate(5deg);
+  }
+  #app .batch-studio-file-row:hover .batch-studio-file-main {
+    background: color-mix(in srgb, var(--batch-ink) 4%, transparent);
+  }
+  #app .batch-studio-remove.btn:not(:disabled):hover {
+    border-color: color-mix(in srgb, var(--color-danger) 35%, var(--color-border));
+    background: color-mix(in srgb, var(--color-danger) 9%, var(--color-surface));
+    color: var(--color-danger);
+  }
+  #app .batch-studio-choice.optional-batch-choice:hover:not(:has(input:disabled)) {
+    border-color: color-mix(in srgb, var(--batch-ink) 55%, var(--color-border));
+    background: color-mix(in srgb, var(--batch-ink) 6%, var(--color-surface));
+    transform: translateY(-1px);
+    box-shadow: 0 .3rem .73rem color-mix(in srgb, var(--batch-ink) 8%, transparent);
+  }
+  #app .batch-studio-choice.optional-batch-choice:hover:not(:has(input:disabled)) .batch-studio-choice-icon {
+    transform: rotate(-4deg) translateY(-1px);
+  }
+  #app .batch-studio-primary.btn:not(:disabled):hover,
+  #app .batch-studio-retry.btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 .55rem 1.05rem color-mix(in srgb, var(--batch-ink-deep) 19%, transparent);
+  }
+  #app .batch-studio-primary.btn:not(:disabled):hover::after,
+  #app .batch-studio-retry.btn:not(:disabled):hover::after {
+    transform: translate(1px, -1px) rotate(4deg);
+  }
+  #app .batch-studio-zip-action.btn:not(:disabled):hover {
+    border-color: #d58f67;
+    background: linear-gradient(125deg, #bf704b, #a45739, #82422e);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--batch-copper) 20%, transparent),
+      0 .86rem 1.54rem rgba(103, 52, 35, .3);
+    transform: translateY(-3px);
+  }
+  #app .batch-studio-zip-action.btn:not(:disabled):hover .batch-studio-download-icon {
+    transform: translateY(-2px);
+  }
+  #app .batch-studio-zip-action.btn:not(:disabled):hover .batch-studio-download-arrow {
+    transform: translateY(2.4px);
+  }
+  #app .batch-studio-cancel.btn:not(:disabled):hover {
+    border-color: color-mix(in srgb, #aa5647 72%, var(--color-border));
+    background: color-mix(in srgb, #aa5647 14%, var(--color-surface));
+  }
+  #app .batch-studio-repeat.btn:not(:disabled):hover,
+  #app .batch-studio-clear.btn:not(:disabled):hover {
+    border-color: color-mix(in srgb, var(--batch-copper) 49%, var(--color-border));
+    background: color-mix(in srgb, var(--batch-copper) 7%, var(--color-surface));
+    color: var(--color-text);
+  }
+}
+
+:root[data-theme="dark"] #app .layout#app-workspace .batch-studio {
+  --batch-ink: #7db99a;
+  --batch-ink-deep: #4a9676;
+}
+:root[data-theme="dark"] #app .batch-studio-counter {
+  background: linear-gradient(145deg, #28533f, #1d4134, #17362b);
+  border-color: rgba(205, 227, 211, .18);
+}
+:root[data-theme="dark"] #app .batch-studio-upload-action {
+  border-color: #346b53;
+  background: linear-gradient(145deg, #90c9aa, #73af90);
+  color: #173527;
+}
+:root[data-theme="dark"] #app .batch-studio-primary.btn:not(.batch-studio-zip-action):not(.batch-studio-retry):not(:disabled) {
+  border-color: #4d8e70;
+  background: linear-gradient(145deg, #8ac5a5, #6da889);
+  color: #132e22;
+}
+:root[data-theme="dark"] #app .batch-studio-zip-action.btn {
+  border-color: #d18d65;
+  background: linear-gradient(125deg, #ab603f, #934a31, #703b2d);
+  color: #fffaf2;
+}
+
+@container batch-studio (max-width: 950px) {
+  #app .batch-studio-layout.batch-workspace-content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+  #app .batch-studio-console { position: static; top: auto; }
+}
+@container batch-studio (max-width: 650px) {
+  #app .batch-studio-header { gap: 1rem; }
+  #app .batch-studio-intro h2 { font-size: clamp(1.76rem, 5vw, 2.45rem); }
+  #app .batch-studio-upload.optional-batch-dropzone {
+    grid-template-columns: 3.05rem minmax(0, 1fr);
+    gap: .66rem .72rem;
+  }
+  #app .batch-studio-upload-icon {
+    width: 3.05rem;
+    height: 3.05rem;
+    flex-basis: 3.05rem;
+  }
+  #app .batch-studio-upload-action {
+    grid-column: 2;
+    justify-self: start;
+    margin-top: .16rem;
+  }
+  #app .batch-studio-file-scroll { max-height: 19rem; }
+}
+@container batch-studio (max-width: 450px) {
+  #app .batch-studio-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: .9rem;
+  }
+  #app .batch-studio-intro { flex: 1 1 100%; }
+  #app .batch-studio-intro h2 { font-size: clamp(1.75rem, 7vw, 2.05rem); }
+  #app .batch-studio-counter {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: .28rem;
+    min-width: 0;
+    min-height: 0;
+    width: auto;
+    padding: .54rem .83rem;
+    border-radius: .78rem;
+  }
+  #app .batch-studio-counter::before { display: none; }
+  #app .batch-studio-counter strong { font-size: 1.52rem; }
+  #app .batch-studio-counter > span { font-size: .79rem; }
+  #app .batch-studio-counter small { padding: 0 0 0 .5rem; border: 0; font-size: .55rem; }
+  #app .batch-studio-library,
+  #app .batch-studio-console { padding: .92rem; gap: .85rem; }
+  #app .batch-studio-section-heading h3 { font-size: 1.52rem; }
+  #app .batch-studio-upload.optional-batch-dropzone {
+    padding: .86rem;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    gap: .55rem .7rem;
+  }
+  #app .batch-studio-upload-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-basis: 2.75rem;
+  }
+  #app .batch-studio-upload-copy strong { font-size: .83rem; }
+  #app .batch-studio-upload-copy small { font-size: .72rem; }
+  #app .batch-studio-upload-action {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-self: stretch;
+    margin-top: .32rem;
+  }
+  #app .batch-studio-file-main { gap: .44rem; padding: .64rem .54rem; }
+  #app .batch-studio-file-number {
+    width: 1.96rem;
+    height: 2.56rem;
+    flex-basis: 1.96rem;
+    font-size: .7rem;
+  }
+  #app .batch-studio-file-status {
+    max-width: 5rem;
+    font-size: .58rem;
+    padding: .25rem .3rem;
+  }
+  #app .batch-studio-remove.btn {
+    min-width: 2.9rem;
+    padding: .28rem .22rem;
+    font-size: .58rem;
+  }
+  #app .batch-studio-file-meta strong { font-size: .72rem; }
+  #app .batch-studio-result-detail { margin-left: 2.68rem; }
+  #app .batch-studio-choice.optional-batch-choice {
+    grid-template-columns: 2.3rem minmax(0, 1fr) 1.12rem;
+    gap: .56rem;
+    padding: .75rem;
+    min-height: 5rem;
+  }
+  #app .batch-studio-choice-icon { width: 2.3rem; height: 2.3rem; }
+  #app .batch-studio-zip-action.btn,
+  #app .batch-studio-primary.btn { padding-left: .92rem; gap: .5rem; }
+  #app .batch-studio-download-icon {
+    width: 2.3rem;
+    height: 2.3rem;
+    flex-basis: 2.3rem;
+  }
+}
+@media (max-width: 900px) {
+  #app .batch-studio-layout.batch-workspace-content {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: stretch;
+  }
+
+  #app .batch-studio-layout.batch-workspace-content > .batch-studio-library,
+  #app .batch-studio-layout.batch-workspace-content > .batch-studio-console {
+    justify-self: stretch;
+    width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  #app .layout#app-workspace .batch-studio {
+    padding: clamp(.91rem, 3.5vw, 1.3rem);
+    border-radius: 1.14rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #app .batch-studio :is(
+    .batch-studio-upload, .batch-studio-upload-icon, .batch-studio-upload-action,
+    .batch-studio-choice, .batch-studio-choice-icon, .batch-studio-choice input::before,
+    .batch-studio-primary, .batch-studio-primary::after, .batch-studio-retry,
+    .batch-studio-retry::after, .batch-studio-download-icon, .batch-studio-download-arrow,
+    .batch-studio-file-main, .batch-studio-clear, .batch-studio-remove,
+    .batch-studio-cancel, .batch-studio-repeat
+  ) { transition: none; }
+  #app .batch-studio .batch-studio-upload:hover .batch-studio-upload-icon,
+  #app .batch-studio .batch-studio-upload:hover .batch-studio-upload-action,
+  #app .batch-studio .batch-studio-choice:hover,
+  #app .batch-studio .batch-studio-choice:hover .batch-studio-choice-icon,
+  #app .batch-studio .batch-studio-primary:hover,
+  #app .batch-studio .batch-studio-primary:hover::after,
+  #app .batch-studio .batch-studio-retry:hover,
+  #app .batch-studio .batch-studio-zip-action:hover .batch-studio-download-icon,
+  #app .batch-studio .batch-studio-zip-action:hover .batch-studio-download-arrow {
+    transform: none;
+  }
+}
+
+#app .batch-studio-counter {
+  min-height: 7.5rem;
+  grid-template-rows: 1fr auto auto;
+}
+
+#app .batch-studio-counter-meter {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: .24rem;
+  width: 100%;
+  margin-top: .32rem;
+}
+
+#app .batch-studio-counter-meter i {
+  display: block;
+  height: .24rem;
+  border-radius: 99px;
+  background: rgba(255, 249, 235, .17);
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, .13);
+  transition: background-color 250ms ease, box-shadow 250ms ease;
+}
+
+#app .batch-studio-counter-meter .batch-studio-counter-tick-filled {
+  background: #f1bd95;
+  box-shadow: 0 0 .42rem rgba(241, 189, 149, .22);
+}
+
+#app .batch-studio-flow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(.45rem, 1.2vw, .8rem);
+  min-width: 0;
+  margin: -.3rem 0 -.2rem;
+  padding: 0;
+  list-style: none;
+}
+
+#app .batch-studio-flow-step {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  min-width: 0;
+  min-height: 2.9rem;
+  padding: .53rem .8rem;
+  border: 1px solid var(--batch-line);
+  border-radius: .75rem;
+  background: color-mix(in srgb, var(--color-surface) 95%, var(--color-surface-2));
+  color: var(--color-text-muted);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 18%, transparent);
+}
+
+#app .batch-studio-flow-step::after {
+  position: absolute;
+  right: .85rem;
+  bottom: 0;
+  left: .85rem;
+  height: 2px;
+  border-radius: 3px 3px 0 0;
+  background: transparent;
+  content: '';
+}
+
+#app .batch-studio-flow-number {
+  display: grid;
+  flex: 0 0 1.76rem;
+  width: 1.76rem;
+  height: 1.76rem;
+  place-items: center;
+  border: 1px solid var(--batch-line);
+  border-radius: .51rem;
+  background: var(--color-surface);
+  font-size: .67rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+#app .batch-studio-flow-text {
+  min-width: 0;
+  color: inherit;
+  font-size: .75rem;
+  font-weight: 790;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+#app .batch-studio-flow-current {
+  border-color: color-mix(in srgb, var(--batch-ink) 43%, var(--color-border));
+  background: color-mix(in srgb, var(--batch-ink) 8%, var(--color-surface));
+  color: var(--color-text);
+}
+
+#app .batch-studio-flow-current::after {
+  background: var(--batch-copper);
+}
+
+#app .batch-studio-flow-current .batch-studio-flow-number {
+  border-color: var(--batch-ink);
+  background: var(--batch-ink);
+  color: #fffaf2;
+}
+
+#app .batch-studio-flow-complete {
+  border-color: color-mix(in srgb, var(--batch-ink) 24%, var(--color-border));
+  color: var(--color-accent-strong);
+}
+
+#app .batch-studio-flow-complete .batch-studio-flow-number {
+  border-color: color-mix(in srgb, var(--batch-ink) 30%, var(--color-border));
+  background: color-mix(in srgb, var(--batch-ink) 12%, var(--color-surface));
+  font-size: .87rem;
+}
+
+#app .batch-studio-upload-icon {
+  position: relative;
+  isolation: isolate;
+}
+
+#app .batch-studio-upload-icon svg {
+  width: 2rem;
+  height: 2rem;
+  display: block;
+  transition: transform 380ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .batch-studio-upload-icon::after {
+  position: absolute;
+  top: -.22rem;
+  right: -.22rem;
+  display: grid;
+  width: 1.18rem;
+  height: 1.18rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--batch-copper) 50%, var(--color-border));
+  border-radius: .36rem;
+  background: var(--color-surface);
+  color: var(--batch-copper);
+  box-shadow: 0 .13rem .27rem color-mix(in srgb, var(--color-text) 10%, transparent);
+  content: '+';
+  font-family: sans-serif;
+  font-size: .86rem;
+  font-weight: 750;
+  line-height: 1;
+}
+
+#app .batch-studio-file-scroll[data-has-files="true"] {
+  border-color: color-mix(in srgb, var(--batch-ink) 24%, var(--color-border));
+  background: var(--color-surface);
+}
+
+#app .batch-studio-file-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: .72rem;
+  row-gap: .38rem;
+  padding: .8rem .9rem;
+}
+
+#app .batch-studio-file-number { grid-column: 1; }
+#app .batch-studio-file-meta { grid-column: 2; }
+#app .batch-studio-file-status { grid-column: 3; max-width: 8rem; }
+#app .batch-studio-remove.btn { grid-column: 4; }
+
+#app .batch-studio-file-row {
+  position: relative;
+}
+
+#app .batch-studio-file-row::before {
+  position: absolute;
+  top: .75rem;
+  bottom: .75rem;
+  left: 0;
+  width: 2px;
+  border-radius: 0 3px 3px 0;
+  background: var(--batch-copper);
+  content: '';
+  opacity: 0;
+  transform: scaleY(.55);
+  transition: opacity 250ms ease, transform 320ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .batch-studio-file-row:focus-within::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+#app .batch-studio-file-status {
+  min-width: 0;
+  max-width: 8rem;
+}
+
+#app .batch-studio-file-meta strong {
+  font-size: .82rem;
+}
+
+#app .batch-studio-upload.optional-batch-dropzone {
+  transition: border-color 380ms ease, background-color 380ms ease,
+    box-shadow 470ms cubic-bezier(.16, 1, .3, 1), transform 380ms cubic-bezier(.16, 1, .3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #app .batch-studio-upload.optional-batch-dropzone:not([aria-disabled="true"]):hover .batch-studio-upload-icon svg {
+    transform: translateY(-1px);
+  }
+
+  #app .batch-studio-file-row:hover::before {
+    opacity: .7;
+    transform: scaleY(1);
+  }
+}
+
+:root[data-theme="dark"] #app .batch-studio-flow-current .batch-studio-flow-number {
+  background: #28674d;
+  border-color: #79b596;
+  color: #fffaf1;
+}
+
+@container batch-studio (max-width: 650px) {
+  #app .batch-studio-flow { gap: .42rem; }
+  #app .batch-studio-flow-step {
+    padding: .48rem .57rem;
+    gap: .44rem;
+    min-height: 2.76rem;
+  }
+
+  #app .batch-studio-flow-number {
+    flex-basis: 1.45rem;
+    width: 1.45rem;
+    height: 1.45rem;
+    font-size: .6rem;
+  }
+
+  #app .batch-studio-flow-text { font-size: .7rem; }
+}
+
+@container batch-studio (max-width: 500px) {
+  #app .batch-studio-file-main {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: .32rem .55rem;
+  }
+
+  #app .batch-studio-file-number {
+    grid-column: 1;
+    grid-row: 1 / 3;
+  }
+
+  #app .batch-studio-file-meta {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  #app .batch-studio-file-status {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+    max-width: min(100%, 12rem);
+  }
+
+  #app .batch-studio-remove.btn {
+    grid-column: 3;
+    grid-row: 1 / 3;
+  }
+}
+
+@container batch-studio (max-width: 360px) {
+  #app .batch-studio-flow-step {
+    display: grid;
+    justify-items: center;
+    justify-content: center;
+    gap: .27rem;
+    padding: .42rem .24rem;
+  }
+
+  #app .batch-studio-flow-text {
+    font-size: .6rem;
+    text-align: center;
+  }
+
+  #app .batch-studio-flow-step::after {
+    left: .35rem;
+    right: .35rem;
+  }
+
+  #app .batch-studio-file-status {
+    max-width: 9rem;
+    padding: .24rem .38rem;
+    font-size: .6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .batch-studio-counter-meter i,
+  #app .batch-studio-upload-icon svg,
+  #app .batch-studio-file-row::before,
+  #app .batch-studio-upload.optional-batch-dropzone {
+    transition: none;
+  }
+
+  #app .batch-studio-upload.optional-batch-dropzone:hover .batch-studio-upload-icon svg,
+  #app .batch-studio-file-row:hover::before {
+    transform: none;
+  }
+}

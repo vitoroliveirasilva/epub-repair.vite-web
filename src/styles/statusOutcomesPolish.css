@@ -1,0 +1,307 @@
+
+#app .layout#app-workspace .status-panel.status-highlight {
+  --status-tone: #28714f;
+  --status-deep: #20573e;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 5.1rem minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1.05rem, 2.4vw, 1.65rem);
+  width: 100%;
+  min-width: 0;
+  min-height: 10.25rem;
+  margin: 0;
+  padding: clamp(1.35rem, 2.6vw, 1.85rem) clamp(1.25rem, 3vw, 2.1rem);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--status-tone) 37%, var(--color-border));
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(ellipse 45% 115% at 0% 8%,
+      color-mix(in srgb, var(--status-tone) 10%, transparent), transparent 94%),
+    linear-gradient(115deg,
+      color-mix(in srgb, var(--status-tone) 4%, var(--color-surface)),
+      var(--color-surface) 68%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 40%, transparent),
+    0 .48rem 1.38rem color-mix(in srgb, var(--color-text) 5%, transparent);
+  transform: none;
+  transition: border-color 330ms ease, box-shadow 370ms ease;
+}
+#app .layout#app-workspace .status-panel.status-highlight::before {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  height: auto;
+  border-radius: 0;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--status-tone) 65%, #fff), var(--status-tone));
+  content: '';
+  opacity: 1;
+  transform: none;
+  pointer-events: none;
+}
+#app .layout#app-workspace .status-panel.status-highlight::after {
+  position: absolute;
+  z-index: 0;
+  right: -3.2rem;
+  bottom: -4.1rem;
+  width: 14rem;
+  height: 14rem;
+  border: 1px solid color-mix(in srgb, var(--status-tone) 13%, transparent);
+  border-radius: 50%;
+  background: transparent;
+  box-shadow:
+    0 0 0 2rem color-mix(in srgb, var(--status-tone) 2.6%, transparent),
+    0 0 0 4rem color-mix(in srgb, var(--status-tone) 2%, transparent);
+  content: '';
+  opacity: 1;
+  pointer-events: none;
+}
+#app .layout#app-workspace .status-panel.status-highlight-info {
+  --status-tone: #397c70;
+  --status-deep: #266257;
+}
+#app .layout#app-workspace .status-panel.status-highlight-warning {
+  --status-tone: #b46b42;
+  --status-deep: #8b4b32;
+}
+#app .layout#app-workspace .status-panel.status-highlight-blocked {
+  --status-tone: #a55048;
+  --status-deep: #813a34;
+}
+#app .layout#app-workspace .status-panel.status-highlight-cancelled {
+  --status-tone: #647e86;
+  --status-deep: #49616a;
+}
+#app .layout#app-workspace .status-panel.status-highlight-error {
+  --status-tone: #b24c49;
+  --status-deep: #8f3635;
+}
+#app .layout#app-workspace .status-panel.status-highlight > .status-icon.status-highlight-emblem {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  flex: 0 0 auto;
+  align-self: center;
+  width: 5.1rem;
+  height: 5.1rem;
+  min-width: 0;
+  margin: 0;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--status-tone) 34%, var(--color-border));
+  border-radius: 1.1rem;
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--status-tone) 14%, var(--color-surface)),
+    color-mix(in srgb, var(--status-tone) 5%, var(--color-surface)));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent),
+    0 .28rem .62rem color-mix(in srgb, var(--status-deep) 10%, transparent);
+  color: var(--status-deep);
+  animation: status-outcome-enter 510ms cubic-bezier(.16, 1, .3, 1) both;
+}
+#app .layout#app-workspace .status-panel.status-highlight > .status-icon.status-highlight-emblem::before,
+#app .layout#app-workspace .status-panel.status-highlight > .status-icon.status-highlight-emblem::after {
+  display: none;
+  content: none;
+}
+#app .layout#app-workspace .status-panel.status-highlight .status-highlight-emblem .status-glyph {
+  display: block;
+  width: 2.75rem;
+  height: 2.75rem;
+  overflow: visible;
+  filter: drop-shadow(0 1px 0 color-mix(in srgb, var(--status-tone) 8%, transparent));
+  transition: transform 470ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .layout#app-workspace .status-panel.status-highlight .status-panel-copy.status-highlight-content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: .48rem;
+  min-width: 0;
+  margin: 0;
+  text-align: left;
+  animation: status-outcome-enter 580ms cubic-bezier(.16, 1, .3, 1) both;
+}
+#app .layout#app-workspace .status-panel.status-highlight .status-highlight-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .48rem .91rem;
+  min-width: 0;
+  margin: 0 0 .06rem;
+}
+#app .layout#app-workspace .status-panel.status-highlight .status-highlight-kicker {
+  color: var(--status-deep);
+  font-family: var(--font-sans);
+  font-size: .65rem;
+  font-weight: 850;
+  letter-spacing: .15em;
+  line-height: 1.35;
+}
+#app .layout#app-workspace .status-panel.status-highlight .status-highlight-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  min-height: 1.55rem;
+  padding: .27rem .58rem;
+  border: 1px solid color-mix(in srgb, var(--status-tone) 40%, var(--color-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--status-tone) 9%, var(--color-surface));
+  color: var(--status-deep);
+  font-size: .64rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+#app .layout#app-workspace .status-panel.status-highlight .status-highlight-badge::before {
+  display: block;
+  width: .36rem;
+  height: .36rem;
+  flex: 0 0 .36rem;
+  border-radius: 50%;
+  background: var(--status-tone);
+  content: '';
+}
+#app .layout#app-workspace .status-panel.status-highlight .status-panel-copy .status-highlight-title {
+  display: block;
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-display, var(--font-serif, serif));
+  font-size: clamp(1.4rem, 2.35vw, 1.88rem);
+  font-weight: 760;
+  letter-spacing: -.05em;
+  line-height: 1.16;
+  text-wrap: balance;
+}
+#app .layout#app-workspace .status-panel.status-highlight .status-panel-copy .status-highlight-description {
+  max-width: 67ch;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: clamp(.83rem, 1.1vw, .94rem);
+  line-height: 1.65;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+#app .layout#app-workspace .status-panel.status-highlight .status-highlight-next-step {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: .53rem;
+  max-width: 100%;
+  margin: .2rem 0 0;
+  padding: .49rem .71rem;
+  border: 1px solid color-mix(in srgb, var(--status-tone) 21%, var(--color-border));
+  border-radius: .62rem;
+  background: color-mix(in srgb, var(--status-tone) 4%, var(--color-surface));
+  color: color-mix(in srgb, var(--color-text) 86%, var(--status-deep));
+  font-size: .75rem;
+  font-weight: 720;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+#app .layout#app-workspace .status-panel.status-highlight .status-highlight-next-step::before {
+  flex: 0 0 auto;
+  color: var(--status-tone);
+  content: '↗';
+  font-size: .9rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+@keyframes status-outcome-enter {
+  from { opacity: 0; transform: translateY(.34rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (hover: hover) and (pointer: fine) {
+  #app .layout#app-workspace .status-panel.status-highlight:hover {
+    border-color: color-mix(in srgb, var(--status-tone) 61%, var(--color-border));
+    box-shadow: 0 .72rem 1.7rem color-mix(in srgb, var(--status-deep) 11%, transparent);
+  }
+  #app .layout#app-workspace .status-panel.status-highlight:hover .status-highlight-emblem svg {
+    transform: translateY(-2px) scale(1.04);
+  }
+}
+:root[data-theme="dark"] #app .layout#app-workspace .status-panel.status-highlight {
+  --status-tone: #87c5a4;
+  --status-deep: #b2e0c9;
+}
+:root[data-theme="dark"] #app .layout#app-workspace .status-panel.status-highlight-info {
+  --status-tone: #82c6b9;
+  --status-deep: #b0e1d6;
+}
+:root[data-theme="dark"] #app .layout#app-workspace .status-panel.status-highlight-warning {
+  --status-tone: #e2a47e;
+  --status-deep: #f0c29f;
+}
+:root[data-theme="dark"] #app .layout#app-workspace .status-panel.status-highlight-blocked,
+:root[data-theme="dark"] #app .layout#app-workspace .status-panel.status-highlight-error {
+  --status-tone: #e89c92;
+  --status-deep: #f1b3ac;
+}
+:root[data-theme="dark"] #app .layout#app-workspace .status-panel.status-highlight-cancelled {
+  --status-tone: #a9c0c7;
+  --status-deep: #d5e4e9;
+}
+@media (max-width: 560px) {
+  #app .layout#app-workspace .status-panel.status-highlight {
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    gap: 1rem;
+    min-height: 0;
+    padding: 1.13rem 1.02rem 1.2rem 1.3rem;
+    border-radius: 1.05rem;
+  }
+  #app .layout#app-workspace .status-panel.status-highlight > .status-icon.status-highlight-emblem {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: .85rem;
+  }
+  #app .layout#app-workspace .status-panel.status-highlight .status-highlight-emblem .status-glyph {
+    width: 2.15rem;
+    height: 2.15rem;
+  }
+
+  #app .layout#app-workspace .status-panel.status-highlight .status-highlight-heading { gap: .34rem .6rem; }
+  #app .layout#app-workspace .status-panel.status-highlight .status-highlight-kicker {
+    font-size: .58rem;
+    letter-spacing: .105em;
+  }
+  #app .layout#app-workspace .status-panel.status-highlight .status-panel-copy .status-highlight-title {
+    font-size: clamp(1.18rem, 4.5vw, 1.35rem);
+    letter-spacing: -.035em;
+    line-height: 1.22;
+  }
+  #app .layout#app-workspace .status-panel.status-highlight .status-panel-copy .status-highlight-description {
+    font-size: .81rem;
+    line-height: 1.6;
+  }
+  #app .layout#app-workspace .status-panel.status-highlight .status-highlight-next-step {
+    padding: .46rem .63rem;
+    font-size: .7rem;
+  }
+}
+@media (max-width: 360px) {
+  #app .layout#app-workspace .status-panel.status-highlight {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .92rem;
+  }
+  #app .layout#app-workspace .status-panel.status-highlight > .status-icon.status-highlight-emblem {
+    width: 3.3rem;
+    height: 3.3rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #app .layout#app-workspace .status-panel.status-highlight,
+  #app .layout#app-workspace .status-panel.status-highlight > .status-icon,
+  #app .layout#app-workspace .status-panel.status-highlight .status-highlight-content,
+  #app .layout#app-workspace .status-panel.status-highlight .status-highlight-emblem svg {
+    animation: none;
+    transition: none;
+  }
+  #app .layout#app-workspace .status-panel.status-highlight:hover .status-highlight-emblem svg {
+    transform: none;
+  }
+}

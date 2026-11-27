@@ -1,6 +1,17 @@
 import { defineConfig } from 'vitest/config';
 
 const jsdomFiles = `
+optionalToolsV4
+bookReaderV4
+batchToolsV4
+readerInlineV4
+readerStructuresV4
+metadataDraftV4
+metadataIntegrityV4
+reviewKindleV4
+pdfColumnFidelityV4
+pdfContentSafetyV4
+pdfOutputIntegrityV4
 accessibilitySemantics99
 activeStructuralFalsePositive99
 adversarialHtml
@@ -22,6 +33,7 @@ encodingRewrite99
 epub-audit-132-149
 epub-audit-150-157
 epub-audit-upload-137
+epubFileCoverThumbnail
 epub-fourth-wave
 epub-third-wave-core
 epub-third-wave-cover
@@ -90,6 +102,8 @@ textDiff99
 typographyPreservation99
 w3cExternalCorpus
 workflowAndScore99
+workspaceModePolish
+scrollRevealMotion
 xmlDtdSecurity99
 xmlPrologPreservation99
 zipBuildWorker99

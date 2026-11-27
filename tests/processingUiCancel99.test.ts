@@ -33,6 +33,7 @@ describe('E-080: progresso sem porcentagem inventada e cancelamento seguro', () 
     const cancel=Array.from(element.querySelectorAll('button')).find(x=>
       x.textContent==='Cancelar operação')!;
     expect(cancel.disabled).toBe(true);
+    expect(cancel.classList.contains('epub-cancel-action')).toBe(true);
   });
   it('E-080: apresenta porcentagem real de recompactação, sem fingir entradas', () => {
     const state=createInitialState();

@@ -1,0 +1,225 @@
+#app .layout#app-workspace .report-welcome {
+  transition:
+    border-color 300ms ease,
+    box-shadow 420ms cubic-bezier(.2, .8, .2, 1);
+}
+
+#app .layout#app-workspace .report-welcome::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(120deg, transparent 10%,
+    color-mix(in srgb, var(--studio-copper) 4%, transparent) 50%,
+    transparent 88%);
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 420ms ease;
+}
+
+#app .report-welcome-art,
+#app .report-welcome-copy {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 580ms cubic-bezier(.18, .74, .28, 1),
+    translate 650ms cubic-bezier(.18, .74, .28, 1);
+}
+
+#app .report-welcome-art { transition-delay: 45ms; }
+
+#app .report-welcome-copy { transition-delay: 115ms; }
+
+#app .report-welcome.scroll-reveal-element[data-scroll-reveal-state="hidden"] .report-welcome-art {
+  opacity: 0;
+  translate: 0 .85rem;
+  transition-delay: 0ms;
+}
+
+#app .report-welcome.scroll-reveal-element[data-scroll-reveal-state="hidden"] .report-welcome-copy {
+  opacity: 0;
+  translate: 0 1rem;
+  transition-delay: 0ms;
+}
+
+#app .report-welcome .report-welcome-art-ring {
+  transform-origin: center;
+  transition:
+    transform 850ms cubic-bezier(.16, 1, .3, 1),
+    border-color 380ms ease;
+}
+
+#app .report-welcome .empty-illustration span {
+  transition:
+    transform 680ms cubic-bezier(.16, 1, .3, 1),
+    box-shadow 520ms ease;
+  transform-origin: 50% 85%;
+}
+
+#app .report-welcome-art-stamp {
+  transition:
+    transform 620ms cubic-bezier(.16, 1, .3, 1),
+    box-shadow 400ms ease;
+}
+
+#app .report-welcome-highlights span {
+  transition:
+    translate 350ms cubic-bezier(.16, 1, .3, 1),
+    opacity 420ms ease;
+}
+
+#app .report-welcome.scroll-reveal-element[data-scroll-reveal-state="hidden"] .report-welcome-highlights span {
+  opacity: 0;
+  translate: 0 .35rem;
+}
+
+#app .report-welcome-highlights span:nth-child(1) { transition-delay: 105ms; }
+
+#app .report-welcome-highlights span:nth-child(2) { transition-delay: 170ms; }
+
+#app .report-welcome-highlights span:nth-child(3) { transition-delay: 235ms; }
+
+#app .report-welcome.scroll-reveal-element[data-scroll-reveal-state="hidden"] .report-welcome-highlights span {
+  transition-delay: 0ms;
+}
+
+#app .layout#app-workspace .advanced-settings {
+  transition:
+    border-color 300ms ease,
+    box-shadow 380ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .advanced-settings > summary .settings-summary-copy {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 560ms ease,
+    translate 610ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .advanced-settings.scroll-reveal-element[data-scroll-reveal-state="hidden"] > summary .settings-summary-copy {
+  opacity: 0;
+  translate: 0 .65rem;
+  transition-delay: 0ms;
+}
+
+#app .advanced-settings .settings-disclosure {
+  transition:
+    transform 390ms cubic-bezier(.2, .8, .2, 1),
+    border-color 300ms ease,
+    background-color 300ms ease;
+}
+
+#app .advanced-settings .option-item {
+  transition: border-color 240ms ease, background-color 240ms ease, translate 280ms ease;
+}
+
+#app .advanced-settings[open] > .options-list {
+  animation: editorial-disclosure-arrive 440ms cubic-bezier(.2, .75, .25, 1) both;
+}
+
+@keyframes editorial-disclosure-arrive {
+  from { opacity: .35; translate: 0 -.35rem; }
+  to { opacity: 1; translate: 0 0; }
+}
+#app .editorial-footer-content > .scroll-reveal-element,
+#app .editorial-footer-wave.scroll-reveal-element {
+  transition:
+    opacity 670ms cubic-bezier(.2, .75, .25, 1),
+    translate 740ms cubic-bezier(.16, 1, .3, 1);
+}
+
+#app .editorial-footer-content > .scroll-reveal-element[data-scroll-reveal-state="hidden"] {
+  opacity: 0;
+  translate: 0 1rem;
+}
+
+#app .editorial-footer-art.scroll-reveal-element[data-scroll-reveal-state="hidden"] {
+  translate: 0 1.4rem;
+}
+
+#app .editorial-footer-wave.scroll-reveal-element[data-scroll-reveal-state="hidden"] {
+  opacity: 0;
+  translate: 0 .75rem;
+}
+
+@media (hover: hover) and (pointer: fine) {#app .layout#app-workspace .report-welcome:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 44%, var(--color-border));
+    box-shadow: 0 1.2rem 3rem color-mix(in srgb, var(--color-accent) 11%, transparent);
+  }
+
+#app .layout#app-workspace .report-welcome:hover::after { opacity: 1; }
+
+#app .report-welcome:hover .report-welcome-art-ring {
+    transform: rotate(22deg) scale(1.035);
+    border-color: color-mix(in srgb, var(--studio-copper) 36%, var(--color-border));
+  }
+
+#app .layout#app-workspace .report-welcome:hover .empty-illustration span:nth-child(1) {
+    transform: rotate(-18deg) translate(-.45rem, -.42rem);
+  }
+
+#app .layout#app-workspace .report-welcome:hover .empty-illustration span:nth-child(2) {
+    transform: rotate(13deg) translate(.42rem, -.3rem);
+  }
+
+#app .layout#app-workspace .report-welcome:hover .empty-illustration span:nth-child(3) {
+    transform: rotate(-3deg) translateY(-.52rem);
+    box-shadow: 0 .95rem 1.7rem color-mix(in srgb, var(--color-accent) 17%, transparent);
+  }
+
+#app .report-welcome:hover .report-welcome-art-stamp {
+    transform: translate(.15rem, -.32rem) rotate(4deg);
+  }
+
+#app .layout#app-workspace .advanced-settings:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 39%, var(--color-border));
+    box-shadow: 0 .85rem 2rem color-mix(in srgb, var(--color-text) 5%, transparent);
+  }
+
+#app .advanced-settings > summary:hover .settings-disclosure {
+    border-color: color-mix(in srgb, var(--color-accent) 50%, var(--color-border));
+    background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+  }
+
+#app .advanced-settings .option-item:hover {
+    translate: 0 -.08rem;
+  }
+}
+
+@media (max-width: 700px) {#app .report-welcome-highlights span {
+    transition-delay: 0ms;
+  }
+
+#app .editorial-footer-content > .scroll-reveal-element,
+#app .editorial-footer-wave.scroll-reveal-element {
+    transition-duration: 520ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {#app .layout#app-workspace .report-welcome,
+#app .layout#app-workspace .report-welcome::after,
+#app .report-welcome-art,
+#app .report-welcome-copy,
+#app .report-welcome-art-ring,
+#app .report-welcome .empty-illustration span,
+#app .report-welcome-art-stamp,
+#app .report-welcome-highlights span,
+#app .advanced-settings,
+#app .advanced-settings *,
+#app .editorial-footer-content > .scroll-reveal-element,
+#app .editorial-footer-wave.scroll-reveal-element {
+    animation: none !important;
+    transition: none !important;
+    translate: 0 0 !important;
+  }
+
+#app .report-welcome-art,
+#app .report-welcome-copy,
+#app .report-welcome-highlights span,
+#app .advanced-settings > summary .settings-summary-copy,
+#app .editorial-footer-content > .scroll-reveal-element,
+#app .editorial-footer-wave.scroll-reveal-element {
+    opacity: 1 !important;
+  }
+}

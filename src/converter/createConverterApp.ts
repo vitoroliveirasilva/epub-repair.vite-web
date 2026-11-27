@@ -4,6 +4,12 @@ import type { ConverterState, EditableSection, PdfAnalysisResult } from './model
 import { analyzePdf, renderPdfPagePreview } from './pdfEngine';
 import { button, downloadBlob, el, formatBytes } from '../ui/dom';
 import { renderMobileNavigation } from '../ui/mobileNavigation';
+import { renderDesktopNavigation } from '../ui/desktopNavigation';
+import { renderBrandName } from '../ui/brand';
+import { renderEditorialFooter } from '../ui/footer';
+import { setupScrollReveals } from '../ui/scrollReveals';
+import { buildReviewAudit, exportReviewAudit, reviewFindingKey,
+  normalizeSectionSpaces, type ReviewFinding } from './reviewSuggestions';
 
 const THEME_STORAGE_KEY = 'epub-repair-theme';
 const MAX_PDF_SIZE = 250 * 1024 * 1024;
@@ -11,7 +17,10 @@ const MAX_PDF_SIZE = 250 * 1024 * 1024;
 export function createConverterApp(root: HTMLElement): void {
   initializeTheme();
   const state = createInitialConverterState();
-  const rerender = (): void => render(root, state, rerender);
+  const rerender = (): void => {
+    render(root, state, rerender);
+    setupScrollReveals(root);
+  };
   rerender();
 }
 
@@ -32,6 +41,7 @@ function render(root: HTMLElement, state: ConverterState, rerender: () => void):
             state.result ? renderResult(state) : undefined,
             state.analysis ? renderOverview(state) : !state.file ? renderConverterEmptyState() : undefined,
             state.analysis && !state.busy ? renderSettings(state, rerender) : undefined,
+            state.analysis && !state.busy ? renderReviewAssist(state, rerender) : undefined,
             state.analysis && !state.busy ? renderAdvancedReview(state, rerender) : undefined,
           ],
         }),
@@ -41,6 +51,31 @@ function render(root: HTMLElement, state: ConverterState, rerender: () => void):
     renderHowItWorks(),
     renderFooter(),
   );
+}
+
+function renderPdfJourneyIcon(index: number): SVGSVGElement {
+  const iconPaths = [
+    ['M8 3.5h11l5 5V27H8z', 'M19 3.5v5h5', 'M12 15h8', 'M12 19h8', 'M12 23h5'],
+    ['M5 9l11-5 11 5-11 5z', 'M5 15l11 5 11-5', 'M5 20l11 5 11-5'],
+    ['M6 4h13l5 5v17H6z', 'M19 4v5h5', 'M10 14h9', 'M10 18h6', 'M14 25l3.2-.5L25 16.7l-2.7-2.7-7.8 7.8z'],
+    ['M6 5h11v16H6z', 'M17 5h9v16h-9', 'M11 24v4h10v-4', 'M18 12v7', 'M15.5 16.5L18 19l2.5-2.5'],
+  ];
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 32 32');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.55');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('class', 'pdf-journey-icon');
+
+  for (const d of iconPaths[index] ?? iconPaths[0]!) {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    svg.append(path);
+  }
+  return svg;
 }
 
 function renderWorkflowRail(state: ConverterState): HTMLElement {
@@ -55,33 +90,84 @@ function renderWorkflowRail(state: ConverterState): HTMLElement {
           ? 2
           : 1;
   const steps = [
-    ['Selecionar PDF', 'Escolha o documento'],
-    ['Processar', 'Texto, imagens e estrutura'],
-    ['Revisar', 'Confira e ajuste'],
-    ['Gerar e baixar', 'EPUB validado'],
+    ['Selecionar PDF', 'Escolha o documento de origem'],
+    ['Reconstruir', 'Texto, imagens e estrutura'],
+    ['Revisar', 'Confira e ajuste o conteúdo'],
+    [
+      generating && !state.result ? 'Gerando EPUB' : 'Baixar EPUB',
+      generating && !state.result ? 'Montagem e validação' : 'Arquivo validado e pronto',
+    ],
   ];
+
   return el('nav', {
-    className: 'converter-workflow',
+    className: 'converter-workflow pdf-conversion-journey pdf-journey-editorial',
     attrs: { 'aria-label': 'Etapas da conversão' },
-    children: [el('ol', { children: steps.map(([title, detail], index) => {
-      const number = index + 1;
-      const status = number < current || (state.result && number === current)
-        ? 'complete'
-        : number === current
-          ? 'active'
-          : 'pending';
-      return el('li', {
-        className: `converter-workflow-step converter-workflow-${status}`,
-        attrs: status === 'active' ? { 'aria-current': 'step' } : {},
-        children: [
-          el('span', { className: 'converter-workflow-number', text: status === 'complete' ? '✓' : String(number) }),
-          el('span', { className: 'converter-workflow-copy', children: [
-            el('strong', { text: title ?? '' }),
-            el('small', { text: detail ?? '' }),
-          ] }),
-        ],
-      });
-    }) })],
+    children: [
+      el('div', { className: 'pdf-journey-header', children: [
+        el('div', { className: 'pdf-journey-intro', children: [
+          el('span', { className: 'pdf-journey-eyebrow', text: 'PDF  /  EPUB' }),
+          el('strong', { className: 'pdf-journey-title', text: 'Seu percurso' }),
+          el('span', { className: 'pdf-journey-subtitle',
+            text: 'Do documento original ao livro digital.' }),
+        ] }),
+        el('div', { className: 'pdf-journey-counter',
+          attrs: { 'aria-label': state.result
+            ? 'Conversão concluída, quatro de quatro etapas'
+            : `Etapa ${current} de 4` },
+          children: [
+            el('span', { className: 'pdf-journey-counter-label',
+              text: state.result ? 'CONCLUÍDO' : 'PROGRESSO' }),
+            el('span', { className: 'pdf-journey-counter-value', children: [
+              el('strong', { text: String(current).padStart(2, '0') }),
+              el('small', { text: '/ 04' }),
+            ] }),
+          ],
+        }),
+      ] }),
+      el('div', { className: 'pdf-journey-progress-track',
+        attrs: { 'aria-hidden': 'true' },
+        children: steps.map((_, index) => {
+          const number = index + 1;
+          const status = number < current || (state.result && number === current)
+            ? 'complete'
+            : number === current ? 'active' : 'pending';
+          return el('span', { className: `pdf-journey-progress-segment pdf-journey-progress-${status}` });
+        }),
+      }),
+      el('ol', { children: steps.map(([title, detail], index) => {
+        const number = index + 1;
+        const status = number < current || (state.result && number === current)
+          ? 'complete'
+          : number === current
+            ? 'active'
+            : 'pending';
+        return el('li', {
+          className: `converter-workflow-step converter-workflow-${status}`,
+          attrs: status === 'active' ? { 'aria-current': 'step' } : {},
+          children: [
+            el('span', { className: 'pdf-journey-stage-head', children: [
+              el('span', { className: 'converter-workflow-number',
+                attrs: { 'aria-hidden': 'true' },
+                text: String(number).padStart(2, '0') }),
+              el('span', { className: 'pdf-journey-stage-symbol',
+                attrs: { 'aria-hidden': 'true' }, children: [
+                  renderPdfJourneyIcon(index),
+                ] }),
+            ] }),
+            el('span', { className: 'converter-workflow-copy', children: [
+              el('strong', { text: title ?? '' }),
+              el('small', { text: detail ?? '' }),
+            ] }),
+            status === 'active'
+              ? el('span', { className: 'pdf-journey-stage-status', text: 'AGORA' })
+              : undefined,
+            status === 'complete'
+              ? el('span', { className: 'visually-hidden', text: 'Etapa concluída' })
+              : undefined,
+          ],
+        });
+      }) }),
+    ],
   });
 }
 
@@ -92,23 +178,19 @@ function renderHeader(): HTMLElement {
       el('a', {
         className: 'brand-mark',
         attrs: { href: '/', 'aria-label': 'EPUB Repair, início' },
-        children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })],
+        children: [renderLogoSymbol(), renderBrandName()],
       }),
-      el('nav', {
-        className: 'header-nav',
-        attrs: { 'aria-label': 'Navegação principal' },
-        children: [
-          el('a', { text: 'Reparar EPUB', attrs: { href: '/' } }),
-          el('a', { text: 'Converter PDF', attrs: { href: '/converter', 'aria-current': 'page' } }),
-          el('a', { text: 'Como funciona', attrs: { href: '#converter-how' } }),
-          el('a', { text: 'Privacidade', attrs: { href: '#converter-privacy' } }),
-        ],
-      }),
+      renderDesktopNavigation([
+        { label: 'Reparar EPUB', href: '/' },
+        { label: 'Converter PDF', href: '/converter', current: true },
+        { label: 'Como funciona', href: '#converter-how' },
+        { label: 'Privacidade', href: '#converter-privacy' },
+      ]),
       renderMobileNavigation('converter'),
       el('div', {
         className: 'header-actions',
         children: [renderThemeToggle(), el('a', {
-          className: 'btn btn-primary btn-small',
+          className: 'btn btn-primary btn-small nav-primary-action',
           text: 'Selecionar PDF',
           attrs: { href: '#pdf-upload' },
         })],
@@ -125,41 +207,30 @@ function renderHero(): HTMLElement {
       el('div', {
         className: 'converter-hero-copy',
         children: [
-          el('p', { className: 'eyebrow', text: 'Conversão editorial local' }),
-          el('h1', { text: 'Transforme PDF em EPUB sem carregar a bagunça junto' }),
+          el('p', { className: 'eyebrow', text: 'PDF → EPUB' }),
+          el('h1', { text: 'Do PDF ao EPUB, sem complicação' }),
           el('p', {
             className: 'hero-copy',
-            text: 'Reconstrua parágrafos, capítulos e ordem de leitura, leia textos de páginas digitalizadas, compare o resultado e gere um EPUB validado sem enviar o documento para servidor.',
+            text: 'Reconstrua capítulos, imagens e a ordem de leitura em um arquivo pronto para revisar.',
           }),
-          el('div', { className: 'hero-actions', children: [
-            el('a', { className: 'btn btn-primary btn-large', text: 'Converter meu PDF', attrs: { href: '#pdf-upload' } }),
-            el('a', { className: 'btn btn-ghost btn-large', text: 'Entender o processo', attrs: { href: '#converter-how' } }),
-          ] }),
-        ],
-      }),
-      el('aside', {
-        className: 'hero-preview converter-hero-preview',
-        attrs: { 'aria-label': 'Recursos do conversor PDF para EPUB' },
-        children: [
-          el('div', { className: 'preview-toolbar', children: [
-            el('span'), el('span'), el('span'), el('strong', { text: 'PDF → EPUB' }),
-          ] }),
-          renderFeature('Diagnóstico por página', 'Texto, digitalização, colunas e imagens'),
-          renderFeature('Reconstrução editorial', 'Parágrafos, capítulos, notas e tipografia'),
-          renderFeature('Leitura de páginas digitalizadas', 'Reconhece texto em imagens sem enviar o arquivo'),
-          renderFeature('Validação final', 'Estrutura EPUB e compatibilidade Kindle'),
+          el('div', {
+            className: 'hero-actions',
+            children: [
+              el('a', {
+                className: 'btn btn-primary btn-large',
+                text: 'Selecionar PDF',
+                attrs: { href: '#pdf-upload' },
+              }),
+              el('a', {
+                className: 'btn btn-ghost btn-large',
+                text: 'Como funciona',
+                attrs: { href: '#converter-how' },
+              }),
+            ],
+          }),
         ],
       }),
     ],
-  });
-}
-
-function renderFeature(title: string, detail: string): HTMLElement {
-  return el('div', {
-    className: 'converter-feature',
-    children: [el('span', { text: '✓' }), el('div', {
-      children: [el('strong', { text: title }), el('small', { text: detail })],
-    })],
   });
 }
 
@@ -178,51 +249,85 @@ function renderUploader(state: ConverterState, rerender: () => void): HTMLElemen
     if (file) void loadAndAnalyze(file, state, rerender);
   });
   const dropzone = el('label', {
-    className: `converter-dropzone ${state.file ? 'converter-dropzone-loaded' : ''} ${state.busy ? 'converter-dropzone-busy' : ''}`,
-    attrs: { for: 'pdf-file-input' },
+    className: 'converter-dropzone upload-studio-zone upload-studio-zone-pdf pdf-drop-stage' +
+      (state.file ? ' converter-dropzone-loaded upload-studio-loaded' : '') +
+      (state.busy ? ' converter-dropzone-busy upload-studio-busy' : ''),
+    attrs: {
+      for: 'pdf-file-input',
+      tabindex: '0',
+      role: 'button',
+      'aria-label': state.file ? 'Substituir documento PDF selecionado'
+        : 'Escolher ou arrastar documento PDF',
+      'aria-disabled': String(state.busy),
+    },
     children: [
-      el('div', { className: 'converter-drop-icon', attrs: { 'aria-hidden': 'true' }, text: 'PDF' }),
-      el('div', { children: [
-        state.file ? el('span', { className: 'converter-file-badge', text: state.busy ? 'Processando agora' : 'PDF carregado' }) : undefined,
-        el('strong', { className: 'converter-file-name', text: state.file ? state.file.name : 'Escolha ou arraste um PDF' }),
-        el('p', {
-          className: 'muted',
-          text: state.file
-            ? `${formatBytes(state.file.size)} · processado somente neste navegador`
-            : 'PDFs de até 250 MB com texto, páginas digitalizadas ou conteúdo misto',
-        }),
-        el('span', {
-          className: `btn ${state.file ? 'btn-ghost' : 'btn-primary'}`,
-          text: state.busy ? 'Processando arquivo…' : state.file ? 'Trocar PDF' : 'Selecionar PDF',
-        }),
+      el('span', { className: 'upload-studio-kicker', children: [
+        el('span', { className: 'upload-studio-dot', attrs: { 'aria-hidden': 'true' } }),
+        el('span', { text: state.busy ? 'Preparando seu documento' :
+          state.file ? 'PDF recebido' : 'Documento de origem' }),
       ] }),
+      el('span', { className: 'upload-studio-graphic upload-studio-graphic-pdf',
+        attrs: { 'aria-hidden': 'true' }, children: [
+          el('span', { className: 'upload-studio-sheet upload-studio-sheet-back' }),
+          el('span', { className: 'upload-studio-sheet upload-studio-sheet-front',
+            children: [
+              el('span', { className: 'upload-studio-lines' }),
+            ],
+          }),
+          el('span', { className: 'upload-studio-graphic-tag', text: 'PDF' }),
+        ] }),
+      el('span', { className: 'upload-studio-content', children: [
+        el('strong', { className: 'upload-studio-title converter-file-name',
+          text: state.file ? state.file.name : 'Solte seu PDF aqui' }),
+        el('span', { className: 'upload-studio-subtitle',
+          text: state.file ? formatBytes(state.file.size) +
+            ' · Este documento continua no seu dispositivo.'
+            : 'Ou escolha um arquivo para transformar em um livro digital.' }),
+      ] }),
+      el('span', { className: 'upload-studio-action', children: [
+        el('span', { text: state.busy ? 'Analisando documento…' :
+          state.file ? 'Trocar PDF' : 'Selecionar PDF' }),
+        el('span', { className: 'upload-studio-action-arrow',
+          attrs: { 'aria-hidden': 'true' }, text: '↗' }),
+      ] }),
+      el('span', { className: 'upload-studio-formats',
+        text: 'PDF até 250 MB  ·  texto, digitalizações e imagens' }),
       input,
     ],
   });
   for (const eventName of ['dragenter', 'dragover']) {
     dropzone.addEventListener(eventName, (event) => {
       event.preventDefault();
-      dropzone.classList.add('converter-dropzone-active');
+      if (!state.busy) dropzone.classList.add('converter-dropzone-active');
     });
   }
-  for (const eventName of ['dragleave', 'drop']) {
-    dropzone.addEventListener(eventName, (event) => {
-      event.preventDefault();
+  dropzone.addEventListener('dragleave', (event) => {
+    if (!dropzone.contains(event.relatedTarget as Node | null))
       dropzone.classList.remove('converter-dropzone-active');
-    });
-  }
+  });
   dropzone.addEventListener('drop', (event) => {
+    event.preventDefault();
+    dropzone.classList.remove('converter-dropzone-active');
     const file = event.dataTransfer?.files[0];
     if (file && !state.busy) void loadAndAnalyze(file, state, rerender);
   });
+  dropzone.addEventListener('keydown', (event) => {
+    if (state.busy || (event.key !== 'Enter' && event.key !== ' ')) return;
+    event.preventDefault();
+    input.click();
+  });
   return el('section', {
-    className: 'panel converter-upload-panel',
+    className: 'panel converter-upload-panel upload-studio-panel pdf-upload-studio',
     attrs: { id: 'pdf-upload', 'aria-label': 'Selecionar PDF para converter' },
     children: [
-      el('div', { className: 'section-heading', children: [
-        el('p', { className: 'eyebrow', text: '1. Documento' }),
+      el('div', { className: 'section-heading upload-studio-heading pdf-upload-heading', children: [
+        el('div', { className: 'pdf-upload-eyebrow-row', children: [
+          el('p', { className: 'eyebrow', text: '01 / ARQUIVO PDF' }),
+          el('span', { className: 'pdf-upload-process-label', text: 'PROCESSAMENTO LOCAL' }),
+        ] }),
         el('h2', { text: state.file ? 'Documento selecionado' : 'Carregue o PDF' }),
-        el('p', { className: 'muted', text: 'O arquivo permanece no dispositivo durante análise, leitura de imagens, prévia e geração do EPUB.' }),
+        el('p', { className: 'muted',
+          text: 'A reconstrução e a prévia acontecem localmente, sem enviar o documento para servidores.' }),
       ] }),
       dropzone,
     ],
@@ -627,18 +732,171 @@ function renderAdvancedReview(state: ConverterState, rerender: () => void): HTML
   return details;
 }
 
+function renderReviewAssist(state: ConverterState, rerender: () => void): HTMLElement {
+  const audit = state.analysis ? buildReviewAudit(state.analysis, state.sections) : undefined;
+  const reviewed = state.reviewedFindingIds ?? new Set<string>();
+  const filter = state.reviewPriorityFilter ?? 'all';
+  const findings = (audit?.findings ?? []).filter((item) =>
+    filter === 'all' || item.priority === filter);
+  const highCount = audit?.high ?? 0;
+  const mediumCount = audit?.medium ?? 0;
+  const reviewedCount = (audit?.findings ?? []).filter((finding) =>
+    reviewed.has(reviewFindingKey(finding))).length;
+  const priorityNames: Record<ReviewFinding['priority'], string> = {
+    high: 'Prioridade alta', medium: 'Revisar', low: 'Conferir se necessário',
+  };
+  const renderFinding = (finding: ReviewFinding): HTMLElement => {
+    const canNavigate = finding.page !== undefined || finding.sectionIndex !== undefined;
+    const navigate = button('Conferir no editor', 'btn btn-ghost btn-small', () => {
+      if (finding.page !== undefined) state.selectedPage = finding.page;
+      if (finding.sectionIndex !== undefined) state.selectedSection = finding.sectionIndex;
+      state.advancedReviewOpen = true;
+      rerender();
+      requestAnimationFrame(() => document.querySelector('.converter-comparison')?.scrollIntoView({
+        behavior: 'smooth', block: 'start',
+      }));
+    });
+    navigate.disabled = !canNavigate;
+    const normalize = finding.canNormalizeSpaces && finding.sectionIndex !== undefined
+      ? button('Normalizar espaços desta seção', 'btn btn-secondary btn-small', () => {
+          if (!window.confirm('Normalizar sequências de três ou mais espaços no texto desta seção, preservando o HTML, as imagens e a formatação?')) return;
+          const index = finding.sectionIndex!;
+          const section = state.sections[index];
+          if (!section) return;
+          state.sections[index] = normalizeSectionSpaces(section);
+          state.result = undefined;
+          rerender();
+        })
+      : undefined;
+    const key = reviewFindingKey(finding);
+    const isReviewed = reviewed.has(key);
+    const toggleReviewed = button(isReviewed ? 'Reabrir revisão' : 'Marcar como conferido',
+      'btn btn-ghost btn-small', () => {
+        state.reviewedFindingIds ??= new Set();
+        if (state.reviewedFindingIds.has(key)) state.reviewedFindingIds.delete(key);
+        else state.reviewedFindingIds.add(key);
+        rerender();
+      });
+    const origin = [
+      priorityNames[finding.priority],
+      ...(finding.page !== undefined ? ['Página ' + finding.page] : []),
+      ...(finding.sectionIndex !== undefined ? ['Seção ' + (finding.sectionIndex + 1)] : []),
+    ].join(' · ');
+    return el('article', { className: 'optional-review-item', children: [
+      el('strong', { text: finding.title + (isReviewed ? ' · Conferido' : '') }),
+      el('small', { className: 'optional-review-origin', text: origin }),
+      el('p', { className: 'muted', text: finding.reason }),
+      finding.evidence ? el('p', { className: 'optional-review-evidence',
+        text: 'Trecho de referência: ' + finding.evidence }) : undefined,
+      el('div', { className: 'optional-review-actions',
+        children: [navigate, normalize, toggleReviewed] }),
+    ] });
+  };
+  const additional = findings.slice(6);
+  const prioritySelect = el('select', { attrs: { 'aria-label': 'Filtrar alertas da revisão' },
+    children: [
+      el('option', { attrs: { value: 'all',
+        ...(filter === 'all' ? { selected: 'selected' } : {}) }, text: 'Todas as prioridades' }),
+      ...(['high', 'medium', 'low'] as const).map((priority) => el('option', {
+        text: priorityNames[priority],
+        attrs: { value: priority,
+          ...(filter === priority ? { selected: 'selected' } : {}) },
+      })),
+    ],
+  });
+  prioritySelect.addEventListener('change', () => {
+    state.reviewPriorityFilter = prioritySelect.value as typeof filter;
+    rerender();
+  });
+  const exportReport = button('Baixar relatório detalhado (JSON)',
+    'btn btn-secondary btn-small', () => {
+      if (!state.analysis) return;
+      const report = exportReviewAudit(state.analysis, state.sections,
+        state.reviewedFindingIds);
+      downloadBlob(new Blob([report], { type: 'application/json' }),
+        'revisao-assistida-pdf.json');
+    });
+  const details = el('details', { className: 'converter-advanced-review optional-pdf-review', children: [
+    el('summary', { children: [
+      el('span', { className: 'converter-advanced-icon', text: 'Aa' }),
+      el('span', { className: 'converter-advanced-copy', children: [
+        el('strong', { text: 'Revisão assistida de PDF' }),
+        el('small', { text: 'Opcional · ' + (audit?.total ?? 0) +
+          ' alerta(s); ' + highCount + ' prioritário(s). Nenhuma mudança automática.' }),
+      ] }),
+      el('span', { className: 'converter-advanced-action', text: 'Ver sugestões' }),
+    ] }),
+    el('div', { className: 'optional-review-list', children: [
+      el('p', { className: 'muted',
+        text: 'Alertas heurísticos, não diagnósticos definitivos. Confira primeiro os pontos de maior prioridade. A revisão não altera o PDF original.' }),
+      audit?.total
+        ? el('p', { className: 'muted', text: highCount + ' prioridade(s) alta(s) · ' +
+          mediumCount + ' revisão(ões) recomendada(s) · ' +
+          audit.low + ' conferência(s) opcional(is). ' +
+          reviewedCount + ' alerta(s) marcado(s) como conferido(s) entre os exibidos.' })
+        : el('p', { text: 'Nenhum sinal adicional encontrado nesta verificação.' }),
+      audit?.omitted ? el('p', { className: 'muted',
+        text: 'Exibindo até ' + audit.displayed + ' dos ' + audit.total +
+          ' alertas. Baixe o relatório para consultar todos os achados.',
+      }) : undefined,
+      el('div', { className: 'optional-review-actions', children: [
+        prioritySelect, exportReport,
+      ] }),
+      ...findings.slice(0, 6).map(renderFinding),
+      additional.length ? el('details', { className: 'optional-review-more', children: [
+        el('summary', { text: 'Mostrar outros ' + additional.length + ' ponto(s) para conferir' }),
+        ...additional.map(renderFinding),
+      ] }) : undefined,
+    ] }),
+  ] });
+  details.open = state.assistedReviewOpen;
+  details.addEventListener('toggle', () => {
+    if (details.isConnected) state.assistedReviewOpen = details.open;
+  });
+  return details;
+}
+
 function renderQualitySidebar(state: ConverterState): HTMLElement {
   const warnings = state.analysis?.warnings ?? [];
+  const qualityScore = state.analysis
+    ? Math.max(0, Math.min(100, state.analysis.qualityScore))
+    : undefined;
   return el('aside', {
-    className: 'converter-sidebar',
+    className: 'converter-sidebar pdf-converter-sidebar',
     children: [
-      el('section', { className: 'panel converter-quality-card', children: [
-        el('p', { className: 'eyebrow', text: 'Qualidade' }),
+      el('section', { className: 'panel converter-quality-card pdf-quality-studio' +
+        (state.analysis ? ' pdf-quality-ready' : ''), children: [
+        el('div', { className: 'pdf-sidebar-heading', children: [
+          el('span', { className: 'pdf-sidebar-symbol pdf-quality-symbol', attrs: { 'aria-hidden': 'true' } }),
+          el('p', { className: 'eyebrow', text: 'Qualidade' }),
+        ] }),
         el('h2', { text: state.analysis ? `${state.analysis.qualityScore}/100` : 'Aguardando PDF' }),
         el('p', { className: 'muted', text: state.analysis
           ? 'Confiança da reconstrução, não nota estética nem garantia editorial.'
           : 'O diagnóstico mostrará texto selecionável, páginas digitalizadas, colunas, imagens e pontos para revisão.' }),
+        qualityScore !== undefined
+          ? el('div', { className: 'pdf-quality-meter',
+            attrs: {
+              role: 'progressbar',
+              'aria-label': 'Confiança da reconstrução',
+              'aria-valuemin': '0',
+              'aria-valuemax': '100',
+              'aria-valuenow': String(qualityScore),
+            },
+            children: [
+              el('span', { className: 'pdf-quality-meter-track', children: [
+                el('span', { className: 'pdf-quality-meter-fill',
+                  attrs: { style: `width: ${qualityScore}%` } }),
+              ] }),
+            ],
+          })
+          : el('div', { className: 'pdf-quality-placeholder', attrs: { 'aria-hidden': 'true' },
+            children: [el('span'), el('span'), el('span')],
+          }),
         state.analysis ? renderRecommendation(state) : undefined,
+        el('span', { className: 'pdf-quality-footnote', text: state.analysis
+          ? 'Diagnóstico do documento'
+          : 'Disponível após selecionar o PDF' }),
       ] }),
       state.analysis ? el('section', { className: 'panel converter-warning-panel', children: [
         el('h3', { text: warnings.length ? 'Pontos para conferir' : 'Nenhuma pendência relevante' }),
@@ -651,10 +909,20 @@ function renderQualitySidebar(state: ConverterState): HTMLElement {
           ],
         })),
       ] }) : undefined,
-      el('section', { className: 'panel converter-privacy-card', attrs: { id: 'converter-privacy' }, children: [
-        el('p', { className: 'eyebrow', text: 'Privacidade' }),
+      el('section', { className: 'panel converter-privacy-card pdf-privacy-studio',
+        attrs: { id: 'converter-privacy' }, children: [
+        el('div', { className: 'pdf-sidebar-heading', children: [
+          el('span', { className: 'pdf-sidebar-symbol pdf-privacy-symbol', attrs: { 'aria-hidden': 'true' } }),
+          el('p', { className: 'eyebrow', text: 'Privacidade' }),
+        ] }),
         el('h3', { text: 'Arquivo sempre local' }),
-        el('p', { className: 'muted', text: 'Leitura do PDF e das imagens, reconstrução, compactação e validação executam no navegador. A CSP impede conexões externas.' }),
+        el('p', { className: 'muted',
+          text: 'Leitura do PDF e das imagens, reconstrução, compactação e validação executam no navegador. A CSP impede conexões externas.' }),
+        el('div', { className: 'pdf-privacy-footer', attrs: { 'aria-hidden': 'true' },
+          children: [
+            el('span', { text: 'SEU DISPOSITIVO' }),
+            el('span', { text: 'SEM ENVIO' }),
+          ] }),
       ] }),
     ],
   });
@@ -693,6 +961,11 @@ function renderResult(state: ConverterState): HTMLElement {
           el('p', { className: 'eyebrow', text: 'Conversão finalizada' }),
           el('h2', { text: 'Seu EPUB está pronto para baixar' }),
           el('p', { className: 'muted', text: 'O arquivo foi gerado, passou pelo reparo automático e foi revalidado com sucesso.' }),
+          result.integrity ? el('p', { className: 'muted',
+            text: 'Integridade do EPUB conferida: ' +
+              result.integrity.sectionsChecked + ' seção(ões) e ' +
+              result.integrity.imageReferencesChecked + ' referência(s) de imagem preservadas. ' +
+              'Esta verificação compara o conteúdo editado com o arquivo final; não garante equivalência com a diagramação do PDF.' }) : undefined,
         ] }),
       ] }),
       el('div', { className: 'converter-result-file', children: [
@@ -782,6 +1055,9 @@ async function loadAndAnalyze(file: File, state: ConverterState, rerender: () =>
   state.selectedPage = 1;
   state.selectedSection = 0;
   state.advancedReviewOpen = false;
+  state.assistedReviewOpen = false;
+  state.reviewedFindingIds = new Set();
+  state.reviewPriorityFilter = 'all';
   await analyzeCurrent(state, rerender);
 }
 
@@ -803,6 +1079,7 @@ async function analyzeCurrent(state: ConverterState, rerender: () => void): Prom
       },
     });
     state.analysis = analysis;
+    state.reviewedFindingIds = new Set();
     state.sections = analysis.sections.map((section) => ({ ...section, sourcePages: [...section.sourcePages] }));
     if (!state.title.trim()) state.title = analysis.title;
     if (!state.author.trim()) state.author = analysis.author;
@@ -1086,34 +1363,27 @@ function howCard(number: string, title: string, detail: string): HTMLElement {
 }
 
 function renderFooter(): HTMLElement {
-  return el('footer', { className: 'footer app-footer', children: [
-    el('div', { className: 'footer-main', children: [
-      el('a', { className: 'footer-brand', attrs: { href: '/' }, children: [renderLogoSymbol(), el('span', { text: 'EPUB Repair' })] }),
-      el('nav', { className: 'footer-links', attrs: { 'aria-label': 'Links de navegação e projeto' }, children: [
-        el('a', { text: 'Desenvolvedor', attrs: { href: 'https://github.com/vitoroliveirasilva', target: '_blank', rel: 'noreferrer noopener' } }),
-        el('a', { text: 'Projeto no GitHub', attrs: { href: 'https://github.com/vitoroliveirasilva/epub-repair.vite-web', target: '_blank', rel: 'noreferrer noopener' } }),
-        el('a', { text: 'Reparar EPUB', attrs: { href: '/' } }),
-        el('a', { text: 'Converter PDF', attrs: { href: '/converter' } }),
-      ] }),
-    ] }),
-    el('div', { className: 'footer-bottom', children: [
-      el('span', { text: `© ${new Date().getFullYear()} Vitor Oliveira Silva` }),
-      el('span', { text: 'Conversão e reparo local de documentos de leitura.' }),
-    ] }),
-  ] });
+  return renderEditorialFooter(() => {
+    applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+  });
 }
 
 function renderLogoSymbol(): HTMLElement {
-  return el('span', { className: 'logo-symbol', attrs: { 'aria-hidden': 'true' }, children: [
-    el('span', { className: 'logo-fold' }),
-    el('span', { className: 'logo-line logo-line-1' }),
-    el('span', { className: 'logo-line logo-line-2' }),
-    el('span', { className: 'logo-check' }),
-  ] });
+  return el('img', {
+    className: 'brand-icon',
+    attrs: {
+      src: '/favicon.svg',
+      alt: '',
+      width: '44',
+      height: '44',
+      decoding: 'async',
+      'aria-hidden': 'true',
+    },
+  });
 }
 
 function renderThemeToggle(): HTMLElement {
-  const toggle = el('button', { className: 'theme-toggle', attrs: { type: 'button', 'aria-label': 'Alternar tema claro e escuro' }, children: [
+  const toggle = el('button', { className: 'theme-toggle nav-theme-toggle', attrs: { type: 'button', 'aria-label': 'Alternar tema claro e escuro' }, children: [
     el('span', { attrs: { 'aria-hidden': 'true' } }),
     el('strong', { text: currentTheme() === 'dark' ? 'Escuro' : 'Claro' }),
   ] });

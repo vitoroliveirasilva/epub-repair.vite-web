@@ -1,5 +1,7 @@
 # EPUB Repair
 
+> **v4.0.0 em desenvolvimento na `dev` (não lançada).** A release estável de produção continua [v3.0.0](https://github.com/vitoroliveirasilva/epub-repair.vite-web/releases/tag/v3.0.0). A próxima versão introduz ferramentas opcionais de leitura EPUB, comparação, metadados, Kindle, processamento em lote e revisão assistida de PDF. Consulte [estado e limitações da v4](docs/V4_0_0_DEV.md); a promoção para `prod` depende de autorização explícita.
+
 [![Netlify Status](https://api.netlify.com/api/v1/badges/0a6d6315-875c-4375-a73f-87859903eb27/deploy-status)](https://app.netlify.com/projects/epubrepair/deploys)
 [![CI](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/workflows/ci.yml/badge.svg?branch=prod)](https://github.com/vitoroliveirasilva/epub-repair.vite-web/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/release-v3.0.0-blue)](https://github.com/vitoroliveirasilva/epub-repair.vite-web/releases/tag/v3.0.0)
