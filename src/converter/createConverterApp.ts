@@ -71,7 +71,7 @@ function renderWorkflowRail(state: ConverterState): HTMLElement {
     ['Gerar e baixar', 'EPUB validado'],
   ];
   return el('nav', {
-    className: 'converter-workflow',
+    className: 'converter-workflow pdf-conversion-journey',
     attrs: { 'aria-label': 'Etapas da conversão' },
     children: [el('ol', { children: steps.map(([title, detail], index) => {
       const number = index + 1;
@@ -84,8 +84,12 @@ function renderWorkflowRail(state: ConverterState): HTMLElement {
         className: `converter-workflow-step converter-workflow-${status}`,
         attrs: status === 'active' ? { 'aria-current': 'step' } : {},
         children: [
-          el('span', { className: 'converter-workflow-number', text: status === 'complete' ? '✓' : String(number) }),
+          el('span', { className: 'converter-workflow-number',
+            attrs: { 'aria-hidden': 'true' },
+            text: status === 'complete' ? '✓' : String(number).padStart(2, '0') }),
           el('span', { className: 'converter-workflow-copy', children: [
+            el('span', { className: 'pdf-journey-state',
+              text: status === 'complete' ? 'Concluída' : status === 'active' ? 'Etapa atual' : 'A seguir' }),
             el('strong', { text: title ?? '' }),
             el('small', { text: detail ?? '' }),
           ] }),
@@ -173,7 +177,7 @@ function renderUploader(state: ConverterState, rerender: () => void): HTMLElemen
     if (file) void loadAndAnalyze(file, state, rerender);
   });
   const dropzone = el('label', {
-    className: 'converter-dropzone upload-studio-zone upload-studio-zone-pdf' +
+    className: 'converter-dropzone upload-studio-zone upload-studio-zone-pdf pdf-drop-stage' +
       (state.file ? ' converter-dropzone-loaded upload-studio-loaded' : '') +
       (state.busy ? ' converter-dropzone-busy upload-studio-busy' : ''),
     attrs: {
@@ -241,11 +245,14 @@ function renderUploader(state: ConverterState, rerender: () => void): HTMLElemen
     input.click();
   });
   return el('section', {
-    className: 'panel converter-upload-panel upload-studio-panel',
+    className: 'panel converter-upload-panel upload-studio-panel pdf-upload-studio',
     attrs: { id: 'pdf-upload', 'aria-label': 'Selecionar PDF para converter' },
     children: [
-      el('div', { className: 'section-heading upload-studio-heading', children: [
-        el('p', { className: 'eyebrow', text: '01 / ARQUIVO PDF' }),
+      el('div', { className: 'section-heading upload-studio-heading pdf-upload-heading', children: [
+        el('div', { className: 'pdf-upload-eyebrow-row', children: [
+          el('p', { className: 'eyebrow', text: '01 / ARQUIVO PDF' }),
+          el('span', { className: 'pdf-upload-process-label', text: 'PROCESSAMENTO LOCAL' }),
+        ] }),
         el('h2', { text: state.file ? 'Documento selecionado' : 'Carregue o PDF' }),
         el('p', { className: 'muted',
           text: 'A reconstrução e a prévia acontecem localmente, sem enviar o documento para servidores.' }),
@@ -779,16 +786,45 @@ function renderReviewAssist(state: ConverterState, rerender: () => void): HTMLEl
 
 function renderQualitySidebar(state: ConverterState): HTMLElement {
   const warnings = state.analysis?.warnings ?? [];
+  const qualityScore = state.analysis
+    ? Math.max(0, Math.min(100, state.analysis.qualityScore))
+    : undefined;
   return el('aside', {
-    className: 'converter-sidebar',
+    className: 'converter-sidebar pdf-converter-sidebar',
     children: [
-      el('section', { className: 'panel converter-quality-card', children: [
-        el('p', { className: 'eyebrow', text: 'Qualidade' }),
+      el('section', { className: 'panel converter-quality-card pdf-quality-studio' +
+        (state.analysis ? ' pdf-quality-ready' : ''), children: [
+        el('div', { className: 'pdf-sidebar-heading', children: [
+          el('span', { className: 'pdf-sidebar-symbol pdf-quality-symbol', attrs: { 'aria-hidden': 'true' } }),
+          el('p', { className: 'eyebrow', text: 'Qualidade' }),
+        ] }),
         el('h2', { text: state.analysis ? `${state.analysis.qualityScore}/100` : 'Aguardando PDF' }),
         el('p', { className: 'muted', text: state.analysis
           ? 'Confiança da reconstrução, não nota estética nem garantia editorial.'
           : 'O diagnóstico mostrará texto selecionável, páginas digitalizadas, colunas, imagens e pontos para revisão.' }),
+        qualityScore !== undefined
+          ? el('div', { className: 'pdf-quality-meter',
+            attrs: {
+              role: 'progressbar',
+              'aria-label': 'Confiança da reconstrução',
+              'aria-valuemin': '0',
+              'aria-valuemax': '100',
+              'aria-valuenow': String(qualityScore),
+            },
+            children: [
+              el('span', { className: 'pdf-quality-meter-track', children: [
+                el('span', { className: 'pdf-quality-meter-fill',
+                  attrs: { style: `width: ${qualityScore}%` } }),
+              ] }),
+            ],
+          })
+          : el('div', { className: 'pdf-quality-placeholder', attrs: { 'aria-hidden': 'true' },
+            children: [el('span'), el('span'), el('span')],
+          }),
         state.analysis ? renderRecommendation(state) : undefined,
+        el('span', { className: 'pdf-quality-footnote', text: state.analysis
+          ? 'Diagnóstico do documento'
+          : 'Disponível após selecionar o PDF' }),
       ] }),
       state.analysis ? el('section', { className: 'panel converter-warning-panel', children: [
         el('h3', { text: warnings.length ? 'Pontos para conferir' : 'Nenhuma pendência relevante' }),
@@ -801,10 +837,20 @@ function renderQualitySidebar(state: ConverterState): HTMLElement {
           ],
         })),
       ] }) : undefined,
-      el('section', { className: 'panel converter-privacy-card', attrs: { id: 'converter-privacy' }, children: [
-        el('p', { className: 'eyebrow', text: 'Privacidade' }),
+      el('section', { className: 'panel converter-privacy-card pdf-privacy-studio',
+        attrs: { id: 'converter-privacy' }, children: [
+        el('div', { className: 'pdf-sidebar-heading', children: [
+          el('span', { className: 'pdf-sidebar-symbol pdf-privacy-symbol', attrs: { 'aria-hidden': 'true' } }),
+          el('p', { className: 'eyebrow', text: 'Privacidade' }),
+        ] }),
         el('h3', { text: 'Arquivo sempre local' }),
-        el('p', { className: 'muted', text: 'Leitura do PDF e das imagens, reconstrução, compactação e validação executam no navegador. A CSP impede conexões externas.' }),
+        el('p', { className: 'muted',
+          text: 'Leitura do PDF e das imagens, reconstrução, compactação e validação executam no navegador. A CSP impede conexões externas.' }),
+        el('div', { className: 'pdf-privacy-footer', attrs: { 'aria-hidden': 'true' },
+          children: [
+            el('span', { text: 'SEU DISPOSITIVO' }),
+            el('span', { text: 'SEM ENVIO' }),
+          ] }),
       ] }),
     ],
   });
